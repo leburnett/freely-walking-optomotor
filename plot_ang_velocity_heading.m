@@ -37,6 +37,7 @@ for exp  = 1:n_time_exps
 
     time_str = time_folders(exp).name;
     title_str = strcat(genotype, '-', date_str, '-', time_str);
+    title_str = strrep(title_str, '_', '-');
     
     % Move into the experiment directory 
     cd(fullfile(time_folders(exp).folder, time_folders(exp).name))
@@ -77,21 +78,17 @@ for exp  = 1:n_time_exps
 
     % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 
-    % Plot the data: 
-
-    % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-
     %% Plot the heading angle of each fly across the entire experiment
     
     plot_heading_angle_per_fly(Log, trx, n_flies, n_conditions, title_str, save_str, fig_exp_save_folder, save_figs)
 
     %% Plot the angular velocity:
    
-    plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, title_str, save_str, fig_exp_save_folder, save_figs)
+    plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, fps, title_str, save_str, fig_exp_save_folder, save_figs)
 
     %% Make 'datapoints' 
 
-    datapoints = make_data_mean_ang_vel(Log, trx, n_flies, n_conditions, fps); 
+    datapoints = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps);
 
     %% Plot the mean ang velocity per condition for all flies as scatter points. "Fish plot" 
    
@@ -127,7 +124,7 @@ for exp  = 1:n_time_exps
     %% SAVE
     
     % save data
-    save(fullfile(data_save_folder, strcat(save_str, '_data.mat')), 'datapoints', 'data_to_use', 'Log', 'trx', 'mean_data', 'clock_data', 'anti_data');
+    save(fullfile(data_save_folder, strcat(save_str, '_data.mat')), 'datapoints', 'data_to_use', 'Log', 'trx');
     
 end 
 

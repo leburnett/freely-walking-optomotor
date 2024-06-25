@@ -1,5 +1,11 @@
-function plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, title_str, save_str, fig_exp_save_folder, save_figs)
+function plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, fps, title_str, save_str, fig_exp_save_folder, save_figs)
     
+    % Fixed paramters: 
+    samp_rate = 1/fps; 
+    method = 'line_fit';
+    t_window = 16;
+    cutoff = []; 
+
     figure
     for idx = 1:n_flies
         % unwrap the heading data
@@ -46,7 +52,7 @@ function plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, title_str, save_s
         plot(V, 'k', 'LineWidth', 1)
 
     end 
-    
+
     sgtitle(strcat(title_str, ' - N=', string(n_flies)))
     f = gcf; 
     f.Position = [2162  -476  794  1520];
