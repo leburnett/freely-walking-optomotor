@@ -1,2 +1,2 @@
-# freely-walking-optomotor
- Scripts used by HMS 2024, who conducted freely-walking optomotor experiments. 
+# Freely_walking_Optomotor
+ Scripts used for HMS 2024 who conducted freely walking optotmotor experiments. 
