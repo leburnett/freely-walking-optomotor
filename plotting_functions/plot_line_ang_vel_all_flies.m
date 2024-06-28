@@ -6,7 +6,7 @@ function plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, 
     
     for idx = 1:n_cond_to_use
         % ang_data_for_c = data_to_use(idx, 2:n_flies+1);
-        mean_data(idx) = mean(mean(data_to_use(idx, :)));
+        mean_data(idx) = mean(mean(data_to_use(idx, 2:n_flies+1)));
     end 
         
     clock_idx = [1,2,3,5,7,9,11,13,15,17,18,20,22,24,26,28,30,32,33]; %blue

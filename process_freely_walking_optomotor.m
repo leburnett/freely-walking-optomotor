@@ -35,6 +35,7 @@ function process_freely_walking_optomotor(path_to_folder, save_figs, genotype)
     for exp  = 1:n_time_exps
     
         time_str = time_folders(exp).name;
+
         title_str = strcat(genotype, '-', date_str, '-', time_str);
         title_str = strrep(title_str, '_', '-');
         
@@ -59,6 +60,15 @@ function process_freely_walking_optomotor(path_to_folder, save_figs, genotype)
             load('movie/movie_JAABA/trx.mat', 'trx');
         end 
     
+        % Load in FEAT
+        if ~isfile('movie/movie-feat.mat')
+            warning('Experiment has not been processed using FlyTracker. Make sure the data has been processed and that trx.mat exists within the movie/movie_JAABA/ directory.')
+        else
+            % load trx
+            load('movie/movie-feat.mat', 'feat');
+        end 
+
+
         % Saving paths and filenames
         save_str = strcat(date_str, '_', time_str, '_', genotype);
     
