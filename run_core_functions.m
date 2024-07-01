@@ -1,6 +1,9 @@
 % Script to run functions from for freely walking optotmotor experiments
 
 path_to_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/DATA/2024_06_17';
+% Folders to save figures and data
+figure_save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/Figures';
+data_save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/ProcessedData';
 save_figs = false;
 genotype = 'csw1118';
 

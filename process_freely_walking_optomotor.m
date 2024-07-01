@@ -2,7 +2,7 @@
 % Assessing the effect of circadian rhythm on flies' optomotor response. 
 % 24/06/24 - created by Burnett
 
-function process_freely_walking_optomotor(path_to_folder, save_figs, genotype)
+function process_freely_walking_optomotor(path_to_folder, figure_save_folder, data_save_folder, save_figs, genotype)
 
     % Inputs
     % ______
@@ -21,11 +21,7 @@ function process_freely_walking_optomotor(path_to_folder, save_figs, genotype)
 
     if isempty(save_figs)
         save_figs = false;
-    end 
-
-    % Folders to save figures and data
-    figure_save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/Figures';
-    data_save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/ProcessedData';
+    end
     
     % Date 
     date_str = strrep(path_to_folder(end-9:end), '_', '-');
