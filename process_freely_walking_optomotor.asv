@@ -15,14 +15,7 @@ function process_freely_walking_optomotor(path_to_folder, save_figs, genotype)
     % save_figs = true;
     
     % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-    if isempty(genotype)
-        genotype = 'csw1118';
-    end 
-
-    if isempty(save_figs)
-        save_figs = false;
-    end 
-
+    
     % Folders to save figures and data
     figure_save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/Figures';
     data_save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/ProcessedData';
@@ -43,7 +36,7 @@ function process_freely_walking_optomotor(path_to_folder, save_figs, genotype)
     % number of experimental conditions
     n_conditions = 33;
     
-    for exp = 1:n_time_exps
+    for exp  = 1:n_time_exps
 
         clear trx Log
     
@@ -79,7 +72,7 @@ function process_freely_walking_optomotor(path_to_folder, save_figs, genotype)
         if contains(mfolder, 'movie') % movie folder configuration 
             trx_file_path = 'movie/movie_JAABA/trx.mat';
         else
-            trx_file_path = strcat(mfolder, '/', 'trx.mat');
+            trx_file_path = strcat(rfolder,'/', strcat(mfolder, '_JAABA'), '/', 'trx.mat');
         end 
 
         if ~isfile(trx_file_path)
@@ -166,8 +159,53 @@ function process_freely_walking_optomotor(path_to_folder, save_figs, genotype)
         
     end 
 
-    % Comment out if you don't want to view the figures
-    % close all
-
 end 
+
+
+% unique_contrasts = unique(data_to_use(:, 1));
+% n_unique_contrasts = numel(unique_contrasts);
+% 
+% data = zeros(n_unique_contrasts, 1);
+% 
+% for j = 1:n_unique_contrasts
+%     contr = unique_contrasts(j);
+%     all_contrast = find(data_to_use(:, 1)==contr);
+%     % Find the mean & abs.
+%     data(j, 1) = mean(mean(abs(data_to_use(all_contrast, :))));
+% end 
+% 
+% % Plot the figure
+% figure;
+% plot(unique_contrasts, data, 'k', 'LineWidth', 1.2)
+% box off
+% ax = gca;
+% ax.TickDir = 'out';
+% xlim([-0.05 1.25])
+% ylim([-0.05, 1.5])
+% ax.LineWidth = 1.5;
+% ax.FontSize = 12;
+% xlabel('Contrast')
+% ylabel('Average abs ang vel')
+% f = gcf;
+% f.Position = [422   637   809   390];
+
+%% Generate a scatter plot of the mean angular velocity for ONE fly for each contrast value.
+% Each conditions (i.e. clockwise and anticlockwise) are plotted as separate points. 
+
+% ALL CONDITIONS
+% figure; scatter(Log.contrast, (datapoints), 300, 'k.')
+% 
+% % ONLY THE FIRST HALF 
+% % figure; scatter(Log.contrast(1:17), abs(datapoints(1:17)), 300, 'k.')
+% ax = gca;
+% ax.TickDir = 'out';
+% xlim([-0.05 1.05])
+% ylim([-0.05, 2.5])
+% ax.LineWidth = 1.5;
+% ax.FontSize = 12;
+% xlabel('Contrast')
+% ylabel('Average abs ang vel')
+% f = gcf;
+% f.Position = [422   637   809   390];
+
 

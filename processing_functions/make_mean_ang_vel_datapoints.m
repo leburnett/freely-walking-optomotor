@@ -28,7 +28,7 @@ function datapoints = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditio
                 st_fr = 1;
             end 
             data = V(st_fr:stop_fr);
-            datapoints(ii, idx+1) = mean(data);
+            datapoints(ii, idx+1) = nanmean(data);
         end 
     end 
 
