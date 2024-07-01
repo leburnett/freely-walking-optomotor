@@ -1,4 +1,4 @@
-function datapoints = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps)
+function [datapoints, datapoints_median] = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps)
 
     % Fixed paramters: 
     samp_rate = 1/fps; 
@@ -12,6 +12,9 @@ function datapoints = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditio
 
     datapoints = zeros(n_conditions, n_flies+1);
     datapoints(1:n_conditions, 1) = contrast_vals;
+
+    datapoints_median = zeros(n_conditions, n_flies+1);
+    datapoints_median(1:n_conditions, 1) = contrast_vals;
 
     for idx = 1:n_flies
         % unwrap the heading data
@@ -29,11 +32,13 @@ function datapoints = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditio
             end 
             data = V(st_fr:stop_fr);
             datapoints(ii, idx+1) = nanmean(data);
+            datapoints_median(ii, idx+1) = nanmedian(data);
         end 
     end 
 
     % Add direction to 'datapoints'
     datapoints(1:n_conditions, n_flies+2) = Log.dir;
+    datapoints_median(1:n_conditions, n_flies+2) = Log.dir;
 
 end 
 

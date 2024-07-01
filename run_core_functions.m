@@ -7,18 +7,10 @@ data_save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/Processed
 save_figs = false;
 genotype = 'csw1118';
 
-process_freely_walking_optomotor(path_to_folder, save_figs, genotype)
+process_freely_walking_optomotor(path_to_folder, figure_save_folder, data_save_folder, save_figs, genotype)
 
+plot_line_ang_vel_for_zt(save_figs, 'mean')
 
-
-
-
-
-
-
-
-
-
-
+plot_line_ang_vel_for_zt(save_figs, 'median')
 
 

@@ -16,7 +16,7 @@ function process_freely_walking_optomotor(path_to_folder, figure_save_folder, da
     
     % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
     if isempty(genotype)
-        genotype = 'csw1118';
+        genotype = 'csw118';
     end 
 
     if isempty(save_figs)
@@ -75,7 +75,8 @@ function process_freely_walking_optomotor(path_to_folder, figure_save_folder, da
         if contains(mfolder, 'movie') % movie folder configuration 
             trx_file_path = 'movie/movie_JAABA/trx.mat';
         else
-            trx_file_path = strcat(mfolder, '/', 'trx.mat');
+            trx_file = strcat(mfolder, '/', 'trx.mat');
+            trx_file_path = fullfile(movie_folder(3).folder, trx_file);
         end 
 
         if ~isfile(trx_file_path)
@@ -95,7 +96,7 @@ function process_freely_walking_optomotor(path_to_folder, figure_save_folder, da
         % end 
 
         % Saving paths and filenames
-        save_str = strcat(date_str, '_', time_str, '_', genotype);
+        save_str = strcat(strrep(date_str, '-', '_'), '_', time_str, '_', genotype);
     
         fig_date_save_folder = fullfile(figure_save_folder, date_str);
         if ~isfolder(fig_date_save_folder)
@@ -122,7 +123,7 @@ function process_freely_walking_optomotor(path_to_folder, figure_save_folder, da
     
         %% Make 'datapoints' 
     
-        datapoints = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps);
+        [datapoints, datapoints_median] = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps);
     
         %% Plot the mean ang velocity per condition for all flies as scatter points. "Fish plot" 
        
@@ -158,12 +159,12 @@ function process_freely_walking_optomotor(path_to_folder, figure_save_folder, da
         %% SAVE
         
         % save data
-        save(fullfile(data_save_folder, strcat(save_str, '_data.mat')), 'datapoints', 'data_to_use', 'Log', 'trx');
+        save(fullfile(data_save_folder, strcat(save_str, '_data.mat')), 'datapoints', 'datapoints_median', 'data_to_use', 'Log', 'trx');
         
     end 
 
     % Comment out if you don't want to view the figures
-    % close all
+    close all
 
 end 
 
