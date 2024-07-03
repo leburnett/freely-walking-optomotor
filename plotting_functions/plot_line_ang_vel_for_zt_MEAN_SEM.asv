@@ -1,4 +1,4 @@
-function plot_line_ang_vel_for_zt(save_figs, med_mean)
+function plot_line_ang_vel_for_zt_MEAN_SEM(save_figs, med_mean)
 
     data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/ProcessedData'; 
     cd(data_path)
@@ -73,17 +73,13 @@ function plot_line_ang_vel_for_zt(save_figs, med_mean)
         
         n_flies = numel(d_all(1, :));
         disp(n_flies)
-        data_to_use = [d(:, 1), d_all, d(:, end)];
+        % data_to_use = [d(:, 1), d_all, d(:, end)];
+
         title_str = strcat('ZT ', string(zt_condition));
         save_str = strrep(title_str, '-', '_');
         fig_exp_save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/Figures/ZT_figs';
-        save_figs = true; 
-
-        % One plot per ZT condition with all flies plotted as light lines in
-        % background. 
-        plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
-        
-        %% 
+  
+        sem_data = nanstd(d_all')/sqrt(size(d_all,2));
         
         % mean of all ZT overlaid
         if med_mean == "median"
@@ -96,17 +92,40 @@ function plot_line_ang_vel_for_zt(save_figs, med_mean)
         anti_idx = [1,2,4,6,8,10,12,14,16,17,19,21,23,25,27,29,31,32,33]; % pink
     
         clock_data = d_mean(clock_idx);
+        if med_mean == "m"
+        clock_sem = sem_data(clock_idx);
+        y1 = clock_data'+clock_sem;
+        y2 = clock_data'-clock_sem;
+
         anti_data = d_mean(anti_idx);
+        anti_sem = sem_data(anti_idx);
+        y3 = anti_data'+anti_sem;
+        y4 = anti_data'-anti_sem;
 
         colours = [0.9, 0.9, 0; 1, 0.65, 0; 0.8, 0, 0; 0.8, 0, 0.8; 0.62, 0.13, 0.94; 0, 0, 1];
         col = colours(idx, :);
+        x = 1:1:19; 
 
         figure(f1)
+
+        % plot SEM for clockwise movement
+        plot(x, y1, 'w', 'LineWidth', 1)
+        hold on
+        plot(x, y2, 'w', 'LineWidth', 1)
+        patch([x fliplr(x)], [y1 fliplr(y2)], col, 'FaceAlpha', 0.125, 'EdgeColor', 'none')
+
+        % plot SEM for anticlockwise movement
+        plot(x, y3, 'w', 'LineWidth', 1)
+        hold on
+        plot(x, y4, 'w', 'LineWidth', 1)
+        patch([x fliplr(x)], [y3 fliplr(y4)], col, 'FaceAlpha', 0.125, 'EdgeColor', 'none')
+
+
         plot(clock_data, 'Color', col, 'LineWidth', 2);
         hold on 
         plot(anti_data, 'Color', col, 'LineWidth', 2);
-        scatter(1:1:19, clock_data, 150, '.', 'MarkerEdgeColor', col, 'MarkerFaceColor',col);
-        scatter(1:1:19, anti_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
+        scatter(x, clock_data, 150, '.', 'MarkerEdgeColor', col, 'MarkerFaceColor',col);
+        scatter(x, anti_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
 
         d_mean_zt(:, idx) = d_mean;
 
@@ -122,11 +141,19 @@ function plot_line_ang_vel_for_zt(save_figs, med_mean)
     xlabel('Condition / Contrast')
 
     if save_figs == true
-        savefig(f1, fullfile(fig_exp_save_folder, strcat('ZT_AngVel_Line_',med_mean, '.fig')))
+        savefig(f1, fullfile(fig_exp_save_folder, strcat('ZT_AngVel_Line_wSEM',med_mean, '.fig')))
     end 
 
 end 
 
 
 
+
+
+
+
+
+
+        
+ 
 
