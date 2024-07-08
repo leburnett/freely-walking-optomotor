@@ -23,8 +23,6 @@ function process_freely_walking_optomotor(path_to_folder, save_figs, genotype)
         save_figs = false;
     end 
 
-    % hi hannah marie
-
     % Folders to save figures and data
     figure_save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/Figures';
     data_save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/ProcessedData';
