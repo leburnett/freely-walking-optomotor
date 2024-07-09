@@ -58,7 +58,7 @@ function plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, 
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12)
     xticks(1:1:19)
     xticklabels({'OFF', 'ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1', 'FLICKER', '1', '0.75', '0.56', '0.40', '0.33', '0.20', '0.11', 'FLICKER', 'OFF'})
-    ylabel('Angular Velocity')
+    ylabel('Velocity')
     xlabel('Condition / Contrast')
     title(strcat(title_str, ' - N=', string(n_flies)))
     
