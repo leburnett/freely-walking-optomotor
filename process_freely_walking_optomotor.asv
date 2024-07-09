@@ -15,7 +15,14 @@ function process_freely_walking_optomotor(path_to_folder, save_figs, genotype)
     % save_figs = true;
     
     % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-    
+    if isempty(genotype)
+        genotype = 'csw1118';
+    end 
+
+    if isempty(save_figs)
+        save_figs = false;
+    end 
+
     % Folders to save figures and data
     figure_save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/Figures';
     data_save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/ProcessedData';
@@ -36,7 +43,7 @@ function process_freely_walking_optomotor(path_to_folder, save_figs, genotype)
     % number of experimental conditions
     n_conditions = 33;
     
-    for exp  = 1:n_time_exps
+    for exp = 1:n_time_exps
 
         clear trx Log
     
@@ -72,7 +79,7 @@ function process_freely_walking_optomotor(path_to_folder, save_figs, genotype)
         if contains(mfolder, 'movie') % movie folder configuration 
             trx_file_path = 'movie/movie_JAABA/trx.mat';
         else
-            trx_file_path = strcat(rfolder,'/', strcat(mfolder, '_JAABA'), '/', 'trx.mat');
+            trx_file_path = strcat(mfolder, '/', 'trx.mat');
         end 
 
         if ~isfile(trx_file_path)
@@ -119,7 +126,7 @@ function process_freely_walking_optomotor(path_to_folder, save_figs, genotype)
     
         %% Make 'datapoints' 
     
-        datapoints = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps);
+        ang_datapoints = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps);
     
         %% Plot the mean ang velocity per condition for all flies as scatter points. "Fish plot" 
        
@@ -127,7 +134,7 @@ function process_freely_walking_optomotor(path_to_folder, save_figs, genotype)
         % until the first flicker, then use "data_to_use = datapoints(1:17, :)" 
         % else use "data_to_use = datapoints". 
         
-        data_to_use = datapoints; %(1:17, :);
+        data_to_use = ang_datapoints; %(1:17, :);
     
         % Update contrast values for acclim / flickers for plotting:
         % OFF ACCLIM
@@ -143,69 +150,57 @@ function process_freely_walking_optomotor(path_to_folder, save_figs, genotype)
         
         plot_scatter_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
     
+        %% Generate a line plot for mean  vel at each contrast level. "Lips plot"
+        
+        % Individual flies in light pink/blue. 
+        % Average across flies in bold.
+        
+        data_to_use = ang_datapoints; %(1:17, :);
+       
+        plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
+     %% Make 'vel datapoints' 
+    
+        vel_datapoints = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps);
+    
+        %% Plot the mean ang velocity per condition for all flies as scatter points. "Fish plot" 
+       
+        % If you only want to plot the data from the conditions ramping up, up
+        % until the first flicker, then use "data_to_use = datapoints(1:17, :)" 
+        % else use "data_to_use = datapoints". 
+        
+        data_to_use = vel_datapoints; %(1:17, :);
+    
+        % Update contrast values for acclim / flickers for plotting:
+        % OFF ACCLIM
+        data_to_use(1,1) = -0.2;
+        % ON ACCLIM 
+        data_to_use(2,1) = -0.1;
+        % FLICKER 1
+        data_to_use(17,1) = 1.2;
+        % FLICKER 2 
+        data_to_use(32,1) = 1.3;
+        % OFF ACCLIM 2
+        data_to_use(33,1) = 1.4;
+        
+        plot_scatter_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
+    
         %% Generate a line plot for mean ang vel at each contrast level. "Lips plot"
         
         % Individual flies in light pink/blue. 
         % Average across flies in bold.
         
-        data_to_use = datapoints; %(1:17, :);
+        data_to_use = vel_datapoints; %(1:17, :);
        
-        plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
-    
+        plot_line_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
         %% SAVE
         
         % save data
-        save(fullfile(data_save_folder, strcat(save_str, '_data.mat')), 'datapoints', 'data_to_use', 'Log', 'trx');
+        save(fullfile(data_save_folder, strcat(save_str, '_data.mat')), 'vel_datapoints', 'data_to_use', 'Log', 'trx');
         
     end 
 
+    % Comment out if you don't want to view the figures
+    % close all
+
 end 
-
-
-% unique_contrasts = unique(data_to_use(:, 1));
-% n_unique_contrasts = numel(unique_contrasts);
-% 
-% data = zeros(n_unique_contrasts, 1);
-% 
-% for j = 1:n_unique_contrasts
-%     contr = unique_contrasts(j);
-%     all_contrast = find(data_to_use(:, 1)==contr);
-%     % Find the mean & abs.
-%     data(j, 1) = mean(mean(abs(data_to_use(all_contrast, :))));
-% end 
-% 
-% % Plot the figure
-% figure;
-% plot(unique_contrasts, data, 'k', 'LineWidth', 1.2)
-% box off
-% ax = gca;
-% ax.TickDir = 'out';
-% xlim([-0.05 1.25])
-% ylim([-0.05, 1.5])
-% ax.LineWidth = 1.5;
-% ax.FontSize = 12;
-% xlabel('Contrast')
-% ylabel('Average abs ang vel')
-% f = gcf;
-% f.Position = [422   637   809   390];
-
-%% Generate a scatter plot of the mean angular velocity for ONE fly for each contrast value.
-% Each conditions (i.e. clockwise and anticlockwise) are plotted as separate points. 
-
-% ALL CONDITIONS
-% figure; scatter(Log.contrast, (datapoints), 300, 'k.')
-% 
-% % ONLY THE FIRST HALF 
-% % figure; scatter(Log.contrast(1:17), abs(datapoints(1:17)), 300, 'k.')
-% ax = gca;
-% ax.TickDir = 'out';
-% xlim([-0.05 1.05])
-% ylim([-0.05, 2.5])
-% ax.LineWidth = 1.5;
-% ax.FontSize = 12;
-% xlabel('Contrast')
-% ylabel('Average abs ang vel')
-% f = gcf;
-% f.Position = [422   637   809   390];
-
 
