@@ -168,7 +168,7 @@ for exp = 1:n_time_exps
 
     %% Plot velocity:
 
-    plot_vel_per_fly(Log, feat, n_flies, n_conditions, fps, title_str, save_str, fig_exp_save_folder, save_figs)
+    plot_vel_per_fly(Log, feat, n_flies, n_conditions, title_str, save_str, fig_exp_save_folder, save_figs)
 
     %% Make 'vel datapoints'
 
