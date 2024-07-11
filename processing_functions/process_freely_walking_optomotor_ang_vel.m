@@ -1,4 +1,8 @@
 function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, save_folder, genotype)
+    % Function to analyse the ANGULAR VELOCITY of the flies across the increasing
+    % contrast optomotor experiments. 
+
+    % uses 'trx' output from Tracker not 'feat'. 
 
     % Inputs
     % ______
@@ -130,8 +134,8 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, sav
         plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, fps, title_str, save_str, fig_exp_save_folder, save_figs)
     
         %% Make 'ang datapoints'
-    
-        ang_datapoints = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps);
+        mean_med = "mean";
+        ang_datapoints = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps, mean_med);
     
         %% Plot the mean ang velocity per condition for all flies as scatter points. "Fish plot"
     

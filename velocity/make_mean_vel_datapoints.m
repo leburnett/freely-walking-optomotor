@@ -1,6 +1,6 @@
-function datapoints = make_mean_vel_datapoints(Log, feat, n_flies, n_conditions)
+function datapoints = make_mean_vel_datapoints(Log, feat, n_flies, n_conditions, mean_med)
 
- 
+  
     % % % % % % % % % % %
 
     contrast_vals = Log.contrast; 
@@ -19,7 +19,12 @@ function datapoints = make_mean_vel_datapoints(Log, feat, n_flies, n_conditions)
             end 
             raw_data = feat.data(idx,:,1);
             data = raw_data(st_fr:stop_fr);
-            datapoints(ii, idx+1) = mean(data);
+
+            if mean_med == "mean"
+                datapoints(ii, idx+1) = nanmean(data);
+            elseif mean_med == "med"
+                datapoints(ii, idx+1) = nanmedian(data);
+            end 
         end 
     end 
 
