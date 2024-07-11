@@ -1,7 +1,12 @@
 function plot_line_ang_vel_for_zt(save_figs, med_mean)
 
+    % Get data from ALL flies. This should be stored in the 'data'
+    % subfolder of the 'save_folder'
     data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/ProcessedData'; 
+
     cd(data_path)
+
+    % List all data files
     all_data = dir();
     dnames = {all_data.name};
     all_data = all_data(~ismember(dnames, '.DS_Store'));

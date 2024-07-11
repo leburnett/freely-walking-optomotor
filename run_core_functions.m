@@ -9,13 +9,15 @@ save_figs = false;
 genotype = 'csw1118';
 save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS'; %'/Users/hms/Documents/Fly Tracking';
 
+mean_med = "mean";
+
 %% FUNCTIONS
 
 % Generate plots for angular velocity analysis
-process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, save_folder, genotype)
+process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, save_folder, genotype, mean_med)
 
 % Generate plots for velocity analysis
-process_freely_walking_optomotor_vel(path_to_folder, save_figs, save_folder, genotype)
+process_freely_walking_optomotor_vel(path_to_folder, save_figs, save_folder, genotype, mean_med)
 
 % Generate plots where flies are pooled across timepoints (ZT).
 

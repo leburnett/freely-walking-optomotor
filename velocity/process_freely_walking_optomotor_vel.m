@@ -1,4 +1,4 @@
-function process_freely_walking_optomotor_vel(path_to_folder, save_figs, save_folder, genotype)
+function process_freely_walking_optomotor_vel(path_to_folder, save_figs, save_folder, genotype, mean_med)
     % Function to analyse the VELOCITY of the flies across the increasing
     % contrast optomotor experiments. 
 
@@ -10,14 +10,18 @@ function process_freely_walking_optomotor_vel(path_to_folder, save_figs, save_fo
     % path_to_folder : Path
     %               Path to data to analyse. e.g. '/Users/burnettl/Documents/Janelia/HMS_2024/DATA/2024_06_17';
     
-    % genotype : str
-    %           string of the genotype of flies used. Default = 'CSW1118';
-    
+    % save_figs : bool 
+    %           Whether to save the figures and data or not. 
+
     % save_folder : path 
     %          Path to save the data and figures to if 'save_figs' = true.         
     
-    % save_figs : bool 
-    %           Whether to save the figures and data or not. 
+    % genotype : str
+    %           string of the genotype of flies used. Default = 'CSW1118';
+
+    % mean_med : str
+    %       Either "mean" to use the mean value of "med" to use the median
+    %       value per fly. 
     
     % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
     
@@ -124,9 +128,13 @@ function process_freely_walking_optomotor_vel(path_to_folder, save_figs, save_fo
         plot_vel_per_fly(Log, feat, n_flies, n_conditions, title_str, save_str, fig_exp_save_folder, save_figs)
     
         %% Make 'vel datapoints'
-        mean_med = "mean"; 
-        vel_datapoints = make_mean_vel_datapoints(Log, feat, n_flies, n_conditions, mean_med);
-    
+        [datapoints_mean, datapoints_med] = make_mean_vel_datapoints(Log, feat, n_flies, n_conditions, mean_med);
+        
+        if mean_med == "mean"
+            vel_datapoints = datapoints_mean;
+        elseif mean_med == "med"
+            vel_datapoints = datapoints_med;
+        end 
         %% Plot the mean velocity per condition for all flies as scatter points. "Fish plot"
     
         % If you only want to plot the data from the conditions ramping up, up
