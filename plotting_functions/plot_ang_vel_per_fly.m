@@ -1,5 +1,40 @@
 function plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, fps, title_str, save_str, fig_exp_save_folder, save_figs)
     
+    % Inputs
+    % ______
+
+    % Log : struct
+    %       Struct of size [n_conditions x n_flies] with details about the
+    %       contrast, direction, start and stop times and start and stop
+    %       frames for each condition. 
+
+    % trx : struct
+    %       Struct of size [1 x n_flies] with details about each fly during
+    %       the experiment, such as the x and y position, orientation of
+    %       fitted ellipse. 
+
+    % n_flies : int
+    %       Number of flies in the experiment.
+
+    % n_conditions : int
+    %       Number of conditions in the experiment.    
+
+    % fps : int
+    %       acquisition rate of the camera in frames per second (fps).
+
+    % title_str : str
+    %       string used for the title of the plot.
+
+    % save_str : str
+    %       string used when saving the figure.
+
+    % fig_exp_save_folder : Path
+    %        Path to save the figure.    
+    
+    % save_figs : bool 
+    %        Whether to save the figures and data or not. 
+
+
     % Fixed paramters: 
     samp_rate = 1/fps; 
     method = 'line_fit';

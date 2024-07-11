@@ -125,7 +125,7 @@ function process_freely_walking_optomotor_vel(path_to_folder, save_figs, save_fo
     
         %% Make 'vel datapoints'
     
-        vel_datapoints = make_mean_vel_datapoints(Log, feat, n_flies, n_conditions, fps);
+        vel_datapoints = make_mean_vel_datapoints(Log, feat, n_flies, n_conditions);
     
         %% Plot the mean velocity per condition for all flies as scatter points. "Fish plot"
     

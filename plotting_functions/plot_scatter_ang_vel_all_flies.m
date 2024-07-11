@@ -1,5 +1,31 @@
 function plot_scatter_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
     
+    % Inputs
+    % ______
+
+    % data_to_use : double, size [n_conditions x n_flies+2]
+    %       Matrix containing the data to be plotted. 
+    %       Each row corresponds to one condition. The first column has the
+    %       contrast value for each condition and the last column has the
+    %       direction of movement. 
+    %       The middle columns each represent one fly and their average
+    %       angular velocity over the 10s condition.
+
+    % n_flies : int
+    %       Number of flies in the experiment.  
+
+    % title_str : str
+    %       string used for the title of the plot.
+
+    % save_str : str
+    %       string used when saving the figure.
+
+    % fig_exp_save_folder : Path
+    %        Path to save the figure.    
+    
+    % save_figs : bool 
+    %        Whether to save the figures and data or not. 
+
     n_cond_to_use = size(data_to_use, 1);
     
     figure

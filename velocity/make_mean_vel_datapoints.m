@@ -1,4 +1,4 @@
-function datapoints = make_mean_vel_datapoints(Log, feat, n_flies, n_conditions, fps)
+function datapoints = make_mean_vel_datapoints(Log, feat, n_flies, n_conditions)
 
  
     % % % % % % % % % % %
