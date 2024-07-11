@@ -1,4 +1,4 @@
-function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, save_folder, genotype, mean_med)
+function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, figure_save_folder, data_save_folder, genotype, mean_med)
     % Function to analyse the ANGULAR VELOCITY of the flies across the increasing
     % contrast optomotor experiments. 
 
@@ -13,8 +13,11 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, sav
     % save_figs : bool 
     %           Whether to save the figures and data or not. 
 
-    % save_folder : path 
-    %          Path to save the data and figures to if 'save_figs' = true.         
+    % figure_save_folder : path 
+    %          Path to save the figures to if 'save_figs' = true. 
+
+    % data_save_folder : path 
+    %          Path to save the data to if 'save_figs' = true. 
     
     % genotype : str
     %           string of the genotype of flies used. Default = 'CSW1118';
@@ -26,22 +29,11 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, sav
     % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
     if isempty(genotype)
-        genotype = 'csw1118';
+        genotype = 'CSw1118';
     end
     
     if isempty(save_figs)
         save_figs = false;
-    end
-    
-    % Folders to save figures and data
-    figure_save_folder = fullfile(save_folder, 'figures'); %'/Users/hms/Documents/Fly Tracking';
-    if ~isfolder(figure_save_folder)
-        mkdir(figure_save_folder);
-    end
-    
-    data_save_folder = fullfile(save_folder, 'data'); %'/Users/hms/Documents/Fly Tracking';
-    if ~isfolder(data_save_folder)
-        mkdir(data_save_folder);
     end
     
     % Date
