@@ -1,8 +1,4 @@
-function process_freely_walking_optomotor_vel(path_to_folder, save_figs, save_folder, genotype)
-    % Function to analyse the VELOCITY of the flies across the increasing
-    % contrast optomotor experiments. 
-
-    % uses 'feat' output from Tracker not 'trx'. 
+function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, save_folder, genotype)
 
     % Inputs
     % ______
@@ -19,8 +15,8 @@ function process_freely_walking_optomotor_vel(path_to_folder, save_figs, save_fo
     % save_figs : bool 
     %           Whether to save the figures and data or not. 
     
-    % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-    
+    % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
     if isempty(genotype)
         genotype = 'csw1118';
     end
@@ -28,22 +24,22 @@ function process_freely_walking_optomotor_vel(path_to_folder, save_figs, save_fo
     if isempty(save_figs)
         save_figs = false;
     end
-
+    
     % Folders to save figures and data
     figure_save_folder = fullfile(save_folder, 'figures'); %'/Users/hms/Documents/Fly Tracking';
     if ~isfolder(figure_save_folder)
         mkdir(figure_save_folder);
     end
-
+    
     data_save_folder = fullfile(save_folder, 'data'); %'/Users/hms/Documents/Fly Tracking';
     if ~isfolder(data_save_folder)
         mkdir(data_save_folder);
     end
     
-    % Date 
+    % Date
     date_str = strrep(path_to_folder(end-9:end), '_', '-');
     
-    % Find times of experiments 
+    % Find times of experiments
     cd(path_to_folder)
     time_folders = dir('*_*');
 
@@ -51,6 +47,7 @@ function process_freely_walking_optomotor_vel(path_to_folder, save_figs, save_fo
     time_names = {time_folders.name};
     time_folders = time_folders(~strcmp(time_names, '.DS_Store'));
 
+    % Number of experiment folders for that day.
     n_time_exps = length(time_folders);
     
     % video recording rate in frames per second
@@ -59,81 +56,90 @@ function process_freely_walking_optomotor_vel(path_to_folder, save_figs, save_fo
     % number of experimental conditions
     n_conditions = 33;
     
-    for exp  = 1:n_time_exps
+    for exp = 1:n_time_exps
     
-        clear feat Log 
-
+        clear trx Log 
+    
         time_str = time_folders(exp).name;
+        disp(time_str)
+    
         title_str = strcat(genotype, '-', date_str, '-', time_str);
         title_str = strrep(title_str, '_', '-');
-        
-        % Move into the experiment directory 
+    
+        % Move into the experiment directory
         cd(fullfile(time_folders(exp).folder, time_folders(exp).name))
-      
+    
         %% load the files that you need:
-        
-        % Open the LOG 
+
+        % Open the LOG
         log_files = dir('LOG_*');
         load(fullfile(log_files(1).folder, log_files(1).name), 'Log');
     
         rec_folder = dir('REC_*');
         if isempty(rec_folder)
             warning('REC_... folder does not exist inside the time folder.')
-        end 
+        end
 
         % Move into recording folder
         cd(fullfile(rec_folder(1).folder, rec_folder(1).name))
-
+        
+        % The data will be stored in the folder within that folder, then
+        % that same folder name with 'JAABA' at the end.
+    
         movie_folder = dir();
         movie_folder = movie_folder([movie_folder.isdir]);
         mfolder = movie_folder(3).name;
-
-        % Load 'feat'
+    
         if contains(mfolder, 'movie') % movie folder configuration
-            feat_file_path = 'movie/movie-feat.mat';
+            trx_file_path = 'movie/movie_JAABA/trx.mat';
         else
-            feat_file_path = strcat(rec_folder(1).name, '-feat.mat');
+            trx_file_path = strcat(mfolder, '/', 'trx.mat');
         end
-
-        if ~isfile(feat_file_path)
-            warning('Experiment has not been processed using FlyTracker. Make sure the data has been processed and that "{moviename}-feat.mat" exists within the movie/movie_JAABA/ directory.')
+    
+        if ~isfile(trx_file_path)
+            warning('Experiment has not been processed using FlyTracker. Make sure the data has been processed and that trx.mat exists within the movie/movie_JAABA/ directory.')
         else
-            load(feat_file_path, 'feat');
+            % load trx
+            load(trx_file_path, 'trx');
         end
-
+    
         % Saving paths and filenames
         save_str = strcat(date_str, '_', time_str, '_', genotype);
     
         fig_date_save_folder = fullfile(figure_save_folder, date_str);
         if ~isfolder(fig_date_save_folder)
             mkdir(fig_date_save_folder);
-        end 
-        
+        end
+    
         fig_exp_save_folder = fullfile(fig_date_save_folder, time_str);
         if ~isfolder(fig_exp_save_folder)
             mkdir(fig_exp_save_folder);
-        end 
+        end
     
         % Number of flies tracked in the experiment
-        n_flies = size(feat.data, 1);
+        n_flies = length(trx);
     
-        % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-   
-        %% Plot velocity:
+        % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
     
-        plot_vel_per_fly(Log, feat, n_flies, n_conditions, title_str, save_str, fig_exp_save_folder, save_figs)
+        %% Plot the heading angle of each fly across the entire experiment
     
-        %% Make 'vel datapoints'
+        plot_heading_angle_per_fly(Log, trx, n_flies, n_conditions, title_str, save_str, fig_exp_save_folder, save_figs)
     
-        vel_datapoints = make_mean_vel_datapoints(Log, feat, n_flies, n_conditions, fps);
+        %% Plot the angular velocity:
     
-        %% Plot the mean velocity per condition for all flies as scatter points. "Fish plot"
+        plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, fps, title_str, save_str, fig_exp_save_folder, save_figs)
+    
+        %% Make 'ang datapoints'
+    
+        ang_datapoints = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps);
+    
+        %% Plot the mean ang velocity per condition for all flies as scatter points. "Fish plot"
     
         % If you only want to plot the data from the conditions ramping up, up
         % until the first flicker, then use "data_to_use = datapoints(1:17, :)"
         % else use "data_to_use = datapoints".
     
-        data_to_use = vel_datapoints; %(1:17, :);
+        data_to_use = ang_datapoints; %(1:17, :);
     
         % Update contrast values for acclim / flickers for plotting:
         % OFF ACCLIM
@@ -147,29 +153,26 @@ function process_freely_walking_optomotor_vel(path_to_folder, save_figs, save_fo
         % OFF ACCLIM 2
         data_to_use(33,1) = 1.4;
     
-        plot_scatter_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
+        plot_scatter_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
     
-        %% Generate a line plot for mean vel at each contrast level. "Lips plot"
+        %% Generate a line plot for mean ang vel at each contrast level. "Lips plot"
     
         % Individual flies in light pink/blue.
         % Average across flies in bold.
     
-        data_to_use = vel_datapoints; %(1:17, :);
+        data_to_use = ang_datapoints; %(1:17, :);
     
-        plot_line_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
-    
+        plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
     
         %% SAVE
-        
+    
         % save data
-        save(fullfile(data_save_folder, strcat(save_str, '_data.mat')), 'vel_datapoints', 'data_to_use', 'Log', 'feat');
-        
-    end 
+        save(fullfile(data_save_folder, strcat(save_str, '_data.mat')), 'ang_datapoints', 'data_to_use', 'Log', 'trx');
 
+    end
+    
     % Uncomment if you don't want to view the figures
     % close all
 
-end 
-
-
+end
 
