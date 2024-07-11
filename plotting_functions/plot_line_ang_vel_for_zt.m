@@ -1,9 +1,8 @@
-function plot_line_ang_vel_for_zt(save_figs, med_mean)
+function plot_line_ang_vel_for_zt(save_figs, save_folder, mean_med)
 
     % Get data from ALL flies. This should be stored in the 'data'
     % subfolder of the 'save_folder'
     data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/ProcessedData'; 
-
     cd(data_path)
 
     % List all data files
@@ -34,6 +33,9 @@ function plot_line_ang_vel_for_zt(save_figs, med_mean)
     
     d_mean_zt = zeros(33, 6);
     % Load the data from each ZT point and combine. 
+
+    % Path to save the figures
+    fig_save_path = fullfile(save_folder, "zt_figs");
 
     f1 = figure;
     for idx = 1:n_conditions
@@ -68,10 +70,10 @@ function plot_line_ang_vel_for_zt(save_figs, med_mean)
         n_rows = length(matching_rows);
         d_all = []; 
         for j = 1:n_rows
-            if med_mean == "median"
+            if mean_med == "med"
                 d = struct2array(load(matching_rows(j).name, 'datapoints_median'));
-            elseif med_mean == "mean"
-                d = struct2array(load(matching_rows(j).name, 'datapoints'));
+            elseif mean_med == "mean"
+                d = struct2array(load(matching_rows(j).name, 'datapoints_mean'));
             end 
             d_all = horzcat(d_all, d(:, 2:end-1));
         end 
@@ -81,19 +83,17 @@ function plot_line_ang_vel_for_zt(save_figs, med_mean)
         data_to_use = [d(:, 1), d_all, d(:, end)];
         title_str = strcat('ZT ', string(zt_condition));
         save_str = strrep(title_str, '-', '_');
-        fig_exp_save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/Figures/ZT_figs';
-        save_figs = true; 
 
         % One plot per ZT condition with all flies plotted as light lines in
         % background. 
-        plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
+        plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_save_path, save_figs)
         
         %% 
         
         % mean of all ZT overlaid
-        if med_mean == "median"
+        if mean_med == "med"
             d_mean = nanmedian(d_all, 2);
-        elseif med_mean == "mean"
+        elseif mean_med == "mean"
             d_mean = nanmean(d_all, 2);
         end 
 
@@ -127,7 +127,7 @@ function plot_line_ang_vel_for_zt(save_figs, med_mean)
     xlabel('Condition / Contrast')
 
     if save_figs == true
-        savefig(f1, fullfile(fig_exp_save_folder, strcat('ZT_AngVel_Line_',med_mean, '.fig')))
+        savefig(f1, fullfile(fig_save_path, strcat('ZT_AngVel_Line_',med_mean, '.fig')))
     end 
 
 end 

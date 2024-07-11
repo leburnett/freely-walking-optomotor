@@ -9,6 +9,8 @@ save_figs = false;
 genotype = 'csw1118';
 save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS'; %'/Users/hms/Documents/Fly Tracking';
 
+fig_save_folder = fullfile(save_folder, "figures");
+data_save_folder = fullfile(save_folder, "data"); 
 mean_med = "mean";
 
 %% FUNCTIONS
@@ -21,9 +23,8 @@ process_freely_walking_optomotor_vel(path_to_folder, save_figs, save_folder, gen
 
 % Generate plots where flies are pooled across timepoints (ZT).
 
-plot_line_ang_vel_for_zt(save_figs, 'mean')
+plot_line_ang_vel_for_zt(save_figs, mean_med)
 
-plot_line_ang_vel_for_zt(save_figs, 'median')
 
 
 

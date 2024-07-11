@@ -170,7 +170,7 @@ function process_freely_walking_optomotor_vel(path_to_folder, save_figs, save_fo
         %% SAVE
         
         % save data
-        save(fullfile(data_save_folder, strcat(save_str, '_data.mat')), 'vel_datapoints', 'data_to_use', 'Log', 'feat');
+        save(fullfile(data_save_folder, strcat(save_str, '_data.mat')), 'vel_datapoints', 'data_to_use', 'Log', 'feat', 'datapoints_med', 'datapoints_mean');
         
     end 
 
