@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 .DS_Store
 processing_functions/process_distance_from_wall.asv
+*.asv
