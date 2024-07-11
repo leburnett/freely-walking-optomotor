@@ -1,4 +1,4 @@
-function plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
+function plot_line_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
 
     n_cond_to_use = size(data_to_use, 1);
     
@@ -63,7 +63,7 @@ function plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, 
     title(strcat(title_str, ' - N=', string(n_flies)))
     
     if save_figs == true
-        savefig(gcf, fullfile(fig_exp_save_folder, strcat('AngVel_Line_', save_str)))
+        savefig(gcf, fullfile(fig_exp_save_folder, strcat('Vel_Line_', save_str)))
     end 
 
 end 

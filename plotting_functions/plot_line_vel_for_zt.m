@@ -1,8 +1,7 @@
-function plot_line_ang_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean_med)
+function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean_med)
 
     % Get data from ALL flies. This should be stored in the 'data'
     % subfolder of the 'save_folder'
-    % data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/ProcessedData'; 
     cd(data_folder)
 
     % List all data files
@@ -42,7 +41,9 @@ function plot_line_ang_vel_for_zt(data_folder, zt_file, save_figs, save_folder, 
         mkdir(fig_save_path)
     end 
 
-    f1 = figure;
+    f1 = figure; % Both clock and anti-clock plotted
+    f2 = figure; % Mean of clock and anticlock plotted.
+
     for idx = 1:n_conditions
     
         % Which ZT condition is being investigated. 
@@ -91,7 +92,7 @@ function plot_line_ang_vel_for_zt(data_folder, zt_file, save_figs, save_folder, 
 
         % One plot per ZT condition with all flies plotted as light lines in
         % background. 
-        plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_save_path, save_figs)
+        plot_line_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_save_path, save_figs)
         
         %% 
         
@@ -107,6 +108,7 @@ function plot_line_ang_vel_for_zt(data_folder, zt_file, save_figs, save_folder, 
     
         clock_data = d_mean(clock_idx);
         anti_data = d_mean(anti_idx);
+        mean_data = nanmean(horzcat(clock_data, anti_data)')';
 
         colours = [0.9, 0.9, 0; 1, 0.65, 0; 0.8, 0, 0; 0.8, 0, 0.8; 0.62, 0.13, 0.94; 0, 0, 1];
         col = colours(idx, :);
@@ -118,21 +120,27 @@ function plot_line_ang_vel_for_zt(data_folder, zt_file, save_figs, save_folder, 
         scatter(1:1:19, clock_data, 150, '.', 'MarkerEdgeColor', col, 'MarkerFaceColor',col);
         scatter(1:1:19, anti_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
 
+        figure(f2)
+        plot(mean_data, 'Color', col, 'LineWidth', 2);
+        hold on 
+        scatter(1:1:19, mean_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
+
         d_mean_zt(:, idx) = d_mean;
 
     end 
     box off
-    ylim([-2 2])
+    ylim([0 14])
     xlim([0 20])
     set(gcf, "Position", [469   658   562   348])
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12)
     xticks(1:1:19)
     xticklabels({'OFF', 'ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1', 'FLICKER', '1', '0.75', '0.56', '0.40', '0.33', '0.20', '0.11', 'FLICKER', 'OFF'})
-    ylabel('Angular Velocity')
+    ylabel('Velocity (mm/s)')
     xlabel('Condition / Contrast')
 
     if save_figs == true
-        savefig(f1, fullfile(fig_save_path, strcat('ZT_AngVel_Line_', mean_med, '.fig')))
+        savefig(f1, fullfile(fig_save_path, strcat('ZT_Vel_Line_clock_anti_', mean_med, '.fig')))
+        savefig(f2, fullfile(fig_save_path, strcat('ZT_Vel_Line_average_', mean_med, '.fig')))
     end 
 
 end 

@@ -130,7 +130,7 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig
         plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, fps, title_str, save_str, fig_exp_save_folder, save_figs)
     
         %% Make 'ang datapoints'
-        [datapoints_mean, datapoints_med] = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps, mean_med);
+        [datapoints_mean, datapoints_med] = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps);
         
         if mean_med == "mean"
             ang_datapoints = datapoints_mean;
@@ -171,12 +171,12 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig
         %% SAVE
     
         % save data
-        save(fullfile(data_save_folder, strcat(save_str, '_data.mat')), 'ang_datapoints', 'data_to_use', 'Log', 'trx', 'datapoints_med', 'datapoints_mean');
+        save(fullfile(data_save_folder, strcat(save_str, '_angvel_data.mat')), 'ang_datapoints', 'data_to_use', 'Log', 'trx', 'datapoints_med', 'datapoints_mean');
 
     end
     
     % Uncomment if you don't want to view the figures
-    % close all
+    close all
 
 end
 

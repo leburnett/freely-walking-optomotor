@@ -76,7 +76,7 @@ function plot_scatter_vel_all_flies(data_to_use, n_flies, title_str, save_str, f
     xlabel('Condition / Contrast')
     
     if save_figs == true
-        savefig(gcf, fullfile(fig_exp_save_folder, strcat('AngVel_Scatter_', save_str)))
+        savefig(gcf, fullfile(fig_exp_save_folder, strcat('Vel_Scatter_', save_str)))
     end 
     
 end 

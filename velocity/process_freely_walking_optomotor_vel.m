@@ -117,7 +117,7 @@ function process_freely_walking_optomotor_vel(path_to_folder, save_figs, figure_
         plot_vel_per_fly(Log, feat, n_flies, n_conditions, title_str, save_str, fig_exp_save_folder, save_figs)
     
         %% Make 'vel datapoints'
-        [datapoints_mean, datapoints_med] = make_mean_vel_datapoints(Log, feat, n_flies, n_conditions, mean_med);
+        [datapoints_mean, datapoints_med] = make_mean_vel_datapoints(Log, feat, n_flies, n_conditions);
         
         if mean_med == "mean"
             vel_datapoints = datapoints_mean;
@@ -159,12 +159,12 @@ function process_freely_walking_optomotor_vel(path_to_folder, save_figs, figure_
         %% SAVE
         
         % save data
-        save(fullfile(data_save_folder, strcat(save_str, '_data.mat')), 'vel_datapoints', 'data_to_use', 'Log', 'feat', 'datapoints_med', 'datapoints_mean');
+        save(fullfile(data_save_folder, strcat(save_str, '_velocity_data.mat')), 'vel_datapoints', 'data_to_use', 'Log', 'feat', 'datapoints_med', 'datapoints_mean');
         
     end 
 
     % Uncomment if you don't want to view the figures
-    % close all
+    close all
 
 end 
 
