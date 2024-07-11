@@ -1,5 +1,4 @@
-function plot_scatter_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
-    
+function plot_scatter_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
     % Inputs
     % ______
 
@@ -24,8 +23,8 @@ function plot_scatter_ang_vel_all_flies(data_to_use, n_flies, title_str, save_st
     %        Path to save the figure.    
     
     % save_figs : bool 
-    %        Whether to save the figures and data or not. 
-
+    %        Whether to save the figures and data or not.  
+    
     n_cond_to_use = size(data_to_use, 1);
     
     figure
@@ -66,14 +65,14 @@ function plot_scatter_ang_vel_all_flies(data_to_use, n_flies, title_str, save_st
     plot([1.1 1.1], [-2.5 2.5], 'k', 'LineWidth', 0.5);
     box off
     xlim([-0.3 1.5])
-    ylim([-2.5 2.5])
+    ylim([0 2.5])
     set(gcf, "Position", [239  565  1080  466])
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12, "TickLength", [0.01 0.01])
     title(strcat(title_str, ' - N=', string(n_flies)))
     xticks(unique(data_to_use(:, 1)))
     xticklabels({'OFF', 'ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1', 'FLICKER1','FLICKER2', 'OFF'})
     xtickangle(45)
-    ylabel('Angular Velocity')
+    ylabel('Velocity')
     xlabel('Condition / Contrast')
     
     if save_figs == true
