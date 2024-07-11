@@ -60,12 +60,11 @@ function plot_scatter_vel_all_flies(data_to_use, n_flies, title_str, save_str, f
         hold on;
     end 
         
-    plot([-0.3 1.5], [0 0], 'k', 'LineWidth', 0.5);
-    plot([0 0], [-2.5 2.5], 'k', 'LineWidth', 0.5);
-    plot([1.1 1.1], [-2.5 2.5], 'k', 'LineWidth', 0.5);
+    plot([0 0], [-2.5 22.5], 'k', 'LineWidth', 0.5);
+    plot([1.1 1.1], [-2.5 22.5], 'k', 'LineWidth', 0.5);
     box off
     xlim([-0.3 1.5])
-    ylim([0 2.5])
+    ylim([0 20])
     set(gcf, "Position", [239  565  1080  466])
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12, "TickLength", [0.01 0.01])
     title(strcat(title_str, ' - N=', string(n_flies)))
