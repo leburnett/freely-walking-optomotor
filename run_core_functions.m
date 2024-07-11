@@ -21,7 +21,7 @@ end
 
 mean_med = "mean";
 
-%% FUNCTIONS
+%% 1 - Generate plots for each individual experiment - i.e per cohort: 
 
 % Generate plots for angular velocity analysis
 process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig_save_folder, data_save_folder, genotype, mean_med)
@@ -29,17 +29,9 @@ process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig_save_fol
 % Generate plots for velocity analysis
 process_freely_walking_optomotor_vel(path_to_folder, save_figs, fig_save_folder, data_save_folder, genotype, mean_med)
 
-% Generate plots where flies are pooled across timepoints (ZT).
+%% 2 - Generate plots for all flies - across time points (ZT) 
 
-plot_line_ang_vel_for_zt(save_figs, fig_save_folder, mean_med)
+zt_file = '/Users/burnettl/Documents/Janelia/HMS_2024/zt_conditions.xlsx';
 
-
-
-
-
-
-
-
-
-
+plot_line_ang_vel_for_zt(data_save_folder, save_figs, fig_save_folder, mean_med)
 

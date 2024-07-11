@@ -48,10 +48,7 @@ function process_freely_walking_optomotor_vel(path_to_folder, save_figs, figure_
     time_folders = time_folders(~strcmp(time_names, '.DS_Store'));
 
     n_time_exps = length(time_folders);
-    
-    % video recording rate in frames per second
-    fps = 30;
-    
+
     % number of experimental conditions
     n_conditions = 33;
     

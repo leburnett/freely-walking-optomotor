@@ -1,9 +1,9 @@
-function plot_line_ang_vel_for_zt(save_figs, save_folder, mean_med)
+function plot_line_ang_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean_med)
 
     % Get data from ALL flies. This should be stored in the 'data'
     % subfolder of the 'save_folder'
-    data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/ProcessedData'; 
-    cd(data_path)
+    % data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/ProcessedData'; 
+    cd(data_folder)
 
     % List all data files
     all_data = dir();
@@ -11,7 +11,7 @@ function plot_line_ang_vel_for_zt(save_figs, save_folder, mean_med)
     all_data = all_data(~ismember(dnames, '.DS_Store'));
     all_data = all_data(3:end, :);
     
-    zt_file = '/Users/burnettl/Documents/Janelia/HMS_2024/zt_conditions.xlsx';
+    % Load in the ZT time point file.
     zt_table = readtable(zt_file);
     
     unique_zt_conditions = unique(zt_table.ZT);
@@ -64,7 +64,7 @@ function plot_line_ang_vel_for_zt(save_figs, save_folder, mean_med)
             end
         end
         
-        cd(data_path)
+        cd(data_folder)
         % Get the rows that match
         matching_rows = all_data(matches);
         n_rows = length(matching_rows);
