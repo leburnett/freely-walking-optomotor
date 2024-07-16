@@ -34,13 +34,14 @@ function plot_ang_vel_ratio(Log, feat, trx, n_flies, n_conditions, fps, save_str
 % save_figs : bool
 %        Whether to save the figures and data or not.
 
+% % % % % % % % % % % % % % % % % % % % % % %
 
-% Fixed paramters:
+%% Fixed paramters:
 samp_rate = 1/fps;
 method = 'line_fit';
 t_window = 16;
 cutoff = [];
-ang_vel_ratio = zeros(n_flies, length(feat.data))
+ang_vel_ratio = zeros(n_flies, length(feat.data));
 
 figure
 for idx = 1:n_flies
@@ -54,11 +55,14 @@ for idx = 1:n_flies
 
     % create angular velocity vs. velocity ratio
     ang_vel_ratio(idx, :) = ang_vel./vel;
-    ang_vel_ratio(idx, vel==0) = 0
+    ang_vel_ratio(idx, vel==0) = 0;
+
+    % calculate the highest value in the ratio and divide everything by it
+    max_val = max(abs(ang_vel_ratio(idx, :)));
+    norm_ang_vel_ratio(idx, :) = ang_vel_ratio(idx,:)./max_val; 
 
     subplot(n_flies, 1, idx)
-    max_val = max(ang_vel_ratio(idx, :) );
-    min_val = min(ang_vel_ratio(idx, :) );
+    min_val = min(ang_vel_ratio(idx, :));
     h = max_val - min_val;
 
     for ii = 1:n_conditions
@@ -92,7 +96,7 @@ for idx = 1:n_flies
         ax.XAxis.Visible = 'off';
     end
 
-    plot(ang_vel_ratio(idx, :) , 'k', 'LineWidth', 1)
+    plot(norm_ang_vel_ratio(idx, :) , 'k', 'LineWidth', 1)
 
 end
 
