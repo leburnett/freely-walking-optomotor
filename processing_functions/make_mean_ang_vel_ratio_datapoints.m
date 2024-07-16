@@ -19,11 +19,14 @@ function [datapoints_mean, datapoints_med] = make_mean_ang_vel_ratio_datapoints(
     for idx = 1:n_flies
         % unwrap the heading data
         D = (trx(idx).theta); %unwrap
-        D_deg = rad2deg(D);
+        D_deg = (rad2deg(D));
+        % D_deg = D_deg/max(D_deg);
         % convert heading to angular velocity
         % AV = vel_estimate(D, samp_rate, method, t_window, cutoff);
         AV = vel_estimate(D_deg, samp_rate, method, t_window, cutoff);
+        AV = abs(AV)/max(abs(AV));
         V = feat.data(idx, :, 1);
+        V = V/max(V);
         AVR = AV./V;
         AVR(1, V==0)=0;
 
@@ -40,7 +43,7 @@ function [datapoints_mean, datapoints_med] = make_mean_ang_vel_ratio_datapoints(
                 st_fr = 1;
             end 
             % data = AVR_norm(st_fr:stop_fr);
-            data = AVR(st_fr:stop_fr);
+            data = AVR_norm(st_fr:stop_fr);
             % ang_vel_data = AV(st_fr:stop_fr);
             % vel_data = V(st_fr:stop_fr);
 
