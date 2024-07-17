@@ -32,12 +32,12 @@ function plot_scatter_ang_vel_ratio_all_flies(data_to_use, n_flies, title_str, s
     for idx = 1:n_cond_to_use
     
         contrast_value = data_to_use(idx, 1);
+        disp(contrast_value)
         c_vals = ones(1, n_flies)*contrast_value;
-    
         dir_id = data_to_use(idx, n_flies+2);
-    
         ang_data_for_c = data_to_use(idx, 2:n_flies+1);
-    
+        abs_ang_data_for_c = abs(ang_data_for_c);
+
         if dir_id == 0 
             if idx == 1 || idx == 33
                 col = [0.5 0.5 0.5];
@@ -57,23 +57,20 @@ function plot_scatter_ang_vel_ratio_all_flies(data_to_use, n_flies, title_str, s
             m_alpha = contrast_value*0.75;
         end 
     
-        scatter(c_vals, ang_data_for_c, 100, 'o', 'MarkerFaceColor', col, 'MarkerFaceAlpha', m_alpha, 'MarkerEdgeColor', [0.7 0.7 0.7], 'XJitter', 'rand', 'XJitterWidth', 0.04);
+        scatter(c_vals, abs_ang_data_for_c, 100, 'o', 'MarkerFaceColor', col, 'MarkerFaceAlpha', m_alpha, 'MarkerEdgeColor', [0.7 0.7 0.7], 'XJitter', 'rand', 'XJitterWidth', 0.04);
         hold on;
     end 
         
-    plot([-0.3 1.5], [0 0], 'k', 'LineWidth', 0.5);
-    plot([0 0], [-2.5 2.5], 'k', 'LineWidth', 0.5);
-    plot([1.1 1.1], [-2.5 2.5], 'k', 'LineWidth', 0.5);
     box off
     xlim([-0.3 1.5])
-    ylim([-2.5 2.5])
+    ylim([0 30])
     set(gcf, "Position", [239  565  1080  466])
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12, "TickLength", [0.01 0.01])
     title(strcat(title_str, ' - N=', string(n_flies)))
     xticks(unique(data_to_use(:, 1)))
     xticklabels({'OFF', 'ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1', 'FLICKER1','FLICKER2', 'OFF'})
     xtickangle(45)
-    ylabel('Angular Velocity')
+    ylabel('Angular Velocity/Velocity (deg/mm)')
     xlabel('Condition / Contrast')
     
     if save_figs == true
