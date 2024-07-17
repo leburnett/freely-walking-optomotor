@@ -53,17 +53,17 @@ function plot_line_ang_vel_ratio_all_flies(data_to_use, n_flies, title_str, save
     
     box off
     xlim([0 20])
-    ylim([-2.5 2.5])
+    % ylim([-2.5 2.5])
     set(gcf, "Position", [469   658   562   348])
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12)
     xticks(1:1:19)
     xticklabels({'OFF', 'ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1', 'FLICKER', '1', '0.75', '0.56', '0.40', '0.33', '0.20', '0.11', 'FLICKER', 'OFF'})
-    ylabel('Angular Velocity')
+    % ylabel('Angular Velocity')
     xlabel('Condition / Contrast')
     title(strcat(title_str, ' - N=', string(n_flies)))
     
     if save_figs == true
-        savefig(gcf, fullfile(fig_exp_save_folder, strcat('AngVel_Line_', save_str)))
+        savefig(gcf, fullfile(fig_exp_save_folder, strcat('AngVelRatio_Line_', save_str)))
     end 
 
 end 

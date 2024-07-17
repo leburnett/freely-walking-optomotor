@@ -143,13 +143,10 @@ function process_freely_walking_optomotor_ang_vel_ratio(path_to_folder, save_fig
         % plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, fps, title_str, save_str, fig_exp_save_folder, save_figs)
     
         %% Make 'ang datapoints'
-        [datapoints_mean, datapoints_med] = make_mean_ang_vel_ratio_datapoints(Log, trx, feat, n_flies, n_conditions, fps);
-        
-        if mean_med == "mean"
-            ang_datapoints = datapoints_mean;
-        elseif mean_med == "med"
-            ang_datapoints = datapoints_med;
-        end 
+        datapoints = make_mean_ang_vel_ratio_datapoints(Log, trx, feat, n_flies, n_conditions, fps);
+
+         ang_datapoints = datapoints;
+
         %% Plot the mean ang velocity per condition for all flies as scatter points. "Fish plot"
     
         % If you only want to plot the data from the conditions ramping up, up
@@ -180,11 +177,13 @@ function process_freely_walking_optomotor_ang_vel_ratio(path_to_folder, save_fig
         % data_to_use = ang_datapoints; %(1:17, :);
     
         % plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
+        plot_line_ang_vel_ratio_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
+
     
         %% SAVE
     
         % save data
-        save(fullfile(data_save_folder, strcat(save_str, '_angvelratio_data.mat')), 'ang_datapoints', 'data_to_use', 'Log', 'trx', 'datapoints_med', 'datapoints_mean');
+        save(fullfile(data_save_folder, strcat(save_str, '_angvelratio_data.mat')), 'ang_datapoints', 'data_to_use', 'Log', 'trx', 'datapoints');
 
     end
     
