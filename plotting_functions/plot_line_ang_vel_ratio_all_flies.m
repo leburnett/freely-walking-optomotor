@@ -6,7 +6,7 @@ function plot_line_ang_vel_ratio_all_flies(data_to_use, n_flies, title_str, save
     
     for idx = 1:n_cond_to_use
         % ang_data_for_c = data_to_use(idx, 2:n_flies+1);
-        mean_data(idx) = mean(mean(data_to_use(idx, 2:n_flies+1)));
+        mean_data(idx) = median(data_to_use(idx, 2:n_flies+1));
     end 
         
     clock_idx = [1,2,3,5,7,9,11,13,15,17,18,20,22,24,26,28,30,32,33]; %blue
@@ -25,8 +25,8 @@ function plot_line_ang_vel_ratio_all_flies(data_to_use, n_flies, title_str, save
     sz2 = 100;
     
     figure
-    for idx = 1:n_flies
-        data_fly = data_to_use(:, idx+1);
+    for idx2 = 1:n_flies
+        data_fly = data_to_use(:, idx2+1);
         fly_clock_data = data_fly(clock_idx);
         fly_anti_data = data_fly(anti_idx); 
         plot(fly_clock_data, 'Color', [0.7 0.7 1 0.4], 'LineWidth', 1);

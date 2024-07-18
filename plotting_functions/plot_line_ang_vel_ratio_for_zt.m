@@ -76,13 +76,11 @@ function plot_line_ang_vel_ratio_for_zt(data_folder, zt_file, save_figs, save_fo
         n_rows = length(matching_rows);
         d_all = []; 
         for j = 1:n_rows
-            if mean_med == "med"
-                d = struct2array(load(matching_rows(j).name, 'datapoints_med'));
-            elseif mean_med == "mean"
-                d = struct2array(load(matching_rows(j).name, 'datapoints_mean'));
-            end 
+            d = struct2array(load(matching_rows(j).name, 'datapoints'));
             d_all = horzcat(d_all, d(:, 2:end-1));
         end 
+
+        d_all(d_all==Inf)= 0;
         
         n_flies = numel(d_all(1, :));
         disp(n_flies)
@@ -90,10 +88,6 @@ function plot_line_ang_vel_ratio_for_zt(data_folder, zt_file, save_figs, save_fo
         title_str = strcat('ZT ', string(zt_condition));
         save_str = strrep(title_str, '-', '_');
 
-        % One plot per ZT condition with all flies plotted as light lines in
-        % background. 
-        plot_line_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_save_path, save_figs)
-        
         %% 
         
         % mean of all ZT overlaid
@@ -114,15 +108,18 @@ function plot_line_ang_vel_ratio_for_zt(data_folder, zt_file, save_figs, save_fo
         col = colours(idx, :);
 
         figure(f1)
-        plot(clock_data, 'Color', col, 'LineWidth', 2);
-        hold on 
-        plot(anti_data, 'Color', col, 'LineWidth', 2);
+        plot(3:1:9, clock_data(3:9), 'Color', col, 'LineWidth', 2);
+        hold on
+        plot(11:1:18, clock_data(11:18), 'Color', col, 'LineWidth', 2);
+        plot(3:1:9, anti_data(3:9), 'Color', col, 'LineWidth', 2);
+        plot(11:1:18, anti_data(11:18), 'Color', col, 'LineWidth', 2);
         scatter(1:1:19, clock_data, 150, '.', 'MarkerEdgeColor', col, 'MarkerFaceColor',col);
         scatter(1:1:19, anti_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
 
         figure(f2)
-        plot(mean_data, 'Color', col, 'LineWidth', 2);
+        plot(3:1:9, mean_data(3:9), 'Color', col, 'LineWidth', 2);
         hold on 
+        plot(11:1:18, mean_data(11:18), 'Color', col, 'LineWidth', 2);
         scatter(1:1:19, mean_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
 
         d_mean_zt(:, idx) = d_mean;
@@ -131,7 +128,7 @@ function plot_line_ang_vel_ratio_for_zt(data_folder, zt_file, save_figs, save_fo
 
     figure(f1)
     box off
-    ylim([-11 11])
+    ylim([-0.5 0.5])
     xlim([0 20])
     set(gcf, "Position", [469   658   562   348])
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12)
@@ -142,7 +139,7 @@ function plot_line_ang_vel_ratio_for_zt(data_folder, zt_file, save_figs, save_fo
 
     figure(f2)
     box off
-    ylim([0 11])
+    ylim([0 0.5])
     xlim([0 20])
     set(gcf, "Position", [469   658   562   348])
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12)

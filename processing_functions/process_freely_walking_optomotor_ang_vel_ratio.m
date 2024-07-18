@@ -145,7 +145,7 @@ function process_freely_walking_optomotor_ang_vel_ratio(path_to_folder, save_fig
         %% Make 'ang datapoints'
         datapoints = make_mean_ang_vel_ratio_datapoints(Log, trx, feat, n_flies, n_conditions, fps);
 
-         ang_datapoints = datapoints;
+         % ang_datapoints = datapoints;
 
         %% Plot the mean ang velocity per condition for all flies as scatter points. "Fish plot"
     
@@ -153,7 +153,7 @@ function process_freely_walking_optomotor_ang_vel_ratio(path_to_folder, save_fig
         % until the first flicker, then use "data_to_use = datapoints(1:17, :)"
         % else use "data_to_use = datapoints".
     
-        data_to_use = ang_datapoints; %(1:17, :);
+        data_to_use = datapoints; %(1:17, :);
     
         % Update contrast values for acclim / flickers for plotting:
         % OFF ACCLIM
@@ -183,7 +183,7 @@ function process_freely_walking_optomotor_ang_vel_ratio(path_to_folder, save_fig
         %% SAVE
     
         % save data
-        save(fullfile(data_save_folder, strcat(save_str, '_angvelratio_data.mat')), 'ang_datapoints', 'data_to_use', 'Log', 'trx', 'datapoints');
+        save(fullfile(data_save_folder, strcat(save_str, '_angvelratio_data.mat')), 'data_to_use', 'Log', 'trx', 'datapoints');
 
     end
     

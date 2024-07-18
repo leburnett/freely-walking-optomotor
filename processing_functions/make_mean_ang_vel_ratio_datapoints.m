@@ -28,12 +28,15 @@ function datapoints = make_mean_ang_vel_ratio_datapoints(Log, trx, feat, n_flies
                 st_fr = 1;
             end 
             % data = AVR(st_fr:stop_fr);
-            AV = D_diff(st_fr:stop_fr);
+            
+            % directional do not make abs
+            AV = (D_diff(st_fr:stop_fr));
             AV(isnan(AV), 1)=0;
 
             vel_data = V(st_fr:stop_fr);
 
             ratio_data = sum(AV)/sum(vel_data);
+            ratio_data(isnan(ratio_data), 1)=0;
 
             datapoints(ii, idx+1) = ratio_data;
         end 

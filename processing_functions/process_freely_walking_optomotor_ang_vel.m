@@ -121,6 +121,8 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig
     
         % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
     
+        n_conditions = size(Log, 1);
+
         %% Plot the heading angle of each fly across the entire experiment
     
         plot_heading_angle_per_fly(Log, trx, n_flies, n_conditions, title_str, save_str, fig_exp_save_folder, save_figs)
@@ -130,8 +132,12 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig
         plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, fps, title_str, save_str, fig_exp_save_folder, save_figs)
     
         %% Make 'ang datapoints'
-        [datapoints_mean, datapoints_med] = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps);
-        
+        if n_conditions == 69
+            [datapoints_mean, datapoints_med] = make_mean_ang_vel_datapoints_dfftimes(Log, trx, n_flies, n_conditions, fps);
+        elseif n_conditions == 33
+            [datapoints_mean, datapoints_med] = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps);
+        end 
+
         if mean_med == "mean"
             ang_datapoints = datapoints_mean;
         elseif mean_med == "med"
@@ -157,7 +163,7 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig
         % OFF ACCLIM 2
         data_to_use(33,1) = 1.4;
     
-        plot_scatter_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
+        % plot_scatter_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
     
         %% Generate a line plot for mean ang vel at each contrast level. "Lips plot"
     
@@ -166,7 +172,7 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig
     
         data_to_use = ang_datapoints; %(1:17, :);
     
-        plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
+        % plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
     
         %% SAVE
     
