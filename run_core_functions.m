@@ -59,6 +59,8 @@ plot_line_vel_for_zt(vel_data_save_folder, zt_file, save_figs, fig_save_folder, 
 
 plot_line_ang_vel_ratio_for_zt(ratio_data_save_folder, zt_file, save_figs, save_folder, mean_med)
 
+plot_line_ang_vel_ratio_for_zt_normalised(ang_data_save_folder, zt_file, save_figs, save_folder, mean_med)
+
 
 
 

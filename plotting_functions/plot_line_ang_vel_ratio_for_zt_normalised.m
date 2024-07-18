@@ -110,9 +110,10 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
         anti_data = d_mean(anti_idx);
         mean_data = nanmean(horzcat(clock_data, abs(anti_data))')';
 
-        max_clock = max(clock_data);
-        max_anti = max(anti_data);
-        max_mean = max(mean_data);
+        % normalised to the first full contrast
+        max_clock = clock_data(9); %max(clock_data);
+        max_anti = anti_data(9); %max(anti_data);
+        max_mean = mean_data(9); %max(mean_data);
 
         clock_data = clock_data/max_clock;
         anti_data = anti_data/max_anti;

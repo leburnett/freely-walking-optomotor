@@ -91,7 +91,7 @@ function plot_line_ang_vel_for_zt(data_folder, zt_file, save_figs, save_folder, 
 
         % One plot per ZT condition with all flies plotted as light lines in
         % background. 
-        plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_save_path, save_figs)
+        % plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_save_path, save_figs)
         
         %% 
         
