@@ -106,7 +106,7 @@ function plot_line_dist_from_centre(data_path, save_figs, fig_save_path)
 
     n_flies_total = size(all_data, 1);
     
-    av_resp = 120 - nanmean(all_data);
+    av_resp = 120 - nanmedian(all_data);
     plot(av_resp, 'k', 'LineWidth', 4)
     xlabel('frame')
     ylabel('Distance from centre (mm)')

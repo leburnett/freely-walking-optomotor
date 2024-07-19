@@ -78,7 +78,7 @@ plot_line_ang_vel_ratio_for_zt(ratio_data_save_folder, zt_file, save_figs, save_
 
 
 %%
-data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/distcentre/protocol_v5';
+data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/distcentre/protocol_v1';
 
 save_figs = true;
 
