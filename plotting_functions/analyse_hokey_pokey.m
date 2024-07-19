@@ -3,7 +3,7 @@
 % trx.x
 % trx.y
 
-data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/oaky_cokey/difftimes/rev'; 
+data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/oaky_cokey/onefly'; 
 cd(data_path)
 all_data = dir();
 dnames = {all_data.name};
@@ -178,7 +178,7 @@ n_files = length(dist_wall_files);
 figure
 
 % Background
-n_conditions = 69; % 33
+n_conditions = 17; %69; % 33
 h = 570000;
 min_val = -10;
 max_val = 570000;
@@ -253,10 +253,10 @@ for ii = 1:n_files
     n_flies = numel(data);
     for jj = 1: n_flies
         dtt = data{jj};
-        if numel(dtt)<18840
+        if numel(dtt)<5152 %18840
             continue
         else
-            dtt = dtt(1:18840);
+            dtt = dtt(1:5152); %18840);
             all_data = vertcat(all_data, dtt);
         end 
     end 
@@ -277,9 +277,10 @@ title('Distance from centre of arena - N = 15')
 
 % 
 hold on
-plot([0 18840], [0 0], 'w', 'LineWidth', 1)
-plot([0 18840], [20 20], 'w', 'LineWidth', 1)
-
+% plot([0 18840], [0 0], 'w', 'LineWidth', 1)
+% plot([0 18840], [20 20], 'w', 'LineWidth', 1)
+plot([0 5150], [0 0], 'w', 'LineWidth', 1)
+plot([0 5150], [20 20], 'w', 'LineWidth', 1)
 
 
 

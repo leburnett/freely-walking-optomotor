@@ -41,7 +41,7 @@ function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean
         mkdir(fig_save_path)
     end 
 
-    f1 = figure; % Both clock and anti-clock plotted
+    % f1 = figure; % Both clock and anti-clock plotted
     f2 = figure; % Mean of clock and anticlock plotted.
 
     for idx = 1:n_conditions
@@ -77,7 +77,7 @@ function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean
         d_all = []; 
         for j = 1:n_rows
             if mean_med == "med"
-                d = struct2array(load(matching_rows(j).name, 'datapoints_median'));
+                d = struct2array(load(matching_rows(j).name, 'datapoints_med'));
             elseif mean_med == "mean"
                 d = struct2array(load(matching_rows(j).name, 'datapoints_mean'));
             end 
@@ -92,7 +92,7 @@ function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean
 
         % One plot per ZT condition with all flies plotted as light lines in
         % background. 
-        plot_line_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_save_path, save_figs)
+        % plot_line_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_save_path, save_figs)
         
         %% 
         
@@ -113,12 +113,12 @@ function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean
         colours = [0.9, 0.9, 0; 1, 0.65, 0; 0.8, 0, 0; 0.8, 0, 0.8; 0.62, 0.13, 0.94; 0, 0, 1];
         col = colours(idx, :);
 
-        figure(f1)
-        plot(clock_data, 'Color', col, 'LineWidth', 2);
-        hold on 
-        plot(anti_data, 'Color', col, 'LineWidth', 2);
-        scatter(1:1:19, clock_data, 150, '.', 'MarkerEdgeColor', col, 'MarkerFaceColor',col);
-        scatter(1:1:19, anti_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
+        % figure(f1)
+        % plot(clock_data, 'Color', col, 'LineWidth', 2);
+        % hold on 
+        % plot(anti_data, 'Color', col, 'LineWidth', 2);
+        % scatter(1:1:19, clock_data, 150, '.', 'MarkerEdgeColor', col, 'MarkerFaceColor',col);
+        % scatter(1:1:19, anti_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
 
         figure(f2)
         plot(mean_data, 'Color', col, 'LineWidth', 2);
@@ -139,7 +139,7 @@ function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean
     xlabel('Condition / Contrast')
 
     if save_figs == true
-        savefig(f1, fullfile(fig_save_path, strcat('ZT_Vel_Line_clock_anti_', mean_med, '.fig')))
+        % savefig(f1, fullfile(fig_save_path, strcat('ZT_Vel_Line_clock_anti_', mean_med, '.fig')))
         savefig(f2, fullfile(fig_save_path, strcat('ZT_Vel_Line_average_', mean_med, '.fig')))
     end 
 

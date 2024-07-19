@@ -151,7 +151,7 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
 
     figure(f2)
     box off
-    ylim([0 1.1])
+    ylim([0 1.5])
     xlim([0 20])
     set(gcf, "Position", [469   658   562   348])
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12)

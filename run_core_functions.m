@@ -7,11 +7,16 @@ clc
 
 %% PARAMETERS 
 
-path_to_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/DATA/2024_06_26';
+path_to_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/DATA/2024_07_17';
 
+% Save the figures that are generated? 
 save_figs = true;
+
 genotype = 'CSw1118';
 save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS'; %'/Users/hms/Documents/Fly Tracking';
+
+% Find the mean 'mean' or the median 'med'
+mean_med = "med";
 
 fig_save_folder = fullfile(save_folder, "figures");
 if ~isfolder(fig_save_folder)
@@ -33,37 +38,32 @@ if ~isfolder(ratio_data_save_folder)
     mkdir(ratio_data_save_folder);
 end
 
-% mean_med = "median";
-% 
-% %% 1 - Generate plots for each individual experiment - i.e per cohort  - for all cohorts from that day: 
-% 
+%% 1 - Generate plots for each individual experiment - i.e per cohort  - for all cohorts from that day: 
+% and create results files that will be used for the plotting functions in section 2. 
+
 % % Generate plots for angular velocity analysis
-% process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig_save_folder, ang_data_save_folder, genotype, mean_med)
-% 
+process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig_save_folder, ang_data_save_folder, genotype, mean_med)
+
 % % Generate plots for velocity analysis
-% process_freely_walking_optomotor_vel(path_to_folder, save_figs, fig_save_folder, vel_data_save_folder, genotype, mean_med)
-% 
-%% Ang vel / vel ratio 
+process_freely_walking_optomotor_vel(path_to_folder, save_figs, fig_save_folder, vel_data_save_folder, genotype, mean_med)
 
-mean_med = "med";
-
+%
 process_freely_walking_optomotor_ang_vel_ratio(path_to_folder, save_figs, fig_save_folder, ratio_data_save_folder, genotype, mean_med)
 
 %% 2 - Generate plots for all flies - across time points (ZT)
 
 zt_file = '/Users/burnettl/Documents/Janelia/HMS_2024/zt_conditions.xlsx';
 
-plot_line_ang_vel_for_zt(ang_data_save_folder, zt_file, save_figs, fig_save_folder, mean_med)
-
-plot_line_vel_for_zt(vel_data_save_folder, zt_file, save_figs, fig_save_folder, mean_med)5
-
-plot_line_ang_vel_ratio_for_zt(ratio_data_save_folder, zt_file, save_figs, save_folder, mean_med)
-
+% Plot the average angular velocity per contrast per zt condition.
+% Normalised to the ang vel at the first 1.0 contrast condition. 
 plot_line_ang_vel_ratio_for_zt_normalised(ang_data_save_folder, zt_file, save_figs, save_folder, mean_med)
 
+% % Plot the unnormalised version: 
+% plot_line_ang_vel_for_zt(ang_data_save_folder, zt_file, save_figs, fig_save_folder, mean_med)
 
+% Plot the velocity per constrast per zt condition
+plot_line_vel_for_zt(vel_data_save_folder, zt_file, save_figs, fig_save_folder, mean_med)
 
-
-
-
+% Plot the ratio of turning over displacement per contrast per zt condition
+plot_line_ang_vel_ratio_for_zt(ratio_data_save_folder, zt_file, save_figs, save_folder, mean_med)
 
