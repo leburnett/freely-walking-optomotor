@@ -7,12 +7,13 @@ clc
 
 %% PARAMETERS 
 
-path_to_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/DATA/2024_07_17';
+path_to_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/DATA/2024_07_15';
 
 % Save the figures that are generated? 
 save_figs = true;
 
 genotype = 'CSw1118';
+
 save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS'; %'/Users/hms/Documents/Fly Tracking';
 
 % Find the mean 'mean' or the median 'med'
@@ -38,6 +39,11 @@ if ~isfolder(ratio_data_save_folder)
     mkdir(ratio_data_save_folder);
 end
 
+dcentre_data_save_folder = fullfile(save_folder, "data/distcentre");
+if ~isfolder(dcentre_data_save_folder)
+    mkdir(dcentre_data_save_folder);
+end
+
 %% 1 - Generate plots for each individual experiment - i.e per cohort  - for all cohorts from that day: 
 % and create results files that will be used for the plotting functions in section 2. 
 
@@ -47,8 +53,11 @@ process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig_save_fol
 % % Generate plots for velocity analysis
 process_freely_walking_optomotor_vel(path_to_folder, save_figs, fig_save_folder, vel_data_save_folder, genotype, mean_med)
 
-%
+% process angle versus displacement ratio
 process_freely_walking_optomotor_ang_vel_ratio(path_to_folder, save_figs, fig_save_folder, ratio_data_save_folder, genotype, mean_med)
+
+% process distance from the centre. 
+process_freely_walking_optomotor_dist_centre(path_to_folder, dcentre_data_save_folder, genotype)
 
 %% 2 - Generate plots for all flies - across time points (ZT)
 
