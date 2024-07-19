@@ -35,7 +35,7 @@ function process_freely_walking_optomotor_dist_centre(path_to_folder, data_save_
     % Remove '.DS_Store' file if it exists.
     time_names = {time_folders.name};
     time_folders = time_folders(~strcmp(time_names, '.DS_Store'));
-    
+
     % Number of experiment folders for that day.
     n_time_exps = length(time_folders);
     
@@ -75,7 +75,7 @@ function process_freely_walking_optomotor_dist_centre(path_to_folder, data_save_
         save_str = strcat(date_str, '_', time_str, '_', genotype);
     
         % save data
-        save(fullfile(data_save_folder, strcat(save_str, '_angvel_data.mat')), 'Log', 'data', 'save_str');
+        save(fullfile(data_save_folder, strcat(save_str, '_dist2centre_data.mat')), 'Log', 'data', 'save_str');
 
     end
 
