@@ -52,10 +52,7 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig
     
     % video recording rate in frames per second
     fps = 30;
-    
-    % number of experimental conditions
-    n_conditions = 33;
-    
+        
     for exp = 1:n_time_exps
     
         clear trx Log 
@@ -74,6 +71,8 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig
         % Open the LOG
         log_files = dir('LOG_*');
         load(fullfile(log_files(1).folder, log_files(1).name), 'Log');
+        % number of experimental conditions
+        n_conditions = size(Log, 1);
     
         rec_folder = dir('REC_*');
         if isempty(rec_folder)
