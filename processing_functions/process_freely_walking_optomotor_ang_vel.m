@@ -53,9 +53,6 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig
     % video recording rate in frames per second
     fps = 30;
     
-    % number of experimental conditions
-    n_conditions = 33;
-    
     for exp = 1:n_time_exps
     
         clear trx Log 

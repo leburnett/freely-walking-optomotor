@@ -7,7 +7,7 @@ clc
 
 %% PARAMETERS 
 
-path_to_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/DATA/2024_07_18';
+path_to_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/DATA/2024_07_22';
 
 % Save the figures that are generated? 
 save_figs = true;
