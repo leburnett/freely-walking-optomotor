@@ -76,7 +76,7 @@ function plot_line_ang_vel_for_zt(data_folder, zt_file, save_figs, save_folder, 
         d_all = []; 
         for j = 1:n_rows
             if mean_med == "med"
-                d = struct2array(load(matching_rows(j).name, 'datapoints_median'));
+                d = struct2array(load(matching_rows(j).name, 'datapoints_med'));
             elseif mean_med == "mean"
                 d = struct2array(load(matching_rows(j).name, 'datapoints_mean'));
             end 
@@ -91,7 +91,7 @@ function plot_line_ang_vel_for_zt(data_folder, zt_file, save_figs, save_folder, 
 
         % One plot per ZT condition with all flies plotted as light lines in
         % background. 
-        plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_save_path, save_figs)
+        % plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_save_path, save_figs)
         
         %% 
         

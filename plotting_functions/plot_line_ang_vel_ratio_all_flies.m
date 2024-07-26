@@ -6,7 +6,7 @@ function plot_line_ang_vel_ratio_all_flies(data_to_use, n_flies, title_str, save
     
     for idx = 1:n_cond_to_use
         % ang_data_for_c = data_to_use(idx, 2:n_flies+1);
-        mean_data(idx) = mean(mean(data_to_use(idx, 2:n_flies+1)));
+        mean_data(idx) = median(data_to_use(idx, 2:n_flies+1));
     end 
         
     clock_idx = [1,2,3,5,7,9,11,13,15,17,18,20,22,24,26,28,30,32,33]; %blue
@@ -25,8 +25,8 @@ function plot_line_ang_vel_ratio_all_flies(data_to_use, n_flies, title_str, save
     sz2 = 100;
     
     figure
-    for idx = 1:n_flies
-        data_fly = data_to_use(:, idx+1);
+    for idx2 = 1:n_flies
+        data_fly = data_to_use(:, idx2+1);
         fly_clock_data = data_fly(clock_idx);
         fly_anti_data = data_fly(anti_idx); 
         plot(fly_clock_data, 'Color', [0.7 0.7 1 0.4], 'LineWidth', 1);
@@ -53,17 +53,17 @@ function plot_line_ang_vel_ratio_all_flies(data_to_use, n_flies, title_str, save
     
     box off
     xlim([0 20])
-    ylim([-2.5 2.5])
+    % ylim([-2.5 2.5])
     set(gcf, "Position", [469   658   562   348])
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12)
     xticks(1:1:19)
     xticklabels({'OFF', 'ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1', 'FLICKER', '1', '0.75', '0.56', '0.40', '0.33', '0.20', '0.11', 'FLICKER', 'OFF'})
-    ylabel('Angular Velocity')
+    % ylabel('Angular Velocity')
     xlabel('Condition / Contrast')
     title(strcat(title_str, ' - N=', string(n_flies)))
     
     if save_figs == true
-        savefig(gcf, fullfile(fig_exp_save_folder, strcat('AngVel_Line_', save_str)))
+        savefig(gcf, fullfile(fig_exp_save_folder, strcat('AngVelRatio_Line_', save_str)))
     end 
 
 end 
