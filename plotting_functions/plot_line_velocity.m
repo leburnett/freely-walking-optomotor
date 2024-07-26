@@ -21,7 +21,7 @@ function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med)
     n_files = length(vel_files);
     
      % Load the data
-    load(fullfile(vel_files(1).folder, vel_files(1).name), 'Log');
+    load(fullfile(vel_files(1).folder, vel_files(1).name), 'Log', 'feat');
 
     % Generate figure: 
     figure
@@ -32,13 +32,13 @@ function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med)
         min_val = -10;
         max_val = 570000;
         for ii = 1:n_conditions
-            
+
             % create the plot
             st_fr = Log.start_f(ii);
             stop_fr = Log.stop_f(ii)-1;
             w = stop_fr - st_fr;
             dir_id = Log.dir(ii);
-        
+
             if dir_id == 0 
                 if ii == 1 || ii == 33
                     col = [0.5 0.5 0.5 0.3];
@@ -52,7 +52,7 @@ function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med)
             elseif dir_id == -1
                 col = [1 0 1 Log.contrast(ii)*0.75];
             end 
-            
+
             % Add rectangles denoting the different types of experiment.
             rectangle('Position', [st_fr, min_val, w, h], 'FaceColor', col, 'EdgeColor', [0.6 0.6 0.6])
             ylim([min_val, max_val])
@@ -63,7 +63,7 @@ function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med)
             xticks([])
         end 
     
-        ylim([-10 130])
+        % ylim([-10 130])
 
     % Add data traces
     % for idx = 1:n_files 
@@ -79,6 +79,8 @@ function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med)
     %     end
     % end 
     
+    data = feat.data(:, :, 1);
+
     if numel(data(1, :)) < 5200
         min_length = 5150;
     elseif numel(data(1, :)) < 6500
@@ -110,6 +112,10 @@ function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med)
         end 
     end 
 
+    % Remove flies that don't move during the trial...
+    mean_vel_per_fly = nanmean(all_data,2);
+    all_data(mean_vel_per_fly<1, :) = [];
+
     n_flies_total = size(all_data, 1);
     
     if mean_med == "med"
@@ -117,7 +123,7 @@ function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med)
     elseif mean_med == "mean"
         av_resp = nanmean(all_data);
     end 
-    plot(av_resp, 'k', 'LineWidth', 4)
+    plot(av_resp, 'k', 'LineWidth', 2)
     xlabel('frame')
     ylabel('Velocity (mm/s)')
     f = gcf;
