@@ -183,7 +183,7 @@ function process_freely_walking_optomotor_ang_vel_ratio(path_to_folder, save_fig
         %% SAVE
     
         % save data
-        save(fullfile(data_save_folder, strcat(save_str, '_angvelratio_data.mat')), 'data_to_use', 'Log', 'trx', 'datapoints');
+        save(fullfile(data_save_folder, strcat(save_str, '_angvelratio_data.mat')), 'data_to_use', 'Log', 'trx', 'datapoints', 'save_str');
 
     end
     

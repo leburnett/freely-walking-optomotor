@@ -71,8 +71,6 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig
         % Open the LOG
         log_files = dir('LOG_*');
         load(fullfile(log_files(1).folder, log_files(1).name), 'Log');
-        % number of experimental conditions
-        n_conditions = size(Log, 1);
     
         rec_folder = dir('REC_*');
         if isempty(rec_folder)
@@ -131,11 +129,11 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig
         plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, fps, title_str, save_str, fig_exp_save_folder, save_figs)
     
         %% Make 'ang datapoints'
-        if n_conditions == 69
-            [datapoints_mean, datapoints_med] = make_mean_ang_vel_datapoints_dfftimes(Log, trx, n_flies, n_conditions, fps);
-        elseif n_conditions == 33
-            [datapoints_mean, datapoints_med] = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps);
-        end 
+        % if n_conditions == 69
+        [datapoints_mean, datapoints_med] = make_mean_ang_vel_datapoints_dfftimes(Log, trx, n_flies, n_conditions, fps);
+        % elseif n_conditions == 33
+        %     [datapoints_mean, datapoints_med] = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps);
+        % end 
 
         if mean_med == "mean"
             ang_datapoints = datapoints_mean;
@@ -176,7 +174,7 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig
         %% SAVE
     
         % save data
-        save(fullfile(data_save_folder, strcat(save_str, '_angvel_data.mat')), 'ang_datapoints', 'data_to_use', 'Log', 'trx', 'datapoints_med', 'datapoints_mean');
+        save(fullfile(data_save_folder, strcat(save_str, '_angvel_data.mat')), 'ang_datapoints', 'data_to_use', 'Log', 'trx', 'datapoints_med', 'datapoints_mean', 'save_str');
 
     end
     

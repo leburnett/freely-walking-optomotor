@@ -1,27 +1,27 @@
-function plot_line_dist_from_centre(data_path, save_figs, fig_save_path, mean_med)
+function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med)
 
-    % Plot the distance from the centre of the arena per fly. 
+    % Plot the velocity per fly over the course of the experiment. 
     
     % Should work that you can either use an individual time/ experiment folder
     % or a folder containing the data collected across experiments after
-    % running 'process_freely_walking_optomotor_dist_centre()'. 
+    % running 'process_freely_walking_optomotor_vel()'. 
     
     cd(data_path)
     
     % Check for 'dist_to_wall' files within the folder. 
     % If the 'data_path' is an experiment folder then this should find the appropriate file.  
-    dist_wall_files = dir('**/dist_to_wall.mat');
+    vel_files = dir('**-feat.mat');
     
     % Else, if no files are found then the 'data_path' is the combined results
     % path. 
-    if isempty(dist_wall_files)
-        dist_wall_files = dir('*dist2centre*');
+    if isempty(vel_files)
+        vel_files = dir('*velocity*');
     end 
     
-    n_files = length(dist_wall_files);
+    n_files = length(vel_files);
     
      % Load the data
-    load(fullfile(dist_wall_files(1).folder, dist_wall_files(1).name), 'Log');
+    load(fullfile(vel_files(1).folder, vel_files(1).name), 'Log');
 
     % Generate figure: 
     figure
@@ -66,26 +66,26 @@ function plot_line_dist_from_centre(data_path, save_figs, fig_save_path, mean_me
         ylim([-10 130])
 
     % Add data traces
-    for idx = 1:n_files 
+    % for idx = 1:n_files 
+    % 
+    %     % Load the data
+    %     load(fullfile(vel_files(idx).folder, vel_files(idx).name), 'feat'); % add 'save_str' back here eventually. 
+    %     data = feat.data(:, :, 1);
+    %     n_flies = size(data, 1);
+    % 
+    %     for i = 1:n_flies
+    %         plot(data(i, :), 'Color', [0.5 0.5 0.5], 'LineWidth', 0.01); 
+    %         hold on 
+    %     end
+    % end 
     
-        % Load the data
-        load(fullfile(dist_wall_files(idx).folder, dist_wall_files(idx).name), 'data', 'Log', 'save_str');
-   
-        n_flies = numel(data);
-    
-        for i = 1:n_flies
-            plot(120 - data{1,i}, 'Color', [0.5 0.5 0.5], 'LineWidth', 0.01); 
-            hold on 
-        end
-    end 
-    
-    if numel(data{1}) < 5200
+    if numel(data(1, :)) < 5200
         min_length = 5150;
-    elseif numel(data{1}) < 6500
+    elseif numel(data(1, :)) < 6500
         min_length =6300;
-    elseif numel(data{1}) < 14700
+    elseif numel(data(1, :)) < 14700
         min_length = 14500;
-    elseif numel(data{1}) < 18900
+    elseif numel(data(1, :)) < 18900
         min_length = 18840;
     else 
         min_length = 5150;
@@ -95,10 +95,12 @@ function plot_line_dist_from_centre(data_path, save_figs, fig_save_path, mean_me
     all_data = [];
     for ii = 1:n_files
         % Load the data
-        load(fullfile(dist_wall_files(ii).folder, dist_wall_files(ii).name), 'data');
-        n_flies = numel(data);
+        load(fullfile(vel_files(ii).folder, vel_files(ii).name), 'feat');
+        data = feat.data(:, :, 1);
+        n_flies = size(data, 1);
+
         for jj = 1: n_flies
-            dtt = data{jj};
+            dtt = data(jj, :);
             if numel(dtt)<min_length 
                 continue
             else
@@ -111,13 +113,13 @@ function plot_line_dist_from_centre(data_path, save_figs, fig_save_path, mean_me
     n_flies_total = size(all_data, 1);
     
     if mean_med == "med"
-        av_resp = 120 - nanmedian(all_data);
+        av_resp = nanmedian(all_data);
     elseif mean_med == "mean"
-        av_resp = 120 - nanmean(all_data);
+        av_resp = nanmean(all_data);
     end 
     plot(av_resp, 'k', 'LineWidth', 4)
     xlabel('frame')
-    ylabel('Distance from centre (mm)')
+    ylabel('Velocity (mm/s)')
     f = gcf;
     f.Position = [23  623  1716  403];
     ax = gca;
@@ -126,7 +128,7 @@ function plot_line_dist_from_centre(data_path, save_figs, fig_save_path, mean_me
     ax.TickDir = 'out';
     ax.TickLength  =[0.005 0.005];
 
-    title(strcat('Distance from centre of arena - N = ', string(n_flies_total)))
+    title(strcat('Velocity - N = ', string(n_flies_total)))
 
     hold on
     plot([0 min_length], [0 0], 'k', 'LineWidth', 0.2)
@@ -137,15 +139,9 @@ function plot_line_dist_from_centre(data_path, save_figs, fig_save_path, mean_me
     plot([0 min_length], [100 100], 'k', 'LineWidth', 0.2) 
     plot([0 min_length], [120 120], 'k', 'LineWidth', 0.2) 
     
-    if save_figs 
-        savefig(gcf, fullfile(fig_save_path, strcat('Dist_from_centre_', save_str,'_', mean_med,'.fig')))
-    end 
-
-    % xlim([3250 12750])
-    % f.Position = [15   590   761   447];
-    % 
+    ylim([0 15])
     % if save_figs 
-    %     savefig(gcf, fullfile(fig_save_path, strcat('Dist_from_centre_', save_str,'CROP.fig')))
+    %     savefig(gcf, fullfile(fig_save_path, strcat('Velocity_', save_str,'_', mean_med,'.fig')))
     % end 
 
 end 

@@ -7,7 +7,7 @@ clc
 
 %% PARAMETERS 
 
-path_to_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/DATA/2024_07_22';
+path_to_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/DATA/2024_07_25';
 
 % Save the figures that are generated? 
 save_figs = true;
@@ -54,7 +54,7 @@ process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig_save_fol
 process_freely_walking_optomotor_vel(path_to_folder, save_figs, fig_save_folder, vel_data_save_folder, genotype, mean_med)
 
 % process angle versus displacement ratio
-process_freely_walking_optomotor_ang_vel_ratio(path_to_folder, save_figs, fig_save_folder, ratio_data_save_folder, genotype, mean_med)
+% process_freely_walking_optomotor_ang_vel_ratio(path_to_folder, save_figs, fig_save_folder, ratio_data_save_folder, genotype, mean_med)
 
 % process distance from the centre. 
 process_freely_walking_optomotor_dist_centre(path_to_folder, dcentre_data_save_folder, genotype)
@@ -78,7 +78,7 @@ plot_line_ang_vel_ratio_for_zt(ratio_data_save_folder, zt_file, save_figs, save_
 
 
 %%
-data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/distcentre/protocol_v1';
+data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/distcentre/protocol_v2';
 
 save_figs = true;
 
@@ -90,7 +90,7 @@ if ~isfolder(dist_fig_save_path)
     mkdir(dist_fig_save_path);
 end
 
-plot_line_dist_from_centre(data_path, save_figs, dist_fig_save_path)
+plot_line_dist_from_centre(data_path, save_figs, dist_fig_save_path, 'mean')
 
 
 

@@ -48,9 +48,6 @@ function process_freely_walking_optomotor_vel(path_to_folder, save_figs, figure_
     time_folders = time_folders(~strcmp(time_names, '.DS_Store'));
 
     n_time_exps = length(time_folders);
-
-    % number of experimental conditions
-    n_conditions = 33;
     
     for exp  = 1:n_time_exps
     
@@ -111,6 +108,8 @@ function process_freely_walking_optomotor_vel(path_to_folder, save_figs, figure_
         n_flies = size(feat.data, 1);
     
         % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+
+        n_conditions = size(Log, 1);
    
         %% Plot velocity:
     
@@ -144,22 +143,22 @@ function process_freely_walking_optomotor_vel(path_to_folder, save_figs, figure_
         % OFF ACCLIM 2
         data_to_use(33,1) = 1.4;
     
-        plot_scatter_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
+        % plot_scatter_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
     
         %% Generate a line plot for mean vel at each contrast level. "Lips plot"
     
         % Individual flies in light pink/blue.
         % Average across flies in bold.
     
-        data_to_use = vel_datapoints; %(1:17, :);
+        % data_to_use = vel_datapoints; %(1:17, :);
     
-        plot_line_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
+        % plot_line_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
     
     
         %% SAVE
         
         % save data
-        save(fullfile(data_save_folder, strcat(save_str, '_velocity_data.mat')), 'vel_datapoints', 'data_to_use', 'Log', 'feat', 'datapoints_med', 'datapoints_mean');
+        save(fullfile(data_save_folder, strcat(save_str, '_velocity_data.mat')), 'vel_datapoints', 'data_to_use', 'Log', 'feat', 'datapoints_med', 'datapoints_mean', 'save_str');
         
     end 
 
