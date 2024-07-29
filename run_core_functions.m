@@ -77,12 +77,15 @@ plot_line_vel_for_zt(vel_data_save_folder, zt_file, save_figs, fig_save_folder, 
 plot_line_ang_vel_ratio_for_zt(ratio_data_save_folder, zt_file, save_figs, save_folder, mean_med)
 
 
-%%
+%% For generating plots for the different protocols
+
 data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/distcentre/protocol_v1';
 
 save_figs = true;
 
 save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS'; %'/Users/hms/Documents/Fly Tracking';
+
+% 1 - Distance to centre
 
 fig_save_folder = fullfile(save_folder, "figures");
 dist_fig_save_path = fullfile(fig_save_folder, 'dist2centre');
@@ -92,7 +95,7 @@ end
 
 plot_line_dist_from_centre(data_path, save_figs, dist_fig_save_path, 'mean')
 
-%% Velocity 
+% 2 -  Velocity 
 
 data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/vel/protocol_v1';
 
