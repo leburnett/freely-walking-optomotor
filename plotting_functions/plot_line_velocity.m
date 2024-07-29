@@ -10,7 +10,7 @@ function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med)
     
     % Check for 'dist_to_wall' files within the folder. 
     % If the 'data_path' is an experiment folder then this should find the appropriate file.  
-    vel_files = dir('**-feat.mat');
+    vel_files = dir('*-feat.mat');
     
     % Else, if no files are found then the 'data_path' is the combined results
     % path. 
@@ -66,18 +66,18 @@ function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med)
         % ylim([-10 130])
 
     % Add data traces
-    % for idx = 1:n_files 
-    % 
-    %     % Load the data
-    %     load(fullfile(vel_files(idx).folder, vel_files(idx).name), 'feat'); % add 'save_str' back here eventually. 
-    %     data = feat.data(:, :, 1);
-    %     n_flies = size(data, 1);
-    % 
-    %     for i = 1:n_flies
-    %         plot(data(i, :), 'Color', [0.5 0.5 0.5], 'LineWidth', 0.01); 
-    %         hold on 
-    %     end
-    % end 
+    for idx = 1:n_files 
+
+        % Load the data
+        load(fullfile(vel_files(idx).folder, vel_files(idx).name), 'feat'); % add 'save_str' back here eventually. 
+        data = feat.data(:, :, 1);
+        n_flies = size(data, 1);
+
+        for i = 1:n_flies
+            plot(data(i, :), 'Color', [0.5 0.5 0.5], 'LineWidth', 0.01); 
+            hold on 
+        end
+    end 
     
     data = feat.data(:, :, 1);
 
@@ -112,9 +112,11 @@ function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med)
         end 
     end 
 
+    % Remove entries with unrealistic velcoity values (>200mm/s)
+    all_data(all_data>200)=0;
     % Remove flies that don't move during the trial...
     mean_vel_per_fly = nanmean(all_data,2);
-    all_data(mean_vel_per_fly<1, :) = [];
+    all_data(mean_vel_per_fly<0.1, :) = [];
 
     n_flies_total = size(all_data, 1);
     

@@ -79,6 +79,7 @@ function plot_line_dist_from_centre(data_path, save_figs, fig_save_path, mean_me
         end
     end 
     
+    load(fullfile(dist_wall_files(1).folder, dist_wall_files(1).name), 'data');
     if numel(data{1}) < 5200
         min_length = 5150;
     elseif numel(data{1}) < 6500

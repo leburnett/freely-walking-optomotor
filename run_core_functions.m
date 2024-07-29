@@ -7,7 +7,7 @@ clc
 
 %% PARAMETERS 
 
-path_to_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/DATA/2024_07_25';
+path_to_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/DATA/2024_07_26';
 
 % Save the figures that are generated? 
 save_figs = true;
@@ -78,7 +78,7 @@ plot_line_ang_vel_ratio_for_zt(ratio_data_save_folder, zt_file, save_figs, save_
 
 
 %%
-data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/distcentre/protocol_v2';
+data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/distcentre/protocol_v1';
 
 save_figs = true;
 
@@ -92,7 +92,9 @@ end
 
 plot_line_dist_from_centre(data_path, save_figs, dist_fig_save_path, 'mean')
 
+%% Velocity 
 
+data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/vel/protocol_v1';
 
-
+plot_line_velocity(data_path, save_figs, '', mean_med)
 
