@@ -76,7 +76,7 @@ function plot_line_ang_vel_for_zt(data_folder, zt_file, save_figs, save_folder, 
         d_all = []; 
         for j = 1:n_rows
             if mean_med == "med"
-                d = struct2array(load(matching_rows(j).name, 'datapoints_median'));
+                d = struct2array(load(matching_rows(j).name, 'datapoints_med'));
             elseif mean_med == "mean"
                 d = struct2array(load(matching_rows(j).name, 'datapoints_mean'));
             end 
