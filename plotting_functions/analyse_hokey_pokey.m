@@ -3,7 +3,7 @@
 % trx.x
 % trx.y
 
-data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/ProcessedData'; 
+data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/oaky_cokey/normal'; 
 cd(data_path)
 all_data = dir();
 dnames = {all_data.name};
