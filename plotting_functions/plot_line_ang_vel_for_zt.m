@@ -107,22 +107,35 @@ function plot_line_ang_vel_for_zt(data_folder, zt_file, save_figs, save_folder, 
     
         clock_data = d_mean(clock_idx);
         anti_data = d_mean(anti_idx);
+        mean_data = nanmean(horzcat(clock_data, abs(anti_data))')';
+
+        max_clock = clock_data(9); %max(clock_data);
+        max_anti = anti_data(9); %max(anti_data);
+        max_mean = mean_data(9); %max(mean_data);
+
+        clock_data = clock_data/max_clock;
+        anti_data = anti_data/max_anti;
+        mean_data = mean_data/max_mean;
 
         colours = [0.9, 0.9, 0; 1, 0.65, 0; 0.8, 0, 0; 0.8, 0, 0.8; 0.62, 0.13, 0.94; 0, 0, 1];
         col = colours(idx, :);
 
         figure(f1)
-        plot(clock_data, 'Color', col, 'LineWidth', 2);
+        plot(mean_data, 'Color', col, 'LineWidth', 2);
         hold on 
-        plot(anti_data, 'Color', col, 'LineWidth', 2);
-        scatter(1:1:19, clock_data, 150, '.', 'MarkerEdgeColor', col, 'MarkerFaceColor',col);
-        scatter(1:1:19, anti_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
+        scatter(1:1:19, mean_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
+
+        % plot(clock_data, 'Color', col, 'LineWidth', 2);
+        % hold on 
+        % plot(anti_data, 'Color', col, 'LineWidth', 2);
+        % scatter(1:1:19, clock_data, 150, '.', 'MarkerEdgeColor', col, 'MarkerFaceColor',col);
+        % scatter(1:1:19, anti_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
 
         d_mean_zt(:, idx) = d_mean;
 
     end 
     box off
-    ylim([-2 2])
+    ylim([0 2])
     xlim([0 20])
     set(gcf, "Position", [469   658   562   348])
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12)
@@ -132,7 +145,7 @@ function plot_line_ang_vel_for_zt(data_folder, zt_file, save_figs, save_folder, 
     xlabel('Condition / Contrast')
 
     if save_figs == true
-        savefig(f1, fullfile(fig_save_path, strcat('ZT_AngVel_Line_', mean_med, '.fig')))
+        savefig(f1, fullfile(fig_save_path, strcat('ZT_AngVel_Line_normalised', mean_med, '.fig')))
     end 
 
 end 

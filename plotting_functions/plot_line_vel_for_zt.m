@@ -113,6 +113,14 @@ function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean
         colours = [0.9, 0.9, 0; 1, 0.65, 0; 0.8, 0, 0; 0.8, 0, 0.8; 0.62, 0.13, 0.94; 0, 0, 1];
         col = colours(idx, :);
 
+        % normalised to the first full contrast
+        max_clock = clock_data(9); %max(clock_data);
+        max_anti = anti_data(9); %max(anti_data);
+        max_mean = mean_data(9); %max(mean_data);
+        
+        clock_data = clock_data/max_clock;
+        anti_data = anti_data/max_anti;
+        mean_data = mean_data/max_mean;
         % figure(f1)
         % plot(clock_data, 'Color', col, 'LineWidth', 2);
         % hold on 
@@ -129,7 +137,7 @@ function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean
 
     end 
     box off
-    ylim([0 14])
+    ylim([0 4])
     xlim([0 20])
     set(gcf, "Position", [469   658   562   348])
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12)
@@ -140,7 +148,7 @@ function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean
 
     if save_figs == true
         % savefig(f1, fullfile(fig_save_path, strcat('ZT_Vel_Line_clock_anti_', mean_med, '.fig')))
-        savefig(f2, fullfile(fig_save_path, strcat('ZT_Vel_Line_average_', mean_med, '.fig')))
+        savefig(f2, fullfile(fig_save_path, strcat('ZT_Vel_Line_average_normalised', mean_med, '.fig')))
     end 
 
 end 

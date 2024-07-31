@@ -76,11 +76,12 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
         n_rows = length(matching_rows);
         d_all = []; 
         for j = 1:n_rows
-            if mean_med == "med"
-                d = struct2array(load(matching_rows(j).name, 'datapoints_med'));
-            elseif mean_med == "mean"
-                d = struct2array(load(matching_rows(j).name, 'datapoints_mean'));
-            end 
+            d = struct2array(load(matching_rows(j).name, 'datapoints'));
+            % if mean_med == "med"
+            %     d = struct2array(load(matching_rows(j).name, 'datapoints_med'));
+            % elseif mean_med == "mean"
+            %     d = struct2array(load(matching_rows(j).name, 'datapoints_mean'));
+            % end 
             d_all = horzcat(d_all, d(:, 2:end-1));
         end 
         
@@ -157,7 +158,7 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12)
     xticks(1:1:19)
     xticklabels({'OFF', 'ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1', 'FLICKER', '1', '0.75', '0.56', '0.40', '0.33', '0.20', '0.11', 'FLICKER', 'OFF'})
-    ylabel('Ang Vel (deg/s)')
+    ylabel('Ang Vel / Vel (deg/mm)')
     xlabel('Condition / Contrast')
 
     if save_figs == true
