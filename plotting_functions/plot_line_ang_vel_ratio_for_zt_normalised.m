@@ -152,7 +152,7 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
 
     figure(f2)
     box off
-    ylim([0 1.5])
+    ylim([0 1.3])
     xlim([0 20])
     set(gcf, "Position", [469   658   562   348])
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12)
@@ -162,8 +162,8 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
     xlabel('Condition / Contrast')
 
     if save_figs == true
-        savefig(f1, fullfile(fig_save_path, strcat('ZT_Vel_Line_clock_anti_', mean_med, '.fig')))
-        savefig(f2, fullfile(fig_save_path, strcat('ZT_Vel_Line_average_', mean_med, '.fig')))
+        % savefig(f1, fullfile(fig_save_path, strcat('ZT_AngVelRatio_Line_clock_anti_', mean_med, '.fig')))
+        savefig(f2, fullfile(fig_save_path, strcat('ZT_AngVelRatio_Line_norm_average_', mean_med, '.fig')))
     end 
 
 end 
