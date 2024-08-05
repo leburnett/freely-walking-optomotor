@@ -17,7 +17,7 @@ genotype = 'CSw1118';
 save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS'; %'/Users/hms/Documents/Fly Tracking';
 
 % Find the mean 'mean' or the median 'med'
-mean_med = "mean";
+mean_med = "med";
 
 fig_save_folder = fullfile(save_folder, "figures");
 if ~isfolder(fig_save_folder)
@@ -65,11 +65,11 @@ zt_file = '/Users/burnettl/Documents/Janelia/HMS_2024/zt_conditions.xlsx';
 
 % What to use for errorbars
 % Can only take "STD", "SEM" or "CI"
-ebar = "SEM";
+ebar = "IQR";
 
 % Plot the average angular velocity per contrast per zt condition.
 % Normalised to the ang vel at the first 1.0 contrast condition. 
-plot_line_ang_vel_ratio_for_zt_normalised(ratio_data_save_folder, zt_file, save_figs, save_folder, mean_med, ebar)
+plot_line_ang_vel_ratio_for_zt_normalised(ratio_data_save_folder, zt_file, save_figs, fig_save_folder, mean_med, ebar)
 
 % % Plot the unnormalised version: 
 plot_line_ang_vel_for_zt(ang_data_save_folder, zt_file, save_figs, fig_save_folder, mean_med, ebar)

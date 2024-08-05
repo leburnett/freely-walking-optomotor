@@ -163,6 +163,17 @@ function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean
                     CI_cond(jj, 1:2) = STD; 
                 end 
             end 
+        elseif ebar == "IQR"
+            for jj = 1:19
+                if jj <3
+                    Q1 = prctile(CI_data(jj, 1:len_CI_data/2), 25);
+                    Q3 = prctile(CI_data(jj, 1:len_CI_data/2), 75);
+                else
+                    Q1 = prctile(CI_data(jj, 1:len_CI_data), 25);
+                    Q3 = prctile(CI_data(jj, 1:len_CI_data), 75);
+                end 
+                CI_cond(jj, 1:2) = [Q1, Q3];
+            end 
         end 
 
         % figure(f1)

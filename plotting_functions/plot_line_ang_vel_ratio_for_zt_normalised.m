@@ -152,6 +152,17 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
                     CI_cond(jj, 1:2) = STD; 
                 end 
             end 
+        elseif ebar == "IQR"
+            for jj = 1:19
+                if jj <3
+                    Q1 = prctile(CI_data(jj, 1:len_CI_data/2), 25);
+                    Q3 = prctile(CI_data(jj, 1:len_CI_data/2), 75);
+                else
+                    Q1 = prctile(CI_data(jj, 1:len_CI_data), 25);
+                    Q3 = prctile(CI_data(jj, 1:len_CI_data), 75);
+                end 
+                CI_cond(jj, 1:2) = [Q1, Q3];
+            end 
         end 
 
         % normalised to the first full contrast
