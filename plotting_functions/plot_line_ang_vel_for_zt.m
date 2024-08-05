@@ -1,4 +1,4 @@
-function plot_line_ang_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean_med)
+function plot_line_ang_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean_med, ebar)
 
     % Get data from ALL flies. This should be stored in the 'data'
     % subfolder of the 'save_folder'
@@ -104,6 +104,9 @@ function plot_line_ang_vel_for_zt(data_folder, zt_file, save_figs, save_folder, 
 
         clock_idx = [1,2,3,5,7,9,11,13,15,17,18,20,22,24,26,28,30,32,33]; %blue
         anti_idx = [1,2,4,6,8,10,12,14,16,17,19,21,23,25,27,29,31,32,33]; % pink
+
+        d_clock = abs(d_all(clock_idx, :));
+        d_anti = abs(d_all(anti_idx, :));
     
         clock_data = d_mean(clock_idx);
         anti_data = d_mean(anti_idx);
@@ -117,13 +120,60 @@ function plot_line_ang_vel_for_zt(data_folder, zt_file, save_figs, save_folder, 
         anti_data = anti_data/max_anti;
         mean_data = mean_data/max_mean;
 
+        CI_data = horzcat(d_clock, d_anti);
+        len_CI_data = numel(CI_data(1, :));
+
+        CI_cond = zeros(19, 2);
+
+        if ebar == "CI"
+            for jj = 1:19
+                if jj <3
+                    SEM = std(CI_data(jj, 1:len_CI_data/2))/sqrt(len_CI_data/2);         
+                    ts = tinv([0.025  0.975],(len_CI_data/2)-1);      
+                    CI_cond(jj, 1:2) = abs(nanmean(CI_data(jj, 1:len_CI_data/2)) + ts*SEM); 
+                else
+                    SEM = std(CI_data(jj, :))/sqrt(length(CI_data(jj, :)));         
+                    ts = tinv([0.025  0.975],length(CI_data(jj, :))-1);      
+                    CI_cond(jj, 1:2) = abs(nanmean(CI_data(jj, :)) + ts*SEM); 
+                end 
+            end 
+        elseif ebar == "SEM"
+    
+            for jj = 1:19
+                if jj <3
+                    SEM = nanstd(CI_data(jj, 1:len_CI_data/2))/sqrt(len_CI_data/2);              
+                    CI_cond(jj, 1:2) = SEM; 
+                else
+                    SEM = nanstd(CI_data(jj, :))/sqrt(length(CI_data(jj, :)));               
+                    CI_cond(jj, 1:2) = SEM; 
+                end 
+            end 
+        elseif ebar == "STD"
+            for jj = 1:19
+                if jj <3
+                    STD = nanstd(CI_data(jj, 1:len_CI_data/2));              
+                    CI_cond(jj, 1:2) = STD; 
+                else
+                    STD = nanstd(CI_data(jj, :));               
+                    CI_cond(jj, 1:2) = STD; 
+                end 
+            end 
+        end 
+
         colours = [0.9, 0.9, 0; 1, 0.65, 0; 0.8, 0, 0; 0.8, 0, 0.8; 0.62, 0.13, 0.94; 0, 0, 1];
         col = colours(idx, :);
 
+        x = [1:1:9];
+
         figure(f1)
-        plot(mean_data, 'Color', col, 'LineWidth', 2);
+        plot(x, mean_data(1:9), 'Color', col, 'LineWidth', 2);
         hold on 
-        scatter(1:1:19, mean_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
+        scatter(x, mean_data(1:9), 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
+
+        % shaded ebar
+        v1 = [mean_data(1:9) - CI_cond(1:9, 1)]'; % lower bound
+        v2 = [mean_data(1:9) + CI_cond(1:9, 2)]'; % upper bound
+        patch([x fliplr(x)], [v1 fliplr(v2)], col, 'FaceAlpha',0.1, 'EdgeColor','none')
 
         % plot(clock_data, 'Color', col, 'LineWidth', 2);
         % hold on 
@@ -135,17 +185,20 @@ function plot_line_ang_vel_for_zt(data_folder, zt_file, save_figs, save_folder, 
 
     end 
     box off
-    ylim([0 2])
-    xlim([0 20])
-    set(gcf, "Position", [469   658   562   348])
+    ylim([0 1.1])
+    xlim([0 10])
+    set(gcf, "Position", [469   562   518   444]) %[469   658   562   348])
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12)
-    xticks(1:1:19)
-    xticklabels({'OFF', 'ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1', 'FLICKER', '1', '0.75', '0.56', '0.40', '0.33', '0.20', '0.11', 'FLICKER', 'OFF'})
-    ylabel('Angular Velocity')
+    xticks(1:1:9)
+    xticklabels({'ACCLIM - OFF', 'ACCLIM - ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1'})
+    % xticks(1:1:19)
+    % xticklabels({'OFF', 'ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1', 'FLICKER', '1', '0.75', '0.56', '0.40', '0.33', '0.20', '0.11', 'FLICKER', 'OFF'})
+    ylabel('Angular Velocity (normalized)')
     xlabel('Condition / Contrast')
+    % title('Angular velocity')
 
     if save_figs == true
-        savefig(f1, fullfile(fig_save_path, strcat('ZT_AngVel_Line_normalised', mean_med, '.fig')))
+        savefig(f1, fullfile(fig_save_path, strcat('ZT_AngVel_Line_norm_average_shaded', mean_med, '_', ebar,'.fig')))
     end 
 
 end 

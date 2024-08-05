@@ -105,6 +105,9 @@ function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean
 
         clock_idx = [1,2,3,5,7,9,11,13,15,17,18,20,22,24,26,28,30,32,33]; %blue
         anti_idx = [1,2,4,6,8,10,12,14,16,17,19,21,23,25,27,29,31,32,33]; % pink
+
+        d_clock = abs(d_all(clock_idx, :));
+        d_anti = abs(d_all(anti_idx, :));
     
         clock_data = d_mean(clock_idx);
         anti_data = d_mean(anti_idx);
@@ -143,25 +146,24 @@ function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean
     
             for jj = 1:19
                 if jj <3
-                    SEM = std(CI_data(jj, 1:len_CI_data/2))/sqrt(len_CI_data/2);              
+                    SEM = nanstd(CI_data(jj, 1:len_CI_data/2))/sqrt(len_CI_data/2);              
                     CI_cond(jj, 1:2) = SEM; 
                 else
-                    SEM = std(CI_data(jj, :))/sqrt(length(CI_data(jj, :)));               
+                    SEM = nanstd(CI_data(jj, :))/sqrt(length(CI_data(jj, :)));               
                     CI_cond(jj, 1:2) = SEM; 
                 end 
             end 
         elseif ebar == "STD"
             for jj = 1:19
                 if jj <3
-                    STD = std(CI_data(jj, 1:len_CI_data/2));              
+                    STD = nanstd(CI_data(jj, 1:len_CI_data/2));              
                     CI_cond(jj, 1:2) = STD; 
                 else
-                    STD = std(CI_data(jj, :));               
+                    STD = nanstd(CI_data(jj, :));               
                     CI_cond(jj, 1:2) = STD; 
                 end 
             end 
         end 
-
 
         % figure(f1)
         % plot(clock_data, 'Color', col, 'LineWidth', 2);
@@ -176,20 +178,20 @@ function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean
 
         plot(x, mean_data(1:9), 'Color', col, 'LineWidth', 2);
         hold on 
-        scatter(x, mean_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
+        scatter(x, mean_data(1:9), 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
 
         % 95 % CI
         v1 = [mean_data(1:9) - CI_cond(1:9, 1)]'; % lower bound
         v2 = [mean_data(1:9) + CI_cond(1:9, 2)]'; % upper bound
-        patch([x fliplr(x)], [v1 fliplr(v2)], col, 'FaceAlpha',0.1, 'EdgeColor','none')
+        patch([x fliplr(x)], [v1 fliplr(v2)], col, 'FaceAlpha', 0.05, 'EdgeColor','none')
 
         d_mean_zt(:, idx) = d_mean;
 
     end 
     box off
-    ylim([0 4])
+    ylim([0 1.1])
     xlim([0 10])
-    set(gcf, "Position", [469   658   562   348])
+    set(gcf, "Position", [469   562   518   444]) %[469   658   562   348])
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12)
     xticks(1:1:9)
     xticklabels({'ACCLIM - OFF', 'ACCLIM - ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1'})
@@ -197,10 +199,11 @@ function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean
     % xticklabels({'OFF', 'ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1', 'FLICKER', '1', '0.75', '0.56', '0.40', '0.33', '0.20', '0.11', 'FLICKER', 'OFF'})
     ylabel('Velocity (normalized)')
     xlabel('Condition / Contrast')
+    % title('Velocity')
 
     if save_figs == true
         % savefig(f1, fullfile(fig_save_path, strcat('ZT_Vel_Line_clock_anti_', mean_med, '.fig')))
-        savefig(f2, fullfile(fig_save_path, strcat('ZT_Vel_Line_average_normalised', mean_med, '.fig')))
+        savefig(f2, fullfile(fig_save_path, strcat('ZT_Vel_Line_norm_average_shaded_', mean_med, '_', ebar,'.fig')))
     end 
 
 end 

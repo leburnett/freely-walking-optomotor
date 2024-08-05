@@ -76,12 +76,12 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
         n_rows = length(matching_rows);
         d_all = []; 
         for j = 1:n_rows
-            % d = struct2array(load(matching_rows(j).name, 'datapoints'));
-            if mean_med == "med"
-                d = struct2array(load(matching_rows(j).name, 'datapoints_med'));
-            elseif mean_med == "mean"
-                d = struct2array(load(matching_rows(j).name, 'datapoints_mean'));
-            end 
+            d = struct2array(load(matching_rows(j).name, 'datapoints'));
+            % if mean_med == "med"
+            %     d = struct2array(load(matching_rows(j).name, 'datapoints_med'));
+            % elseif mean_med == "mean"
+            %     d = struct2array(load(matching_rows(j).name, 'datapoints_mean'));
+            % end 
             d_all = horzcat(d_all, d(:, 2:end-1));
         end 
         
@@ -135,20 +135,20 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
     
             for jj = 1:19
                 if jj <3
-                    SEM = std(CI_data(jj, 1:len_CI_data/2))/sqrt(len_CI_data/2);              
+                    SEM = nanstd(CI_data(jj, 1:len_CI_data/2))/sqrt(len_CI_data/2);              
                     CI_cond(jj, 1:2) = SEM; 
                 else
-                    SEM = std(CI_data(jj, :))/sqrt(length(CI_data(jj, :)));               
+                    SEM = nanstd(CI_data(jj, :))/sqrt(length(CI_data(jj, :)));               
                     CI_cond(jj, 1:2) = SEM; 
                 end 
             end 
         elseif ebar == "STD"
             for jj = 1:19
                 if jj <3
-                    STD = std(CI_data(jj, 1:len_CI_data/2));              
+                    STD = nanstd(CI_data(jj, 1:len_CI_data/2));              
                     CI_cond(jj, 1:2) = STD; 
                 else
-                    STD = std(CI_data(jj, :));               
+                    STD = nanstd(CI_data(jj, :));               
                     CI_cond(jj, 1:2) = STD; 
                 end 
             end 
@@ -181,7 +181,7 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
         hold on 
         scatter(x, mean_data(1:9), 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
 
-        % 95 % CI
+        % shaded ebar
         v1 = [mean_data(1:9) - CI_cond(1:9, 1)]'; % lower bound
         v2 = [mean_data(1:9) + CI_cond(1:9, 2)]'; % upper bound
         patch([x fliplr(x)], [v1 fliplr(v2)], col, 'FaceAlpha',0.1, 'EdgeColor','none')
@@ -203,9 +203,9 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
 
     figure(f2)
     box off
-    ylim([0 1.3])
+    ylim([0 1.1])
     xlim([0 10])
-    set(gcf, "Position", [469   658   562   348])
+    set(gcf, "Position", [469   562   518   444]) %[469   658   562   348])
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12)
     xticks(1:1:9)
     xticklabels({'ACCLIM - OFF', 'ACCLIM - ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1'})
@@ -213,10 +213,11 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
     % xticklabels({'ACCLIM - OFF', 'ACCLIM - ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1', 'FLICKER', '1', '0.75', '0.56', '0.40', '0.33', '0.20', '0.11', 'FLICKER', 'OFF'})
     ylabel('Ang Vel / Vel (normalized)')
     xlabel('Condition / Contrast')
+    % title('Angular velocity / Velocity')
 
     if save_figs == true
         % savefig(f1, fullfile(fig_save_path, strcat('ZT_AngVelRatio_Line_clock_anti_', mean_med, '.fig')))
-        savefig(f2, fullfile(fig_save_path, strcat('ZT_AngVelRatio_Line_norm_average_shaded_', mean_med, '.fig')))
+        savefig(f2, fullfile(fig_save_path, strcat('ZT_AngVelRatio_Line_norm_average_shaded_', mean_med, '_', ebar,'.fig')))
     end 
 
 end 
