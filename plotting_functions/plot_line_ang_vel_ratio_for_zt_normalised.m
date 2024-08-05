@@ -117,17 +117,29 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
         CI_data = horzcat(d_clock, d_anti);
         len_CI_data = numel(CI_data(1, :));
 
+        % CI_cond = zeros(19, 2);
+        % 
+        % for jj = 1:19
+        %     if jj <3
+        %         SEM = std(CI_data(jj, 1:len_CI_data/2))/sqrt(len_CI_data/2);         
+        %         ts = tinv([0.025  0.975],(len_CI_data/2)-1);      
+        %         CI_cond(jj, 1:2) = abs(nanmean(CI_data(jj, 1:len_CI_data/2)) + ts*SEM); 
+        %     else
+        %         SEM = std(CI_data(jj, :))/sqrt(length(CI_data(jj, :)));         
+        %         ts = tinv([0.025  0.975],length(CI_data(jj, :))-1);      
+        %         CI_cond(jj, 1:2) = abs(nanmean(CI_data(jj, :)) + ts*SEM); 
+        %     end 
+        % end 
+
         CI_cond = zeros(19, 2);
 
         for jj = 1:19
             if jj <3
-                SEM = std(CI_data(jj, 1:len_CI_data/2))/sqrt(len_CI_data/2);         
-                ts = tinv([0.025  0.975],(len_CI_data/2)-1);      
-                CI_cond(jj, 1:2) = abs(nanmean(CI_data(jj, 1:len_CI_data/2)) + ts*SEM); 
+                SEM = std(CI_data(jj, 1:len_CI_data/2))/sqrt(len_CI_data/2);              
+                CI_cond(jj, 1:2) = SEM; 
             else
-                SEM = std(CI_data(jj, :))/sqrt(length(CI_data(jj, :)));         
-                ts = tinv([0.025  0.975],length(CI_data(jj, :))-1);      
-                CI_cond(jj, 1:2) = abs(nanmean(CI_data(jj, :)) + ts*SEM); 
+                SEM = std(CI_data(jj, :))/sqrt(length(CI_data(jj, :)));               
+                CI_cond(jj, 1:2) = SEM; 
             end 
         end 
 
