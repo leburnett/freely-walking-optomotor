@@ -76,12 +76,12 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
         n_rows = length(matching_rows);
         d_all = []; 
         for j = 1:n_rows
-            d = struct2array(load(matching_rows(j).name, 'datapoints'));
-            % if mean_med == "med"
-            %     d = struct2array(load(matching_rows(j).name, 'datapoints_med'));
-            % elseif mean_med == "mean"
-            %     d = struct2array(load(matching_rows(j).name, 'datapoints_mean'));
-            % end 
+            % d = struct2array(load(matching_rows(j).name, 'datapoints'));
+            if mean_med == "med"
+                d = struct2array(load(matching_rows(j).name, 'datapoints_med'));
+            elseif mean_med == "mean"
+                d = struct2array(load(matching_rows(j).name, 'datapoints_mean'));
+            end 
             d_all = horzcat(d_all, d(:, 2:end-1));
         end 
         
@@ -107,9 +107,29 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
         clock_idx = [1,2,3,5,7,9,11,13,15,17,18,20,22,24,26,28,30,32,33]; %blue
         anti_idx = [1,2,4,6,8,10,12,14,16,17,19,21,23,25,27,29,31,32,33]; % pink
     
+        d_clock = abs(d_all(clock_idx, :));
+        d_anti = abs(d_all(anti_idx, :));
+
         clock_data = d_mean(clock_idx);
         anti_data = d_mean(anti_idx);
         mean_data = nanmean(horzcat(clock_data, abs(anti_data))')';
+
+        CI_data = horzcat(d_clock, d_anti);
+        len_CI_data = numel(CI_data(1, :));
+
+        CI_cond = zeros(19, 2);
+
+        for jj = 1:19
+            if jj <3
+                SEM = std(CI_data(jj, 1:len_CI_data/2))/sqrt(len_CI_data/2);         
+                ts = tinv([0.025  0.975],(len_CI_data/2)-1);      
+                CI_cond(jj, 1:2) = abs(nanmean(CI_data(jj, 1:len_CI_data/2)) + ts*SEM); 
+            else
+                SEM = std(CI_data(jj, :))/sqrt(length(CI_data(jj, :)));         
+                ts = tinv([0.025  0.975],length(CI_data(jj, :))-1);      
+                CI_cond(jj, 1:2) = abs(nanmean(CI_data(jj, :)) + ts*SEM); 
+            end 
+        end 
 
         % normalised to the first full contrast
         max_clock = clock_data(9); %max(clock_data);
@@ -131,9 +151,20 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
         % scatter(1:1:19, anti_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
 
         figure(f2)
-        plot(mean_data, 'Color', col, 'LineWidth', 2);
+        plot(1:1:9, mean_data(1:9), 'Color', col, 'LineWidth', 2);
         hold on 
-        scatter(1:1:19, mean_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
+        scatter(1:1:9, mean_data(1:9), 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
+
+        x = [1:1:9];
+        % 95 % CI
+        v1 = [mean_data(1:9) - CI_cond(1:9, 1)]';
+        v2 = [mean_data(1:9) + CI_cond(1:9, 2)]';
+        patch([x fliplr(x)], [v1 fliplr(v2)], col, 'FaceAlpha',0.2, 'EdgeColor','none')
+
+        % upper bound
+        % v3 = [mean_data(1:9) - CI_cond(1:9, 2)]';
+        % v4 = [mean_data(1:9) + CI_cond(1:9, 2)]';
+        % patch([x fliplr(x)], [v3 fliplr(v4)], col,  'FaceAlpha',0.2, 'EdgeColor','none')
 
         d_mean_zt(:, idx) = d_mean;
 
