@@ -174,20 +174,17 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
         % scatter(1:1:19, anti_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
 
         figure(f2)
-        plot(1:1:9, mean_data(1:9), 'Color', col, 'LineWidth', 2);
-        hold on 
-        scatter(1:1:9, mean_data(1:9), 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
 
         x = [1:1:9];
-        % 95 % CI
-        v1 = [mean_data(1:9) - CI_cond(1:9, 1)]';
-        v2 = [mean_data(1:9) + CI_cond(1:9, 2)]';
-        patch([x fliplr(x)], [v1 fliplr(v2)], col, 'FaceAlpha',0.2, 'EdgeColor','none')
 
-        % upper bound
-        % v3 = [mean_data(1:9) - CI_cond(1:9, 2)]';
-        % v4 = [mean_data(1:9) + CI_cond(1:9, 2)]';
-        % patch([x fliplr(x)], [v3 fliplr(v4)], col,  'FaceAlpha',0.2, 'EdgeColor','none')
+        plot(x, mean_data(1:9), 'Color', col, 'LineWidth', 2);
+        hold on 
+        scatter(x, mean_data(1:9), 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
+
+        % 95 % CI
+        v1 = [mean_data(1:9) - CI_cond(1:9, 1)]'; % lower bound
+        v2 = [mean_data(1:9) + CI_cond(1:9, 2)]'; % upper bound
+        patch([x fliplr(x)], [v1 fliplr(v2)], col, 'FaceAlpha',0.1, 'EdgeColor','none')
 
         d_mean_zt(:, idx) = d_mean;
 
@@ -207,17 +204,19 @@ function plot_line_ang_vel_ratio_for_zt_normalised(data_folder, zt_file, save_fi
     figure(f2)
     box off
     ylim([0 1.3])
-    xlim([0 20])
+    xlim([0 10])
     set(gcf, "Position", [469   658   562   348])
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12)
-    xticks(1:1:19)
-    xticklabels({'OFF', 'ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1', 'FLICKER', '1', '0.75', '0.56', '0.40', '0.33', '0.20', '0.11', 'FLICKER', 'OFF'})
-    ylabel('Ang Vel / Vel (deg/mm)')
+    xticks(1:1:9)
+    xticklabels({'ACCLIM - OFF', 'ACCLIM - ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1'})
+    % xticks(1:1:19)
+    % xticklabels({'ACCLIM - OFF', 'ACCLIM - ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1', 'FLICKER', '1', '0.75', '0.56', '0.40', '0.33', '0.20', '0.11', 'FLICKER', 'OFF'})
+    ylabel('Ang Vel / Vel (normalized)')
     xlabel('Condition / Contrast')
 
     if save_figs == true
         % savefig(f1, fullfile(fig_save_path, strcat('ZT_AngVelRatio_Line_clock_anti_', mean_med, '.fig')))
-        savefig(f2, fullfile(fig_save_path, strcat('ZT_AngVelRatio_Line_norm_average_', mean_med, '.fig')))
+        savefig(f2, fullfile(fig_save_path, strcat('ZT_AngVelRatio_Line_norm_average_shaded_', mean_med, '.fig')))
     end 
 
 end 

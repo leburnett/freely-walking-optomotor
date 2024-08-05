@@ -1,4 +1,4 @@
-function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean_med)
+function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean_med, ebar)
 
     % Get data from ALL flies. This should be stored in the 'data'
     % subfolder of the 'save_folder'
@@ -121,6 +121,48 @@ function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean
         clock_data = clock_data/max_clock;
         anti_data = anti_data/max_anti;
         mean_data = mean_data/max_mean;
+
+        CI_data = horzcat(d_clock, d_anti);
+        len_CI_data = numel(CI_data(1, :));
+
+        CI_cond = zeros(19, 2);
+
+        if ebar == "CI"
+            for jj = 1:19
+                if jj <3
+                    SEM = std(CI_data(jj, 1:len_CI_data/2))/sqrt(len_CI_data/2);         
+                    ts = tinv([0.025  0.975],(len_CI_data/2)-1);      
+                    CI_cond(jj, 1:2) = abs(nanmean(CI_data(jj, 1:len_CI_data/2)) + ts*SEM); 
+                else
+                    SEM = std(CI_data(jj, :))/sqrt(length(CI_data(jj, :)));         
+                    ts = tinv([0.025  0.975],length(CI_data(jj, :))-1);      
+                    CI_cond(jj, 1:2) = abs(nanmean(CI_data(jj, :)) + ts*SEM); 
+                end 
+            end 
+        elseif ebar == "SEM"
+    
+            for jj = 1:19
+                if jj <3
+                    SEM = std(CI_data(jj, 1:len_CI_data/2))/sqrt(len_CI_data/2);              
+                    CI_cond(jj, 1:2) = SEM; 
+                else
+                    SEM = std(CI_data(jj, :))/sqrt(length(CI_data(jj, :)));               
+                    CI_cond(jj, 1:2) = SEM; 
+                end 
+            end 
+        elseif ebar == "STD"
+            for jj = 1:19
+                if jj <3
+                    STD = std(CI_data(jj, 1:len_CI_data/2));              
+                    CI_cond(jj, 1:2) = STD; 
+                else
+                    STD = std(CI_data(jj, :));               
+                    CI_cond(jj, 1:2) = STD; 
+                end 
+            end 
+        end 
+
+
         % figure(f1)
         % plot(clock_data, 'Color', col, 'LineWidth', 2);
         % hold on 
@@ -129,21 +171,31 @@ function plot_line_vel_for_zt(data_folder, zt_file, save_figs, save_folder, mean
         % scatter(1:1:19, anti_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
 
         figure(f2)
-        plot(mean_data, 'Color', col, 'LineWidth', 2);
+
+        x = [1:1:9];
+
+        plot(x, mean_data(1:9), 'Color', col, 'LineWidth', 2);
         hold on 
-        scatter(1:1:19, mean_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
+        scatter(x, mean_data, 150, '.',  'MarkerEdgeColor', col, 'MarkerFaceColor',col);
+
+        % 95 % CI
+        v1 = [mean_data(1:9) - CI_cond(1:9, 1)]'; % lower bound
+        v2 = [mean_data(1:9) + CI_cond(1:9, 2)]'; % upper bound
+        patch([x fliplr(x)], [v1 fliplr(v2)], col, 'FaceAlpha',0.1, 'EdgeColor','none')
 
         d_mean_zt(:, idx) = d_mean;
 
     end 
     box off
     ylim([0 4])
-    xlim([0 20])
+    xlim([0 10])
     set(gcf, "Position", [469   658   562   348])
     set(gca, "LineWidth", 1, "TickDir", 'out', "FontSize", 12)
-    xticks(1:1:19)
-    xticklabels({'OFF', 'ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1', 'FLICKER', '1', '0.75', '0.56', '0.40', '0.33', '0.20', '0.11', 'FLICKER', 'OFF'})
-    ylabel('Velocity (mm/s)')
+    xticks(1:1:9)
+    xticklabels({'ACCLIM - OFF', 'ACCLIM - ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1'})
+    % xticks(1:1:19)
+    % xticklabels({'OFF', 'ON', '0.11', '0.20', '0.33', '0.40', '0.56', '0.75', '1', 'FLICKER', '1', '0.75', '0.56', '0.40', '0.33', '0.20', '0.11', 'FLICKER', 'OFF'})
+    ylabel('Velocity (normalized)')
     xlabel('Condition / Contrast')
 
     if save_figs == true

@@ -63,9 +63,13 @@ process_freely_walking_optomotor_dist_centre(path_to_folder, dcentre_data_save_f
 
 zt_file = '/Users/burnettl/Documents/Janelia/HMS_2024/zt_conditions.xlsx';
 
+% What to use for errorbars
+% Can only take "STD", "SEM" or "CI"
+ebar = "CI";
+
 % Plot the average angular velocity per contrast per zt condition.
 % Normalised to the ang vel at the first 1.0 contrast condition. 
-plot_line_ang_vel_ratio_for_zt_normalised(ang_data_save_folder, zt_file, save_figs, save_folder, mean_med)
+plot_line_ang_vel_ratio_for_zt_normalised(ang_data_save_folder, zt_file, save_figs, save_folder, mean_med, ebar)
 
 % % Plot the unnormalised version: 
 % plot_line_ang_vel_for_zt(ang_data_save_folder, zt_file, save_figs, fig_save_folder, mean_med)
