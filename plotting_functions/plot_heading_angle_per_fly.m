@@ -40,7 +40,7 @@ function plot_heading_angle_per_fly(Log, trx, n_flies, n_conditions, title_str, 
         subplot(n_flies, 1, idx)
 
         % Heading angle data from 'trx'
-        data = unwrap(trx(idx).theta);
+        data = rad2deg(unwrap(trx(idx).theta));
     
         max_val = max(data);
         min_val = min(data);

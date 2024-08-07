@@ -44,7 +44,7 @@ function plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, fps, title_str, s
     figure
     for idx = 1:n_flies
         % unwrap the heading data
-        D = unwrap(trx(idx).theta);
+        D = rad2deg(unwrap(trx(idx).theta));
         % convert heading to angular velocity
         V = vel_estimate(D, samp_rate, method, t_window, cutoff);
     
