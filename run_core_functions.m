@@ -7,7 +7,7 @@ clc
 
 %% PARAMETERS 
 
-path_to_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/DATA/2024_06_17';
+path_to_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/DATA/2024_08_06';
 
 % Save the figures that are generated? 
 save_figs = true;
@@ -24,12 +24,12 @@ if ~isfolder(fig_save_folder)
     mkdir(fig_save_folder);
 end
 
-ang_data_save_folder = fullfile(save_folder, "data/angvel");
+ang_data_save_folder = fullfile(save_folder, "data/angvel/post_HM");
 if ~isfolder(ang_data_save_folder)
     mkdir(ang_data_save_folder);
 end
 
-vel_data_save_folder = fullfile(save_folder, "data/vel/protocol_v1/");
+vel_data_save_folder = fullfile(save_folder, "data/vel");
 if ~isfolder(vel_data_save_folder)
     mkdir(vel_data_save_folder);
 end
@@ -57,7 +57,7 @@ process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig_save_fol
 % % process_freely_walking_optomotor_ang_vel_ratio(path_to_folder, save_figs, fig_save_folder, ratio_data_save_folder, genotype, mean_med)
 % 
 % % process distance from the centre. 
-% process_freely_walking_optomotor_dist_centre(path_to_folder, dcentre_data_save_folder, genotype)
+process_freely_walking_optomotor_dist_centre(path_to_folder, dcentre_data_save_folder, genotype)
 
 %% 2 - Generate plots for all flies - across time points (ZT)
 
@@ -80,25 +80,25 @@ plot_line_vel_for_zt(vel_data_save_folder, zt_file, save_figs, fig_save_folder, 
 
 %% For generating plots for the different protocols
 
-% data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/distcentre/protocol_v1';
-% 
-% save_figs = true;
-% 
-% save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS'; %'/Users/hms/Documents/Fly Tracking';
-% 
-% % 1 - Distance to centre
-% 
-% fig_save_folder = fullfile(save_folder, "figures");
-% dist_fig_save_path = fullfile(fig_save_folder, 'dist2centre');
-% if ~isfolder(dist_fig_save_path)
-%     mkdir(dist_fig_save_path);
-% end
-% 
-% plot_line_dist_from_centre(data_path, save_figs, dist_fig_save_path, 'mean')
-% 
-% % 2 -  Velocity 
-% 
-% data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/vel/protocol_v1';
-% 
-% plot_line_velocity(data_path, save_figs, '', mean_med)
+data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/distcentre/protocol_v1/empty_split_females';
+
+save_figs = true;
+
+save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS'; %'/Users/hms/Documents/Fly Tracking';
+
+% 1 - Distance to centre
+
+fig_save_folder = fullfile(save_folder, "figures");
+dist_fig_save_path = fullfile(fig_save_folder, 'dist2centre');
+if ~isfolder(dist_fig_save_path)
+    mkdir(dist_fig_save_path);
+end
+
+plot_line_dist_from_centre(data_path, save_figs, dist_fig_save_path, 'mean')
+
+% 2 -  Velocity 
+
+data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/vel/protocol_v1';
+
+plot_line_velocity(data_path, save_figs, '', mean_med)
 

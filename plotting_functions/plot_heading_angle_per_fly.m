@@ -55,6 +55,10 @@ function plot_heading_angle_per_fly(Log, trx, n_flies, n_conditions, title_str, 
     
             % Use the Log.dir value to get the stimulus direction.
             dir_id = Log.dir(ii);
+            con_val = Log.contrast(ii);
+            if con_val > 1.2
+                con_val = 1;
+            end 
     
             if dir_id == 0 
                 if ii == 1 || ii == 33
@@ -64,10 +68,11 @@ function plot_heading_angle_per_fly(Log, trx, n_flies, n_conditions, title_str, 
                 else
                     col = [1 1 1];
                 end 
+
             elseif dir_id == 1
-                col = [0 0 1 Log.contrast(ii)*0.75];
+                col = [0 0 1 con_val*0.75];
             elseif dir_id == -1
-                col = [1 0 1 Log.contrast(ii)*0.75];
+                col = [1 0 1 con_val*0.75];
             end 
     
             % Plot rectangles in the background of when the stimulus changes. 
