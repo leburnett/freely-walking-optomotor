@@ -7,7 +7,7 @@ clc
 
 %% PARAMETERS 
 
-path_to_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/DATA/2024_08_06';
+path_to_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/data/2024_08_09';
 
 % Save the figures that are generated? 
 save_figs = true;
@@ -61,26 +61,26 @@ process_freely_walking_optomotor_dist_centre(path_to_folder, dcentre_data_save_f
 
 %% 2 - Generate plots for all flies - across time points (ZT)
 
-zt_file = '/Users/burnettl/Documents/Janelia/HMS_2024/zt_conditions.xlsx';
-
-% What to use for errorbars
-% Can only take "STD", "SEM" or "CI"
-ebar = "IQR";
-
-% Plot the average angular velocity per contrast per zt condition.
-% Normalised to the ang vel at the first 1.0 contrast condition. 
-plot_line_ang_vel_ratio_for_zt_normalised(ratio_data_save_folder, zt_file, save_figs, fig_save_folder, mean_med, ebar)
-
-% % Plot the unnormalised version: 
-plot_line_ang_vel_for_zt(ang_data_save_folder, zt_file, save_figs, fig_save_folder, mean_med, ebar)
-
-% Plot the velocity per constrast per zt condition
-plot_line_vel_for_zt(vel_data_save_folder, zt_file, save_figs, fig_save_folder, mean_med, ebar)
+% zt_file = '/Users/burnettl/Documents/Janelia/HMS_2024/zt_conditions.xlsx';
+% 
+% % What to use for errorbars
+% % Can only take "STD", "SEM" or "CI"
+% ebar = "IQR";
+% 
+% % Plot the average angular velocity per contrast per zt condition.
+% % Normalised to the ang vel at the first 1.0 contrast condition. 
+% plot_line_ang_vel_ratio_for_zt_normalised(ratio_data_save_folder, zt_file, save_figs, fig_save_folder, mean_med, ebar)
+% 
+% % % Plot the unnormalised version: 
+% plot_line_ang_vel_for_zt(ang_data_save_folder, zt_file, save_figs, fig_save_folder, mean_med, ebar)
+% 
+% % Plot the velocity per constrast per zt condition
+% plot_line_vel_for_zt(vel_data_save_folder, zt_file, save_figs, fig_save_folder, mean_med, ebar)
 
 
 %% For generating plots for the different protocols
 
-data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/distcentre/protocol_v1/empty_split_females';
+data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/distcentre/protocol_v6/cond_val_3/SS324_motionblind_females';
 
 save_figs = true;
 

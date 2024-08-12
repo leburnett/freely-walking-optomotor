@@ -38,6 +38,12 @@ function plot_line_dist_from_centre(data_path, save_figs, fig_save_path, mean_me
             stop_fr = Log.stop_f(ii)-1;
             w = stop_fr - st_fr;
             dir_id = Log.dir(ii);
+
+            if dir_id <= 1.2
+                cond_val = 1; 
+            else 
+                cond_val = Log.contrast(ii);
+            end 
         
             if dir_id == 0 
                 if ii == 1 || ii == 33
@@ -48,9 +54,9 @@ function plot_line_dist_from_centre(data_path, save_figs, fig_save_path, mean_me
                     col = [1 1 1];
                 end 
             elseif dir_id == 1
-                col = [0 0 1 Log.contrast(ii)*0.75];
+                col = [0 0 1 cond_val*0.75];
             elseif dir_id == -1
-                col = [1 0 1 Log.contrast(ii)*0.75];
+                col = [1 0 1 cond_val*0.75];
             end 
             
             % Add rectangles denoting the different types of experiment.
@@ -87,7 +93,7 @@ function plot_line_dist_from_centre(data_path, save_figs, fig_save_path, mean_me
     elseif numel(data{1}) < 14700
         min_length = 14500;
     elseif numel(data{1}) < 18900
-        min_length = 18840;
+        min_length = 18800;
     else 
         min_length = 5150;
     end 
@@ -100,7 +106,9 @@ function plot_line_dist_from_centre(data_path, save_figs, fig_save_path, mean_me
         n_flies = numel(data);
         for jj = 1: n_flies
             dtt = data{jj};
-            if numel(dtt)<min_length 
+            if numel(dtt)<min_length
+                disp('Number of frames less than min length - there will be missing data. Numel(dtt): ')
+                disp(numel(dtt))
                 continue
             else
                 dtt = dtt(1:min_length);
