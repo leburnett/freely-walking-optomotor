@@ -130,9 +130,9 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig
     
         %% Make 'ang datapoints'
         % if n_conditions == 69
-        [datapoints_mean, datapoints_med] = make_mean_ang_vel_datapoints_dfftimes(Log, trx, n_flies, n_conditions, fps);
+        % [datapoints_mean, datapoints_med] = make_mean_ang_vel_datapoints_dfftimes(Log, trx, n_flies, n_conditions, fps);
         % elseif n_conditions == 33
-        %     [datapoints_mean, datapoints_med] = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps);
+        [datapoints_mean, datapoints_med] = make_mean_ang_vel_datapoints(Log, trx, n_flies, n_conditions, fps);
         % end 
 
         if mean_med == "mean"
@@ -167,7 +167,7 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig
         % Individual flies in light pink/blue.
         % Average across flies in bold.
     
-        data_to_use = ang_datapoints; %(1:17, :);
+        % data_to_use = ang_datapoints; %(1:17, :);
     
         % plot_line_ang_vel_all_flies(data_to_use, n_flies, title_str, save_str, fig_exp_save_folder, save_figs)
     

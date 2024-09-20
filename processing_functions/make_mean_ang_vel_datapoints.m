@@ -30,6 +30,11 @@ function [datapoints_mean, datapoints_med] = make_mean_ang_vel_datapoints(Log, t
             if st_fr == 0 
                 st_fr = 1;
             end 
+
+            if stop_fr > numel(V)
+                stop_fr = numel(V);
+            end 
+            
             data = V(st_fr:stop_fr);
 
             datapoints_mean(ii, idx+1) = nanmean(data);
