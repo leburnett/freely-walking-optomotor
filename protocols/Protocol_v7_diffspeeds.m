@@ -14,6 +14,7 @@ flicker_speed = 16;
 fly_strain = 'CS_w1118';
 fly_age = 2; % days
 fly_sex = 'F';
+n_flies = 15;
 lights_ON = datetime('20:00', 'Format', 'HH:mm');
 lights_OFF = datetime('12:00', 'Format', 'HH:mm');
 arena_temp = 24.5;
@@ -59,7 +60,7 @@ vidobj.getStatus();
 date_str = datetime('now','TimeZone','local','Format','yyyy_MM_dd');
 time_str = datetime('now','TimeZone','local','Format','HH:mm:ss');
 
-%% Save the data in date-folder -- protocol_folder -- time_folder
+%% Save the data in date-folder -- protocol_folder -- strain_folder -- time_folder
 project_data_folder = 'C:\MatlabRoot\FreeWalkOptomotor\data';
 
 date_folder = fullfile(project_data_folder, string(date_str));
@@ -70,10 +71,15 @@ end
 protocol_folder = fullfile(date_folder, func_name);
 if ~isfolder(protocol_folder)
     mkdir(protocol_folder)
-end 
+end
+
+strain_folder = fullfile(protocol_folder, fly_strain);
+if ~isfolder(strain_folder)
+    mkdir(strain_folder)
+end
 
 t_str = strrep(string(time_str), ':', '_');
-exp_folder = fullfile(protocol_folder, t_str);
+exp_folder = fullfile(strain_folder, t_str);
 if ~isfolder(exp_folder)
     mkdir(exp_folder)
 end 
@@ -372,6 +378,7 @@ LOG.time = time_str;
 LOG.fly_strain = fly_strain;
 LOG.fly_age = fly_age;
 LOG.fly_sex = fly_sex;
+LOG.n_flies = n_flies;
 LOG.lights_ON = lights_ON;
 LOG.lights_OFF = lights_OFF;
 LOG.arena_temp= arena_temp;

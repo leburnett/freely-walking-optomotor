@@ -51,7 +51,7 @@ vidobj.getStatus();
 date_str = datetime('now','TimeZone','local','Format','yyyy_MM_dd');
 time_str = datetime('now','TimeZone','local','Format','HH:mm:ss');
 
-% Path to project folder
+%% Save the data in date-folder -- protocol_folder -- strain_folder -- time_folder
 project_data_folder = 'C:\MatlabRoot\FreeWalkOptomotor\data';
 
 date_folder = fullfile(project_data_folder, string(date_str));
@@ -62,10 +62,15 @@ end
 protocol_folder = fullfile(date_folder, func_name);
 if ~isfolder(protocol_folder)
     mkdir(protocol_folder)
-end 
+end
+
+strain_folder = fullfile(protocol_folder, fly_strain);
+if ~isfolder(strain_folder)
+    mkdir(strain_folder)
+end
 
 t_str = strrep(string(time_str), ':', '_');
-exp_folder = fullfile(protocol_folder, t_str);
+exp_folder = fullfile(strain_folder, t_str);
 if ~isfolder(exp_folder)
     mkdir(exp_folder)
 end 
