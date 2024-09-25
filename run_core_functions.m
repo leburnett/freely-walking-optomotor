@@ -51,7 +51,7 @@ end
 process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig_save_folder, ang_data_save_folder, genotype, mean_med)
 % 
 % % % Generate plots for velocity analysis
-% process_freely_walking_optomotor_vel(path_to_folder, save_figs, fig_save_folder, vel_data_save_folder, genotype, mean_med)
+process_freely_walking_optomotor_vel(path_to_folder, save_figs, fig_save_folder, vel_data_save_folder, genotype, mean_med)
 % 
 % % process angle versus displacement ratio
 % % process_freely_walking_optomotor_ang_vel_ratio(path_to_folder, save_figs, fig_save_folder, ratio_data_save_folder, genotype, mean_med)
