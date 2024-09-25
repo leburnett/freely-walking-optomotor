@@ -12,8 +12,8 @@ lights_OFF = datetime('12:00', 'Format', 'HH:mm');
 arena_temp = 24.5;
 
 % Protocol parameters:
-trial_len = 10; 
-t_acclim = 60;
+trial_len = 5; 
+t_acclim = 6;
 num_trials_per_block = 7;
 num_directions = 2; 
 num_reps = 2;
@@ -24,6 +24,7 @@ num_acclim = 3;
 optomotor_pattern = 1;
 flicker_pattern = 2;
 optomotor_speed = 64; % in frames per second
+flicker_speed = 8;
 
 %% Protocol name
 func_name = string(mfilename());
@@ -49,7 +50,7 @@ vidobj.getStatus();
 date_str = datetime('now','TimeZone','local','Format','yyyy_MM_dd');
 time_str = datetime('now','TimeZone','local','Format','HH:mm:ss');
 
-% Path to project folder
+%% Save the data in date-folder -- protocol_folder -- time_folder
 project_data_folder = 'C:\MatlabRoot\FreeWalkOptomotor\data';
 
 date_folder = fullfile(project_data_folder, string(date_str));
@@ -72,7 +73,6 @@ exp_name = 'REC_';
 v_fname =  fullfile(exp_folder, exp_name);
 
 vidobj.enableLogging();
-% vidobj.setConfiguration(config_path);
 vidobj.loadConfiguration(config_path);
 vidobj.setVideoFile(v_fname);
 
@@ -143,7 +143,7 @@ for tr_ind = 1:num_trials_per_block
     Log.contrast(idx_value) = contrast_levels(tr_ind);
     Log.dir(idx_value) = dir_val;
 
-    Panel_com('send_gain_bias', [optomotor_speed 0 0 0]);
+    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]);
     pause(0.01);
     Panel_com('set_position', [1 tr_ind]);
     pause(0.01);
@@ -173,7 +173,7 @@ for tr_ind = 1:num_trials_per_block
     Log.contrast(idx_value) = contrast_levels(tr_ind);
     Log.dir(idx_value) = dir_val;
 
-    Panel_com('send_gain_bias', [-optomotor_speed 0 0 0]); 
+    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
     pause(0.01);
     Panel_com('set_position', [1 tr_ind]); 
     pause(0.01);
@@ -208,7 +208,7 @@ Log.trial(idx_value) = idx_value;
 Log.contrast(idx_value) = 1.2;
 Log.dir(idx_value) = dir_val;
 
-Panel_com('send_gain_bias', [optomotor_speed/8 0 0 0]); 
+Panel_com('send_gain_bias', [flicker_speed 0 0 0]); 
 pause(0.01);
 Panel_com('set_position', [1 1]);
 pause(0.01);
@@ -245,7 +245,7 @@ for tr_ind = 7+[1:num_trials_per_block]
     Log.contrast(idx_value) = contrast_levels(15-tr_ind);
     Log.dir(idx_value) = dir_val;
 
-    Panel_com('send_gain_bias', [optomotor_speed 0 0 0]); 
+    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
     pause(0.01);
     Panel_com('set_position', [1 15-tr_ind]); 
     pause(0.01);
@@ -275,7 +275,7 @@ for tr_ind = 7+[1:num_trials_per_block]
     Log.contrast(idx_value) = contrast_levels(15-tr_ind);
     Log.dir(idx_value) = dir_val;
 
-    Panel_com('send_gain_bias', [-optomotor_speed 0 0 0]); 
+    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
     pause(0.01);
     Panel_com('set_position', [1 15-tr_ind]);
     pause(0.01);
@@ -310,7 +310,7 @@ Log.trial(idx_value) = idx_value;
 Log.contrast(idx_value) = 1.2;
 Log.dir(idx_value) = dir_val;
 
-Panel_com('send_gain_bias', [optomotor_speed/8 0 0 0]); 
+Panel_com('send_gain_bias', [flicker_speed 0 0 0]); 
 pause(0.01);
 Panel_com('set_position', [1 1]);
 pause(0.01);
@@ -382,10 +382,13 @@ LOG.num_acclim=num_acclim;
 LOG.optomotor_pattern=optomotor_pattern;
 LOG.flicker_pattern=flicker_pattern;
 LOG.optomotor_speed=optomotor_speed; % in frames per second
+LOG.flicker_speed = flicker_speed;
 LOG.pattern_names=pattern_names;
 
+% Add log file of timings per condition
 LOG.Log = Log;
 
+%% save LOG file
 log_fname =  fullfile(exp_folder, strcat('LOG_', string(date_str), '_', t_str, '.mat'));
 save(log_fname, 'LOG');
 disp('Log saved')
