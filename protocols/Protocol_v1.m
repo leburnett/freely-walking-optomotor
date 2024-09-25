@@ -14,6 +14,7 @@ arena_temp = 24.5;
 % Protocol parameters:
 trial_len = 5; 
 t_acclim = 6;
+t_flicker = 10;
 num_trials_per_block = 7;
 num_directions = 2; 
 num_reps = 2;
@@ -219,7 +220,7 @@ pause(0.01);
 Log.start_t(idx_value) = vidobj.getTimeStamp().value;
 Log.start_f(idx_value) = vidobj.getFrameCount().value;
 
-pause(trial_len); 
+pause(t_flicker); 
 pause(0.01); % The pattern will run for this ‘Time’
 Panel_com('stop'); 
 pause(0.01);
@@ -321,7 +322,7 @@ pause(0.01);
 Log.start_t(idx_value) = vidobj.getTimeStamp().value;
 Log.start_f(idx_value) = vidobj.getFrameCount().value;
 
-pause(trial_len); 
+pause(t_flicker); 
 pause(0.01); % The pattern will run for this ‘Time’
 Panel_com('stop'); 
 pause(0.01);
@@ -372,6 +373,7 @@ LOG.func_name = func_name;
 % Protocol parameters:
 LOG.trial_len=trial_len;
 LOG.t_acclim=t_acclim;
+LOG.t_flicker=t_flicker;
 LOG.num_trials_per_block=num_trials_per_block;
 LOG.num_directions=num_directions; 
 LOG.num_reps=num_reps;

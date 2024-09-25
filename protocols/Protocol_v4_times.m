@@ -1,6 +1,39 @@
 
-%Protocol_v1.m file for HMS experiments, June 2024
-% exp_str = 'Circadian_optomotor_freewalking_';
+%Protocol_v4.m file 
+% Different switch intervals - short to long
+
+%% Input parameters:
+% These parameters will be saved in the log file. 
+fly_strain = 'CS_w1118';
+fly_age = 2; % days
+fly_sex = 'F';
+lights_ON = datetime('20:00', 'Format', 'HH:mm');
+lights_OFF = datetime('12:00', 'Format', 'HH:mm');
+arena_temp = 24.5;
+
+% Protocol parameters:
+t_acclim = 20;
+t_flicker = 20;
+
+num_directions = 2; 
+num_reps = 2;
+num_flickers = 2; 
+num_acclim = 3; 
+
+% Pattern settings
+optomotor_pattern = 1;
+flicker_pattern = 2;
+optomotor_speed = 64; % in frames per second
+flicker_speed = 8;
+
+%% Protocol name
+func_name = string(mfilename());
+
+%% SD card pattern information
+load('C:\MatlabRoot\Patterns\patterns_oaky\SD_copy.mat', 'SD');
+patterns = SD.pattern.pattNames;
+% cell array with the name of the patterns used.
+pattern_names = patterns(optomotor_pattern: flicker_pattern);
 
 %% block of initializations
 
@@ -17,7 +50,7 @@ vidobj.getStatus();
 date_str = datetime('now','TimeZone','local','Format','yyyy_MM_dd');
 time_str = datetime('now','TimeZone','local','Format','HH:mm:ss');
 
-% Path to project folder
+%% Save the data in date-folder -- protocol_folder -- time_folder
 project_data_folder = 'C:\MatlabRoot\FreeWalkOptomotor\data';
 
 date_folder = fullfile(project_data_folder, string(date_str));
@@ -25,42 +58,28 @@ if ~isfolder(date_folder)
     mkdir(date_folder)
 end 
 
+protocol_folder = fullfile(date_folder, func_name);
+if ~isfolder(protocol_folder)
+    mkdir(protocol_folder)
+end 
+
 t_str = strrep(string(time_str), ':', '_');
-exp_folder = fullfile(date_folder, t_str);
+exp_folder = fullfile(protocol_folder, t_str);
 if ~isfolder(exp_folder)
     mkdir(exp_folder)
 end 
 
-% exp_name = strcat(exp_str, string(date_str), '-', t_str);
 exp_name = 'REC_';
 v_fname =  fullfile(exp_folder, exp_name);
 
 vidobj.enableLogging();
-% vidobj.setConfiguration(config_path);
 vidobj.loadConfiguration(config_path);
 vidobj.setVideoFile(v_fname);
 
 % Pattern settings
-
-optomotor_pattern = 1;
-flicker_pattern = 2;
-
-optomotor_speed = 64; % in frames per second
-controller_mode = [0 0]; % double open loop
-% contrast_levels = [0.11 0.2 0.333 0.4 0.556 0.75 1.0];
-
-t_acclim = 20;
-t_flicker = 20;
-
-num_trials_per_block = 7;
-num_directions = 2; 
-num_reps = 2;
-num_flickers = 2; 
-num_acclim = 3; 
-
+controller_mode = [0 0]; % double open loop 
 idx_value = 1;
-
-contrast_value = 7; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% - all high contrast
+contrast_value = 7; % - all high contrast
 
 sz = [69, 7];
 varTypes = {'double', 'double','double','double','double','double','double'};
@@ -129,7 +148,7 @@ for tr_ind = 1:num_trials_per_block1
     Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
-    Panel_com('send_gain_bias', [optomotor_speed 0 0 0]);
+    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]);
     pause(0.01);
     Panel_com('set_position', [1 contrast_value]);
     pause(0.01);
@@ -159,7 +178,7 @@ for tr_ind = 1:num_trials_per_block1
     Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
-    Panel_com('send_gain_bias', [-optomotor_speed 0 0 0]); 
+    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
     pause(0.01);
     Panel_com('set_position', [1 contrast_value]); 
     pause(0.01);
@@ -194,7 +213,7 @@ Log.trial(idx_value) = idx_value;
 Log.contrast(idx_value) = 1.2;
 Log.dir(idx_value) = dir_val;
 
-Panel_com('send_gain_bias', [optomotor_speed/8 0 0 0]); 
+Panel_com('send_gain_bias', [flicker_speed 0 0 0]); 
 pause(0.01);
 Panel_com('set_position', [1 1]);
 pause(0.01);
@@ -241,7 +260,7 @@ for tr_ind = 1:num_trials_per_block2
     Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
-    Panel_com('send_gain_bias', [optomotor_speed 0 0 0]);
+    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]);
     pause(0.01);
     Panel_com('set_position', [1 contrast_value]);
     pause(0.01);
@@ -271,7 +290,7 @@ for tr_ind = 1:num_trials_per_block2
     Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
-    Panel_com('send_gain_bias', [-optomotor_speed 0 0 0]); 
+    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
     pause(0.01);
     Panel_com('set_position', [1 contrast_value]); 
     pause(0.01);
@@ -306,7 +325,7 @@ Log.trial(idx_value) = idx_value;
 Log.contrast(idx_value) = 1.3;
 Log.dir(idx_value) = dir_val;
 
-Panel_com('send_gain_bias', [optomotor_speed/8 0 0 0]); 
+Panel_com('send_gain_bias', [flicker_speed 0 0 0]); 
 pause(0.01);
 Panel_com('set_position', [1 1]);
 pause(0.01);
@@ -353,7 +372,7 @@ for tr_ind = 1:num_trials_per_block3
     Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
-    Panel_com('send_gain_bias', [optomotor_speed 0 0 0]);
+    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]);
     pause(0.01);
     Panel_com('set_position', [1 contrast_value]);
     pause(0.01);
@@ -383,7 +402,7 @@ for tr_ind = 1:num_trials_per_block3
     Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
-    Panel_com('send_gain_bias', [-optomotor_speed 0 0 0]); 
+    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
     pause(0.01);
     Panel_com('set_position', [1 contrast_value]); 
     pause(0.01);
@@ -418,7 +437,7 @@ Log.trial(idx_value) = idx_value;
 Log.contrast(idx_value) = 1.4;
 Log.dir(idx_value) = dir_val;
 
-Panel_com('send_gain_bias', [optomotor_speed/8 0 0 0]); 
+Panel_com('send_gain_bias', [flicker_speed 0 0 0]); 
 pause(0.01);
 Panel_com('set_position', [1 1]);
 pause(0.01);
@@ -464,7 +483,7 @@ for tr_ind = 1:num_trials_per_block4
     Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
-    Panel_com('send_gain_bias', [optomotor_speed 0 0 0]);
+    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]);
     pause(0.01);
     Panel_com('set_position', [1 contrast_value]);
     pause(0.01);
@@ -494,7 +513,7 @@ for tr_ind = 1:num_trials_per_block4
     Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
-    Panel_com('send_gain_bias', [-optomotor_speed 0 0 0]); 
+    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
     pause(0.01);
     Panel_com('set_position', [1 contrast_value]); 
     pause(0.01);
@@ -529,7 +548,7 @@ Log.trial(idx_value) = idx_value;
 Log.contrast(idx_value) = 1.5;
 Log.dir(idx_value) = dir_val;
 
-Panel_com('send_gain_bias', [optomotor_speed/8 0 0 0]); 
+Panel_com('send_gain_bias', [flicker_speed 0 0 0]); 
 pause(0.01);
 Panel_com('set_position', [1 1]);
 pause(0.01);
@@ -575,7 +594,7 @@ for tr_ind = 1:num_trials_per_block5
     Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
-    Panel_com('send_gain_bias', [optomotor_speed 0 0 0]);
+    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]);
     pause(0.01);
     Panel_com('set_position', [1 contrast_value]);
     pause(0.01);
@@ -605,7 +624,7 @@ for tr_ind = 1:num_trials_per_block5
     Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
-    Panel_com('send_gain_bias', [-optomotor_speed 0 0 0]); 
+    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
     pause(0.01);
     Panel_com('set_position', [1 contrast_value]); 
     pause(0.01);
@@ -640,7 +659,7 @@ Log.trial(idx_value) = idx_value;
 Log.contrast(idx_value) = 1.6;
 Log.dir(idx_value) = dir_val;
 
-Panel_com('send_gain_bias', [optomotor_speed/8 0 0 0]); 
+Panel_com('send_gain_bias', [flicker_speed 0 0 0]); 
 pause(0.01);
 Panel_com('set_position', [1 1]);
 pause(0.01);
@@ -687,7 +706,7 @@ for tr_ind = 1:num_trials_per_block6
     Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
-    Panel_com('send_gain_bias', [optomotor_speed 0 0 0]);
+    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]);
     pause(0.01);
     Panel_com('set_position', [1 contrast_value]);
     pause(0.01);
@@ -717,7 +736,7 @@ for tr_ind = 1:num_trials_per_block6
     Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
-    Panel_com('send_gain_bias', [-optomotor_speed 0 0 0]); 
+    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
     pause(0.01);
     Panel_com('set_position', [1 contrast_value]); 
     pause(0.01);
@@ -752,7 +771,7 @@ Log.trial(idx_value) = idx_value;
 Log.contrast(idx_value) = 1.7;
 Log.dir(idx_value) = dir_val;
 
-Panel_com('send_gain_bias', [optomotor_speed/8 0 0 0]); 
+Panel_com('send_gain_bias', [flicker_speed 0 0 0]); 
 pause(0.01);
 Panel_com('set_position', [1 1]);
 pause(0.01);
@@ -799,12 +818,42 @@ Log.stop_f(idx_value) = vidobj.getFrameCount().value;
 %% stop camera
 vidobj.stopCapture();
 disp('Camera OFF')
+
+%% Add parameters to log file. 
+LOG.date = date_str;
+LOG.time = time_str;
+
+LOG.fly_strain = fly_strain;
+LOG.fly_age = fly_age;
+LOG.fly_sex = fly_sex;
+LOG.lights_ON = lights_ON;
+LOG.lights_OFF = lights_OFF;
+LOG.arena_temp= arena_temp;
+
+% Protocol name
+LOG.func_name = func_name;
+
+% Protocol parameters:
+LOG.trial_len=[trial_len1, trial_len2, trial_len3, trial_len4, trial_len5, trial_len6];
+LOG.t_acclim=t_acclim;
+LOG.t_flicker = t_flicker;
+LOG.num_trials_per_block=[num_trials_per_block1, num_trials_per_block2, num_trials_per_block3, num_trials_per_block4, num_trials_per_block5, num_trials_per_block6];
+LOG.num_directions=num_directions; 
+LOG.num_reps=num_reps;
+LOG.num_flickers=num_flickers; 
+LOG.num_acclim=num_acclim; 
+
+% Pattern settings
+LOG.optomotor_pattern=optomotor_pattern;
+LOG.flicker_pattern=flicker_pattern;
+LOG.optomotor_speed=optomotor_speed; % in frames per second
+LOG.flicker_speed = flicker_speed;
+LOG.pattern_names=pattern_names;
+
+% Add log file of timings per condition
+LOG.Log = Log;
+
+%% save LOG file
 log_fname =  fullfile(exp_folder, strcat('LOG_', string(date_str), '_', t_str, '.mat'));
-save(log_fname, 'Log');
+save(log_fname, 'LOG');
 disp('Log saved')
-
-
-%%
-% 
-% vid_fname = 'C:\MatlabRoot\FreeWalkOptomotor\data\2024_06_11\16_41_58\REC__cam_0_date_2024_06_11_time_16_41_58_v001.avi';
-% v = VideoReader(vid_fname);
