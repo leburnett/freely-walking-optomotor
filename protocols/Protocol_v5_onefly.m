@@ -178,6 +178,8 @@ end
 
 %% Flicker pattern 
 
+disp('trial number = flicker 1')
+
 Panel_com('set_pattern_id', flicker_pattern);
 
 idx_value = idx_value+1;
@@ -200,7 +202,7 @@ pause(0.01);
 Log.start_t(idx_value) = vidobj.getTimeStamp().value;
 Log.start_f(idx_value) = vidobj.getFrameCount().value;
 
-pause(trial_len); 
+pause(30); %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 pause(0.01); % The pattern will run for this ‘Time’
 Panel_com('stop'); 
 pause(0.01);
@@ -209,7 +211,7 @@ pause(0.01);
 Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
 Log.stop_f(idx_value) = vidobj.getFrameCount().value;
 
-disp('trial number = flicker 1')
+
 
 %% sweeping down contrast block
 

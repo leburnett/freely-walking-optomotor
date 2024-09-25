@@ -1,10 +1,22 @@
 
-%Protocol_v7.m file for HMS experiments, June 2024
-% exp_str = 'Circadian_optomotor_freewalking_';
+%Protocol_v7.m - different speeds
 
-% different speed - stepping contrast 
+% [16, 2]; 1 Hz
+% [32, 4]; 2 Hz
+% [64, 8]; 4 Hz
+% [127, 16]; 8 Hz
 
-speed_val = 45; % 64 = baseline
+speed_val = 127; % 64 = baseline
+flicker_speed = 16;
+
+% % gs_val = 3 - 2:7 patterns
+% optomotor_pattern = 1;
+% flicker_pattern = 2;
+
+% gs_val = 1 - 0:1 patterns
+% 8 pixel bars
+optomotor_pattern = 6;
+flicker_pattern = 7;
 
 %% block of initializations
 
@@ -45,18 +57,15 @@ vidobj.loadConfiguration(config_path);
 vidobj.setVideoFile(v_fname);
 
 % Pattern settings
-
-optomotor_pattern = 1;
-flicker_pattern = 2;
-
 optomotor_speed = speed_val; % in frames per second
 controller_mode = [0 0]; % double open loop
 contrast_levels = [0.11 0.2 0.333 0.4 0.556 0.75 1.0];
 
 trial_len = 10; 
-t_acclim = 60;
+t_acclim = 20; %60;
+t_flicker = 30;
 
-num_trials_per_block = 7;
+num_trials_per_block = 4; %7;
 num_directions = 2; 
 num_reps = 2;
 num_flickers = 2; 
@@ -127,7 +136,8 @@ for tr_ind = 1:num_trials_per_block
 
     Panel_com('send_gain_bias', [optomotor_speed 0 0 0]);
     pause(0.01);
-    Panel_com('set_position', [1 tr_ind]);
+    % Panel_com('set_position', [1 tr_ind]);
+    Panel_com('set_position', [1 1]);
     pause(0.01);
     Panel_com('start'); 
     pause(0.01);
@@ -157,7 +167,8 @@ for tr_ind = 1:num_trials_per_block
 
     Panel_com('send_gain_bias', [-optomotor_speed 0 0 0]); 
     pause(0.01);
-    Panel_com('set_position', [1 tr_ind]); 
+    % Panel_com('set_position', [1 tr_ind]); 
+    Panel_com('set_position', [1 1]);
     pause(0.01);
     Panel_com('start'); 
     pause(0.01);
@@ -191,7 +202,7 @@ Log.trial(idx_value) = idx_value;
 Log.contrast(idx_value) = 1.2;
 Log.dir(idx_value) = dir_val;
 
-Panel_com('send_gain_bias', [optomotor_speed/8 0 0 0]); 
+Panel_com('send_gain_bias', [flicker_speed 0 0 0]); 
 pause(0.01);
 Panel_com('set_position', [1 1]);
 pause(0.01);
@@ -202,7 +213,7 @@ pause(0.01);
 Log.start_t(idx_value) = vidobj.getTimeStamp().value;
 Log.start_f(idx_value) = vidobj.getFrameCount().value;
 
-pause(trial_len); 
+pause(t_flicker); 
 pause(0.01); % The pattern will run for this ‘Time’
 Panel_com('stop'); 
 pause(0.01);
@@ -231,7 +242,8 @@ for tr_ind = 7+[1:num_trials_per_block]
 
     Panel_com('send_gain_bias', [optomotor_speed 0 0 0]); 
     pause(0.01);
-    Panel_com('set_position', [1 15-tr_ind]); 
+    % Panel_com('set_position', [1 15-tr_ind]);
+    Panel_com('set_position', [1 1]);
     pause(0.01);
     Panel_com('start'); 
     pause(0.01);
@@ -261,7 +273,8 @@ for tr_ind = 7+[1:num_trials_per_block]
 
     Panel_com('send_gain_bias', [-optomotor_speed 0 0 0]); 
     pause(0.01);
-    Panel_com('set_position', [1 15-tr_ind]);
+    % Panel_com('set_position', [1 15-tr_ind]);
+    Panel_com('set_position', [1 1]);
     pause(0.01);
     Panel_com('start'); 
     pause(0.01);
@@ -295,7 +308,7 @@ Log.trial(idx_value) = idx_value;
 Log.contrast(idx_value) = 1.2;
 Log.dir(idx_value) = dir_val;
 
-Panel_com('send_gain_bias', [optomotor_speed/8 0 0 0]); 
+Panel_com('send_gain_bias', [flicker_speed 0 0 0]); 
 pause(0.01);
 Panel_com('set_position', [1 1]);
 pause(0.01);
@@ -306,7 +319,7 @@ pause(0.01);
 Log.start_t(idx_value) = vidobj.getTimeStamp().value;
 Log.start_f(idx_value) = vidobj.getFrameCount().value;
 
-pause(trial_len); 
+pause(t_flicker); 
 pause(0.01); % The pattern will run for this ‘Time’
 Panel_com('stop'); 
 pause(0.01);
