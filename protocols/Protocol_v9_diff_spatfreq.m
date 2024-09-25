@@ -1,30 +1,42 @@
 
-%Protocol_v2.m file 
-% All high contrast optomotor patterns.
+%Protocol_v9.m file - different spatial frequecies
 
 %% Input parameters:
 % These parameters will be saved in the log file. 
 fly_strain = 'CS_w1118';
 fly_age = 2; % days
 fly_sex = 'F';
-lights_ON = datetime('20:00', 'Format', 'HH:mm');
-lights_OFF = datetime('12:00', 'Format', 'HH:mm');
-arena_temp = 24.5;
+n_flies = 15;
+lights_ON = datetime('01:00', 'Format', 'HH:mm');
+lights_OFF = datetime('17:00', 'Format', 'HH:mm');
+arena_temp = 23.9;
 
 % Protocol parameters:
-trial_len = 10; 
-t_acclim = 60;
-t_flicker = 10;
-num_trials_per_block = 7;
+trial_len = 10;  
+t_acclim = 20; 
+t_flicker = 30; 
+num_trials_per_block = 4; 
 num_directions = 2; 
 num_reps = 2;
 num_flickers = 2; 
 num_acclim = 3; 
 
-% Pattern settings
-optomotor_pattern = 1;
-flicker_pattern = 2;
-optomotor_speed = 64; % in frames per second
+% Pattern settings:
+% 4 pixel bars
+optomotor_pattern = 4;
+flicker_pattern = 5;
+optomotor_speed = 32; 
+
+% 8 pixel bars
+% optomotor_pattern = 6;
+% flicker_pattern = 7;
+% optomotor_speed = 64; % in frames per second - was 64
+
+% 16 pixel bars
+% optomotor_pattern = 9;
+% flicker_pattern = 10;
+% optomotor_speed = 127; 
+
 flicker_speed = 8;
 
 %% Protocol name
@@ -82,11 +94,12 @@ vidobj.enableLogging();
 vidobj.loadConfiguration(config_path);
 vidobj.setVideoFile(v_fname);
 
+% Pattern settings
 controller_mode = [0 0]; % double open loop
-contrast_levels = [1.0 1.0 1.0 1.0 1.0 1.0 1.0]; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+contrast_levels = [1.0 1.0 1.0 1.0 1.0 1.0 1.0]; 
 
 idx_value = 1;
-con_val = 7; % Only the highest contrast
+con_val = 1; 
 
 sz = [((num_trials_per_block*num_directions)*num_reps)+num_flickers+num_acclim, 7];
 varTypes = {'double', 'double','double','double','double','double','double'};
@@ -138,6 +151,7 @@ disp('Acclim ended')
 for tr_ind = 1:num_trials_per_block
 
     disp(['trial number = ' num2str(tr_ind)])
+
     % If not the first trial then add one to idx_value
     if idx_value > 1
         idx_value = idx_value+1;
@@ -182,7 +196,7 @@ for tr_ind = 1:num_trials_per_block
 
     Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
     pause(0.01);
-    Panel_com('set_position', [1 con_val]);  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    Panel_com('set_position', [1 con_val]);  
     pause(0.01);
     Panel_com('start'); 
     pause(0.01);
@@ -199,11 +213,13 @@ for tr_ind = 1:num_trials_per_block
     % get frame and log it 
     Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
     Log.stop_f(idx_value) = vidobj.getFrameCount().value;
+
 end
 
 %% Flicker pattern 
 
 disp('trial number = flicker 1')
+
 Panel_com('set_pattern_id', flicker_pattern);
 
 idx_value = idx_value+1;
@@ -226,7 +242,7 @@ pause(0.01);
 Log.start_t(idx_value) = vidobj.getTimeStamp().value;
 Log.start_f(idx_value) = vidobj.getFrameCount().value;
 
-pause(t_flicker); 
+pause(t_flicker);  
 pause(0.01); % The pattern will run for this ‘Time’
 Panel_com('stop'); 
 pause(0.01);
@@ -235,12 +251,15 @@ pause(0.01);
 Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
 Log.stop_f(idx_value) = vidobj.getFrameCount().value;
 
+
 %% sweeping down contrast block
 
 Panel_com('set_mode',controller_mode);
 Panel_com('set_pattern_id', optomotor_pattern);
 
 for tr_ind = 7+[1:num_trials_per_block]
+
+    disp(['trial number = ' num2str(tr_ind)])
 
     idx_value = idx_value+1;
     % set dir_val as positive (1)
@@ -253,7 +272,7 @@ for tr_ind = 7+[1:num_trials_per_block]
 
     Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
     pause(0.01);
-    Panel_com('set_position', [1 con_val]); %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+    Panel_com('set_position', [1 con_val]); 
     pause(0.01);
     Panel_com('start'); 
     pause(0.01);
@@ -283,7 +302,7 @@ for tr_ind = 7+[1:num_trials_per_block]
 
     Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
     pause(0.01);
-    Panel_com('set_position', [1 con_val]); %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    Panel_com('set_position', [1 con_val]); 
     pause(0.01);
     Panel_com('start'); 
     pause(0.01);
@@ -301,10 +320,10 @@ for tr_ind = 7+[1:num_trials_per_block]
     Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
     Log.stop_f(idx_value) = vidobj.getFrameCount().value;
 
-    disp(['trial number = ' num2str(tr_ind)])
 end
 
 %% Flicker pattern 
+
 disp('trial number = flicker 2')
 Panel_com('set_pattern_id', flicker_pattern);
 
@@ -370,6 +389,7 @@ LOG.time = time_str;
 LOG.fly_strain = fly_strain;
 LOG.fly_age = fly_age;
 LOG.fly_sex = fly_sex;
+LOG.n_flies=n_flies;
 LOG.lights_ON = lights_ON;
 LOG.lights_OFF = lights_OFF;
 LOG.arena_temp= arena_temp;
@@ -380,7 +400,7 @@ LOG.func_name = func_name;
 % Protocol parameters:
 LOG.trial_len=trial_len;
 LOG.t_acclim=t_acclim;
-LOG.t_flicker= t_flicker;
+LOG.t_flicker=t_flicker;
 LOG.num_trials_per_block=num_trials_per_block;
 LOG.num_directions=num_directions; 
 LOG.num_reps=num_reps;
@@ -402,3 +422,8 @@ log_fname =  fullfile(exp_folder, strcat('LOG_', string(date_str), '_', t_str, '
 save(log_fname, 'LOG');
 disp('Log saved')
 
+
+%%
+% 
+% vid_fname = 'C:\MatlabRoot\FreeWalkOptomotor\data\2024_06_11\16_41_58\REC__cam_0_date_2024_06_11_time_16_41_58_v001.avi';
+% v = VideoReader(vid_fname);
