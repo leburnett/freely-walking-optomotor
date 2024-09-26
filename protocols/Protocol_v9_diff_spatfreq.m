@@ -4,12 +4,12 @@
 %% Input parameters:
 % These parameters will be saved in the log file. 
 fly_strain = 'CS_w1118';
-fly_age = 2; % days
+fly_age = 3; % days
 fly_sex = 'F';
 n_flies = 15;
-lights_ON = datetime('01:00', 'Format', 'HH:mm');
-lights_OFF = datetime('17:00', 'Format', 'HH:mm');
-arena_temp = 23.9;
+lights_ON = datetime('20:00', 'Format', 'HH:mm');
+lights_OFF = datetime('12:00', 'Format', 'HH:mm');
+arena_temp = 23.7;
 
 % Protocol parameters:
 trial_len = 10;  
@@ -23,9 +23,9 @@ num_acclim = 3;
 
 % Pattern settings:
 % 4 pixel bars
-optomotor_pattern = 4;
-flicker_pattern = 5;
-optomotor_speed = 32; 
+% optomotor_pattern = 4;
+% flicker_pattern = 5;
+% optomotor_speed = 32; 
 
 % 8 pixel bars
 % optomotor_pattern = 6;
@@ -37,6 +37,7 @@ optomotor_speed = 32;
 % flicker_pattern = 10;
 % optomotor_speed = 127; 
 
+% Flicker speed stays consistent.
 flicker_speed = 8;
 
 %% Protocol name
@@ -130,7 +131,7 @@ Log.stop_f(idx_value) = vidobj.getFrameCount().value;
 % Acclim time with all panels ON
 idx_value = idx_value+1; 
 Log.trial(idx_value) = idx_value;
-Log.contrast(idx_value) = 1.0; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Log.contrast(idx_value) = 1.0; 
 Log.dir(idx_value) = 0;
 disp('Pattern ON')
 Log.start_t(idx_value) = vidobj.getTimeStamp().value;
@@ -138,7 +139,7 @@ Log.start_f(idx_value) = vidobj.getFrameCount().value;
 
 Panel_com('set_mode',controller_mode); pause(0.01)
 Panel_com('set_pattern_id', optomotor_pattern); pause(0.01)
-Panel_com('set_position', [1 con_val]); pause(0.01) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Panel_com('set_position', [1 con_val]); pause(0.01) 
 pause(t_acclim);
 
 % get frame and log it 
