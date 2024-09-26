@@ -7,8 +7,8 @@
 % [64, 8]; 4 Hz
 % [127, 16]; 8 Hz
 
-speed_val = 64; % 64 = baseline
-flicker_speed = 8;
+optomotor_speed = 127; % 64 = baseline % in frames per second
+flicker_speed = 16;
 
 % These parameters will be saved in the log file. 
 fly_strain = 'CS_w1118';
@@ -17,7 +17,7 @@ fly_sex = 'F';
 n_flies = 15;
 lights_ON = datetime('20:00', 'Format', 'HH:mm');
 lights_OFF = datetime('12:00', 'Format', 'HH:mm');
-arena_temp = 23.9;
+arena_temp = 24.3;
 
 % Protocol parameters:
 trial_len = 10; 
@@ -34,7 +34,6 @@ num_acclim = 3;
 % 8 pixel bars
 optomotor_pattern = 6;
 flicker_pattern = 7;
-optomotor_speed = speed_val; % in frames per second
 
 %% Protocol name
 func_name = string(mfilename());
