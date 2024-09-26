@@ -1,4 +1,4 @@
-%Protocol_v8.m - testing spatial frequencies, speed, and trial lengths in
+%Protocol_v10_all_tests.m - testing spatial frequencies, speed, and trial lengths in
 %one big protocol
 
 %% Input parameters:
@@ -8,8 +8,10 @@
 % [64, 8]; 4 Hz
 % [127, 16]; 8 Hz
 
-optomotor_speed = 127; % 64 = baseline % in frames per second
-flicker_speed = 16;
+%% THESE ARE THE ONES THAT CHANGE IN EACH TRIAL
+% optomotor_speed = 127; % 64 = baseline % in frames per second
+% flicker_speed = 16;
+%%%%%%%%%%
 
 % These parameters will be saved in the log file. 
 fly_strain = 'CS_w1118';
@@ -21,7 +23,7 @@ lights_OFF = datetime('12:00', 'Format', 'HH:mm');
 arena_temp = 24.3;
 
 % Protocol parameters:
-trial_len = 10; 
+%%%%%%% trial_len = 10; %% also changes
 t_acclim = 20;
 t_flicker = 30;
 num_trials_per_block = 4;
@@ -30,11 +32,12 @@ num_reps = 2;
 num_flickers = 2; 
 num_acclim = 3; 
 
-% Pattern settings
-% gs_val = 1 - 0:1 patterns - binary
-% 8 pixel bars
-optomotor_pattern = 6;
-flicker_pattern = 7;
+% Pattern settings %%%%%%%%%%% ALSO CHANGE IN EACH TRIAL, THESE ARE CHOSEN
+% BASED ON THE SPATIAL FREQUENCY
+% % gs_val = 1 - 0:1 patterns - binary
+% % 8 pixel bars
+% optomotor_pattern = 6;
+% flicker_pattern = 7;
 
 %% Protocol name
 func_name = string(mfilename());
@@ -105,6 +108,20 @@ vidobj.startCapture();
 disp('camera ON')
 % Record the behaviour of the flies without any lights on in the arena
 % before running the stimulus. 
+
+%%%% BEGINNING NEW LOOP METHOD HERE
+% want to choose a random experiment from a list of experiments
+
+% first, build and define all experiments in an array where each experiment
+% is a row and each parameter is a column
+
+all_conditions = {
+    struct ('name', 'Condition_1', 'optomotor_pattern', 4, 'flicker_pattern', 5, 'optomotor_speed', 64, 'flicker_speed', 8, 'trial_len', 2);
+    
+    
+    };
+
+
 
 % Acclim time with all panels OFF
 
