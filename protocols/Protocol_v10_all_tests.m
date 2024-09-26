@@ -9,8 +9,8 @@
 % [127, 16]; 8 Hz
 
 %% THESE ARE THE ONES THAT CHANGE IN EACH TRIAL
-optomotor_speed = 127; % 64 = baseline % in frames per second
-flicker_speed = 16;
+% optomotor_speed = 127; % 64 = baseline % in frames per second
+% flicker_speed = 16;
 %%%%%%%%%
 
 % These parameters will be saved in the log file. 
@@ -23,7 +23,7 @@ lights_OFF = datetime('12:00', 'Format', 'HH:mm');
 arena_temp = 24.3;
 
 % Protocol parameters:
-trial_len = 10; %% also changes
+% trial_len = 10; %% also changes
 t_acclim = 20;
 t_flicker = 30;
 num_trials_per_block = 4;
@@ -37,8 +37,8 @@ num_conditions = 8;
 % BASED ON THE SPATIAL FREQUENCY
 % % gs_val = 1 - 0:1 patterns - binary
 % % 8 pixel bars
-optomotor_pattern = 6;
-flicker_pattern = 7;
+% optomotor_pattern = 6;
+% flicker_pattern = 7;
 
 %% Protocol name
 func_name = string(mfilename());
@@ -132,7 +132,20 @@ all_conditions = [
  for i = 1:num_conditions
      % get the current condition
      current_condition = random_order(i);
-     display (current_condition);
+     disp (current_condition);
+
+     % set condition variables based on row in all conditions
+     temp_optomotor_pattern = all_conditions(current_condition, 1);
+     temp_flicker_pattern = all_conditions(current_condition, 2);
+     temp_optomotor_speed = all_conditions(current_condition, 3);
+     temp_flicker_speed = all_conditions(current_condition, 4);
+     temp_trial_len = all_conditions(current_condition, 5);
+
+     % disp (optomotor_pattern); 
+     % disp (flicker_pattern);
+     % disp (optomotor_speed);
+     % disp (flicker_speed);
+     % disp (trial_len);
 
  end
 
