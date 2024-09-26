@@ -9,9 +9,9 @@
 % [127, 16]; 8 Hz
 
 %% THESE ARE THE ONES THAT CHANGE IN EACH TRIAL
-% optomotor_speed = 127; % 64 = baseline % in frames per second
-% flicker_speed = 16;
-%%%%%%%%%%
+optomotor_speed = 127; % 64 = baseline % in frames per second
+flicker_speed = 16;
+%%%%%%%%%
 
 % These parameters will be saved in the log file. 
 fly_strain = 'CS_w1118';
@@ -23,7 +23,7 @@ lights_OFF = datetime('12:00', 'Format', 'HH:mm');
 arena_temp = 24.3;
 
 % Protocol parameters:
-%%%%%%% trial_len = 10; %% also changes
+trial_len = 10; %% also changes
 t_acclim = 20;
 t_flicker = 30;
 num_trials_per_block = 4;
@@ -31,13 +31,14 @@ num_directions = 2;
 num_reps = 2;
 num_flickers = 2; 
 num_acclim = 3; 
+num_conditions = 8;
 
 % Pattern settings %%%%%%%%%%% ALSO CHANGE IN EACH TRIAL, THESE ARE CHOSEN
 % BASED ON THE SPATIAL FREQUENCY
 % % gs_val = 1 - 0:1 patterns - binary
 % % 8 pixel bars
-% optomotor_pattern = 6;
-% flicker_pattern = 7;
+optomotor_pattern = 6;
+flicker_pattern = 7;
 
 %% Protocol name
 func_name = string(mfilename());
@@ -112,17 +113,39 @@ disp('camera ON')
 %%%% BEGINNING NEW LOOP METHOD HERE
 % want to choose a random experiment from a list of experiments
 
+% create random number order of the conditions
+random_order = randperm(num_conditions);
+display (random_order);
+
+all_conditions = [
+    4, 5, 64, 8, 2;
+    4, 5, 127, 16, 20;
+    4, 5, 64, 8, 20;
+    4, 5, 127, 16, 2;
+    6, 7, 64, 8, 2; 
+    6, 7, 127, 16, 20;
+    6, 7, 64, 8, 20;
+    6, 7, 127, 16, 2
+];
+
+%start LOOP
+ for i = 1:num_conditions
+     % get the current condition
+     current_condition = random_order(i);
+     display (current_condition);
+
+ end
+
+
+
+
 % first, build and define all experiments in an array where each experiment
 % is a row and each parameter is a column
 
-all_conditions = {
-    struct ('name', 'Condition_1', 'optomotor_pattern', 4, 'flicker_pattern', 5, 'optomotor_speed', 64, 'flicker_speed', 8, 'trial_len', 2);
-    
-    
-    };
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Acclim time with all panels OFF
 
 Log.trial(idx_value) = idx_value;
