@@ -135,43 +135,27 @@ random_order = randperm(num_conditions);
 display (random_order);
 
 %% % ACCLIM OFF
-% initialize empty LOG_acclim_off
-ao_idx_value = 1; % acclim off index value
-sz = [1, 6];
 
-varTypes = {'double','double','double','double','double','double'};
-varNames = {'condition', 'dir', 'start_t', 'start_f', 'stop_t', 'stop_f'};
-acclim_off = table('Size',sz,'VariableTypes',varTypes,'VariableNames',varNames);
+acclim_off1.condition = 0;
+acclim_off1.dir = 0;
 
-acclim_off.condition(1) = 0;
-
-
-
-% Log.dir(idx_value) = 0;
 % % get frame and log it
-acclim_off.start_t(1) = vidobj.getTimeStamp().value;
-acclim_off.start_f(1) = vidobj.getFrameCount().value;
+acclim_off1.start_t = vidobj.getTimeStamp().value;
+acclim_off1.start_f = vidobj.getFrameCount().value;
 
 Panel_com('all_off'); 
 disp('Acclim OFF')
 pause(t_acclim); 
 
 % get frame and log it 
-acclim_off.stop_t(1) = vidobj.getTimeStamp().value;
-acclim_off.stop_f(1) = vidobj.getFrameCount().value;
+acclim_off1.stop_t = vidobj.getTimeStamp().value;
+acclim_off1.stop_f = vidobj.getFrameCount().value;
 
-LOG.acclim_off = acclim_off;
+LOG.acclim_off = acclim_off1;
 
 
-% initialize empty LOG_acclim_patt
-sz = [1, 6];
-
-varTypes = {'double','double','double','double','double','double'};
-varNames = {'condition', 'dir', 'start_t', 'start_f', 'stop_t', 'stop_f'};
-acclim_patt = table('Size',sz,'VariableTypes',varTypes,'VariableNames',varNames);
-
-acclim_patt.condition(1) = random_order(1);
 %% Present stimuli
+log_n = 1;
 
 % Run through all 8 conditions twice
 for j = [1,2] 
@@ -185,62 +169,57 @@ for j = [1,2]
          if j == 1 && i == 1
 
             optomotor_pattern = all_conditions(current_condition, 1);
-             % % ACCLIM ON
-            % idx_value = idx_value+1; 
-            % Log.trial(idx_value) = idx_value;
-            % Log.dir(idx_value) = 0;
+             
+            % % ACCLIM ON
             disp('Pattern ON')
 
-            % log LOG_acclim_patt
-            acclim_patt.start_t(1) = vidobj.getTimeStamp().value;
-            acclim_patt.start_f(1) = vidobj.getFrameCount().value;
+            acclim_patt.condition = random_order(1);
+            acclim_patt.optomotor_pattern = optomotor_pattern;
+            acclim_patt.start_t = vidobj.getTimeStamp().value;
+            acclim_patt.start_f = vidobj.getFrameCount().value;
             
             Panel_com('set_mode',controller_mode); pause(0.01)
             Panel_com('set_pattern_id', optomotor_pattern); pause(0.01)
             Panel_com('set_position', [1 1]); pause(0.01)
             pause(t_acclim); 
-
-            acclim_patt.stop_t(1) = vidobj.getTimeStamp().value;
-            acclim_patt.stop_f(1) = vidobj.getFrameCount().value;
+            acclim_patt.stop_t = vidobj.getTimeStamp().value;
+            acclim_patt.stop_f = vidobj.getFrameCount().value;
 
             LOG.acclim_patt = acclim_patt;
-
             disp('Acclim ended')
 
          end 
     
-        present_optomotor_stimulus(current_condition, all_conditions)
-       
+        Log = present_optomotor_stimulus(current_condition, all_conditions, vidobj);
+        % Add the 'Log' from each condition to the overall log 'LOG'.
+        fieldName = sprintf('log_%d', log_n);
+        LOG.(fieldName) = Log;
+
+        log_n = log_n+1;
      end
 end 
-
-
-
-
-% first, build and define all experiments in an array where each experiment
-% is a row and each parameter is a column
-
 
 
 %% Acclim at the end 
 % Record the behaviour of the flies without any lights on in the arena
 % after running the stimulus. 
-% ao_idx_value = ao_idx_value+1;
 
-% % Log - for acclim
-% Log.trial(idx_value) = idx_value;
-% Log.dir(idx_value) = 0;
+acclim_off2.condition = 0;
+acclim_off2.dir = 0;
+
 % % get frame and log it
-% Log.start_t(idx_value) = vidobj.getTimeStamp().value;
-% Log.start_f(idx_value) = vidobj.getFrameCount().value;
+acclim_off2.start_t = vidobj.getTimeStamp().value;
+acclim_off2.start_f = vidobj.getFrameCount().value;
+
 Panel_com('all_off'); 
 disp('Acclim OFF')
-
 pause(t_acclim); 
 
-% % get frame and log it 
-% Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
-% Log.stop_f(idx_value) = vidobj.getFrameCount().value;
+% get frame and log it 
+acclim_off2.stop_t = vidobj.getTimeStamp().value;
+acclim_off2.stop_f = vidobj.getFrameCount().value;
+
+LOG.acclim_off2 = acclim_off2;
 
 
 %% stop camera
@@ -248,30 +227,7 @@ vidobj.stopCapture();
 disp('Camera OFF')
 
 
-% Protocol name
-% LOG.func_name = func_name;
-
-% % Protocol parameters: %% log indivudually
-% LOG.trial_len=trial_len;
-% LOG.t_acclim=t_acclim;
-% LOG.t_flicker=t_flicker;
-% LOG.num_trials_per_block=num_trials_per_block;
-% LOG.num_directions=num_directions; 
-% LOG.num_reps=num_reps;
-% LOG.num_flickers=num_flickers; 
-% LOG.num_acclim=num_acclim; 
-% 
-% % Pattern settings
-% LOG.optomotor_pattern=optomotor_pattern;
-% LOG.flicker_pattern=flicker_pattern;
-% LOG.optomotor_speed=optomotor_speed; % in frames per second
-% LOG.flicker_speed = flicker_speed;
-% LOG.pattern_names=pattern_names;
-% 
-% % Add log file of timings per condition
-% LOG.Log = Log;
-% 
-% %% save LOG file
-% log_fname =  fullfile(exp_folder, strcat('LOG_', string(date_str), '_', t_str, '.mat'));
-% save(log_fname, 'LOG');
-% disp('Log saved')
+%% save LOG file
+log_fname =  fullfile(exp_folder, strcat('LOG_', string(date_str), '_', t_str, '.mat'));
+save(log_fname, 'LOG');
+disp('Log saved')
