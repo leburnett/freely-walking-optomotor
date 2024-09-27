@@ -1,4 +1,4 @@
-function datapoints = make_mean_ang_vel_ratio_datapoints(Log, trx, feat, n_flies, n_conditions, fps)
+function datapoints = make_mean_ang_vel_ratio_datapoints(Log, trk, feat, n_flies, n_conditions)
 
 
     % % % % % % % % % % %
@@ -11,7 +11,7 @@ function datapoints = make_mean_ang_vel_ratio_datapoints(Log, trx, feat, n_flies
     for idx = 1:n_flies
 
         % unwrap the heading data
-        D = unwrap(trx(idx).theta); %unwrap
+        D = unwrap(trk.data(idx, :, 3)); %unwrap
         D_deg = (rad2deg(D));
         % Find diff in angle moved per frame. 
         D_diff = diff(D_deg);

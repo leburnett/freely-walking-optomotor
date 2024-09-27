@@ -5,16 +5,25 @@ close all
 clear
 clc
 
-%% PARAMETERS 
+%% Initialise fixed paths.
+PROJECT_ROOT = '/Users/burnettl/Documents/Projects/oaky_cokey/';
+data_path = fullfile(PROJECT_ROOT, 'data');
+results_path = fullfile(PROJECT_ROOT, 'results');
 
-path_to_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/data/2024_08_02';
+date_to_analyse = '2024_08_02';
+path_to_folder = fullfile(data_path, date_to_analyse);
 
-% Save the figures that are generated? 
-save_figs = false;
-
+save_figs = false; % Save the figures that are generated? 
 genotype = 'CSw1118';
+save_folder = fullfile(results_path, genotype);
 
-save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS'; %'/Users/hms/Documents/Fly Tracking';
+%% 
+
+% Generate scripts that ONLY process the data and output the processed data
+% for velocity, angular velocity, distance from centre, angvel/vel. 
+
+
+
 
 % Find the mean 'mean' or the median 'med'
 mean_med = "med";
