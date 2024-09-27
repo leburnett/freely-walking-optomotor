@@ -1,4 +1,4 @@
-function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med)
+function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med, vel_or_ang)
 
     % Plot the velocity per fly over the course of the experiment. 
     
@@ -70,7 +70,12 @@ function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med)
 
         % Load the data
         load(fullfile(vel_files(idx).folder, vel_files(idx).name), 'feat'); % add 'save_str' back here eventually. 
-        data = feat.data(:, :, 1);
+
+        if vel_or_ang == "vel" % velocity
+            data = feat.data(:, :, 1);
+        elseif vel_or_ang == "ang" %angular velocity
+            data = feat.data(:, :, 2);
+        end 
         n_flies = size(data, 1);
 
         for i = 1:n_flies
@@ -98,7 +103,12 @@ function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med)
     for ii = 1:n_files
         % Load the data
         load(fullfile(vel_files(ii).folder, vel_files(ii).name), 'feat');
-        data = feat.data(:, :, 1);
+        if vel_or_ang == "vel" % velocity
+            data = feat.data(:, :, 1);
+        elseif vel_or_ang == "ang" % ang velocity
+            data = feat.data(:, :, 2);
+        end 
+
         n_flies = size(data, 1);
 
         for jj = 1: n_flies
@@ -113,10 +123,12 @@ function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med)
     end 
 
     % Remove entries with unrealistic velcoity values (>200mm/s)
-    all_data(all_data>200)=0;
-    % Remove flies that don't move during the trial...
-    mean_vel_per_fly = nanmean(all_data,2);
-    all_data(mean_vel_per_fly<0.1, :) = [];
+    if vel_or_ang == "vel"
+        all_data(all_data>200)=0;
+        % Remove flies that don't move during the trial...
+        mean_vel_per_fly = nanmean(all_data,2);
+        all_data(mean_vel_per_fly<0.1, :) = [];
+    end 
 
     n_flies_total = size(all_data, 1);
     
@@ -127,7 +139,11 @@ function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med)
     end 
     plot(av_resp, 'k', 'LineWidth', 2)
     xlabel('frame')
-    ylabel('Velocity (mm/s)')
+    if vel_or_ang == "vel"
+        ylabel('Velocity (mm/s)')
+    elseif vel_or_ang == "ang"
+        ylabel('Angular velocity (rad/s)')
+    end 
     f = gcf;
     f.Position = [23  623  1716  403];
     ax = gca;
@@ -136,20 +152,30 @@ function plot_line_velocity(data_path, save_figs, fig_save_path, mean_med)
     ax.TickDir = 'out';
     ax.TickLength  =[0.005 0.005];
 
-    title(strcat('Velocity - N = ', string(n_flies_total)))
+    if vel_or_ang == "vel"
+        title(strcat('Velocity - N = ', string(n_flies_total)))
+    elseif vel_or_ang == "ang"
+        title(strcat('Angular velocity - N = ', string(n_flies_total)))
+    end 
 
-    hold on
-    plot([0 min_length], [0 0], 'k', 'LineWidth', 0.2)
-    plot([0 min_length], [20 20], 'k', 'LineWidth', 0.2)
-    plot([0 min_length], [40 40], 'k', 'LineWidth', 0.2)
-    plot([0 min_length], [60 60], 'k', 'LineWidth', 0.2) 
-    plot([0 min_length], [80 80], 'k', 'LineWidth', 0.2)
-    plot([0 min_length], [100 100], 'k', 'LineWidth', 0.2) 
-    plot([0 min_length], [120 120], 'k', 'LineWidth', 0.2) 
+    % hold on
+    % plot([0 min_length], [0 0], 'k', 'LineWidth', 0.2)
+    % plot([0 min_length], [20 20], 'k', 'LineWidth', 0.2)
+    % plot([0 min_length], [40 40], 'k', 'LineWidth', 0.2)
+    % plot([0 min_length], [60 60], 'k', 'LineWidth', 0.2) 
+    % plot([0 min_length], [80 80], 'k', 'LineWidth', 0.2)
+    % plot([0 min_length], [100 100], 'k', 'LineWidth', 0.2) 
+    % plot([0 min_length], [120 120], 'k', 'LineWidth', 0.2) 
     
     ylim([0 15])
-    % if save_figs 
-    %     savefig(gcf, fullfile(fig_save_path, strcat('Velocity_', save_str,'_', mean_med,'.fig')))
-    % end 
+    
+    if save_figs 
+        if vel_or_ang == "vel"
+            savefig(gcf, fullfile(fig_save_path, strcat('Velocity_', save_str,'_', mean_med,'.fig')))
+        elseif vel_or_ang == "ang"
+            savefig(gcf, fullfile(fig_save_path, strcat('AngVel_', save_str,'_', mean_med,'.fig')))
+        end 
+
+    end 
 
 end 

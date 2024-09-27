@@ -7,10 +7,10 @@ clc
 
 %% PARAMETERS 
 
-path_to_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/data/2024_08_09';
+path_to_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/data/2024_08_02';
 
 % Save the figures that are generated? 
-save_figs = true;
+save_figs = false;
 
 genotype = 'CSw1118';
 
@@ -29,7 +29,7 @@ if ~isfolder(ang_data_save_folder)
     mkdir(ang_data_save_folder);
 end
 
-vel_data_save_folder = fullfile(save_folder, "data/vel");
+vel_data_save_folder = fullfile(save_folder, "data/vel/post_HM");
 if ~isfolder(vel_data_save_folder)
     mkdir(vel_data_save_folder);
 end
@@ -80,9 +80,10 @@ process_freely_walking_optomotor_dist_centre(path_to_folder, dcentre_data_save_f
 
 %% For generating plots for the different protocols
 
-data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/distcentre/protocol_v6/cond_val_3/SS324_motionblind_females';
+% data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/distcentre/protocol_v6/cond_val_3/SS324_motionblind_females';
+data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/distcentre/protocol_v1/empty_split_females';
 
-save_figs = true;
+save_figs = false;
 
 save_folder = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS'; %'/Users/hms/Documents/Fly Tracking';
 
@@ -98,7 +99,15 @@ plot_line_dist_from_centre(data_path, save_figs, dist_fig_save_path, 'mean')
 
 % 2 -  Velocity 
 
-data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/vel/protocol_v1';
+% data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/vel/protocol_v1';
+data_path = '/Users/burnettl/Documents/Janelia/HMS_2024/RESULTS/data/vel/protocol_v1/post-HM/ES_JFRC49';
+
+mean_med = 'med';
 
 plot_line_velocity(data_path, save_figs, '', mean_med)
+
+
+% 3 - Ang vel
+vel_or_ang = "ang";
+plot_line_velocity(data_path, save_figs, fig_save_path, mean_med, vel_or_ang)
 

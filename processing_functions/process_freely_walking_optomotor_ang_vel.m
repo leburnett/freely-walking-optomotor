@@ -122,11 +122,11 @@ function process_freely_walking_optomotor_ang_vel(path_to_folder, save_figs, fig
 
         %% Plot the heading angle of each fly across the entire experiment
     
-        plot_heading_angle_per_fly(Log, trx, n_flies, n_conditions, title_str, save_str, fig_exp_save_folder, save_figs)
+        % plot_heading_angle_per_fly(Log, trx, n_flies, n_conditions, title_str, save_str, fig_exp_save_folder, save_figs)
     
         %% Plot the angular velocity:
     
-        plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, fps, title_str, save_str, fig_exp_save_folder, save_figs)
+        % plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, fps, title_str, save_str, fig_exp_save_folder, save_figs)
     
         %% Make 'ang datapoints'
         % if n_conditions == 69
