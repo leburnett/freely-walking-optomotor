@@ -11,13 +11,13 @@ optomotor_speed = 127; % 64 = baseline % in frames per second
 flicker_speed = 16;
 
 % These parameters will be saved in the log file. 
-fly_strain = 'CS_w1118';
-fly_age = 3; % days
+fly_strain = 'SS00324_T4T5';
+fly_age = 2; % days
 fly_sex = 'F';
-n_flies = 15;
+n_flies = 14;
 lights_ON = datetime('20:00', 'Format', 'HH:mm');
 lights_OFF = datetime('12:00', 'Format', 'HH:mm');
-arena_temp = 24.3;
+arena_temp = 24.5;
 
 % Protocol parameters:
 trial_len = 10; 

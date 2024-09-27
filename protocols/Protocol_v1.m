@@ -4,16 +4,17 @@
 
 %% Input parameters:
 % These parameters will be saved in the log file. 
-fly_strain = 'CS_w1118';
+fly_strain = 'SS00324_T4T5';
 fly_age = 2; % days
 fly_sex = 'F';
+n_flies = 14;
 lights_ON = datetime('20:00', 'Format', 'HH:mm');
 lights_OFF = datetime('12:00', 'Format', 'HH:mm');
-arena_temp = 24.5;
+arena_temp = 24.8;
 
 % Protocol parameters:
-trial_len = 5; 
-t_acclim = 6;
+trial_len = 10; 
+t_acclim = 60;
 t_flicker = 10;
 num_trials_per_block = 7;
 num_directions = 2; 
@@ -368,6 +369,7 @@ LOG.time = time_str;
 LOG.fly_strain = fly_strain;
 LOG.fly_age = fly_age;
 LOG.fly_sex = fly_sex;
+LOG.n_flies = n_flies;
 LOG.lights_ON = lights_ON;
 LOG.lights_OFF = lights_OFF;
 LOG.arena_temp= arena_temp;
