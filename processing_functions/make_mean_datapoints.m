@@ -44,9 +44,13 @@ function [datapoints_mean, datapoints_med]  = make_mean_datapoints(Log, feat, tr
                 st_fr = 1;
             end 
 
-            if feature == "angvel"
+            if feature == "angvel" 
                 if stop_fr > numel(AV)
                     stop_fr = numel(AV);
+                end
+            elseif feature == "ratio"
+                if stop_fr > numel(D_diff)
+                    stop_fr = numel(D_diff);
                 end
             else
                 if stop_fr > numel(V)
@@ -61,10 +65,10 @@ function [datapoints_mean, datapoints_med]  = make_mean_datapoints(Log, feat, tr
             elseif feature == "ratio"
                 % directional do not make abs
                 AV = (D_diff(st_fr:stop_fr));
-                AV(1, isnan(AV))=0;
+                AV(isnan(AV), 1)=0;
                 vel_data = V(st_fr:stop_fr);
                 ratio_data = sum(AV)/sum(vel_data);
-                ratio_data(1, isnan(ratio_data))=0;
+                ratio_data(isnan(ratio_data), 1)=0;
             end 
 
             if feature == "ratio"

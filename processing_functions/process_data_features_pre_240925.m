@@ -1,4 +1,4 @@
-function process_data_features(path_to_folder, save_folder)
+function process_data_features_pre_240925(path_to_folder, save_folder)
 
     % Inputs
     % ______
@@ -39,7 +39,7 @@ function process_data_features(path_to_folder, save_folder)
         
         % Open the LOG 
         log_files = dir('LOG_*');
-        load(fullfile(log_files(1).folder, log_files(1).name), 'LOG');
+        load(fullfile(log_files(1).folder, log_files(1).name), 'Log');
     
         rec_folder = dir('REC_*');
         if isempty(rec_folder)
@@ -68,17 +68,17 @@ function process_data_features(path_to_folder, save_folder)
             load(feat_file_path, 'feat');
         end
 
-        %% Load 'trk'
+        %% Load 'trx'
         if contains(mfolder, 'movie') % movie folder configuration
-            trk_file_path = 'movie/movie-track.mat';
+            trx_file_path = 'movie/movie_JAABA/trx.mat';
         else
-            trk_file_path = strcat(rec_folder(1).name, '-track.mat');
+            trx_file_path = strcat(mfolder, '/', 'trx.mat');
         end
 
-        if ~isfile(trk_file_path)
-            warning('Experiment has not been processed using FlyTracker. Make sure the data has been processed and that "{moviename}-track.mat" exists within the movie/movie_JAABA/ directory.')
+        if ~isfile(trx_file_path)
+            warning('Experiment has not been processed using FlyTracker. Make sure the data has been processed and that "trx.mat" exists within the movie/movie_JAABA/ directory.')
         else
-            load(trk_file_path, 'trk');
+            load(trx_file_path, 'trx');
         end
 
  
@@ -92,16 +92,16 @@ function process_data_features(path_to_folder, save_folder)
         % Process data per CONDITION
 
         %% Process velocity data
-        [vel_data_per_cond_mean, vel_data_per_cond_med] = make_mean_datapoints(Log, feat, trk, n_flies, n_conditions, "vel");
+        [vel_data_per_cond_mean, vel_data_per_cond_med] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "vel");
 
         %% Process angular velocity data
-        [ang_vel_data_per_cond_mean, ang_vel_data_per_cond_med] = make_mean_datapoints(Log, feat, trk, n_flies, n_conditions, "angvel");
+        [ang_vel_data_per_cond_mean, ang_vel_data_per_cond_med] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "angvel");
         
         %% Process angular velocity : velocity ratio data
-        [ratio_data_per_cond] = make_mean_datapoints(Log, feat, trk, n_flies, n_conditions, "ratio");
+        [ratio_data_per_cond] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "ratio");
 
         %% Process distance to wall data 
-        [dist_data_per_cond_mean, dist_data_per_cond_med] = make_mean_datapoints(Log, feat, trk, n_flies, n_conditions, "dist");
+        [dist_data_per_cond_mean, dist_data_per_cond_med] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "dist");
         
 
         %% SAVE
@@ -110,7 +110,7 @@ function process_data_features(path_to_folder, save_folder)
         save(fullfile(save_folder, strcat(date_str, '_', time_str, '_data.mat')) ...
             , 'Log' ...
             , 'feat' ...
-            , 'trk' ...
+            , 'trx' ...
             , 'vel_data_per_cond_mean' ...
             , 'vel_data_per_cond_med' ...
             , 'ang_vel_data_per_cond_mean' ...

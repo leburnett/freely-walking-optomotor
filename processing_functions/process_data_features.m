@@ -70,7 +70,7 @@ function process_data_features(path_to_folder, save_folder, date_str)
             load(feat_file_path, 'feat');
         end
 
-        %% Load 'trk'
+        %% Load 'trx'
         if contains(mfolder, 'movie') % movie folder configuration
             trx_file_path = 'movie/movie_JAABA/trx.mat';
         else
