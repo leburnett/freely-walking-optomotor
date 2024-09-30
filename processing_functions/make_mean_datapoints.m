@@ -1,4 +1,4 @@
-function [datapoints_mean, datapoints_med]  = make_mean_datapoints(Log, feat, trk, n_flies, n_conditions, feature)
+function [datapoints_mean, datapoints_med]  = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, feature)
 
     % Fixed paramters for angular velocity: 
     fps = 30;
@@ -21,13 +21,13 @@ function [datapoints_mean, datapoints_med]  = make_mean_datapoints(Log, feat, tr
 
         if feature == "angvel"
             % unwrap the heading data
-            D = unwrap(trk.data(idx, :, 3)');
+            D = unwrap(trx(idx).theta);
             % convert heading to angular velocity
             AV = vel_estimate(D, samp_rate, method, t_window, cutoff);
         elseif feature == "vel"
             V = feat.data(idx,:,1);
         elseif feature == "ratio"
-            D = unwrap(trk.data(idx, :, 3));
+            D = unwrap(trx(idx).theta);
             D_deg = (rad2deg(D));
             D_diff = diff(D_deg);
             V = feat.data(idx,:,1);
