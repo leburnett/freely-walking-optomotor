@@ -1,5 +1,10 @@
-function process_data_features(path_to_folder, save_folder)
-
+function process_data_features(path_to_folder, save_folder, date_str)
+    % Processes optomotor freely-walking data from FlyTracker and saves the
+    % mean/ med values per 'condition' within the experiment in arrays. it
+    % also saves all of the variables with the full data across the entrie
+    % experiments, such as velocity, angular velocity, distance from the
+    % wall and heading in the same file. 
+    
     % Inputs
     % ______
     
@@ -10,10 +15,7 @@ function process_data_features(path_to_folder, save_folder)
     %          Path to save the processed data.        
    
     % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-    
-    % Date
-    date_str = path_to_folder(end-9:end);
-    % date_str = strrep(path_to_folder(end-9:end), '_', '-');
+
     cd(path_to_folder)
 
     % Find times of experiments
@@ -27,7 +29,7 @@ function process_data_features(path_to_folder, save_folder)
     
     for exp  = 1:n_time_exps
     
-        clear feat Log trk
+        clear feat LOG trk
 
         time_str = time_folders(exp).name;
         disp(time_str)
@@ -39,7 +41,7 @@ function process_data_features(path_to_folder, save_folder)
         
         % Open the LOG 
         log_files = dir('LOG_*');
-        load(fullfile(log_files(1).folder, log_files(1).name), 'Log');
+        load(fullfile(log_files(1).folder, log_files(1).name), 'LOG');
     
         rec_folder = dir('REC_*');
         if isempty(rec_folder)
@@ -87,6 +89,8 @@ function process_data_features(path_to_folder, save_folder)
     
         % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 
+        Log = LOG.Log;
+
         n_conditions = size(Log, 1);
    
         % Process data per CONDITION
@@ -103,11 +107,14 @@ function process_data_features(path_to_folder, save_folder)
         %% Process distance to wall data 
         [dist_data_per_cond_mean, dist_data_per_cond_med] = make_mean_datapoints(Log, feat, trk, n_flies, n_conditions, "dist");
         
-
         %% SAVE
-        
+        if ~isfolder(save_folder)
+            mkdir(save_folder);
+        end
+                
         % save data
         save(fullfile(save_folder, strcat(date_str, '_', time_str, '_data.mat')) ...
+            , 'LOG' ...
             , 'Log' ...
             , 'feat' ...
             , 'trk' ...
