@@ -1,4 +1,4 @@
-function plot_heading_angle_per_fly(Log, trx, n_flies, n_conditions, title_str, save_str, fig_exp_save_folder, save_figs)
+function f = plot_heading_angle_per_fly(Log, trk, title_str)
     % Generate a figure composed of n_flies x 1 subplots showing each fly's
     % heading angle over the course of the freely-walking, increasing
     % contrast optomotor experiment. 
@@ -11,41 +11,30 @@ function plot_heading_angle_per_fly(Log, trx, n_flies, n_conditions, title_str, 
     %       contrast, direction, start and stop times and start and stop
     %       frames for each condition. 
 
-    % trx : struct
+    % trk : struct
     %       Struct of size [1 x n_flies] with details about each fly during
     %       the experiment, such as the x and y position, orientation of
     %       fitted ellipse. 
 
-    % n_flies : int
-    %       Number of flies in the experiment
-
-    % n_conditions : int
-    %       Number of conditions in the experiment.    
-
-    % title_str : str
-    %       string used for the title of the plot
-
-    % save_str : str
-    %       string used when saving the figure
-
-    % fig_exp_save_folder : Path
-    %        Path to save the figure    
-    
-    % save_figs : bool 
-    %        Whether to save the figures and data or not. 
+    % heading_data = rad2deg(unwrap(trk.data(:, :, 3)));
+    % n_flies = height(heading_data);
+    n_flies = length(trx);
 
     figure
     for idx = 1:n_flies
     
         subplot(n_flies, 1, idx)
 
-        % Heading angle data from 'trx'
+        % Heading angle data from 'trk.ori'
+        % data = heading_data(idx, :);
         data = rad2deg(unwrap(trx(idx).theta));
     
         max_val = max(data);
         min_val = min(data);
         h = max_val - min_val;
     
+        n_conditions = height(Log);
+
         for ii = 1:n_conditions
     
             % Get the timing of each condition
@@ -91,9 +80,5 @@ function plot_heading_angle_per_fly(Log, trx, n_flies, n_conditions, title_str, 
     sgtitle(strcat(title_str, ' - N=', string(n_flies)))
     f = gcf; 
     f.Position = [2162  -476  794  1520];
-    
-    if save_figs == true
-        savefig(gcf, fullfile(fig_exp_save_folder, strcat('HeadingAngle_perfly_', save_str)))
-    end 
 
 end 
