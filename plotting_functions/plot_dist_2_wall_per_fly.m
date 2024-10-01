@@ -1,4 +1,4 @@
-function f = plot_vel_per_fly(Log, feat, title_str)
+function f = plot_dist_2_wall_per_fly(Log, feat, title_str)
 
 % Inputs
 % ______
@@ -21,7 +21,7 @@ function f = plot_vel_per_fly(Log, feat, title_str)
     figure
     for idx = 1:n_flies
         subplot(n_flies, 1, idx)
-        V = feat.data(idx,:,1);
+        V = feat.data(idx,:,9);
         max_val = max(V);
         min_val = min(V);
         h = max_val - min_val;
@@ -51,7 +51,7 @@ function f = plot_vel_per_fly(Log, feat, title_str)
             end 
             
             % Add rectangles denoting the different types of experiment.
-            rectangle('Position', [st_fr, min_val, w, h], 'FaceColor', col, 'EdgeColor', [0.6 0.6 0.6]);
+            rectangle('Position', [st_fr, -20, w, 170], 'FaceColor', col, 'EdgeColor', [0.6 0.6 0.6]);
             ylim([min_val, max_val])
             hold on 
             box off
@@ -59,18 +59,22 @@ function f = plot_vel_per_fly(Log, feat, title_str)
             ax.XAxis.Visible = 'off';
         end 
 
-        plot(V, 'k', 'LineWidth', 1)
+        plot(120-V, 'k', 'LineWidth', 1)
+        ylim([-15 135])
+        plot([0 8500], [120 120], 'LineWidth', 1, 'Color', [0.7 0.7 0.7])
+        plot([0 8500], [0 0], 'LineWidth', 1, 'Color', [0.7 0.7 0.7])
 
     end 
 
     sgtitle(strcat(title_str, ' - N=', string(n_flies)))
     f = gcf; 
-    f.Position = [2162  -476  794  1520];
+    % f.Position = [2162  -476  794  1520];
+    f.Position = [1183 75 618 972];
 
     han=axes(f, 'visible','off');
     han.YLabel.Visible='on';
     han.XLabel.Visible='on';
-    ylabel(han, 'Velocity (mm s-1)', 'Position', [-0.06 0.5])
+    ylabel(han, 'Distance from centre of arena (mm)', 'Position', [-0.06 0.5])
     xlabel(han, 'Time / frames / conditions')
     
 end 

@@ -1,4 +1,4 @@
-function plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, fps, title_str, save_str, fig_exp_save_folder, save_figs)
+function f = plot_ang_vel_per_fly(Log, trx, title_str)
     
     % Inputs
     % ______
@@ -13,29 +13,13 @@ function plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, fps, title_str, s
     %       the experiment, such as the x and y position, orientation of
     %       fitted ellipse. 
 
-    % n_flies : int
-    %       Number of flies in the experiment.
-
-    % n_conditions : int
-    %       Number of conditions in the experiment.    
-
-    % fps : int
-    %       acquisition rate of the camera in frames per second (fps).
-
     % title_str : str
     %       string used for the title of the plot.
 
-    % save_str : str
-    %       string used when saving the figure.
-
-    % fig_exp_save_folder : Path
-    %        Path to save the figure.    
-    
-    % save_figs : bool 
-    %        Whether to save the figures and data or not. 
-
+    n_flies = length(trx);
 
     % Fixed paramters: 
+    fps = 30;
     samp_rate = 1/fps; 
     method = 'line_fit';
     t_window = 16;
@@ -53,6 +37,8 @@ function plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, fps, title_str, s
         min_val = min(V);
         h = max_val - min_val;
         
+        n_conditions = height(Log);
+
         for ii = 1:n_conditions
         
             % create the plot
@@ -97,8 +83,11 @@ function plot_ang_vel_per_fly(Log, trx, n_flies, n_conditions, fps, title_str, s
     f = gcf; 
     f.Position = [2162  -476  794  1520];
     
-    if save_figs == true
-        savefig(gcf, fullfile(fig_exp_save_folder, strcat('AngVel_perfly_', save_str)))
-    end 
+    han=axes(f, 'visible','off');
+    han.YLabel.Visible='on';
+    han.XLabel.Visible='on';
+    ylabel(han, 'Angular velocity (deg s-1)', 'Position', [-0.06 0.5])
+    xlabel(han, 'Time / frames / conditions')
+
 
 end 

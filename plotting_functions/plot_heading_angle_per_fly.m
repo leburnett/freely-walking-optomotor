@@ -1,4 +1,4 @@
-function f = plot_heading_angle_per_fly(Log, trk, title_str)
+function f = plot_heading_angle_per_fly(Log, trx, title_str)
     % Generate a figure composed of n_flies x 1 subplots showing each fly's
     % heading angle over the course of the freely-walking, increasing
     % contrast optomotor experiment. 
@@ -16,8 +16,6 @@ function f = plot_heading_angle_per_fly(Log, trk, title_str)
     %       the experiment, such as the x and y position, orientation of
     %       fitted ellipse. 
 
-    % heading_data = rad2deg(unwrap(trk.data(:, :, 3)));
-    % n_flies = height(heading_data);
     n_flies = length(trx);
 
     figure
@@ -25,8 +23,6 @@ function f = plot_heading_angle_per_fly(Log, trk, title_str)
     
         subplot(n_flies, 1, idx)
 
-        % Heading angle data from 'trk.ori'
-        % data = heading_data(idx, :);
         data = rad2deg(unwrap(trx(idx).theta));
     
         max_val = max(data);
@@ -80,5 +76,10 @@ function f = plot_heading_angle_per_fly(Log, trk, title_str)
     sgtitle(strcat(title_str, ' - N=', string(n_flies)))
     f = gcf; 
     f.Position = [2162  -476  794  1520];
+    han=axes(f, 'visible','off');
+    han.YLabel.Visible='on';
+    han.XLabel.Visible='on';
+    ylabel(han, 'Unwrapped heading angle (deg)', 'Position', [-0.06 0.5])
+    xlabel(han, 'Time / frames / conditions')
 
 end 
