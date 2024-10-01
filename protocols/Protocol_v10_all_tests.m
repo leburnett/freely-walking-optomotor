@@ -2,6 +2,8 @@
 %one big protocol
 clear 
 
+tic
+
 %% Input parameters:
 
 % [16, 2]; 1 Hz
@@ -15,13 +17,13 @@ clear
 %%%%%%%%%
 
 % These parameters will be saved in the log file. 
-fly_strain = 'CS_w1118';
-fly_age = 3; % days
+fly_strain = 'SS00324_T4T5';
+fly_age = 5; % days
 fly_sex = 'F';
 n_flies = 15;
 lights_ON = datetime('20:00', 'Format', 'HH:mm');
 lights_OFF = datetime('12:00', 'Format', 'HH:mm');
-arena_temp = 24.3;
+arena_temp = 24.4;
 
 % Protocol parameters:
 t_acclim = 5;
@@ -151,7 +153,7 @@ pause(t_acclim);
 acclim_off1.stop_t = vidobj.getTimeStamp().value;
 acclim_off1.stop_f = vidobj.getFrameCount().value;
 
-LOG.acclim_off = acclim_off1;
+LOG.acclim_off1 = acclim_off1;
 
 
 %% Present stimuli
@@ -231,3 +233,5 @@ disp('Camera OFF')
 log_fname =  fullfile(exp_folder, strcat('LOG_', string(date_str), '_', t_str, '.mat'));
 save(log_fname, 'LOG');
 disp('Log saved')
+
+toc
