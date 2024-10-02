@@ -25,10 +25,6 @@ process_data_features(path_to_folder, save_folder, date_to_analyse)
 
 
 
-
-
-
-
 %% If data recorded on or before 24/09/2024 - - - all experiments saved in one date folder. 
 
 % What date to analyse:
