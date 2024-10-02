@@ -48,7 +48,7 @@ function f = plot_dist_2_centre_per_fly(Log, feat, title_str)
             
             % Add rectangles denoting the different types of experiment.
             rectangle('Position', [st_fr, -20, w, 170], 'FaceColor', col, 'EdgeColor', [0.6 0.6 0.6]);
-            ylim([min_val, max_val])
+            % ylim([-20, max_val])
             hold on 
             box off
             ax = gca;
