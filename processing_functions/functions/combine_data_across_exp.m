@@ -67,7 +67,7 @@ function combined_data = combine_data_across_exp(path_to_data)
         all_velocity_data = vertcat(all_velocity_data, vel_data);
         all_dist_data = vertcat(all_dist_data, dist_data);
         all_av_data = vertcat(all_av_data, av_data);
-        all_heading_data = vertcat(all_heading_data, av_data);
+        all_heading_data = vertcat(all_heading_data, heading_data);
 
     end 
 
