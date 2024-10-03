@@ -1,30 +1,22 @@
-% Functions to analyse the behaviour of strains across all experiments
+function make_plots_per_strain(strain_data_folder)
+% Generate pdf with a number of different plots using the combined data
+% from all experiments from a particular fly strain and for a particular
+% protocol. 
 
-strain_data_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_v1/JFRC49_ES';
-cd(strain_data_folder)
+% Inputs
+% - - - - 
 
-data_files = dir('*.mat');
-n_files = length(data_files);
+% strain_data_folder : Path (e.g.
+% '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_v1/JFRC49_ES')
 
-all_velocity_data = []; 
+% Information about the strain / protocol. 
+subfolders = split(strain_data_folder, '/');
+strain = subfolders{end};
+protocol = subfolders{end-1};
 
-for i = 1:n_files
-    load(data_files(i).name);
-    vel_data = feat.data(:, :, 1);
+%% Generate combined velocity data 
 
-    [rowsall, colsall] = size(all_velocity_data);
-    [rowsdata, colsdata]  = size(vel_data);
-
-    n_cols_diff = colsall-colsdata;
-    if n_cols_diff >=0 
-        vel_data = [vel_data, NaN(rowsdata, n_cols_diff)];
-    elseif n_cols_diff < 0 
-        all_velocity_data = [all_velocity_data, NaN(rowsall, n_cols_diff*-1)];
-    end 
-
-    all_velocity_data = vertcat(all_velocity_data, vel_data);
-
-end 
+combined_data = combine_data_across_exp(strain_data_folder);
 
 %% Plots
 
@@ -50,27 +42,9 @@ figure; histogram(p_slow, 'BinEdges', [0:0.05:1])
 figure; histogram(all_velocity_data(:, 1:900), 'BinEdges', [0:2:50])
 
 
-%% distance to wall data 
+%% Generate combined distance from centre data 
 
-all_distance_data = []; 
-
-for i = 1:n_files
-    load(data_files(i).name);
-    dist_data = 120-feat.data(:, :, 9);
-
-    [rowsall, colsall] = size(all_distance_data);
-    [rowsdata, colsdata]  = size(dist_data);
-
-    n_cols_diff = colsall-colsdata;
-    if n_cols_diff >0 
-        dist_data = [dist_data, NaN(rowsdata, n_cols_diff)];
-    elseif n_cols_diff < 0 
-        all_distance_data = [all_distance_data, NaN(rowsall, n_cols_diff*-1)];
-    end 
-
-    all_distance_data = vertcat(all_distance_data, dist_data);
-
-end 
+all_distance_data = ombine_data_across_exp(strain_data_folder, "dist");
 
 %% Plots
 
@@ -87,7 +61,7 @@ figure; histogram(all_distance_data(:, 1:900), 'BinEdges', [0:2:50])
 
 
 
-
+end 
 
 
 
