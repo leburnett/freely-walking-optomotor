@@ -1,9 +1,13 @@
 
 %Protocol_v9.m file - different spatial frequecies
 clear
+
+% Set pixel width
+pixel_width = 4; 
+
 %% Input parameters:
 % These parameters will be saved in the log file. 
-fly_strain = 'CS_w1118';
+fly_strain = 'csw1118';
 fly_age = 2; % days
 fly_sex = 'F';
 n_flies = 15;
@@ -22,20 +26,22 @@ num_flickers = 2;
 num_acclim = 3; 
 
 % Pattern settings:
-% 4 pixel bars
-% optomotor_pattern = 4;
-% flicker_pattern = 5;
-% optomotor_speed = 32; 
-
-% 8 pixel bars
-% optomotor_pattern = 6;
-% flicker_pattern = 7;
-% optomotor_speed = 64; % in frames per second - was 64
-
-% 16 pixel bars
-% optomotor_pattern = 9;
-% flicker_pattern = 10;
-% optomotor_speed = 127; 
+if pixel_width == 4
+    % 4 pixel bars
+    optomotor_pattern = 4;
+    flicker_pattern = 5;
+    optomotor_speed = 32; 
+elseif pixel_width == 8 
+    % 8 pixel bars
+    optomotor_pattern = 6;
+    flicker_pattern = 7;
+    optomotor_speed = 64; % in frames per second - was 64
+elseif pixel_width == 16
+    % 16 pixel bars
+    optomotor_pattern = 9;
+    flicker_pattern = 10;
+    optomotor_speed = 127; 
+end 
 
 % Flicker speed stays consistent.
 flicker_speed = 8;
@@ -83,8 +89,18 @@ if ~isfolder(strain_folder)
     mkdir(strain_folder)
 end
 
+sex_folder = fullfile(strain_folder, fly_sex);
+if ~isfolder(sex_folder)
+    mkdir(sex_folder)
+end
+
+cond_folder = fullfile(sex_folder, string(pixel_width));
+if ~isfolder(cond_folder)
+    mkdir(cond_folder)
+end
+
 t_str = strrep(string(time_str), ':', '_');
-exp_folder = fullfile(strain_folder, t_str);
+exp_folder = fullfile(cond_folder, t_str);
 if ~isfolder(exp_folder)
     mkdir(exp_folder)
 end 
@@ -398,6 +414,7 @@ LOG.arena_temp= arena_temp;
 
 % Protocol name
 LOG.func_name = func_name;
+LOG.pixel_width = pixel_width;
 
 % Protocol parameters:
 LOG.trial_len=trial_len;
