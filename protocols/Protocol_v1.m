@@ -1,7 +1,7 @@
 
 %Protocol_v1.m file for HMS experiments, June 2024
 % exp_str = 'Circadian_optomotor_freewalking_';
-
+clear
 %% Input parameters:
 % These parameters will be saved in the log file. 
 fly_strain = 'SS00324_T4T5';

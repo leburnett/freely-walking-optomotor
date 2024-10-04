@@ -1,7 +1,7 @@
 
 %Protocol_v4_reverse.m file 
 % Different switch intervals - long to short
-
+clear
 %% Input parameters:
 % These parameters will be saved in the log file. 
 fly_strain = 'CS_w1118';

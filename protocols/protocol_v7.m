@@ -1,5 +1,5 @@
 %Protocol_v7.m - different speeds
-
+clear
 %% Input parameters:
 
 % [16, 2]; 1 Hz
@@ -10,14 +10,17 @@
 optomotor_speed = 127; % 64 = baseline % in frames per second
 flicker_speed = 16;
 
+% SS00324_T4T5
+% CS_w1118
+
 % These parameters will be saved in the log file. 
-fly_strain = 'SS00324_T4T5';
+fly_strain = 'csw1118';
 fly_age = 2; % days
 fly_sex = 'F';
-n_flies = 14;
+n_flies = 15;
 lights_ON = datetime('20:00', 'Format', 'HH:mm');
 lights_OFF = datetime('12:00', 'Format', 'HH:mm');
-arena_temp = 24.5;
+arena_temp = 25.3;
 
 % Protocol parameters:
 trial_len = 10; 
@@ -37,6 +40,7 @@ flicker_pattern = 7;
 
 %% Protocol name
 func_name = string(mfilename());
+% func_name = lower(func_name{1:11});
 
 %% SD card pattern information
 load('C:\MatlabRoot\Patterns\patterns_oaky\SD_copy.mat', 'SD');

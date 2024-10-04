@@ -1,7 +1,7 @@
 
 %Protocol_v2.m file 
 % All high contrast optomotor patterns.
-
+clear
 %% Input parameters:
 % These parameters will be saved in the log file. 
 fly_strain = 'CS_w1118';
