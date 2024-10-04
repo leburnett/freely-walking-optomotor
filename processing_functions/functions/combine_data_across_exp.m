@@ -15,6 +15,7 @@ function combined_data = combine_data_across_exp(path_to_data)
     for i = 1:n_files
 
         load(data_files(i).name);
+        % disp(data_files(i).name) % good for troubleshooting
 
         % velocity % % % % % % % % % % % 
         vel_data = feat.data(:, :, 1);
