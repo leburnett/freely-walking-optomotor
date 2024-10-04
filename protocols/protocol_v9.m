@@ -114,7 +114,6 @@ vidobj.setVideoFile(v_fname);
 
 % Pattern settings
 controller_mode = [0 0]; % double open loop
-contrast_levels = [1.0 1.0 1.0 1.0 1.0 1.0 1.0]; 
 
 idx_value = 1;
 con_val = 1; 
@@ -179,7 +178,7 @@ for tr_ind = 1:num_trials_per_block
 
     % Log
     Log.trial(idx_value) = idx_value;
-    Log.contrast(idx_value) = contrast_levels(tr_ind);
+    Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
     Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]);
@@ -209,7 +208,7 @@ for tr_ind = 1:num_trials_per_block
 
     % Log
     Log.trial(idx_value) = idx_value;
-    Log.contrast(idx_value) = contrast_levels(tr_ind);
+    Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
     Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
@@ -285,7 +284,7 @@ for tr_ind = 7+[1:num_trials_per_block]
 
     % Log
     Log.trial(idx_value) = idx_value;
-    Log.contrast(idx_value) = contrast_levels(15-tr_ind);
+    Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
     Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
@@ -315,7 +314,7 @@ for tr_ind = 7+[1:num_trials_per_block]
     
     % Log
     Log.trial(idx_value) = idx_value;
-    Log.contrast(idx_value) = contrast_levels(15-tr_ind);
+    Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
     Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 

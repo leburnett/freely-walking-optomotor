@@ -82,11 +82,16 @@ if ~isfolder(sex_folder)
     mkdir(sex_folder)
 end
 
+cond_folder = fullfile(sex_folder, string(con_val));
+if ~isfolder(cond_folder)
+    mkdir(cond_folder)
+end
+
 t_str = strrep(string(time_str), ':', '_');
-exp_folder = fullfile(sex_folder, t_str);
+exp_folder = fullfile(cond_folder, t_str);
 if ~isfolder(exp_folder)
     mkdir(exp_folder)
-end 
+end
 
 exp_name = 'REC_';
 v_fname =  fullfile(exp_folder, exp_name);
