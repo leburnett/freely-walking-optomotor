@@ -1,6 +1,23 @@
-function plot_vel_per_fly(Log, feat, n_flies, n_conditions, title_str, save_str, fig_exp_save_folder, save_figs)
+function f = plot_vel_per_fly(Log, feat, title_str)
 
-    
+% Inputs
+% ______
+
+% Log : struct
+%       Struct of size [n_conditions x n_flies] with details about the
+%       contrast, direction, start and stop times and start and stop
+%       frames for each condition. 
+
+% feat : struct
+%       Struct of size [1 x n_flies] with details about each fly during
+%       the experiment, such as the x and y position, orientation of
+%       fitted ellipse. 
+
+% title_str : str
+%       string used for the title of the plot.
+
+    n_flies = numel(feat.data(:,1,1));
+
     figure
     for idx = 1:n_flies
         subplot(n_flies, 1, idx)
@@ -9,7 +26,8 @@ function plot_vel_per_fly(Log, feat, n_flies, n_conditions, title_str, save_str,
         min_val = min(V);
         h = max_val - min_val;
         
-        
+        n_conditions = height(Log);
+
         for ii = 1:n_conditions
         
             % create the plot
@@ -48,9 +66,11 @@ function plot_vel_per_fly(Log, feat, n_flies, n_conditions, title_str, save_str,
     sgtitle(strcat(title_str, ' - N=', string(n_flies)))
     f = gcf; 
     f.Position = [2162  -476  794  1520];
-    
-    if save_figs == true
-        savefig(gcf, fullfile(fig_exp_save_folder, strcat('Vel_perfly_', save_str)))
-    end 
 
+    han=axes(f, 'visible','off');
+    han.YLabel.Visible='on';
+    han.XLabel.Visible='on';
+    ylabel(han, 'Velocity (mm s-1)', 'Position', [-0.06 0.5])
+    xlabel(han, 'Time / frames / conditions')
+    
 end 
