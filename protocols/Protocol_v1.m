@@ -1,7 +1,7 @@
 
 %Protocol_v1.m file for HMS experiments, June 2024
 % exp_str = 'Circadian_optomotor_freewalking_';
-
+clear
 %% Input parameters:
 % These parameters will be saved in the log file. 
 fly_strain = 'SS00324_T4T5';
@@ -70,8 +70,13 @@ if ~isfolder(strain_folder)
     mkdir(strain_folder)
 end
 
+sex_folder = fullfile(strain_folder, fly_sex);
+if ~isfolder(sex_folder)
+    mkdir(sex_folder)
+end
+
 t_str = strrep(string(time_str), ':', '_');
-exp_folder = fullfile(strain_folder, t_str);
+exp_folder = fullfile(sex_folder, t_str);
 if ~isfolder(exp_folder)
     mkdir(exp_folder)
 end 

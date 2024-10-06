@@ -1,9 +1,12 @@
 
 %Protocol_v11.m file 
+
+clear
+
 % Short, all high contrast, protocol. Replacing flicker with all OFF
 %% Input parameters:
 % These parameters will be saved in the log file. 
-fly_strain = 'CS_w1118';
+fly_strain = 'csw1118';
 fly_age = 7; % days
 fly_sex = 'F';
 lights_ON = datetime('20:00', 'Format', 'HH:mm');
@@ -21,8 +24,8 @@ num_flickers = 2;
 num_acclim = 3; 
 
 % Pattern settings
-optomotor_pattern = 1;
-flicker_pattern = 2;
+optomotor_pattern = 6; % 8 pixel bars
+flicker_pattern = 7;
 optomotor_speed = 64; % in frames per second
 flicker_speed = 8;
 
@@ -68,8 +71,13 @@ if ~isfolder(strain_folder)
     mkdir(strain_folder)
 end
 
+sex_folder = fullfile(strain_folder, fly_sex);
+if ~isfolder(sex_folder)
+    mkdir(sex_folder)
+end
+
 t_str = strrep(string(time_str), ':', '_');
-exp_folder = fullfile(strain_folder, t_str);
+exp_folder = fullfile(sex_folder, t_str);
 if ~isfolder(exp_folder)
     mkdir(exp_folder)
 end 

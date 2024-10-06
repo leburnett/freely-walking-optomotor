@@ -26,18 +26,19 @@ lights_OFF = datetime('12:00', 'Format', 'HH:mm');
 arena_temp = 24.4;
 
 % Protocol parameters:
-t_acclim = 5;
+t_acclim = 20;
 num_conditions = 8;
+t_pause = 0.015;
 
 % All conditions 
 all_conditions = [
     4, 5, 64, 8, 2;
-    4, 5, 127, 16, 20;
-    4, 5, 64, 8, 20;
+    4, 5, 127, 16, 15;
+    4, 5, 64, 8, 15;
     4, 5, 127, 16, 2;
     6, 7, 64, 8, 2; 
-    6, 7, 127, 16, 20;
-    6, 7, 64, 8, 20;
+    6, 7, 127, 16, 15;
+    6, 7, 64, 8, 15;
     6, 7, 127, 16, 2
 ];
 
@@ -87,8 +88,13 @@ if ~isfolder(strain_folder)
     mkdir(strain_folder)
 end
 
+sex_folder = fullfile(strain_folder, fly_sex);
+if ~isfolder(sex_folder)
+    mkdir(sex_folder)
+end
+
 t_str = strrep(string(time_str), ':', '_');
-exp_folder = fullfile(strain_folder, t_str);
+exp_folder = fullfile(sex_folder, t_str);
 if ~isfolder(exp_folder)
     mkdir(exp_folder)
 end 
@@ -126,6 +132,7 @@ controller_mode = [0 0]; % double open loop
 %% start camera
 vidobj.startCapture();
 disp('camera ON')
+pause(t_pause)
 % Record the behaviour of the flies without any lights on in the arena
 % before running the stimulus. 
 
@@ -141,11 +148,12 @@ display (random_order);
 acclim_off1.condition = 0;
 acclim_off1.dir = 0;
 
+Panel_com('all_off'); pause(t_pause)
+
 % % get frame and log it
 acclim_off1.start_t = vidobj.getTimeStamp().value;
 acclim_off1.start_f = vidobj.getFrameCount().value;
 
-Panel_com('all_off'); 
 disp('Acclim OFF')
 pause(t_acclim); 
 
@@ -174,15 +182,15 @@ for j = [1,2]
              
             % % ACCLIM ON
             disp('Pattern ON')
-
+            pause(t_pause)
             acclim_patt.condition = random_order(1);
             acclim_patt.optomotor_pattern = optomotor_pattern;
             acclim_patt.start_t = vidobj.getTimeStamp().value;
             acclim_patt.start_f = vidobj.getFrameCount().value;
             
-            Panel_com('set_mode',controller_mode); pause(0.01)
-            Panel_com('set_pattern_id', optomotor_pattern); pause(0.01)
-            Panel_com('set_position', [1 1]); pause(0.01)
+            Panel_com('set_mode',controller_mode); pause(t_pause)
+            Panel_com('set_pattern_id', optomotor_pattern); pause(t_pause)
+            Panel_com('set_position', [1 1]); pause(t_pause)
             pause(t_acclim); 
             acclim_patt.stop_t = vidobj.getTimeStamp().value;
             acclim_patt.stop_f = vidobj.getFrameCount().value;
@@ -209,11 +217,12 @@ end
 acclim_off2.condition = 0;
 acclim_off2.dir = 0;
 
+Panel_com('all_off'); pause(t_pause)
+
 % % get frame and log it
 acclim_off2.start_t = vidobj.getTimeStamp().value;
 acclim_off2.start_f = vidobj.getFrameCount().value;
 
-Panel_com('all_off'); 
 disp('Acclim OFF')
 pause(t_acclim); 
 

@@ -38,6 +38,7 @@ function batch_track_ufmf(date_folder)
             , options ...
             )
         t2t = toc;
+        disp(t2t)
 
         % For logging
         video_names{f, 1} = ufmf_files(f).folder;
@@ -46,5 +47,5 @@ function batch_track_ufmf(date_folder)
 
     tracking_log = table(video_names, t2track);
     log_fname = fullfile('C:\MatlabRoot\FreeWalkOptomotor\tracking_log', strcat('Tracked_', date_folder(end-9:end), '.mat'));
-    save(log_fname, tracking_log)
+    save(log_fname, 'tracking_log')
 end 

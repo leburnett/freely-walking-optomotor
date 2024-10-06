@@ -14,17 +14,18 @@ function Log = present_optomotor_stimulus(current_condition, all_conditions, vid
  % disp (trial_len);
 
 t_flicker = 30;
+t_pause = 0.015;
 
 if trial_len == 2
-    num_trials = 30;
-elseif trial_len == 20
-    num_trials = 3;
+    num_trials = 15;
+elseif trial_len == 15
+    num_trials = 2;
 end
 
 idx_value = 1;
 %%%%% 
 
-Panel_com('set_pattern_id', optomotor_pattern); pause(0.01)
+Panel_com('set_pattern_id', optomotor_pattern); pause(t_pause)
 
 % Start stimulus 
 dir_val = -1;
@@ -39,20 +40,20 @@ for tr_ind = 1:num_trials
     Log.dir(idx_value) = dir_val;
 
     Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]);
-    pause(0.01);
+    pause(t_pause);
     Panel_com('set_position', [1 1]);
-    pause(0.01);
+    pause(t_pause);
     Panel_com('start'); 
-    pause(0.01);
+    pause(t_pause);
 
     % get frame and log it
     Log.start_t(idx_value) = vidobj.getTimeStamp().value;
     Log.start_f(idx_value) = vidobj.getFrameCount().value;
 
     pause(trial_len); % The pattern will run for this ‘Time’
-    pause(0.01); 
+    pause(t_pause); 
     Panel_com('stop'); 
-    pause(0.01);
+    pause(t_pause);
 
     % get frame and log it 
     Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
@@ -84,20 +85,20 @@ Log.trial(idx_value) = idx_value;
 Log.dir(idx_value) = dir_val;
 
 Panel_com('send_gain_bias', [flicker_speed 0 0 0]); 
-pause(0.01);
+pause(t_pause);
 Panel_com('set_position', [1 1]);
-pause(0.01);
+pause(t_pause);
 Panel_com('start'); 
-pause(0.01);
+pause(t_pause);
 
 % get frame and log it
 Log.start_t(idx_value) = vidobj.getTimeStamp().value;
 Log.start_f(idx_value) = vidobj.getFrameCount().value;
 
 pause(t_flicker); 
-pause(0.01); % The pattern will run for this ‘Time’
+pause(t_pause); % The pattern will run for this ‘Time’
 Panel_com('stop'); 
-pause(0.01);
+pause(t_pause);
 
 % % get frame and log it 
 Log.stop_t(idx_value) = vidobj.getTimeStamp().value;

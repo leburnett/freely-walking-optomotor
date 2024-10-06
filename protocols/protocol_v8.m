@@ -1,43 +1,29 @@
 
-%Protocol_v9.m file - different spatial frequecies
+% Protocol_v8.m file - optomotor freely walking with 4 pixel stripes
 
 %% Input parameters:
 % These parameters will be saved in the log file. 
-fly_strain = 'SS00324_T4T5';
+fly_strain = 'CS_w1118';
 fly_age = 2; % days
 fly_sex = 'F';
-n_flies = 14;
 lights_ON = datetime('20:00', 'Format', 'HH:mm');
 lights_OFF = datetime('12:00', 'Format', 'HH:mm');
-arena_temp = 25.0;
+arena_temp = 24.5;
 
 % Protocol parameters:
-trial_len = 10;  
-t_acclim = 20; 
-t_flicker = 30; 
-num_trials_per_block = 4; 
+trial_len = 10; 
+t_acclim = 20;
+t_flicker = 30;
+num_trials_per_block = 4;
 num_directions = 2; 
 num_reps = 2;
 num_flickers = 2; 
 num_acclim = 3; 
 
-% Pattern settings:
-% 4 pixel bars
-% optomotor_pattern = 4;
-% flicker_pattern = 5;
-% optomotor_speed = 32; 
-
-% 8 pixel bars
-% optomotor_pattern = 6;
-% flicker_pattern = 7;
-% optomotor_speed = 64; % in frames per second - was 64
-
-% 16 pixel bars
-% optomotor_pattern = 9;
-% flicker_pattern = 10;
-% optomotor_speed = 127; 
-
-% Flicker speed stays consistent.
+% Pattern settings
+optomotor_pattern = 4;
+flicker_pattern = 5;
+optomotor_speed = 32; % in frames per second - was 64
 flicker_speed = 8;
 
 %% Protocol name
@@ -82,8 +68,13 @@ if ~isfolder(strain_folder)
     mkdir(strain_folder)
 end
 
+sex_folder = fullfile(strain_folder, fly_sex);
+if ~isfolder(sex_folder)
+    mkdir(sex_folder)
+end
+
 t_str = strrep(string(time_str), ':', '_');
-exp_folder = fullfile(strain_folder, t_str);
+exp_folder = fullfile(sex_folder, t_str);
 if ~isfolder(exp_folder)
     mkdir(exp_folder)
 end 
@@ -95,7 +86,7 @@ vidobj.enableLogging();
 vidobj.loadConfiguration(config_path);
 vidobj.setVideoFile(v_fname);
 
-% Pattern settings
+
 controller_mode = [0 0]; % double open loop
 contrast_levels = [1.0 1.0 1.0 1.0 1.0 1.0 1.0]; 
 
@@ -253,6 +244,7 @@ Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
 Log.stop_f(idx_value) = vidobj.getFrameCount().value;
 
 
+
 %% sweeping down contrast block
 
 Panel_com('set_mode',controller_mode);
@@ -261,7 +253,6 @@ Panel_com('set_pattern_id', optomotor_pattern);
 for tr_ind = 7+[1:num_trials_per_block]
 
     disp(['trial number = ' num2str(tr_ind)])
-
     idx_value = idx_value+1;
     % set dir_val as positive (1)
     dir_val = 1;
@@ -273,7 +264,7 @@ for tr_ind = 7+[1:num_trials_per_block]
 
     Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
     pause(0.01);
-    Panel_com('set_position', [1 con_val]); 
+    Panel_com('set_position', [1 con_val]);  
     pause(0.01);
     Panel_com('start'); 
     pause(0.01);
@@ -320,12 +311,10 @@ for tr_ind = 7+[1:num_trials_per_block]
     % get frame and log it
     Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
     Log.stop_f(idx_value) = vidobj.getFrameCount().value;
-
 end
 
 %% Flicker pattern 
 
-disp('trial number = flicker 2')
 Panel_com('set_pattern_id', flicker_pattern);
 
 idx_value = idx_value+1;
@@ -356,6 +345,8 @@ pause(0.01);
 % get frame and log it 
 Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
 Log.stop_f(idx_value) = vidobj.getFrameCount().value;
+
+disp('trial number = flicker 2')
 
 %% Acclim at the end 
 % Record the behaviour of the flies without any lights on in the arena
@@ -390,7 +381,6 @@ LOG.time = time_str;
 LOG.fly_strain = fly_strain;
 LOG.fly_age = fly_age;
 LOG.fly_sex = fly_sex;
-LOG.n_flies=n_flies;
 LOG.lights_ON = lights_ON;
 LOG.lights_OFF = lights_OFF;
 LOG.arena_temp= arena_temp;
@@ -422,9 +412,3 @@ LOG.Log = Log;
 log_fname =  fullfile(exp_folder, strcat('LOG_', string(date_str), '_', t_str, '.mat'));
 save(log_fname, 'LOG');
 disp('Log saved')
-
-
-%%
-% 
-% vid_fname = 'C:\MatlabRoot\FreeWalkOptomotor\data\2024_06_11\16_41_58\REC__cam_0_date_2024_06_11_time_16_41_58_v001.avi';
-% v = VideoReader(vid_fname);
