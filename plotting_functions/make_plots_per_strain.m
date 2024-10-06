@@ -54,6 +54,13 @@ end
 
 savefig(features_fig, fullfile(features_folder, fig2_str))
 
+
+% % % % Figure 3 - scatter box plots - velocity
+
+fig_scatter_vel = make_scatter_bar_across_exp(combined_data, strain, protocol, "dist");
+
+
+
 end 
 
 
