@@ -5,12 +5,20 @@ function make_prob_heatmap(data_folder)
     % Protocol v6 - 7 clockwise and anti trials - flicker
     cd(data_folder)
 
-    % Information about the strain / protocol.  - only for protocol 6 atm. 
+    % Information about the strain / protocol.
+
     subfolders = split(data_folder, '/');
-    cond = subfolders{end};
-    % sex = subfolders{end-1};
-    strain = subfolders{end-2};
-    protocol = subfolders{end-3};
+    % protocol v6
+    % cond = subfolders{end};
+    % % sex = subfolders{end-1};
+    % strain = subfolders{end-2};
+    % protocol = subfolders{end-3};
+
+    % protocol v5
+    sex = subfolders{end};
+    strain = subfolders{end-1};
+    protocol = subfolders{end-2};
+
 
     % Load log
     PROJECT_ROOT = '/Users/burnettl/Documents/Projects/oaky_cokey/'; 
@@ -22,40 +30,40 @@ function make_prob_heatmap(data_folder)
 
     % Generate figure
     figure
-    tiledlayout(1,7);
+    tiledlayout(1,3);
 
- for subpl = 1:7
+ for subpl = 1:3
 
      nexttile
 
-     if subpl == 1
-         % off
-         range = 1: Log.stop_f(1);
-         sub_tit = 'OFF';
-     elseif subpl ==2 
-         % on
-         range = Log.start_f(2) : Log.stop_f(2);
-         sub_tit = 'ON';
-     elseif subpl ==3 
-         %opto 1
-         range = Log.start_f(3):Log.stop_f(16); 
-         sub_tit = 'OPTOMOTOR';
-     elseif subpl ==4 
-         %flicker
-          range = Log.start_f(17):Log.stop_f(17);
-          sub_tit = 'FLICKER';
-     elseif subpl ==5 
-         %opto 2
-         range = Log.start_f(18):Log.stop_f(31);
-         sub_tit = 'OPTOMOTOR';
-     elseif subpl ==6 
-         % flicker 2
-         range = Log.start_f(32):Log.stop_f(32);
-         sub_tit = 'FLICKER';
-     elseif subpl == 7
-         % off 2
-         range = Log.start_f(33):Log.stop_f(33)-2;
-         sub_tit = 'OFF';
+     if protocol == "protocol_v6" || protocol == "protocol_v1" 
+         if subpl == 1
+             % off
+             range = 1: Log.stop_f(2);
+             sub_tit = 'ACCLIM';
+         elseif subpl ==2 
+             %opto
+             range = [Log.start_f(3):Log.stop_f(16), Log.start_f(18):Log.stop_f(31)]; 
+             sub_tit = 'OPTOMOTOR';
+         elseif subpl ==3 
+             %flicker
+              range = [Log.start_f(17):Log.stop_f(17), Log.start_f(32):Log.stop_f(32)];
+              sub_tit = 'FLICKER';
+         end 
+     elseif protocol == "protocol_v5"
+         if subpl == 1
+             % off
+             range = 1: Log.stop_f(2);
+             sub_tit = 'ACCLIM';
+         elseif subpl ==2 
+             %opto
+             range = [Log.start_f(3):Log.stop_f(10), Log.start_f(12):Log.stop_f(19)]; 
+             sub_tit = 'OPTOMOTOR';
+         elseif subpl ==3 
+             %flicker
+              range = [Log.start_f(11):Log.stop_f(11), Log.start_f(20):Log.stop_f(20)];
+              sub_tit = 'FLICKER';
+         end 
      end 
 
 
@@ -105,7 +113,8 @@ function make_prob_heatmap(data_folder)
         viscircles([num_bins/2, num_bins/2], num_bins/2, "Color", 'w', "LineWidth", 0.4); 
 
         colormap("gray")
-        set(gcf, 'Position', [178  819  1487 205])
+        % set(gcf, 'Position', [178  819  1487 205])
+        set(gcf, 'Position', [178   738   950   286])
         axis off
         title(sub_tit)
         xlim([0 num_bins])
@@ -118,7 +127,11 @@ function make_prob_heatmap(data_folder)
         end 
  end 
 
-sgtitle(strcat(strain, '-', strrep(cond, '_', '-')))
+ if protocol == "protocol_v6"
+    sgtitle(strcat(strrep(strain, '_', '-'), '-', strrep(cond, '_', '-')))
+ else
+    sgtitle(strrep(strain, '_', '-'))  
+ end 
 
 end 
 
