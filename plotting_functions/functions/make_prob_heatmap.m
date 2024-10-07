@@ -1,13 +1,28 @@
-function make_prob_heatmap()
+function make_prob_heatmap(data_folder)
 % Generate a spatial heatmap of where the fly was during different parts of
 % the experiment. 
 
-% Protocol v6 - 7 clockwise and anti trials - flicker
+    % Protocol v6 - 7 clockwise and anti trials - flicker
+    cd(data_folder)
 
+    % Information about the strain / protocol.  - only for protocol 6 atm. 
+    subfolders = split(data_folder, '/');
+    cond = subfolders{end};
+    % sex = subfolders{end-1};
+    strain = subfolders{end-2};
+    protocol = subfolders{end-3};
+
+    % Load log
+    PROJECT_ROOT = '/Users/burnettl/Documents/Projects/oaky_cokey/'; 
+    load(fullfile(PROJECT_ROOT, strcat('/example_logs/', protocol,'_log.mat')), 'Log');
+    
     % get a list of all .mat results files. 
     data_files = dir('*.mat');
     n_files = length(data_files);
-    t = tiledlayout(1,7);
+
+    % Generate figure
+    figure
+    tiledlayout(1,7);
 
  for subpl = 1:7
 
@@ -24,7 +39,7 @@ function make_prob_heatmap()
      elseif subpl ==3 
          %opto 1
          range = Log.start_f(3):Log.stop_f(16); 
-         sub_tit = 'OPTO';
+         sub_tit = 'OPTOMOTOR';
      elseif subpl ==4 
          %flicker
           range = Log.start_f(17):Log.stop_f(17);
@@ -32,7 +47,7 @@ function make_prob_heatmap()
      elseif subpl ==5 
          %opto 2
          range = Log.start_f(18):Log.stop_f(31);
-         sub_tit = 'OPTO';
+         sub_tit = 'OPTOMOTOR';
      elseif subpl ==6 
          % flicker 2
          range = Log.start_f(32):Log.stop_f(32);
@@ -81,15 +96,29 @@ function make_prob_heatmap()
             
         end 
         pos_data = pos_data/sum(sum(pos_data));
-        max_lim = max(max(pos_data))*0.6;
+        max_lim = max(max(pos_data))*0.4;
+
+        % plot
         imagesc(pos_data); clim([0 max_lim])
+        hold on
+        plot(num_bins/2, num_bins/2, 'r+', 'MarkerSize', 16, 'LineWidth', 1.2);
+        viscircles([num_bins/2, num_bins/2], num_bins/2, "Color", 'w', "LineWidth", 0.4); 
+
         colormap("gray")
         set(gcf, 'Position', [178  819  1487 205])
         axis off
         title(sub_tit)
+        xlim([0 num_bins])
+        ylim([0 num_bins])
 
+        if subpl == 7
+            hcb=colorbar;
+            hcb.Title.String = "Probability";
+            
+        end 
  end 
 
+sgtitle(strcat(strain, '-', strrep(cond, '_', '-')))
 
 end 
 
