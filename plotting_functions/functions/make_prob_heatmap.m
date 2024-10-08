@@ -9,15 +9,15 @@ function make_prob_heatmap(data_folder)
 
     subfolders = split(data_folder, '/');
     % protocol v6
-    % cond = subfolders{end};
-    % % sex = subfolders{end-1};
-    % strain = subfolders{end-2};
-    % protocol = subfolders{end-3};
+    cond = subfolders{end};
+    % sex = subfolders{end-1};
+    strain = subfolders{end-2};
+    protocol = subfolders{end-3};
 
     % protocol v5
-    sex = subfolders{end};
-    strain = subfolders{end-1};
-    protocol = subfolders{end-2};
+    % sex = subfolders{end};
+    % strain = subfolders{end-1};
+    % protocol = subfolders{end-2};
 
 
     % Load log
@@ -109,10 +109,11 @@ function make_prob_heatmap(data_folder)
         % plot
         imagesc(pos_data); clim([0 max_lim])
         hold on
-        plot(num_bins/2, num_bins/2, 'r+', 'MarkerSize', 16, 'LineWidth', 1.2);
+        plot(num_bins/2, num_bins/2, 'c+', 'MarkerSize', 12, 'LineWidth', 2.5);
         viscircles([num_bins/2, num_bins/2], num_bins/2, "Color", 'w', "LineWidth", 0.4); 
 
-        colormap("gray")
+        infern = cmap_inferno();
+        colormap(infern)
         % set(gcf, 'Position', [178  819  1487 205])
         set(gcf, 'Position', [178   738   950   286])
         axis off
@@ -120,10 +121,11 @@ function make_prob_heatmap(data_folder)
         xlim([0 num_bins])
         ylim([0 num_bins])
 
-        if subpl == 7
+        if subpl == 3
             hcb=colorbar;
             hcb.Title.String = "Probability";
-            
+            hcb.Ruler.SecondaryLabel.Units = 'normalized';
+            hcb.Ruler.SecondaryLabel.Position = [1.07 0.95];
         end 
  end 
 

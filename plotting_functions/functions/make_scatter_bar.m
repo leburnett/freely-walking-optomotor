@@ -1,4 +1,4 @@
-function make_scatter_bar(data, Log, feature)
+function make_scatter_bar(data, feature)
 % data can be one of the 'data_per_cond' arrays. 
 
 if feature == "dist"
@@ -75,3 +75,4 @@ elseif feature == "ratio"
 end 
 
 
+end 

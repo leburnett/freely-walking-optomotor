@@ -1,4 +1,4 @@
-function f = make_scatter_bar_across_exp(combined_data, strain, protocol, feature)
+function f = make_scatter_bar_across_exp_cond_val(combined_data, strain, protocol, cond_val, feature)
 % For combined data across exp = generate combined data 
 % Currently for protocol v1
 
@@ -22,7 +22,7 @@ function f = make_scatter_bar_across_exp(combined_data, strain, protocol, featur
         on_range = Log.start_f(2) : Log.stop_f(2);
         opto_range = Log.start_f(15):Log.stop_f(16);  % , Log.start_f(18):Log.stop_f(31)
         flicker_range = Log.start_f(17):Log.stop_f(17);
-    elseif protocol == "protocol_v7"
+    elseif protocol == "protocol_v7" || protocol == "protocol_v9"
         off_range = 1: Log.stop_f(1);
         on_range = Log.start_f(2) : Log.stop_f(2);
         opto_range = [Log.start_f(3):Log.stop_f(10), Log.start_f(12):Log.stop_f(19)];  % , Log.start_f(18):Log.stop_f(31)
@@ -50,7 +50,7 @@ function f = make_scatter_bar_across_exp(combined_data, strain, protocol, featur
     yvals = [doff_mean', don_mean', dopto_mean', dflicker_mean'];
     
     figure;
-    scatter(xvals ...
+    scatter(xvals...
         , yvals ...
         , 50 ...
         , [0.6 0.6 0.6] ...
@@ -100,7 +100,7 @@ function f = make_scatter_bar_across_exp(combined_data, strain, protocol, featur
     text(4, txt_n, num2str(nanmedian(dflicker_mean), 3), "Color", 'b', 'HorizontalAlignment','center', "FontSize", 12)
     
 
-    title(strcat(strrep(strain, '_', '-'), '-', str_tit, '-n=', num2str(n_flies)), 'FontWeight', 'bold', "FontSize", 12)
+    title(strcat(strrep(strain, '_', '-'), '-', str_tit, '-',string(cond_val), 'pix-n=', num2str(n_flies)), 'FontWeight', 'bold', "FontSize", 12)
 
     f = gcf;
 

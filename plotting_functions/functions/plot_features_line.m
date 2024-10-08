@@ -52,9 +52,9 @@ function f = plot_features_line(combined_data, strain, sex, protocol)
         end 
 
         if dir_id == 0 
-            if ii == 1 || ii == 33
+            if ii == 1 || ii == 21 %ii == 1 || ii == 33
                 col = [0.5 0.5 0.5 0.3];
-            elseif ii == 17 || ii == 32
+            elseif ii == 11 || ii == 20 %ii == 17 || ii == 32
                 col = [0 0 0 0.5];
             else
                 col = [1 1 1];
