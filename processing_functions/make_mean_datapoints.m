@@ -9,13 +9,13 @@ function [datapoints_mean, datapoints_med]  = make_mean_datapoints(Log, feat, tr
 
     % % % % % % % % % % %
 
-    contrast_vals = Log.contrast; 
+    % contrast_vals = Log.contrast; 
     
     datapoints_mean = zeros(n_conditions, n_flies+1);
-    datapoints_mean(1:n_conditions, 1) = contrast_vals;
+    % datapoints_mean(1:n_conditions, 1) = contrast_vals;
 
     datapoints_med = zeros(n_conditions, n_flies+1);
-    datapoints_med(1:n_conditions, 1) = contrast_vals;
+    % datapoints_med(1:n_conditions, 1) = contrast_vals;
 
     for idx = 1:n_flies
 
