@@ -1,12 +1,12 @@
 function process_freely_walking_data(date_to_analyse)
 % process the oaky-cokey freely-walking optomotor behaviour data 
-
-    close all
-    clear
-    clc
+    % 
+    % close all
+    % clear
+    % clc
     
     %% If data recorded after 24/09/2024 - - - new logging / saving system that saves in subfolders. 
-    PROJECT_ROOT = '/Users/burnettl/Documents/Projects/oaky_cokey/'; %% Update for your computer. 
+    PROJECT_ROOT = 'C:\Users\deva\Documents\projects\oakey_cokey\'; %% Update for your computer. 
     data_path = fullfile(PROJECT_ROOT, 'data');
     results_path = fullfile(PROJECT_ROOT, 'results');
     
