@@ -118,8 +118,10 @@ function process_data_features_AD(path_to_folder, save_folder, date_str)
 
 
         % Log = LOG.Log;
+        
+        % n_conditions = 14;
 
-        n_conditions = 1; %% have to figure out what this will be now, unsure if its each condition within the log or whether each condition is the log itself
+        % n_conditions = size(LOG.log_2.start_t, 2); %% have to figure out what this will be now, unsure if its each condition within the log or whether each condition is the log itself
    
         %%%%%%% NOT V10 LOG FORMAT %%%%%%%%%%%%%%%%%
 
@@ -141,26 +143,35 @@ function process_data_features_AD(path_to_folder, save_folder, date_str)
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+        % create figure and subplot formatting
+
         %% cycle through each baby log and process the velocity, angular velocity, ratio, and distance to wall
 
-        for i = 2:length(log_names)
-            % process velocity for each log
-            [vel_data_per_cond_mean, vel_data_per_cond_med] = make_mean_datapoints(LOG.(log_names{i}), feat, trx, n_flies, n_conditions, "vel");
+        %% log_1
+        n_conditions = size(LOG.log_1.start_t, 2);
+        [ang_vel_data_per_cond_mean, ang_vel_data_per_cond_med] = make_mean_datapoints(LOG.log_1, feat, trx, n_flies, n_conditions, "angvel");
+
+        subplot();
+
+
+        % for i = 3:length(log_names) %%%%%%%%% change to i = 2:length(log_names) so that it starts at log_1
+            % % process velocity for each log
+            % [vel_data_per_cond_mean, vel_data_per_cond_med] = make_mean_datapoints(LOG.(log_names{i}), feat, trx, n_flies, n_conditions, "vel");
 
             % process angular velocity for each log
-            [ang_vel_data_per_cond_mean, ang_vel_data_per_cond_med] = make_mean_datapoints(LOG.(log_names{i}), feat, trx, n_flies, n_conditions, "angvel");
+            [ang_vel_data_per_cond_mean, ang_vel_data_per_cond_med] = make_mean_datapoints(LOG.log_2, feat, trx, n_flies, n_conditions, "angvel");
 
-            % process angular velocity : velocity ratio
-            [ratio_data_per_cond] = make_mean_datapoints(LOG.(log_names{i}), feat, trx, n_flies, n_conditions, "ratio");
-
-            % process distance to wall
-            [dist_data_per_cond_mean, dist_data_per_cond_med] = make_mean_datapoints(LOG.(log_names{i}), feat, trx, n_flies, n_conditions, "dist");
+            % % process angular velocity : velocity ratio
+            % [ratio_data_per_cond] = make_mean_datapoints(LOG.(log_names{i}), feat, trx, n_flies, n_conditions, "ratio");
+            % 
+            % % process distance to wall
+            % [dist_data_per_cond_mean, dist_data_per_cond_med] = make_mean_datapoints(LOG.(log_names{i}), feat, trx, n_flies, n_conditions, "dist");
 
 
             %% save these somehow individually for each log? or all in one? not sure or have to create one big array?
     
-        end
-
+        % end
 
         %% SAVE
         if ~isfolder(save_folder)
