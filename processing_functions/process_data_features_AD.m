@@ -93,29 +93,41 @@ function process_data_features_AD(path_to_folder, save_folder, date_str)
 
         log_names = fieldnames(LOG);
 
-        % save each baby log as its own log
+        % create figure to make subplots within
+        figure;
 
-        % log_acclim_off1 = LOG.acclim_off1;
-        % log_acclim_patt = LOG.acclim_patt;
-        % log_log_1 = LOG.log_1;
-        % log_log_2 = LOG.log_2;
-        % log_log_3 = LOG.log_3;  
-        % log_log_4 = LOG.log_4;
-        % log_log_5 = LOG.log_5;
-        % log_log_6 = LOG.log_6;
-        % log_log_7 = LOG.log_7;
-        % log_log_8 = LOG.log_8;
-        % log_log_9 = LOG.log_9;
-        % log_log_10 = LOG.log_10;
-        % log_log_11 = LOG.log_11;
-        % log_log_12 = LOG.log_12;
-        % log_log_13 = LOG.log_13;
-        % log_log_14 = LOG.log_14;
-        % log_log_15 = LOG.log_15;
-        % log_log_16 = LOG.log_16;
-        % log_acclim_off2 = LOG.acclim_off2;
+        for i = 2:length(log_names)
+            % get current log
+            current_log = LOG.(log_names{i});
+            current_n_conditions = size(current_log.start_t, 2);
 
+            % needed for v10 pre-10/17/2024, sets acclim_patt.dir
+            if i == 3
+                current_log.dir = 0;
+                display('in if');
+            end
 
+            % % process velocity for each log
+            % [vel_data_per_cond_mean, vel_data_per_cond_med] = make_mean_datapoints(LOG.(log_names{i}), feat, trx, n_flies, n_conditions, "vel");
+
+            % process angular velocity for each log
+            [ang_vel_data_per_cond_mean, ang_vel_data_per_cond_med] = make_mean_datapoints(current_log, feat, trx, n_flies, current_n_conditions, "angvel");
+
+            % % process angular velocity : velocity ratio
+            % [ratio_data_per_cond] = make_mean_datapoints(LOG.(log_names{i}), feat, trx, n_flies, n_conditions, "ratio");
+            % 
+            % % process distance to wall
+            % [dist_data_per_cond_mean, dist_data_per_cond_med] = make_mean_datapoints(LOG.(log_names{i}), feat, trx, n_flies, n_conditions, "dist");
+
+            % create subplot
+            subplot(length(log_names), 1, i);
+
+            % plot ang_vel_mean
+            plot(ang_vel_data_per_cond_mean);
+
+            % create title for each subplot
+            title([log_names{i}, ' - Angular Velocity Mean']);
+        end
 
         % Log = LOG.Log;
         
@@ -143,16 +155,23 @@ function process_data_features_AD(path_to_folder, save_folder, date_str)
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-        % create figure and subplot formatting
-
         %% cycle through each baby log and process the velocity, angular velocity, ratio, and distance to wall
 
-        %% log_1
-        n_conditions = size(LOG.log_1.start_t, 2);
-        [ang_vel_data_per_cond_mean, ang_vel_data_per_cond_med] = make_mean_datapoints(LOG.log_1, feat, trx, n_flies, n_conditions, "angvel");
+        % %% log_1
+        % n_conditions = size(LOG.log_1.start_t, 2);
+        % % % process velocity for each log
+        % % [vel_data_per_cond_mean, vel_data_per_cond_med] = make_mean_datapoints(LOG.(log_names{i}), feat, trx, n_flies, n_conditions, "vel");
+        % 
+        % % process angular velocity for each log
+        % [ang_vel_data_per_cond_mean, ang_vel_data_per_cond_med] = make_mean_datapoints(LOG.log_1, feat, trx, n_flies, n_conditions, "angvel");
+        % 
+        % % % process angular velocity : velocity ratio
+        % % [ratio_data_per_cond] = make_mean_datapoints(LOG.(log_names{i}), feat, trx, n_flies, n_conditions, "ratio");
+        % % 
+        % % % process distance to wall
+        % % [dist_data_per_cond_mean, dist_data_per_cond_med] = make_mean_datapoints(LOG.(log_names{i}), feat, trx, n_flies, n_conditions, "dist");
+        % 
 
-        subplot();
 
 
         % for i = 3:length(log_names) %%%%%%%%% change to i = 2:length(log_names) so that it starts at log_1
@@ -160,7 +179,7 @@ function process_data_features_AD(path_to_folder, save_folder, date_str)
             % [vel_data_per_cond_mean, vel_data_per_cond_med] = make_mean_datapoints(LOG.(log_names{i}), feat, trx, n_flies, n_conditions, "vel");
 
             % process angular velocity for each log
-            [ang_vel_data_per_cond_mean, ang_vel_data_per_cond_med] = make_mean_datapoints(LOG.log_2, feat, trx, n_flies, n_conditions, "angvel");
+            % [ang_vel_data_per_cond_mean, ang_vel_data_per_cond_med] = make_mean_datapoints(LOG.log_2, feat, trx, n_flies, n_conditions, "angvel");
 
             % % process angular velocity : velocity ratio
             % [ratio_data_per_cond] = make_mean_datapoints(LOG.(log_names{i}), feat, trx, n_flies, n_conditions, "ratio");
