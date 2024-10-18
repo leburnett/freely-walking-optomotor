@@ -38,7 +38,7 @@ function process_freely_walking_data_AD(date_to_analyse)
             save_folder = fullfile(results_path, protocol_to_analyse, genotype_to_analyse);
             
             % Process the data and save the processed data:
-            process_data_features(path_to_folder, save_folder, date_to_analyse)
+            process_data_features_AD(path_to_folder, save_folder, date_to_analyse)
         end 
     
     end 
