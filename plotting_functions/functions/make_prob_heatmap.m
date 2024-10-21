@@ -104,13 +104,16 @@ function make_prob_heatmap(data_folder)
             
         end 
         pos_data = pos_data/sum(sum(pos_data));
-        max_lim = max(max(pos_data))*0.4;
+        % max_lim = max(max(pos_data))*0.4;
+        max_lim = 0.003;
 
         % plot
         imagesc(pos_data); clim([0 max_lim])
         hold on
-        plot(num_bins/2, num_bins/2, 'c+', 'MarkerSize', 12, 'LineWidth', 2.5);
-        viscircles([num_bins/2, num_bins/2], num_bins/2, "Color", 'w', "LineWidth", 0.4); 
+        % plot(num_bins/2, num_bins/2, 'c+', 'MarkerSize', 12, 'LineWidth', 2.5);
+        viscircles([num_bins/2, num_bins/2], num_bins/2, "Color", 'w', "LineWidth", 0.3); 
+        plot([num_bins/2, num_bins/2], [0, num_bins], 'w', "LineWidth", 0.3);
+        plot([0, num_bins], [num_bins/2, num_bins/2], 'w', "LineWidth", 0.3);
 
         infern = cmap_inferno();
         colormap(infern)
@@ -126,8 +129,14 @@ function make_prob_heatmap(data_folder)
             hcb.Title.String = "Probability";
             hcb.Ruler.SecondaryLabel.Units = 'normalized';
             hcb.Ruler.SecondaryLabel.Position = [1.07 0.95];
+            hcb.Ticks = [0, 0.001, 0.002, 0.003];
+            hcb.TickDirection = 'out';
+            hcb.FontSize = 12; 
+            hcb.LineWidth = 1; 
         end 
  end 
+ f = gcf;
+ f.Position = [45   820   718   200];
 
  if protocol == "protocol_v6"
     sgtitle(strcat(strrep(strain, '_', '-'), '-', strrep(cond, '_', '-')))
