@@ -5,8 +5,8 @@
 % plot_all_logs_seq_AD() to plot into different subplots
 
 % for testing
-cd('C:\Users\deva\Documents\projects\oakey_cokey\results\Protocol_v10_all_tests\CS_w1118');
-load("2024_10_03_11_19_53_data.mat");
+cd('C:\Users\deva\Documents\projects\oakey_cokey\results\protocol_10\csw1118\F')
+load("2024_10_23_14_44_21_data.mat");
 
 log_names = fieldnames(LOG);
 
@@ -25,21 +25,21 @@ for i = 4:(length(log_names) - 1)
     
     % determine which condition it is to put into title_subplot
     if current_log.optomotor_pattern == 4 && current_log.optomotor_speed == 64 && current_log.trial_len == 2
-        current_condition_name = '1. thin, slow, short';
+        current_condition_name = '1. 4pix, 64hz';
     elseif current_log.optomotor_pattern == 4 && current_log.optomotor_speed == 127 && current_log.trial_len == 15
-        current_condition_name = '2. thin, fast, long';
+        current_condition_name = '2. 4pix, 127hz';
     elseif current_log.optomotor_pattern == 4 && current_log.optomotor_speed == 64 && current_log.trial_len == 15
-        current_condition_name = '3. thin, slow, long';   
+        current_condition_name = '3. 4pix, 64hz';   
     elseif current_log.optomotor_pattern == 4 && current_log.optomotor_speed == 127 && current_log.trial_len == 2
-        current_condition_name = '4. thin, fast, short';
+        current_condition_name = '4. 4pix, 127hz';
     elseif current_log.optomotor_pattern == 6 && current_log.optomotor_speed == 64 && current_log.trial_len == 2
-        current_condition_name = '5. thick, slow, short';
+        current_condition_name = '5. 8pix, 64hz';
     elseif current_log.optomotor_pattern == 6 && current_log.optomotor_speed == 127 && current_log.trial_len == 15
-        current_condition_name = '6. thick, fast, long';
+        current_condition_name = '6. 8pix, 127hz';
     elseif current_log.optomotor_pattern == 6 && current_log.optomotor_speed == 64 && current_log.trial_len == 15
-        current_condition_name = '7. thick, slow, long';   
+        current_condition_name = '7. 8pix, 64hz';   
     elseif current_log.optomotor_pattern == 6 && current_log.optomotor_speed == 127 && current_log.trial_len == 2
-        current_condition_name = '8. thick, fast, short';
+        current_condition_name = '8. 8pix, 127hz';
     end
 
     count = count + 1;
@@ -53,7 +53,7 @@ for i = 4:(length(log_names) - 1)
         position = count - 8; % Shift positions by 8 to move to second column
     end
 
-    subplot(8, 1, position);
+    subplot(4, 2, position);
 
     plot_one_log_dist_seq_AD(current_log, feat, trx, current_condition_name);
     
@@ -64,7 +64,16 @@ for i = 4:(length(log_names) - 1)
     % ylabel(han, 'dist-from-center (mm)');
 
 end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% plot mean
 
+    % % calculate and plot mean for 1/9, 2/10, 3/11, 4/12, 5/13, 6/14, 7/15, 9/16
+    % if position == 9
+    %     % 1/9
+    %     mean_dist_data = calc_mean_log_dist_seq_AD(log_1, log_2, feat, trx, title_str);
+    %     plot(mean_dist_data, 'k', 'LineWidth', 1)
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 sgtitle(strcat('V10-distance-from-center'))
 
 hold off
@@ -111,8 +120,6 @@ for i = 4:(length(log_names) - 1)
     subplot(8, 1, position);
 
     plot_one_log_ang_vel_seq_AD(current_log, feat, trx, current_condition_name);
-
-
 
 end
 
