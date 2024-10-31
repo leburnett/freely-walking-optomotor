@@ -40,12 +40,6 @@ n_conditions = size(current_log.start_t, 2);
 
 hold on
 
-% add blue lines at each start and stop point for the conditions
-for i = 1:n_conditions - 1
-    temp_start_f = current_log.start_f(i) - current_start_f;
-    xline(temp_start_f, '-b', 'LineWidth', 1);
-end
-
 for idx = 1:n_flies
   % Plot the distance from the centre per fly
     plot(dist_data(idx, :), 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5)
@@ -53,14 +47,9 @@ end
 
 ylim([-15 135])
 xlim([0, 1880])
-% plot([0 current_log.stop_f(end)], [120 120], 'LineWidth', 1, 'Color', [0.7 0.7 0.7])
-% plot([0 current_log.stop_f(end)], [0 0], 'LineWidth', 1, 'Color', [0.7 0.7 0.7])
-
-% plot(mean(dist_data), 'k', 'LineWidth', 1)
 
 title(title_str);
 
-xline(flicker_start, '--r', 'LineWidth', 1);
 % xlabel('time (f)')
 % ylabel('distance (mm)')
 

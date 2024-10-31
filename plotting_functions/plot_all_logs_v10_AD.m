@@ -1,6 +1,5 @@
 % script to process all logs in v10 protocol
 
-
 % have to basically cycle through all of the logs and run
 % plot_all_logs_seq_AD() to plot into different subplots
 
@@ -15,11 +14,25 @@ log_names = fieldnames(LOG);
 % % % % % DISTANCE FROM CENTER % % % % % 
 
 count = 0;
+count2 = 0;
 figure;
+
 hold on
 
 % plot colored rectangles
+for i = 4:11
+    current_log_name = log_names{i};
+    current_log = LOG.(log_names{i});
+    count2 = count2 + 1;
+    % current_n_conditions = size(current_log.start_t, 2);
 
+    min_val = 0;
+    max_val = 120;
+    protcol10 = 'protocol10';
+    subplot(4, 2, count2);
+    plot_pink_blue_rects_AD(current_log, min_val, max_val, 0);
+
+end
 
 
 %%%%%%
@@ -110,7 +123,7 @@ subplot(4, 2, 8)
 m8 = calc_mean_log_dist_seq_AD(LOG.log_8, LOG.log_16, feat, trx);
 plot(m8, 'k', 'LineWidth', 1);
 
-sgtitle(strcat('V10-distance-from-center'))
+% sgtitle(strcat('V10-distance-from-center'))
 
 hold off
 
