@@ -18,6 +18,14 @@ count = 0;
 figure;
 hold on
 
+% plot colored rectangles
+
+
+
+%%%%%%
+
+% plot all flies
+
 for i = 4:(length(log_names) - 1)
     current_log_name = log_names{i};
     current_log = LOG.(log_names{i});
@@ -64,19 +72,48 @@ for i = 4:(length(log_names) - 1)
     % ylabel(han, 'dist-from-center (mm)');
 
 end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% plot mean
 
-    % % calculate and plot mean for 1/9, 2/10, 3/11, 4/12, 5/13, 6/14, 7/15, 9/16
-    % if position == 9
-    %     % 1/9
-    %     mean_dist_data = calc_mean_log_dist_seq_AD(log_1, log_2, feat, trx, title_str);
-    %     plot(mean_dist_data, 'k', 'LineWidth', 1)
-    
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% plot mean of all flies
+
+% calculate and plot mean for 1/9, 2/10, 3/11, 4/12, 5/13, 6/14, 7/15, 9/16
+hold on
+
+subplot(4, 2, 1)
+m1 = calc_mean_log_dist_seq_AD(LOG.log_1, LOG.log_9, feat, trx);
+plot(m1, 'k', 'LineWidth', 1);
+
+subplot(4, 2, 2)
+m2 = calc_mean_log_dist_seq_AD(LOG.log_2, LOG.log_10, feat, trx);
+plot(m2, 'k', 'LineWidth', 1);
+
+subplot(4, 2, 3)
+m3 = calc_mean_log_dist_seq_AD(LOG.log_3, LOG.log_11, feat, trx);
+plot(m3, 'k', 'LineWidth', 1);
+
+subplot(4, 2, 4)
+m4 = calc_mean_log_dist_seq_AD(LOG.log_4, LOG.log_12, feat, trx);
+plot(m4, 'k', 'LineWidth', 1);
+
+subplot(4, 2, 5)
+m5 = calc_mean_log_dist_seq_AD(LOG.log_5, LOG.log_13, feat, trx);
+plot(m5, 'k', 'LineWidth', 1);
+
+subplot(4, 2, 6)
+m6 = calc_mean_log_dist_seq_AD(LOG.log_6, LOG.log_14, feat, trx);
+plot(m6, 'k', 'LineWidth', 1);
+
+subplot(4, 2, 7)
+m7 = calc_mean_log_dist_seq_AD(LOG.log_7, LOG.log_15, feat, trx);
+plot(m7, 'k', 'LineWidth', 1);
+
+subplot(4, 2, 8)
+m8 = calc_mean_log_dist_seq_AD(LOG.log_8, LOG.log_16, feat, trx);
+plot(m8, 'k', 'LineWidth', 1);
+
 sgtitle(strcat('V10-distance-from-center'))
 
 hold off
+
 % % % % % ANGULAR VELOCITY % % % % % 
 
 count = 0;
