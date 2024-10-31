@@ -8,8 +8,10 @@ function plot_one_log_dist_seq_AD(current_log, feat, trx, title_str)
 %% trx
 
 % use for testing
-% current_log = LOG.log_4;
-% title_str = 'log_4';
+% cd('C:\Users\deva\Documents\projects\oakey_cokey\data\2024_10_23\protocol_10\csw1118\F\14_44_21')
+% load("LOG_2024_10_23_14_44_21.mat")
+% current_log = LOG.log_8;
+% title_str = '4pix, 64hx';
 % figure;
 
 % fixed_parameters
@@ -50,17 +52,18 @@ for idx = 1:n_flies
 end 
 
 ylim([-15 135])
+xlim([0, 1880])
 % plot([0 current_log.stop_f(end)], [120 120], 'LineWidth', 1, 'Color', [0.7 0.7 0.7])
 % plot([0 current_log.stop_f(end)], [0 0], 'LineWidth', 1, 'Color', [0.7 0.7 0.7])
 
-plot(mean(dist_data), 'k', 'LineWidth', 1)
+% plot(mean(dist_data), 'k', 'LineWidth', 1)
 
 title(title_str);
 
 xline(flicker_start, '--r', 'LineWidth', 1);
-xlabel('time (s)')
-ylabel('distance (mm)')
+% xlabel('time (f)')
+% ylabel('distance (mm)')
 
-hold off
+% hold off
 
 end
