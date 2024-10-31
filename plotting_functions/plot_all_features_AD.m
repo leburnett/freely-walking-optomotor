@@ -21,8 +21,8 @@ function f = plot_all_features_AD(Log, feat, trx, title_str)
     
     % Fixed paramters: 
     n_flies = length(trx);
-    Log = log_2;
-    title_str = 'log_2_allfeatures';
+    % Log = log_2;
+    % title_str = 'log_2_allfeatures';
 
     fps = 30;
     samp_rate = 1/fps; 
@@ -52,7 +52,7 @@ function f = plot_all_features_AD(Log, feat, trx, title_str)
 
     % Plot the pink and blue bckground rectangles. 
 
-    for ii = 1:n_conditions
+    for ii = 4:n_conditions
 
         % Get the timing of each condition
         st_fr = Log.start_f(ii);
@@ -69,7 +69,7 @@ function f = plot_all_features_AD(Log, feat, trx, title_str)
         if dir_id == 0 
             if ii == 1 || ii == 33
                 col = [0.5 0.5 0.5 0.3];
-            elseif ii == 17 || ii == 32
+            elseif ii == 17 || ii == 32 %% gray for the flickers? i think?
                 col = [0 0 0 0.3];
             else
                 col = [1 1 1];
@@ -286,7 +286,8 @@ function f = plot_all_features_AD(Log, feat, trx, title_str)
 
     sgtitle(strcat(title_str, ' - N=', string(n_flies)))
     f = gcf; 
-    f.Position = [1234  71  567  976];
+    % f.Position = [1234  71  567  976]; %% does something wierd,
+    % uncommented for now
     han=axes(f, 'visible','off');
     han.XLabel.Visible='on';
     xlabel(han, 'Time / frames / conditions')
