@@ -13,17 +13,17 @@ close all
 PROJECT_ROOT = '/Users/burnettl/Documents/Projects/oaky_cokey/'; 
 
 % Information about the strain / protocol. 
-% subfolders = split(data_folder, '/');
-% sex = subfolders{end};
-% strain = subfolders{end-1};
-% protocol = subfolders{end-2};
+subfolders = split(data_folder, '/');
+sex = subfolders{end};
+strain = subfolders{end-1};
+protocol = subfolders{end-2};
 
 %protocol v9 / v7
-subfolders = split(data_folder, '/');
-cond_val = subfolders{end};
-sex = subfolders{end-1};
-strain = subfolders{end-2};
-protocol = subfolders{end-3};
+% subfolders = split(data_folder, '/');
+% cond_val = subfolders{end};
+% sex = subfolders{end-1};
+% strain = subfolders{end-2};
+% protocol = subfolders{end-3};
 
 % Folder to save figs:
 results_path = fullfile(PROJECT_ROOT, 'figures');
@@ -66,12 +66,12 @@ savefig(features_fig, fullfile(features_folder, fig2_str))
 
 fig_scatter_vel = make_scatter_bar_across_exp(combined_data, strain, protocol, "vel");
 
-%
-fig_scatter_vel = make_scatter_bar_across_exp_cond_val(combined_data, strain, protocol, cond_val, "vel");
-fig_scatter_vel = make_scatter_bar_across_exp_cond_val(combined_data, strain, protocol, cond_val, "angvel");
-fig_scatter_vel = make_scatter_bar_across_exp_cond_val(combined_data, strain, protocol, cond_val, "dist");
-
-feature = "dist";
+% %
+% fig_scatter_vel = make_scatter_bar_across_exp_cond_val(combined_data, strain, protocol, cond_val, "vel");
+% fig_scatter_vel = make_scatter_bar_across_exp_cond_val(combined_data, strain, protocol, cond_val, "angvel");
+% fig_scatter_vel = make_scatter_bar_across_exp_cond_val(combined_data, strain, protocol, cond_val, "dist");
+% 
+% feature = "dist";
 
 end 
 
