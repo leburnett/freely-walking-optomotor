@@ -120,8 +120,10 @@ function process_data_features(path_to_folder, save_folder, date_str)
         %% Process distance to wall data 
         [dist_data_per_cond_mean, dist_data_per_cond_med] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "dist");
         
-        % Generate quick overview plots:
+
+        %% Generate quick overview plots:
         combined_data = combine_data_one_cohort(feat, trx);
+
         % 1 - histograms of locomotor parameters
         f_overview = make_overview(combined_data, strain, sex, protocol);
 
@@ -131,12 +133,13 @@ function process_data_features(path_to_folder, save_folder, date_str)
         end
         saveas(f_overview, fullfile(hist_save_folder, strcat(save_str, '_hist.png')), 'png')
 
+        % 2 - features - with individual traces per fly
+        f_feat = plot_all_features(Log, feat, trx, save_str);
+
         feat_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/results/overview_figs/feat_overview';
         if ~isfolder(feat_save_folder)
             mkdir(feat_save_folder);
         end
-
-        f_feat = plot_all_features(Log, feat, trx, save_str);
         saveas(f_feat, fullfile(feat_save_folder, strcat(save_str, '_feat.png')), 'png')
 
         %% SAVE
