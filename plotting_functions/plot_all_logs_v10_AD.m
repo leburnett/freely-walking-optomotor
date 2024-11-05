@@ -127,6 +127,7 @@ plot(m8, 'k', 'LineWidth', 1);
 
 hold off
 
+
 % % % % % ANGULAR VELOCITY % % % % % 
 
 count = 0;

@@ -45,22 +45,26 @@ for idx = 1:n_flies
 end 
 
 ylim([0 120])
-plot([0 Log.stop_f(end)], [120 120], 'LineWidth', 1, 'Color', [0.7 0.7 0.7])
-plot([0 Log.stop_f(end)], [0 0], 'LineWidth', 1, 'Color', [0.7 0.7 0.7])
+% plot([0 Log.stop_f(end)], [120 120], 'LineWidth', 1, 'Color', [0.7 0.7 0.7])
+% plot([0 Log.stop_f(end)], [0 0], 'LineWidth', 1, 'Color', [0.7 0.7 0.7])
 
 % Plot the distance from the centre
 plot(mean(dist_data), 'k', 'LineWidth', 2.5)
 
 % create bracket ticks for each condition change
-xticks(LOG.acclim_off1.start_f, LOG.acclim_off1.stop_f)
-
+% ticks = [LOG.acclim_off1.start_f, LOG.acclim_off1.stop_f, LOG.acclim_patt.stop_f, LOG.log_1.stop_f(end), LOG.log_2.stop_f(end-1)];
+% xticks(ticks);
+% xticklabels({'start exp', 'acclim off', 'pattern on', log_names{4}, log_names{5}})
 ylabel('Distance from the centre (mm)')
 
-
-sgtitle(strcat(title_str, ' - N=', string(n_flies)))
-f = gcf; 
+ax = gca;
+ax.XAxis.Visible='on';
+% sgtitle(strcat(title_str, ' - N=', string(n_flies)))
+% f = gcf; 
 % f.Position = [1234  71  567  976]; %% does something wierd,
 % uncommented for now
-han=axes(f, 'visible','off');
+hold on
+
+% han=axes(f, 'visible','on');
 han.XLabel.Visible='on';
 xlabel(han, 'Time / frames / conditions')

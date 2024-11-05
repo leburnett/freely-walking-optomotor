@@ -17,7 +17,7 @@ end
     for ii = 1:n_conditions
         % Get the timing of each condition
         st_fr = current_log.start_f(ii) - start_full_cond;
-        stop_fr = current_log.stop_f(ii)-1;
+        stop_fr = current_log.stop_f(ii) - start_full_cond; % - 1
         w = stop_fr - st_fr;
         % Use the Log.dir value to get the stimulus direction.
         dir_id = current_log.dir(ii);
@@ -35,6 +35,7 @@ end
         % Plot rectangles in the background of when the stimulus changes.
         rectangle('Position', [st_fr, min_val, w, h], 'FaceColor', col, 'EdgeColor', [0.6 0.6 0.6])
         ylim([min_val, max_val])
+        % xlim([0, 1800])
         hold on
         box off
         ax = gca;

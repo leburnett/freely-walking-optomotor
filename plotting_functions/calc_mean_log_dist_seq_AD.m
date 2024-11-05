@@ -60,6 +60,6 @@ end
 all_dist_data = cell2mat({dist_data_1, dist_data_2}');
 
 mean_dist_data = mean(all_dist_data);
-plot(mean_dist_data);
+% plot(mean_dist_data);
 
 end
