@@ -1,0 +1,40 @@
+function combined_data = combine_data_one_cohort(feat, trx)
+    % Combine the data about different features together to use when plotting
+    % quick overview plots while processing. 
+
+    FPS = 30; % videos acquired at 30 FPS
+    
+    % velocity % % % % % % % % % % % 
+    vel_data = feat.data(:, :, 1);
+    dist_trav = vel_data/FPS;
+
+    % distance from centre % % % % % % % % % % % 
+
+    dist_data  = 120 - feat.data(:, :, 9); % raw data is distance from wall. Must subtract from 120. 
+
+    % angular velocity % heading% % % % % % % % % % % 
+
+    % Fixed paramters: 
+    n_flies = length(trx);
+    fps = 30;
+    samp_rate = 1/fps; 
+    method = 'line_fit';
+    t_window = 16;
+    cutoff = [];
+
+    heading_data = []; 
+    av_data = [];
+    for idx = 1:n_flies
+        D = rad2deg(unwrap(trx(idx).theta)); 
+        heading_data(idx, :) = D;
+        av_data(idx, :) = vel_estimate(D, samp_rate, method, t_window, cutoff);
+    end
+
+    % Combine the matrices into an overall struct
+    combined_data.vel_data = vel_data;
+    combined_data.dist_data = dist_data;
+    combined_data.dist_trav = dist_trav;
+    combined_data.av_data = av_data;
+    combined_data.heading_data = heading_data;
+
+end 

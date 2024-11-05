@@ -36,7 +36,20 @@ function process_data_features(path_to_folder, save_folder, date_str)
 
         % Move into the experiment directory 
         cd(fullfile(time_folders(exp).folder, time_folders(exp).name))
-      
+
+        data_path = cd;
+        subfolders = split(data_path, '/');
+        sex = subfolders{end-1};
+        strain = subfolders{end-2};
+        protocol = subfolders{end-3};
+
+        save_str = strcat(date_str, '_', time_str, '_', strain, '_', protocol, '_', sex);
+
+        % Check in case there is something wrong with the folder structure.
+        if protocol(1)~='p'
+            disp('protocol string does not start with a p - check folder structure.')
+        end
+
         %% load the files that you need:
         
         % Open the LOG 
@@ -107,13 +120,32 @@ function process_data_features(path_to_folder, save_folder, date_str)
         %% Process distance to wall data 
         [dist_data_per_cond_mean, dist_data_per_cond_med] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "dist");
         
+        % Generate quick overview plots:
+        combined_data = combine_data_one_cohort(feat, trx);
+        % 1 - histograms of locomotor parameters
+        f_overview = make_overview(combined_data, strain, sex, protocol);
+
+        hist_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/results/overview_figs/loco_histograms';
+        if ~isfolder(hist_save_folder)
+            mkdir(hist_save_folder);
+        end
+        saveas(f_overview, fullfile(hist_save_folder, strcat(save_str, '_hist.png')), 'png')
+
+        feat_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/results/overview_figs/feat_overview';
+        if ~isfolder(feat_save_folder)
+            mkdir(feat_save_folder);
+        end
+
+        f_feat = plot_all_features(Log, feat, trx, save_str);
+        saveas(f_feat, fullfile(feat_save_folder, strcat(save_str, '_feat.png')), 'png')
+
         %% SAVE
         if ~isfolder(save_folder)
             mkdir(save_folder);
         end
                 
         % save data
-        save(fullfile(save_folder, strcat(date_str, '_', time_str, '_data.mat')) ...
+        save(fullfile(save_folder, strcat(save_str, '_data.mat')) ...
             , 'LOG' ...
             , 'Log' ...
             , 'feat' ...

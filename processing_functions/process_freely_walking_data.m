@@ -5,12 +5,13 @@ function process_freely_walking_data(date_to_analyse)
     clear
     clc
     
+    %% Enter date to be analysed here:
+    date_to_analyse = '2024_10_23';
+
     %% If data recorded after 24/09/2024 - - - new logging / saving system that saves in subfolders. 
     PROJECT_ROOT = '/Users/burnettl/Documents/Projects/oaky_cokey/'; %% Update for your computer. 
     data_path = fullfile(PROJECT_ROOT, 'data');
     results_path = fullfile(PROJECT_ROOT, 'results');
-    
-    date_to_analyse = '2024_10_23';
     
     date_folder = fullfile(data_path, date_to_analyse);
     

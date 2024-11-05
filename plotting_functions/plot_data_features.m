@@ -24,7 +24,7 @@ for i = 1:n_exps
 
     % Combined figure with individual traces per fly
     f_all = plot_all_features(Log, feat, trx, title_str);
-    savefig(f_all)
+    % savefig(f_all)
 end 
 
 % Plot all features - mean + SEM across all cohorts for a particular
