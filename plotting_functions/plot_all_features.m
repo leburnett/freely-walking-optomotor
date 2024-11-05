@@ -18,6 +18,9 @@ function f = plot_all_features(Log, feat, trx, title_str)
     %       fitted ellipse. 
 
     % feat : struct
+
+    % title_str : str
+    %       title to use in the plot.
     
     % Fixed paramters: 
     n_flies = length(trx);
@@ -43,49 +46,8 @@ function f = plot_all_features(Log, feat, trx, title_str)
 
     max_val = max(max(heading_data));
     min_val = min(min(heading_data));
-    h = max_val - min_val;
     
-    n_conditions = height(Log);
-
-    % Plot the pink and blue bckground rectangles. 
-
-    for ii = 1:n_conditions
-
-        % Get the timing of each condition
-        st_fr = Log.start_f(ii);
-        stop_fr = Log.stop_f(ii)-1;
-        w = stop_fr - st_fr;
-
-        % Use the Log.dir value to get the stimulus direction.
-        dir_id = Log.dir(ii);
-        con_val = Log.contrast(ii);
-        if con_val > 1.2
-            con_val = 1;
-        end 
-
-        if dir_id == 0 
-            if ii == 1 || ii == 33
-                col = [0.5 0.5 0.5 0.3];
-            elseif ii == 17 || ii == 32
-                col = [0 0 0 0.3];
-            else
-                col = [1 1 1];
-            end 
-
-        elseif dir_id == 1
-            col = [0 0 1 con_val*0.75];
-        elseif dir_id == -1
-            col = [1 0 1 con_val*0.75];
-        end 
-
-        % Plot rectangles in the background of when the stimulus changes. 
-        rectangle('Position', [st_fr, min_val, w, h], 'FaceColor', col, 'EdgeColor', [0.6 0.6 0.6])
-        ylim([min_val, max_val])
-        hold on 
-        box off
-        ax = gca;
-        ax.XAxis.Visible = 'off';
-    end 
+    plot_pink_blue_rects(Log, protocol, min_val, max_val)
 
     for idx = 1:n_flies
       % Plot the heading angle per fly
@@ -94,9 +56,7 @@ function f = plot_all_features(Log, feat, trx, title_str)
 
     % Plot the heading angle
     plot(mean(heading_data), 'k', 'LineWidth', 2.5)
-    % title('Heading (deg)')
     ylabel('Heading (deg)')
-
 
 
     % % % % % % % % Subplot 2 = VELOCITY % % % % % % % % %
@@ -106,49 +66,8 @@ function f = plot_all_features(Log, feat, trx, title_str)
 
     max_val = max(max(velocity_data));
     min_val = min(min(velocity_data));
-    h = max_val - min_val;
-    
-    n_conditions = height(Log);
-
-    % Plot the pink and blue bckground rectangles. 
-
-    for ii = 1:n_conditions
-
-        % Get the timing of each condition
-        st_fr = Log.start_f(ii);
-        stop_fr = Log.stop_f(ii)-1;
-        w = stop_fr - st_fr;
-
-        % Use the Log.dir value to get the stimulus direction.
-        dir_id = Log.dir(ii);
-        con_val = Log.contrast(ii);
-        if con_val > 1.2
-            con_val = 1;
-        end 
-
-        if dir_id == 0 
-            if ii == 1 || ii == 33
-                col = [0.5 0.5 0.5 0.3];
-            elseif ii == 17 || ii == 32
-                col = [0 0 0 0.3];
-            else
-                col = [1 1 1];
-            end 
-
-        elseif dir_id == 1
-            col = [0 0 1 con_val*0.75];
-        elseif dir_id == -1
-            col = [1 0 1 con_val*0.75];
-        end 
-
-        % Plot rectangles in the background of when the stimulus changes. 
-        rectangle('Position', [st_fr, min_val, w, h], 'FaceColor', col, 'EdgeColor', [0.6 0.6 0.6])
-        ylim([min_val, max_val])
-        hold on 
-        box off
-        ax = gca;
-        ax.XAxis.Visible = 'off';
-    end 
+   
+    plot_pink_blue_rects(Log, protocol, min_val, max_val)
 
     for idx = 1:n_flies
       % Plot the velocity per fly
@@ -165,49 +84,8 @@ function f = plot_all_features(Log, feat, trx, title_str)
 
     max_val = max(max(ang_vel_data));
     min_val = min(min(ang_vel_data));
-    h = max_val - min_val;
-    
-    n_conditions = height(Log);
 
-    % Plot the pink and blue bckground rectangles. 
-
-    for ii = 1:n_conditions
-
-        % Get the timing of each condition
-        st_fr = Log.start_f(ii);
-        stop_fr = Log.stop_f(ii)-1;
-        w = stop_fr - st_fr;
-
-        % Use the Log.dir value to get the stimulus direction.
-        dir_id = Log.dir(ii);
-        con_val = Log.contrast(ii);
-        if con_val > 1.2
-            con_val = 1;
-        end 
-
-        if dir_id == 0 
-            if ii == 1 || ii == 33
-                col = [0.5 0.5 0.5 0.3];
-            elseif ii == 17 || ii == 32
-                col = [0 0 0 0.3];
-            else
-                col = [1 1 1];
-            end 
-
-        elseif dir_id == 1
-            col = [0 0 1 con_val*0.75];
-        elseif dir_id == -1
-            col = [1 0 1 con_val*0.75];
-        end 
-
-        % Plot rectangles in the background of when the stimulus changes. 
-        rectangle('Position', [st_fr, min_val, w, h], 'FaceColor', col, 'EdgeColor', [0.6 0.6 0.6])
-        ylim([min_val, max_val])
-        hold on 
-        box off
-        ax = gca;
-        ax.XAxis.Visible = 'off';
-    end 
+    plot_pink_blue_rects(Log, protocol, min_val, max_val)
 
     for idx = 1:n_flies
       % Plot the ang vel per fly
@@ -224,48 +102,10 @@ function f = plot_all_features(Log, feat, trx, title_str)
     dist_data = feat.data(:, :, 9);
     dist_data = 120-dist_data;
     subplot(4, 1, 4)
+    min_val = -10;
+    max_val = 120;
     
-    n_conditions = height(Log);
-
-    % Plot the pink and blue bckground rectangles. 
-
-    for ii = 1:n_conditions
-
-        % Get the timing of each condition
-        st_fr = Log.start_f(ii);
-        stop_fr = Log.stop_f(ii)-1;
-        w = stop_fr - st_fr;
-
-        % Use the Log.dir value to get the stimulus direction.
-        dir_id = Log.dir(ii);
-        con_val = Log.contrast(ii);
-        if con_val > 1.2
-            con_val = 1;
-        end 
-
-        if dir_id == 0 
-            if ii == 1 || ii == 33
-                col = [0.5 0.5 0.5 0.3];
-            elseif ii == 17 || ii == 32
-                col = [0 0 0 0.3];
-            else
-                col = [1 1 1];
-            end 
-
-        elseif dir_id == 1
-            col = [0 0 1 con_val*0.75];
-        elseif dir_id == -1
-            col = [1 0 1 con_val*0.75];
-        end 
-
-        % Plot rectangles in the background of when the stimulus changes. 
-        rectangle('Position', [st_fr, -20, w, 170], 'FaceColor', col, 'EdgeColor', [0.6 0.6 0.6])
-        ylim([min_val, max_val])
-        hold on 
-        box off
-        ax = gca;
-        ax.XAxis.Visible = 'off';
-    end 
+    plot_pink_blue_rects(Log, protocol, min_val, max_val)
 
     for idx = 1:n_flies
       % Plot the distance from the centre per fly
