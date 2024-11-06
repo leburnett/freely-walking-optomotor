@@ -23,10 +23,12 @@ function combined_data = combine_data_one_cohort(feat, trx)
     cutoff = [];
 
     heading_data = []; 
+    heading_wrap = [];
     av_data = [];
     for idx = 1:n_flies
         D = rad2deg(unwrap(trx(idx).theta)); 
-        heading_data(idx, :) = D;
+        heading_data_unwrap(idx, :) = D;
+        heading_wrap(idx, :) = rad2deg(trx(idx).theta); 
         av_data(idx, :) = vel_estimate(D, samp_rate, method, t_window, cutoff);
     end
 
@@ -35,6 +37,7 @@ function combined_data = combine_data_one_cohort(feat, trx)
     combined_data.dist_data = dist_data;
     combined_data.dist_trav = dist_trav;
     combined_data.av_data = av_data;
-    combined_data.heading_data = heading_data;
+    combined_data.heading_data = heading_data_unwrap;
+    combined_data.heading_wrap = heading_wrap;
 
 end 

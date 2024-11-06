@@ -71,6 +71,7 @@ function process_data_features(path_to_folder, save_folder, date_str)
         mfolder = movie_folder(3).name;
 
         %% Load 'feat'
+
         if contains(mfolder, 'movie') % movie folder configuration
             feat_file_path = 'movie/movie-feat.mat';
         else
@@ -84,6 +85,7 @@ function process_data_features(path_to_folder, save_folder, date_str)
         end
 
         %% Load 'trx'
+
         if contains(mfolder, 'movie') % movie folder configuration
             trx_file_path = 'movie/movie_JAABA/trx.mat';
         else
@@ -102,23 +104,19 @@ function process_data_features(path_to_folder, save_folder, date_str)
     
         % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 
-        Log = LOG.Log;
+        % n_conditions = size(Log, 1);
 
-        n_conditions = size(Log, 1);
-   
-        % Process data per CONDITION
-
-        %% Process velocity data
-        [vel_data_per_cond_mean, vel_data_per_cond_med] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "vel");
-
-        %% Process angular velocity data
-        [ang_vel_data_per_cond_mean, ang_vel_data_per_cond_med] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "angvel");
-        
-        %% Process angular velocity : velocity ratio data
-        [ratio_data_per_cond] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "ratio");
-
-        %% Process distance to wall data 
-        [dist_data_per_cond_mean, dist_data_per_cond_med] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "dist");
+        % %% Process velocity data
+        % [vel_data_per_cond_mean, vel_data_per_cond_med] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "vel");
+        % 
+        % %% Process angular velocity data
+        % [ang_vel_data_per_cond_mean, ang_vel_data_per_cond_med] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "angvel");
+        % 
+        % %% Process angular velocity : velocity ratio data
+        % [ratio_data_per_cond] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "ratio");
+        % 
+        % %% Process distance to wall data 
+        % [dist_data_per_cond_mean, dist_data_per_cond_med] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "dist");
         
 
         %% Generate quick overview plots:
@@ -134,13 +132,14 @@ function process_data_features(path_to_folder, save_folder, date_str)
         saveas(f_overview, fullfile(hist_save_folder, strcat(save_str, '_hist.png')), 'png')
 
         % 2 - features - with individual traces per fly
-        f_feat = plot_all_features(Log, feat, trx, protocol, save_str);
+        f_feat = plot_all_features(LOG, feat, trx, protocol, save_str);
 
         feat_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/results/overview_figs/feat_overview';
         if ~isfolder(feat_save_folder)
             mkdir(feat_save_folder);
         end
         saveas(f_feat, fullfile(feat_save_folder, strcat(save_str, '_feat.png')), 'png')
+
 
         %% SAVE
         if ~isfolder(save_folder)
@@ -150,16 +149,8 @@ function process_data_features(path_to_folder, save_folder, date_str)
         % save data
         save(fullfile(save_folder, strcat(save_str, '_data.mat')) ...
             , 'LOG' ...
-            , 'Log' ...
             , 'feat' ...
             , 'trx' ...
-            , 'vel_data_per_cond_mean' ...
-            , 'vel_data_per_cond_med' ...
-            , 'ang_vel_data_per_cond_mean' ...
-            , 'ang_vel_data_per_cond_med' ...
-            , 'ratio_data_per_cond' ...
-            , 'dist_data_per_cond_mean' ...
-            , 'dist_data_per_cond_med' ...
             );
     end
 

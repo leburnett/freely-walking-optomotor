@@ -1,4 +1,4 @@
-function f = plot_all_features(Log, feat, trx, protocol, title_str)
+function f = plot_all_features(LOG, feat, trx, protocol, title_str)
 
     % Generate a figure composed of n_flies x 1 subplots showing each fly's
     % heading angle over the course of the freely-walking, increasing
@@ -46,8 +46,10 @@ function f = plot_all_features(Log, feat, trx, protocol, title_str)
 
     max_val = max(max(heading_data));
     min_val = min(min(heading_data));
+    xmax = size(heading_data, 2);
     
-    plot_pink_blue_rects(Log, protocol, min_val, max_val)
+    % Plot the boundaries between when the stimulus changes.
+    plot_pink_blue_rects(LOG, protocol, min_val, max_val)
 
     for idx = 1:n_flies
       % Plot the heading angle per fly
@@ -57,7 +59,7 @@ function f = plot_all_features(Log, feat, trx, protocol, title_str)
     % Plot the heading angle
     plot(mean(heading_data), 'k', 'LineWidth', 2.5)
     ylabel('Heading (deg)')
-
+    xlim([0 xmax])
 
     % % % % % % % % Subplot 2 = VELOCITY % % % % % % % % %
 
@@ -67,7 +69,8 @@ function f = plot_all_features(Log, feat, trx, protocol, title_str)
     max_val = max(max(velocity_data));
     min_val = min(min(velocity_data));
    
-    plot_pink_blue_rects(Log, protocol, min_val, max_val)
+    % Plot the boundaries between when the stimulus changes.
+    plot_pink_blue_rects(LOG, protocol, min_val, max_val)
 
     for idx = 1:n_flies
       % Plot the velocity per fly
@@ -77,7 +80,8 @@ function f = plot_all_features(Log, feat, trx, protocol, title_str)
     % Plot the velocity
     plot(mean(velocity_data), 'k', 'LineWidth', 2.5)
     ylabel('Velocity (mm s-1)')
-
+    ylim([-2 50])
+    xlim([0 xmax])
     % % % % % % % % Subplot 3 = ANG VEL % % % % % % % % %
 
     subplot(4, 1, 3)
@@ -85,7 +89,8 @@ function f = plot_all_features(Log, feat, trx, protocol, title_str)
     max_val = max(max(ang_vel_data));
     min_val = min(min(ang_vel_data));
 
-    plot_pink_blue_rects(Log, protocol, min_val, max_val)
+    % Plot the boundaries between when the stimulus changes.
+    plot_pink_blue_rects(LOG, protocol, min_val, max_val)
 
     for idx = 1:n_flies
       % Plot the ang vel per fly
@@ -95,30 +100,32 @@ function f = plot_all_features(Log, feat, trx, protocol, title_str)
     % Plot the ang vel
     plot(mean(ang_vel_data), 'k', 'LineWidth', 2.5)
     ylabel('Angular velocity (deg s-1)')
-
+    xlim([0 xmax])
 
     % % % % % % % % Subplot 4 = DISTANCE FROM CENTRE % % % % % % % % %
 
     dist_data = feat.data(:, :, 9);
     dist_data = 120-dist_data;
     subplot(4, 1, 4)
-    min_val = -10;
+    min_val = -1;
     max_val = 120;
     
-    plot_pink_blue_rects(Log, protocol, min_val, max_val)
+    % Plot the boundaries between when the stimulus changes.
+    plot_pink_blue_rects(LOG, protocol, min_val, max_val)
 
     for idx = 1:n_flies
       % Plot the distance from the centre per fly
         plot(dist_data(idx, :), 'Color', [0.7 0.7 0.7], 'LineWidth', 1)
     end 
 
-    ylim([-15 135])
-    plot([0 Log.stop_f(end)], [120 120], 'LineWidth', 1, 'Color', [0.7 0.7 0.7])
-    plot([0 Log.stop_f(end)], [0 0], 'LineWidth', 1, 'Color', [0.7 0.7 0.7])
+    ylim([-1 121])
+    plot([0 xmax], [120 120], 'LineWidth', 1, 'Color', [0 0 0])
+    plot([0 xmax], [0 0], 'LineWidth', 1, 'Color', [0 0 0])
 
     % Plot the distance from the centre
     plot(mean(dist_data), 'k', 'LineWidth', 2.5)
     ylabel('Distance from the centre (mm)')
+    xlim([0 xmax])
 
     title_str = strrep(title_str, '_', '-');
     sgtitle(strcat(title_str, ' - N=', string(n_flies)))

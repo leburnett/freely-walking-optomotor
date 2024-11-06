@@ -34,7 +34,7 @@ plot_hist(combined_data.av_data, 20, "angvel")
 
 % plot 4 - histogram of heading over the entire experiment. 
 nexttile
-plot_hist(combined_data.heading_data, 20, "heading")
+plot_hist(combined_data.heading_wrap, 20, "heading")
 ylabel('')
 % % % % Distance from centre % % % % 
 
