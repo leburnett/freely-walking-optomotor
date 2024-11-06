@@ -98,27 +98,6 @@ function process_data_features(path_to_folder, save_folder, date_str)
             load(trx_file_path, 'trx');
         end
 
- 
-        % Number of flies tracked in the experiment
-        n_flies = size(feat.data, 1);
-    
-        % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-
-        % n_conditions = size(Log, 1);
-
-        % %% Process velocity data
-        % [vel_data_per_cond_mean, vel_data_per_cond_med] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "vel");
-        % 
-        % %% Process angular velocity data
-        % [ang_vel_data_per_cond_mean, ang_vel_data_per_cond_med] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "angvel");
-        % 
-        % %% Process angular velocity : velocity ratio data
-        % [ratio_data_per_cond] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "ratio");
-        % 
-        % %% Process distance to wall data 
-        % [dist_data_per_cond_mean, dist_data_per_cond_med] = make_mean_datapoints(Log, feat, trx, n_flies, n_conditions, "dist");
-        
-
         %% Generate quick overview plots:
         combined_data = combine_data_one_cohort(feat, trx);
 
@@ -139,8 +118,7 @@ function process_data_features(path_to_folder, save_folder, date_str)
             mkdir(feat_save_folder);
         end
         saveas(f_feat, fullfile(feat_save_folder, strcat(save_str, '_feat.png')), 'png')
-
-
+        
         %% SAVE
         if ~isfolder(save_folder)
             mkdir(save_folder);

@@ -41,3 +41,16 @@ function combined_data = combine_data_one_cohort(feat, trx)
     combined_data.heading_wrap = heading_wrap;
 
 end 
+
+% sometimes you might get an error like: "Unable to perform assignment
+% because the size of the left side is 1-by-31505 and the size of the right side is 30640-by-1."
+% I think this is because flies have not been tracked properly and one fly
+% has been split into two 'flies' and so you don't get full tracking across
+% the entire experiment. I remove flies that have not been tracked to
+% completion. 
+% 
+% trx([4,10]) = [];
+% feat.data([4,10], :, :) = [];
+% move to correct folders:
+% save('trx.mat', 'trx')
+% save('REC__cam_0_date_2024_11_05_time_14_45_44_v001-feat.mat', 'feat')
