@@ -1,4 +1,4 @@
-function f = plot_all_features(Log, feat, trx, title_str)
+function f = plot_all_features(Log, feat, trx, protocol, title_str)
 
     % Generate a figure composed of n_flies x 1 subplots showing each fly's
     % heading angle over the course of the freely-walking, increasing
@@ -120,7 +120,7 @@ function f = plot_all_features(Log, feat, trx, title_str)
     plot(mean(dist_data), 'k', 'LineWidth', 2.5)
     ylabel('Distance from the centre (mm)')
 
-
+    title_str = strrep(title_str, '_', '-');
     sgtitle(strcat(title_str, ' - N=', string(n_flies)))
     f = gcf; 
     f.Position = [1234  71  567  976];

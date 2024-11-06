@@ -1,4 +1,4 @@
-function process_freely_walking_data(date_to_analyse)
+function process_freely_walking_data()
 % process the oaky-cokey freely-walking optomotor behaviour data 
 
     close all
@@ -6,7 +6,7 @@ function process_freely_walking_data(date_to_analyse)
     clc
     
     %% Enter date to be analysed here:
-    date_to_analyse = '2024_10_23';
+    date_to_analyse = '2024_10_22';
 
     %% If data recorded after 24/09/2024 - - - new logging / saving system that saves in subfolders. 
     PROJECT_ROOT = '/Users/burnettl/Documents/Projects/oaky_cokey/'; %% Update for your computer. 
@@ -59,18 +59,3 @@ function process_freely_walking_data(date_to_analyse)
     end 
 
 end 
-%% If data recorded on or before 24/09/2024 - - - all experiments saved in one date folder. 
-
-% What date to analyse:
-
-% date_to_analyse = '2024_07_16';
-% 
-% % Initialise fixed paths.
-% 
-% PROJECT_ROOT = '/Users/burnettl/Documents/Projects/oaky_cokey/';
-% data_path = fullfile(PROJECT_ROOT, 'data');
-% results_path = fullfile(PROJECT_ROOT, 'results');
-% path_to_folder = fullfile(data_path, date_to_analyse);
-% save_folder = results_path; 
-% % Process the data and save the processed data:
-% process_data_features_pre_240925(path_to_folder, save_folder)

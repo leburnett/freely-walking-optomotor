@@ -134,7 +134,7 @@ function process_data_features(path_to_folder, save_folder, date_str)
         saveas(f_overview, fullfile(hist_save_folder, strcat(save_str, '_hist.png')), 'png')
 
         % 2 - features - with individual traces per fly
-        f_feat = plot_all_features(Log, feat, trx, save_str);
+        f_feat = plot_all_features(Log, feat, trx, protocol, save_str);
 
         feat_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/results/overview_figs/feat_overview';
         if ~isfolder(feat_save_folder)
