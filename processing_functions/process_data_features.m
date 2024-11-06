@@ -43,6 +43,9 @@ function process_data_features(path_to_folder, save_folder, date_str)
         strain = subfolders{end-2};
         protocol = subfolders{end-3};
 
+        date_str = strrep(date_str, '_', '-');
+        time_str = strrep(time_str, '_', '-');
+
         save_str = strcat(date_str, '_', time_str, '_', strain, '_', protocol, '_', sex);
 
         % Check in case there is something wrong with the folder structure.
@@ -118,7 +121,7 @@ function process_data_features(path_to_folder, save_folder, date_str)
             mkdir(feat_save_folder);
         end
         saveas(f_feat, fullfile(feat_save_folder, strcat(save_str, '_feat.png')), 'png')
-        
+
         %% SAVE
         if ~isfolder(save_folder)
             mkdir(save_folder);
@@ -132,6 +135,7 @@ function process_data_features(path_to_folder, save_folder, date_str)
             );
     end
 
+    close all
 end 
 
 
