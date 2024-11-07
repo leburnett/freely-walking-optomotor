@@ -2,6 +2,8 @@ function combined_data = combine_data_across_exp(path_to_data)
 
     % move into the folder.
     cd(path_to_data)
+
+    FPS = 30; % videos acquired at 30 FPS
     
     % get a list of all .mat results files. 
     data_files = dir('*.mat');
@@ -11,6 +13,7 @@ function combined_data = combine_data_across_exp(path_to_data)
     all_dist_data = []; 
     all_av_data = [];
     all_heading_data = [];
+    all_dist_trav = [];
     
     for i = 1:n_files
 
@@ -19,6 +22,7 @@ function combined_data = combine_data_across_exp(path_to_data)
 
         % velocity % % % % % % % % % % % 
         vel_data = feat.data(:, :, 1);
+        dist_trav = vel_data/FPS;
     
         % distance from centre % % % % % % % % % % % 
 
@@ -54,11 +58,13 @@ function combined_data = combine_data_across_exp(path_to_data)
         if n_cols_diff >=0 
             vel_data = [vel_data, NaN(rowsdata, n_cols_diff)];
             dist_data = [dist_data, NaN(rowsdata, n_cols_diff)];
+            dist_trav = [dist_trav, NaN(rowsdata, n_cols_diff)];
             av_data = [av_data, NaN(rowsdata, n_cols_diff)];
             heading_data = [heading_data, NaN(rowsdata, n_cols_diff)];
         elseif n_cols_diff < 0 
             all_velocity_data = [all_velocity_data, NaN(rowsall, n_cols_diff*-1)];
             all_dist_data = [all_dist_data, NaN(rowsall, n_cols_diff*-1)];
+            all_dist_trav = [all_dist_trav, NaN(rowsall, n_cols_diff*-1)];
             all_av_data = [all_av_data, NaN(rowsall, n_cols_diff*-1)];
             all_heading_data = [all_heading_data, NaN(rowsall, n_cols_diff*-1)];
         end 
@@ -67,6 +73,7 @@ function combined_data = combine_data_across_exp(path_to_data)
 
         all_velocity_data = vertcat(all_velocity_data, vel_data);
         all_dist_data = vertcat(all_dist_data, dist_data);
+        all_dist_trav = vertcat(all_dist_trav, dist_trav);
         all_av_data = vertcat(all_av_data, av_data);
         all_heading_data = vertcat(all_heading_data, heading_data);
 
@@ -75,6 +82,7 @@ function combined_data = combine_data_across_exp(path_to_data)
     % Combine the matrices into an overall struct
     combined_data.vel_data = all_velocity_data;
     combined_data.dist_data = all_dist_data;
+    combined_data.dist_trav = all_dist_trav;
     combined_data.av_data = all_av_data;
     combined_data.heading_data = all_heading_data;
 
