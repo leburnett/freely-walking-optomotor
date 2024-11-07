@@ -6,8 +6,8 @@ clear
 d = initialize_temp_recording();
 
 % Protocol parameters: 
-t_acclim = 2; 
-num_conditions = 1; 
+t_acclim = 20; 
+num_conditions = 8; 
 t_pause = 0.015;
 
 % All conditions 

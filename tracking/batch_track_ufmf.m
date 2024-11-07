@@ -1,7 +1,7 @@
 % Batch process with simle_noninteractive_flytracker.m
 % 01/10/24
 % Burnett
-function batch_track_ufmf(date_folder)
+function tracking_log = batch_track_ufmf(date_folder)
     
     % date_folder = 'C:\MatlabRoot\FreeWalkOptomotor\data\2024_09_30\Protocol_v11_OFF_no_flicker';
     

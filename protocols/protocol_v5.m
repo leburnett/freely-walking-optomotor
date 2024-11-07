@@ -3,19 +3,14 @@
 % Short, all high contrast, protocol. Initially for testing an individual
 % fly.
 clear 
-%% Input parameters:
-% These parameters will be saved in the log file. 
-fly_strain = 'CS_w1118';
-fly_age = 2; % days
-fly_sex = 'F';
-lights_ON = datetime('20:00', 'Format', 'HH:mm');
-lights_OFF = datetime('12:00', 'Format', 'HH:mm');
-arena_temp = 24.5;
+
+% Initialize the temperature recording.
+d = initialize_temp_recording();
 
 % Protocol parameters:
 trial_len = 10; 
-t_acclim = 10;
-t_flicker = 30;
+t_acclim = 10; 
+t_flicker = 30; 
 num_trials_per_block = 4;
 num_directions = 2; 
 num_reps = 2;
@@ -24,7 +19,7 @@ num_acclim = 3;
 
 % Pattern settings
 optomotor_pattern = 1;
-flicker_pattern = 2;
+flicker_pattern = 7;
 optomotor_speed = 64; % in frames per second
 flicker_speed = 8;
 
@@ -38,60 +33,10 @@ patterns = SD.pattern.pattNames;
 pattern_names = patterns(optomotor_pattern: flicker_pattern);
 
 %% block of initializations
-
-% BIAS settings:
-ip = '127.0.0.1';
-port = 5010;
-config_path = 'C:\MatlabRoot\FreeWalkOptomotor\bias_config_ufmf.json';
-
-vidobj = SimpleBiasCameraInterface(ip, port);
-vidobj.connect();
-vidobj.getStatus();
-
-% Get date and time
-date_str = datetime('now','TimeZone','local','Format','yyyy_MM_dd');
-time_str = datetime('now','TimeZone','local','Format','HH:mm:ss');
-
-%% Save the data in date-folder -- protocol_folder -- strain_folder -- time_folder
 project_data_folder = 'C:\MatlabRoot\FreeWalkOptomotor\data';
-
-date_folder = fullfile(project_data_folder, string(date_str));
-if ~isfolder(date_folder)
-    mkdir(date_folder)
-end 
-
-protocol_folder = fullfile(date_folder, func_name);
-if ~isfolder(protocol_folder)
-    mkdir(protocol_folder)
-end
-
-strain_folder = fullfile(protocol_folder, fly_strain);
-if ~isfolder(strain_folder)
-    mkdir(strain_folder)
-end
-
-sex_folder = fullfile(strain_folder, fly_sex);
-if ~isfolder(sex_folder)
-    mkdir(sex_folder)
-end
-
-t_str = strrep(string(time_str), ':', '_');
-exp_folder = fullfile(sex_folder, t_str);
-if ~isfolder(exp_folder)
-    mkdir(exp_folder)
-end 
-
-% exp_name = strcat(exp_str, string(date_str), '-', t_str);
-exp_name = 'REC_';
-v_fname =  fullfile(exp_folder, exp_name);
-
-vidobj.enableLogging();
-% vidobj.setConfiguration(config_path);
-vidobj.loadConfiguration(config_path);
-vidobj.setVideoFile(v_fname);
+[LOG, vidobj, exp_folder, date_str, t_str, params] = initialize_video_and_folders(project_data_folder, func_name);
 
 controller_mode = [0 0]; % double open loop
-contrast_levels = [1.0 1.0 1.0 1.0 1.0 1.0 1.0]; 
 
 idx_value = 1;
 con_val = 7; 
@@ -101,13 +46,12 @@ varTypes = {'double', 'double','double','double','double','double','double'};
 varNames = {'trial', 'contrast', 'dir', 'start_t', 'start_f', 'stop_t', 'stop_f'};
 Log = table('Size',sz,'VariableTypes',varTypes,'VariableNames',varNames);
 
+%% get start temperature
+[t_outside_start, t_ring_start] = get_temp_rec(d);
+
 %% start camera
 vidobj.startCapture();
 disp('camera ON')
-% Record the behaviour of the flies without any lights on in the arena
-% before running the stimulus. 
-
-% Acclim time with all panels OFF
 
 Log.trial(idx_value) = idx_value;
 Log.contrast(idx_value) = 0;
@@ -125,7 +69,7 @@ Log.stop_f(idx_value) = vidobj.getFrameCount().value;
 % Acclim time with all panels ON
 idx_value = idx_value+1; 
 Log.trial(idx_value) = idx_value;
-Log.contrast(idx_value) = 1.0; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Log.contrast(idx_value) = 1; 
 Log.dir(idx_value) = 0;
 disp('Pattern ON')
 Log.start_t(idx_value) = vidobj.getTimeStamp().value;
@@ -133,7 +77,7 @@ Log.start_f(idx_value) = vidobj.getFrameCount().value;
 
 Panel_com('set_mode',controller_mode); pause(0.01)
 Panel_com('set_pattern_id', optomotor_pattern); pause(0.01)
-Panel_com('set_position', [1 con_val]); pause(0.01) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Panel_com('set_position', [1 con_val]); pause(0.01) 
 pause(t_acclim);
 
 % get frame and log it 
@@ -156,7 +100,7 @@ for tr_ind = 1:num_trials_per_block
 
     % Log
     Log.trial(idx_value) = idx_value;
-    Log.contrast(idx_value) = contrast_levels(tr_ind);
+    Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
     Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]);
@@ -186,7 +130,7 @@ for tr_ind = 1:num_trials_per_block
 
     % Log
     Log.trial(idx_value) = idx_value;
-    Log.contrast(idx_value) = contrast_levels(tr_ind);
+    Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
     Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
@@ -252,7 +196,7 @@ Log.stop_f(idx_value) = vidobj.getFrameCount().value;
 Panel_com('set_mode',controller_mode);
 Panel_com('set_pattern_id', optomotor_pattern);
 
-for tr_ind = 7+[1:num_trials_per_block]
+for tr_ind = num_trials_per_block+(1:num_trials_per_block)
 
     disp(['trial number = ' num2str(tr_ind)])
 
@@ -262,7 +206,7 @@ for tr_ind = 7+[1:num_trials_per_block]
 
     % Log
     Log.trial(idx_value) = idx_value;
-    Log.contrast(idx_value) = contrast_levels(15-tr_ind);
+    Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
     Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
@@ -292,7 +236,7 @@ for tr_ind = 7+[1:num_trials_per_block]
     
     % Log
     Log.trial(idx_value) = idx_value;
-    Log.contrast(idx_value) = contrast_levels(15-tr_ind);
+    Log.contrast(idx_value) = 1;
     Log.dir(idx_value) = dir_val;
 
     Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
@@ -373,24 +317,14 @@ pause(t_acclim);
 Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
 Log.stop_f(idx_value) = vidobj.getFrameCount().value;
 
+% get end temp
+[t_outside_end, t_ring_end] = get_temp_rec(d);
 
 %% stop camera
 vidobj.stopCapture();
 disp('Camera OFF')
 
 %% Add parameters to log file. 
-LOG.date = date_str;
-LOG.time = time_str;
-
-LOG.fly_strain = fly_strain;
-LOG.fly_age = fly_age;
-LOG.fly_sex = fly_sex;
-LOG.lights_ON = lights_ON;
-LOG.lights_OFF = lights_OFF;
-LOG.arena_temp= arena_temp;
-
-% Protocol name
-LOG.func_name = func_name;
 
 % Protocol parameters:
 LOG.trial_len=trial_len;
@@ -409,6 +343,12 @@ LOG.optomotor_speed=optomotor_speed; % in frames per second
 LOG.flicker_speed = flicker_speed;
 LOG.pattern_names=pattern_names;
 
+% Temperature
+LOG.start_temp_outside = t_outside_start;
+LOG.start_temp_ring = t_ring_start;
+LOG.end_temp_outside = t_outside_end;
+LOG.end_temp_ring = t_ring_end;
+
 % Add log file of timings per condition
 LOG.Log = Log;
 
@@ -416,3 +356,7 @@ LOG.Log = Log;
 log_fname =  fullfile(exp_folder, strcat('LOG_', string(date_str), '_', t_str, '.mat'));
 save(log_fname, 'LOG');
 disp('Log saved')
+
+
+% clear temp
+clear d ch1 ch2

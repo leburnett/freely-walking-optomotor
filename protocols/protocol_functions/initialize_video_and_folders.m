@@ -52,12 +52,22 @@ vidobj.loadConfiguration(config_path);
 vidobj.setVideoFile(v_fname);
 
 %% Add parameters to LOG_meta file. 
-LOG.meta.date = date_str;
-LOG.meta.time = time_str;
-LOG.meta.func_name = func_name;
-LOG.meta.fly_strain = params.Strain;
-LOG.meta.fly_age = params.Age;
-LOG.meta.fly_sex = params.Sex;
-LOG.meta.light_cycle = params.LightCycle;
+if func_name == "protocol_v5"
+    LOG.date = date_str;
+    LOG.time = time_str;
+    LOG.func_name = func_name;
+    LOG.fly_strain = params.Strain;
+    LOG.fly_age = params.Age;
+    LOG.fly_sex = params.Sex;
+    LOG.light_cycle = params.LightCycle;
+else
+    LOG.meta.date = date_str;
+    LOG.meta.time = time_str;
+    LOG.meta.func_name = func_name;
+    LOG.meta.fly_strain = params.Strain;
+    LOG.meta.fly_age = params.Age;
+    LOG.meta.fly_sex = params.Sex;
+    LOG.meta.light_cycle = params.LightCycle;
+end 
 
 end 
