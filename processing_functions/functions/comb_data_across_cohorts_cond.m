@@ -113,7 +113,7 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
             DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).optomotor_speed = Log.optomotor_speed;
             DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).flicker_pattern = Log.flicker_pattern;
             DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).flicker_speed = Log.flicker_speed;
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).start_flicker_f = Log.start_f(end-1);
+            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).start_flicker_f = Log.start_f(end)-start_f;
     
             DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).vel_data = comb_data.vel_data(:, start_f:stop_f);
             DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).dist_data = comb_data.dist_data(:, start_f:stop_f);
