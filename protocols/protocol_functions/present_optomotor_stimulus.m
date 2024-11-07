@@ -6,6 +6,7 @@ function Log = present_optomotor_stimulus(current_condition, all_conditions, vid
  optomotor_speed = all_conditions(current_condition, 3);
  flicker_speed = all_conditions(current_condition, 4);
  trial_len = all_conditions(current_condition, 5);
+ which_condition = all_conditions(current_condition, 6);
 
  % disp (optomotor_pattern); 
  % disp (flicker_pattern);
@@ -34,7 +35,7 @@ for tr_ind = 1:num_trials
     disp(['trial number = ' num2str(tr_ind)])
 
     dir_val = dir_val*-1;
-    
+    % JFRC49_ES
     % Log
     Log.trial(idx_value) = idx_value;
     Log.dir(idx_value) = dir_val;
@@ -67,6 +68,7 @@ for tr_ind = 1:num_trials
     Log.flicker_pattern = flicker_pattern;
     Log.optomotor_speed = optomotor_speed;
     Log.flicker_speed = flicker_speed;
+    Log.which_condition = which_condition;
 
     idx_value = idx_value+1;
 
