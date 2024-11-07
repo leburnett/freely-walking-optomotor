@@ -35,7 +35,7 @@ function f = plot_features_line(combined_data, strain, sex, protocol)
     
     n_conditions = height(Log);
 
-    % Plot the pink and blue bckground rectangles. 
+    % Plot the pink and blue background rectangles. 
 
     for ii = 1:n_conditions
 
@@ -52,18 +52,18 @@ function f = plot_features_line(combined_data, strain, sex, protocol)
         end 
 
         if dir_id == 0 
-            if ii == 1 || ii == 21 %ii == 1 || ii == 33
+            if ii == 1 || ii == 33
                 col = [0.5 0.5 0.5 0.3];
-            elseif ii == 11 || ii == 20 %ii == 17 || ii == 32
+            elseif ii == 17 || ii == 32
                 col = [0 0 0 0.5];
             else
                 col = [1 1 1];
             end 
 
         elseif dir_id == 1
-            col = [0 0 1 con_val*0.75];
+            col = [0.2 0.2 1 con_val*0.75];
         elseif dir_id == -1
-            col = [1 0 1 con_val*0.75];
+            col = [1 0.2 1 con_val*0.75];
         end 
 
         % Plot rectangles in the background of when the stimulus changes. 
@@ -112,18 +112,18 @@ function f = plot_features_line(combined_data, strain, sex, protocol)
         end 
 
         if dir_id == 0 
-            if ii == 1 || ii == 33
+            if ii == 1 || ii == 21  %ii == 1 || ii == 33
                 col = [0.5 0.5 0.5 0.3];
-            elseif ii == 17 || ii == 32
+            elseif ii == 11 || ii == 20  % ii == 17 || ii == 32
                 col = [0 0 0 0.5];
             else
                 col = [1 1 1];
             end 
 
         elseif dir_id == 1
-            col = [0 0 1 con_val*0.75];
+            col = [0.25 0.25 1 con_val*0.75];
         elseif dir_id == -1
-            col = [1 0 1 con_val*0.75];
+            col = [1 0.25 1 con_val*0.75];
         end 
 
         % Plot rectangles in the background of when the stimulus changes. 
@@ -149,10 +149,9 @@ function f = plot_features_line(combined_data, strain, sex, protocol)
 
     nexttile
 
-    ylim([-60 60])
-
-    max_val = 60; %max(max(av_data));
-    min_val = -60; %min(min(av_data));
+    max_val = 30; %max(max(av_data));
+    min_val = -30; %min(min(av_data));
+    ylim([min_val max_val])
     h = max_val - min_val;
     
     n_conditions = height(Log);
@@ -174,18 +173,18 @@ function f = plot_features_line(combined_data, strain, sex, protocol)
         end 
 
         if dir_id == 0 
-            if ii == 1 || ii == 33
+            if ii == 1 || ii == 21   %ii == 1 || ii == 33
                 col = [0.5 0.5 0.5 0.3];
-            elseif ii == 17 || ii == 32
+            elseif ii == 11 || ii == 20 %ii == 17 || ii == 32
                 col = [0 0 0 0.5];
             else
                 col = [1 1 1];
             end 
 
         elseif dir_id == 1
-            col = [0 0 1 con_val*0.75];
+            col = [0.25 0.25 1 con_val*0.75];
         elseif dir_id == -1
-            col = [1 0 1 con_val*0.75];
+            col = [1 0.25 1 con_val*0.75];
         end 
 
         % Plot rectangles in the background of when the stimulus changes. 
@@ -203,7 +202,7 @@ function f = plot_features_line(combined_data, strain, sex, protocol)
     end 
 
     % Plot the ang vel
-    plot(nanmean(av_data), 'k', 'LineWidth', 2.5)
+    plot(nanmean(av_data), 'Color', [1 1 1]*0.7, 'LineWidth', 2.5)
     ylabel('Angular velocity (deg s-1)')
    
 
@@ -263,7 +262,7 @@ function f = plot_features_line(combined_data, strain, sex, protocol)
     plot([0 Log.stop_f(end)], [0 0], 'LineWidth', 1, 'Color', [0.3 0.3 0.3])
 
     % Plot the distance from the centre
-    plot(nanmean(dist_data), 'k', 'LineWidth', 2.5)
+    plot(nanmean(dist_data), 'Color', [1 1 1]*0, 'LineWidth', 2.5)
     ylabel('Distance from the centre (mm)')
 
 

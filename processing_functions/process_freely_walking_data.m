@@ -1,16 +1,17 @@
-function process_freely_walking_data(date_to_analyse)
+function process_freely_walking_data()
 % process the oaky-cokey freely-walking optomotor behaviour data 
 
     close all
     clear
     clc
     
+    %% Enter date to be analysed here:
+    date_to_analyse = '2024_11_05';
+
     %% If data recorded after 24/09/2024 - - - new logging / saving system that saves in subfolders. 
     PROJECT_ROOT = '/Users/burnettl/Documents/Projects/oaky_cokey/'; %% Update for your computer. 
     data_path = fullfile(PROJECT_ROOT, 'data');
     results_path = fullfile(PROJECT_ROOT, 'results');
-    
-    % date_to_analyse = '2024_09_27';
     
     date_folder = fullfile(data_path, date_to_analyse);
     
@@ -33,29 +34,28 @@ function process_freely_walking_data(date_to_analyse)
     
         for strain_idx = 1:n_strains
             genotype_to_analyse =  strain_folders(strain_idx).name;
+            cd(fullfile(strain_folders(strain_idx).folder, strain_folders(strain_idx).name))
             
-            path_to_folder = fullfile(data_path, date_to_analyse, protocol_to_analyse, genotype_to_analyse);
-            save_folder = fullfile(results_path, protocol_to_analyse, genotype_to_analyse);
-            
-            % Process the data and save the processed data:
-            process_data_features(path_to_folder, save_folder, date_to_analyse)
+            sex_folders = dir();
+            % make sure only appropriate folders are considered.
+            sex_folders = sex_folders(3:end, :);
+            sex_names = {sex_folders.name};
+            sex_folders = sex_folders(~strcmp(sex_names, '.DS_Store'));
+            n_sexes = length(sex_folders);
+
+            for sex_idx = 1:n_sexes
+                sex_to_analyse = sex_folders(sex_idx).name;
+                cd(fullfile(sex_folders(sex_idx).folder, sex_folders(sex_idx).name))
+
+                path_to_folder = fullfile(data_path, date_to_analyse, protocol_to_analyse, genotype_to_analyse, sex_to_analyse);
+                save_folder = fullfile(results_path, protocol_to_analyse, genotype_to_analyse, sex_to_analyse);
+
+                % Process the data and save the processed data:
+                process_data_features(path_to_folder, save_folder, date_to_analyse)
+
+            end
         end 
     
     end 
 
 end 
-%% If data recorded on or before 24/09/2024 - - - all experiments saved in one date folder. 
-
-% What date to analyse:
-
-% date_to_analyse = '2024_07_16';
-% 
-% % Initialise fixed paths.
-% 
-% PROJECT_ROOT = '/Users/burnettl/Documents/Projects/oaky_cokey/';
-% data_path = fullfile(PROJECT_ROOT, 'data');
-% results_path = fullfile(PROJECT_ROOT, 'results');
-% path_to_folder = fullfile(data_path, date_to_analyse);
-% save_folder = results_path; 
-% % Process the data and save the processed data:
-% process_data_features_pre_240925(path_to_folder, save_folder)

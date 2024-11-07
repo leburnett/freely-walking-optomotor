@@ -1,6 +1,6 @@
 function plot_hist(data, nbins, feature)
 
-    max_val = max(max(data, 2));
+    max_val = max(max(max(data, 2)));
     med_val = nanmedian(nanmedian(data, 2));
     mean_val = nanmean(nanmean(data, 2));
 
