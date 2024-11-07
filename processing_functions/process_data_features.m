@@ -107,7 +107,7 @@ function process_data_features(path_to_folder, save_folder, date_str)
         % 1 - histograms of locomotor parameters
         f_overview = make_overview(combined_data, strain, sex, protocol);
 
-        hist_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/results/overview_figs/loco_histograms';
+        hist_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/loco_histograms';
         if ~isfolder(hist_save_folder)
             mkdir(hist_save_folder);
         end
@@ -116,7 +116,7 @@ function process_data_features(path_to_folder, save_folder, date_str)
         % 2 - features - with individual traces per fly
         f_feat = plot_all_features(LOG, feat, trx, protocol, save_str);
 
-        feat_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/results/overview_figs/feat_overview';
+        feat_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/feat_overview';
         if ~isfolder(feat_save_folder)
             mkdir(feat_save_folder);
         end
