@@ -1,6 +1,6 @@
 function DATA = comb_data_across_cohorts_cond(protocol_dir)
     
-    % [optomotor_pattern, flicker_pattern, opto_speed, flick_speed, num_trials]
+    % [optomotor_pattern, flicker_pattern, opto_speed, flick_speed, trial_len]
     cond_array =[9, 10, 64, 8, 2;
             9, 10, 127, 16, 15;
             9, 10, 64, 8, 15;
@@ -32,11 +32,8 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
 
         % Get key information about strain and sex:
         strain = LOG.meta.fly_strain;
-        % Check for if the strain begins with a number:
-        startsnum = isstrprop(strain(1), 'digit');
-        if startsnum
-            strain = strcat('ss', strain);
-        end 
+        strain = check_strain_typos(strain);
+
         sex = LOG.meta.fly_sex;
     
         %% Extract all of the data from the entire experiment:
@@ -102,8 +99,8 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
                 flicker_pattern = Log.flicker_pattern;
                 opto_speed = Log.optomotor_speed;
                 flick_speed = Log.flicker_speed;
-                ntrials = Log.num_trials;
-                params = [optomotor_pattern, flicker_pattern, opto_speed, flick_speed, ntrials];
+                trial_len = Log.trial_len;
+                params = [optomotor_pattern, flicker_pattern, opto_speed, flick_speed, trial_len];
                 condition_n = find(ismember(cond_array, params, 'rows'));
             end 
     
