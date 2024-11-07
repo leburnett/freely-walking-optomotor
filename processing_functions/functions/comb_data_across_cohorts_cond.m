@@ -134,8 +134,10 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         DATA.(strain).(sex)(sz).acclim_off2.av_data = comb_data.av_data(:, start_f:stop_f);
         DATA.(strain).(sex)(sz).acclim_off2.heading_data = comb_data.heading_data(:, start_f:stop_f);
         DATA.(strain).(sex)(sz).acclim_off2.heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
-
     
     end 
+
+    strs = split(protocol_dir, '/');
+    save(string(fullfile(protocol_dir, strcat(strs(end), '_DATA.mat'))), 'DATA');
 
 end 
