@@ -7,7 +7,6 @@ d = initialize_temp_recording();
 
 % Protocol parameters: 
 t_acclim = 20; 
-num_conditions = 8; 
 t_pause = 0.015;
 
 % All conditions 
@@ -19,8 +18,14 @@ all_conditions = [
     6, 7, 64, 8, 2, 5; 
     6, 7, 127, 16, 15, 6;
     6, 7, 64, 8, 15, 7;
-    6, 7, 127, 16, 2, 8
+    6, 7, 127, 16, 2, 8;
+    4, 5, 64, 8, 2, 9; 
+    4, 5, 127, 16, 15, 10;
+    4, 5, 64, 8, 15, 11;
+    4, 5, 127, 16, 2, 12; 
 ];
+
+num_conditions = height(all_conditions); 
 
 %% Protocol name
 func_name = string(mfilename());
