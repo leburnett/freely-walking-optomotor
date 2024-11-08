@@ -1,7 +1,7 @@
 % Plotting function - generate 6 x 2 subplot with the mean + / SEM for all
 % flies from one experimental group. 
 
-function f = plot_mean_sem_12cond(DATA, strain, sex)
+function f = plot_mean_sem_12cond_overlap(DATA, strain, sex)
 
     % % Eventually have this as the input to the function 
     data = DATA.(strain).(sex); 
@@ -31,7 +31,7 @@ function f = plot_mean_sem_12cond(DATA, strain, sex)
 
     % Generate new figure
     figure;
-    t = tiledlayout(6,2);
+    t = tiledlayout(1,2);
     t.TileSpacing = 'compact';
 
     cond_order = [1,3,4,2,5,7,8,6,9,11,12,10];
@@ -106,13 +106,18 @@ function f = plot_mean_sem_12cond(DATA, strain, sex)
         x = 1:1:nf_comb;
     
         % Plot subplot for condition
-        nexttile
-        % subplot(6,2,idx2)
+        if ismember(idx2, [1,3,5,7,9,11])
+            subpl = 1;
+        else
+            subpl = 2;
+        end 
+
+        subplot(1,2,subpl)
 
         if ismember(idx2, [1,2])
             col = 'k';
         elseif ismember(idx2, [3,4])
-            col = [0.7 0.7 0.7];
+            col = [0.8 0.8 0.8];
         elseif ismember(idx2, [5,6])
             col = [0 0.6 0];
         elseif ismember(idx2, [7,8])
@@ -126,26 +131,31 @@ function f = plot_mean_sem_12cond(DATA, strain, sex)
         plot(x, y1, 'w', 'LineWidth', 1)
         hold on
         plot(x, y2, 'w', 'LineWidth', 1)
-        patch([x fliplr(x)], [y1 fliplr(y2)], 'k', 'FaceAlpha', 0.125, 'EdgeColor', 'none')
+        patch([x fliplr(x)], [y1 fliplr(y2)], 'k', 'FaceAlpha', 0.1, 'EdgeColor', 'none')
         plot(mean_data, 'Color', col, 'LineWidth', 2);
     
-        % When flicker stimulus started:
-        fl = mean(fl_start_f);
-        plot([fl fl], [0 85], 'k', 'LineWidth', 0.5)
-        plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
+        if idx2>10
+            % When flicker stimulus started:
+            fl = mean(fl_start_f);
+            plot([fl fl], [0 85], 'k', 'LineWidth', 0.5)
+            plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
+        end 
         xlim([0 nf_comb])
         ylim([0 85])
         box off
         ax = gca; ax.XAxis.Visible = 'off'; ax.TickDir = 'out'; ax.TickLength = [0.015 0.015]; ax.LineWidth = 1; ax.FontSize = 12;
 
-        title(strcat(string(p(1)), 'deg-', string(p(2)), 'Hz-', string(p(3)), 's'), 'FontSize', 11)
-        
+        title(strcat(string(p(3)), 's'), 'FontSize', 11)
+        if subpl == 1
+            ylabel('Distance from centre (mm)', 'FontSize', 16)
+        end 
+
     end 
 
     f = gcf;
-    f.Position = [11    78   474   969];
+    f.Position = [1   721   836   326];
     strain = strrep(strain, '_', '-');
-    title(t, strcat(strain, '--', sex, '--N=', string(total_flies)), 'FontSize', 16)
-    ylabel(t,'Distance from centre (mm)', 'FontSize', 16)
+    sgtitle(strcat(strain, '--', sex, '--N=', string(total_flies)), 'FontSize', 16)
+    
 
 end 

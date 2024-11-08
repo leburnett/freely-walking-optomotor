@@ -49,8 +49,8 @@ end
 % the entire experiment. I remove flies that have not been tracked to
 % completion. 
 % 
-% trx([4,10]) = [];
-% feat.data([4,10], :, :) = [];
+% trx(5) = [];
+% feat.data([5], :, :) = [];
 % move to correct folders:
 % save('trx.mat', 'trx')
-% save('REC__cam_0_date_2024_11_05_time_14_45_44_v001-feat.mat', 'feat')
+% save('REC__cam_0_date_2024_11_07_time_16_14_25_v001-feat.mat', 'feat')
