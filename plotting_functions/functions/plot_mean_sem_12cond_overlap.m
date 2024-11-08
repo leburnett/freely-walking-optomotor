@@ -1,7 +1,7 @@
 % Plotting function - generate 6 x 2 subplot with the mean + / SEM for all
 % flies from one experimental group. 
 
-function f = plot_mean_sem_12cond_overlap(DATA, strain, sex)
+function f = plot_mean_sem_12cond_overlap(DATA, strain, sex, data_type)
 
     % % Eventually have this as the input to the function 
     data = DATA.(strain).(sex); 
@@ -25,7 +25,7 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, sex)
     
     % Calculate the total number of flies in this experimental group:
     for idx = 1:n_exp
-        n_flies = size(data(idx).acclim_off1.vel_data, 1);
+        n_flies = size(data(idx).acclim_off1.(data_type), 1);
         total_flies = total_flies + n_flies;
     end 
 
@@ -56,8 +56,8 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, sex)
     
             if ~isempty(rep1_data) % check that the row is not empty.
                 % Extract the relevant data
-                rep1_data = rep1_data.dist_data;
-                rep2_data = data(idx).(rep2_str).dist_data;
+                rep1_data = rep1_data.(data_type);
+                rep2_data = data(idx).(rep2_str).(data_type);
     
                 % Number of frames in each rep
                 nf1 = size(rep1_data, 2);
@@ -128,26 +128,44 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, sex)
             col = [0.6 0.8 0.9];
         end 
 
+        if data_type == "dist_data"
+            rng = [0 85];
+            ylb = 'Distance from centre (mm)';
+            lw = 2;
+        elseif data_type == "dist_trav"
+            rng = [0 1];
+            ylb = 'Distance travelled (mm)';
+            lw = 1; 
+        elseif data_type == "av_data"
+            rng = [-15 15];
+            ylb = "Angular velocity (deg s-1)";
+            lw = 2;
+        elseif data_type == "heading_data"
+            rng = [-6000 6000];
+            ylb = "Heading (deg)";
+            lw = 2;
+        end
+
         plot(x, y1, 'w', 'LineWidth', 1)
         hold on
         plot(x, y2, 'w', 'LineWidth', 1)
         patch([x fliplr(x)], [y1 fliplr(y2)], 'k', 'FaceAlpha', 0.1, 'EdgeColor', 'none')
-        plot(mean_data, 'Color', col, 'LineWidth', 2);
-    
+        plot(mean_data, 'Color', col, 'LineWidth', lw);    
+
         if idx2>10
             % When flicker stimulus started:
             fl = mean(fl_start_f);
-            plot([fl fl], [0 85], 'k', 'LineWidth', 0.5)
+            plot([fl fl], rng, 'k', 'LineWidth', 0.5)
             plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
         end 
         xlim([0 nf_comb])
-        ylim([0 85])
+        ylim(rng)
         box off
         ax = gca; ax.XAxis.Visible = 'off'; ax.TickDir = 'out'; ax.TickLength = [0.015 0.015]; ax.LineWidth = 1; ax.FontSize = 12;
 
         title(strcat(string(p(3)), 's'), 'FontSize', 11)
         if subpl == 1
-            ylabel('Distance from centre (mm)', 'FontSize', 16)
+            ylabel(ylb, 'FontSize', 16)
         end 
 
     end 

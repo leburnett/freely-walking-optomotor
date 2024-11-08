@@ -5,35 +5,53 @@ cd(protocol_dir);
 
 DATA = comb_data_across_cohorts_cond(protocol_dir);
 
-% Load in the data for all protocol_10 experiments. 
-% files = dir('*.mat');
-% load(files(1).name, 'DATA')
+experimental_groups = {
+    'csw1118', 'F';
+    'csw1118', 'M';
+    'jfrc49_es_kir', 'F';
+    'jfrc100_es_shibire', 'F';
+    'ss324_t4t5_kir', 'F';
+    'ss324_t4t5_shibire', 'F';
+    'jfrc49_l1l4_kir', 'F'
+    };
 
-strain = 'ss324_t4t5_shibire';
-sex = 'F';
+n_exp_groups = height(experimental_groups);
 
-% Potentially run through all of the available folders. 
+for gp = 1:n_exp_groups
 
-% all_cond_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/protocol_10/12cond';
-% if ~isfolder(all_cond_save_folder)
-%     mkdir(all_cond_save_folder);
-% end
-% 
-% % All 12 conditions plotted individually:
-% f = plot_mean_sem_12cond(DATA, strain, sex);
-% saveas(f, fullfile(all_cond_save_folder, strcat(strain, '_', sex, '.png')))
+    strain = experimental_groups{gp, 1};
+    sex = experimental_groups{gp, 2};
+    
+    % Potentially run through all of the available folders. 
+    
+    % all_cond_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/protocol_10/12cond';
+    % if ~isfolder(all_cond_save_folder)
+    %     mkdir(all_cond_save_folder);
+    % end
+    % 
+    % % All 12 conditions plotted individually:
+    % f = plot_mean_sem_12cond(DATA, strain, sex);
+    % saveas(f, fullfile(all_cond_save_folder, strcat(strain, '_', sex, '.png')))
+    
+    % overlap_cond_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/protocol_10/12cond_overlap';
+    % if ~isfolder(overlap_cond_save_folder)
+    %     mkdir(overlap_cond_save_folder);
+    % end
+    
+    % % Plot the 6 conditions for each trial length overlapped.
+    % data_type = 'dist_data';
+    % f2 = plot_mean_sem_12cond_overlap(DATA, strain, sex, data_type);
+    % % saveas(f2, fullfile(overlap_cond_save_folder, strcat(strain, '_', sex, '.png')))
+    % 
+    % % Plot the 6 conditions for each trial length overlapped.
+    % data_type = 'dist_trav';
+    % f3 = plot_mean_sem_12cond_overlap(DATA, strain, sex, 'dist_trav');
+    
+    data_type = 'heading_data';
+    f4a = plot_mean_sem_12cond(DATA, strain, sex, data_type);
+    f4b = plot_mean_sem_12cond_overlap(DATA, strain, sex, data_type);
 
-
-overlap_cond_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/protocol_10/12cond_overlap';
-if ~isfolder(overlap_cond_save_folder)
-    mkdir(overlap_cond_save_folder);
-end
-
-% Plot the 6 conditions for each trial length overlapped.
-f2 = plot_mean_sem_12cond_overlap(DATA, strain, sex);
-saveas(f2, fullfile(overlap_cond_save_folder, strcat(strain, '_', sex, '.png')))
-
-
+end 
 
 
 
