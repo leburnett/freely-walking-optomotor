@@ -58,7 +58,7 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, sex, data_type)
                 % Extract the relevant data
                 rep1_data = rep1_data.(data_type);
                 rep2_data = data(idx).(rep2_str).(data_type);
-    
+
                 % Number of frames in each rep
                 nf1 = size(rep1_data, 2);
                 nf2 = size(rep2_data, 2);
@@ -99,6 +99,11 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, sex, data_type)
    
         % Mean +/- SEM
         mean_data = nanmean(cond_data);
+
+        if data_type == "dist_trav"
+            mean_data = movmean(mean_data, 5);
+        end 
+
         sem_data = nanstd(cond_data)/sqrt(size(cond_data,1));
         y1 = mean_data+sem_data;
         y2 = mean_data-sem_data;

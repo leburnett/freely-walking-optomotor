@@ -54,15 +54,17 @@ for gp = 1:n_exp_groups
 end 
 
 % csw1118 F, M and L1L4
-gps2plot = [1,2,7];
+% gps2plot = [1,2,7];
 
 % % csw1118 F , ES Kir, ES Shibire
 % gps2plot = [1,3,4];
 
 % % csw1118 F , T4T5 Kir, T4T5 Shibire
-% gps2plot = [1,5,6];
+gps2plot = [1,5,6];
 
-data_type = 'av_data';
+% gps2plot = [1:1:7];
+
+data_type = 'dist_trav';
 plot_sem = false;
 f = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem);
 

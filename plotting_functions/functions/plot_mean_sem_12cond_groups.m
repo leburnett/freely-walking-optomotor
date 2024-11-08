@@ -109,6 +109,11 @@ for gp = gps2plot
    
         % Mean +/- SEM
         mean_data = nanmean(cond_data);
+
+        if data_type == "dist_trav"
+            mean_data = movmean(mean_data, 5);
+        end 
+
         sem_data = nanstd(cond_data)/sqrt(size(cond_data,1));
         y1 = mean_data+sem_data;
         y2 = mean_data-sem_data;
@@ -121,7 +126,7 @@ for gp = gps2plot
         if data_type == "dist_data"
             rng = [0 85];
             ylb = 'Distance from centre (mm)';
-            lw = 1.5;
+            lw = 2;
         elseif data_type == "dist_trav"
             rng = [0 1];
             ylb = 'Distance travelled (mm)';
