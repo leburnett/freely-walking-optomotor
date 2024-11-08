@@ -1,7 +1,7 @@
 % Plotting function - generate 6 x 2 subplot with the mean + / SEM as one
 % line per experimental group
 
-function f = plot_mean_sem_12cond_groups(DATA, data_type)
+function f = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem)
 
     % Generate new figure
     figure;
@@ -11,17 +11,17 @@ function f = plot_mean_sem_12cond_groups(DATA, data_type)
     cond_order = [1,3,4,2,5,7,8,6,9,11,12,10];
 
     experimental_groups = {
-    'csw1118', 'F', [0 0.45 0.6]; % dark blue
-    'csw1118', 'M', [0.35 0.7 0.9];% light blue
+    'csw1118', 'F', [0.3 0.3 0.3];%[0 0.45 0.6]; % dark blue
+    'csw1118', 'M', [0.7 0.7 0.7]; %[0.4 0.8 1];% light blue
     'jfrc49_es_kir', 'F', [0.41 0.22 0.47]; % dark purple
     'jfrc100_es_shibire', 'F', [0.85 0.4 0.7];% pink
-    'ss324_t4t5_kir', 'F', [1 0.6 0]; % orange
-    'ss324_t4t5_shibire', 'F', [0.9 0.85 0.2]; % yellow
-    'jfrc49_l1l4_kir', 'F', [0.6 0.6 0.6] % grey
+    'ss324_t4t5_kir', 'F', [0 0.4 0]; %[1 0.6 0]; % dark green / orange
+    'ss324_t4t5_shibire', 'F', [0.6 0.8 0.6];%[0.9 0.85 0.2]; % light green / yellow
+    'jfrc49_l1l4_kir', 'F', [0.4 0.8 1]; %[0.6 0.6 0.6] % grey
     };
 
 %% For each experimental group (strain-sex):
-for gp = 1:height(experimental_groups)
+for gp = gps2plot
 
     % % Eventually have this as the input to the function 
     strain = experimental_groups{gp, 1};
@@ -129,24 +129,31 @@ for gp = 1:height(experimental_groups)
         elseif data_type == "av_data"
             rng = [-15 15];
             ylb = "Angular velocity (deg s-1)";
-            lw = 2;
+            lw = 1;
         elseif data_type == "heading_data"
             rng = [-6000 6000];
             ylb = "Heading (deg)";
-            lw = 2;
+            lw = 1.5;
         end
 
-        plot(x, y1, 'w', 'LineWidth', 1)
-        hold on
-        plot(x, y2, 'w', 'LineWidth', 1)
-        patch([x fliplr(x)], [y1 fliplr(y2)], 'k', 'FaceAlpha', 0.1, 'EdgeColor', 'none')
+        if plot_sem
+            plot(x, y1, 'w', 'LineWidth', 1)
+            hold on
+            plot(x, y2, 'w', 'LineWidth', 1)
+            patch([x fliplr(x)], [y1 fliplr(y2)], 'k', 'FaceAlpha', 0.1, 'EdgeColor', 'none')
+        end
         plot(mean_data, 'Color', col, 'LineWidth', lw);
+        hold on
     
         % When flicker stimulus started:
-        if gp == height(experimental_groups)
+        if gp == gps2plot(end)
             fl = mean(fl_start_f);
             plot([fl fl], rng, 'k', 'LineWidth', 0.5)
-            plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
+            if data_type == "dist_data"
+                plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
+            elseif data_type == "av_data"
+                plot([0 nf_comb], [0 0], 'k:', 'LineWidth', 0.5)
+            end 
         end 
         xlim([0 nf_comb])
         ylim(rng)
