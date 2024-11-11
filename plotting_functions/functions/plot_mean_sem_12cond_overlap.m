@@ -162,7 +162,11 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, sex, data_type)
 
         if idx2>10
             plot([fl fl], rng, 'k', 'LineWidth', 0.5)
-            plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
+            if data_type == "dist_data"
+                plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
+            elseif data_type == "av_data"
+                plot([0 nf_comb], [0 0], 'k:', 'LineWidth', 0.5)
+            end 
         end 
         xlim([0 nf_comb])
         ylim(rng)
@@ -187,12 +191,21 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, sex, data_type)
         % Find the mean value during the moving stim and during the flicker
 
         % Buffer time after start of flicker to exclude. 30 fps. 
-        buffer_t = 30*7; 
+        if data_type == "dist_trav"
+            buffer_t = 1;
+        else
+            buffer_t = 30*7; 
+        end 
+
+        if data_type == "av_data"
+            mean_data = abs(mean_data);
+            sem_data = abs(sem_data);
+        end 
 
         if data_type == "dist_data"
             % moving stim: 
             mean_stim = min(mean_data(1:fl));
-            sem_stim = min(sem_data(1:fl));
+            sem_stim = mean(sem_data(1:fl));
     
             % flicker stim: 
             mean_flicker = mean(mean_data(fl+buffer_t:end));
@@ -223,7 +236,9 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, sex, data_type)
         plot([0.875+jt1, 1.875+jt2], [mean_stim, mean_flicker], '-', 'LineWidth', 1.2, 'Color', col)
         
         if idx2>10 
-            plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
+            if data_type == "dist_data"
+                plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
+            end 
         end 
 
         xlim([0.5 2.5])
