@@ -1,4 +1,4 @@
-% Plotting function - generate 6 x 2 subplot with the mean + / SEM for all
+% Plotting function - generate 1 x 2 subplot with the mean + / SEM for all
 % flies from one experimental group. 
 
 function f = plot_mean_sem_12cond_overlap(DATA, strain, sex, data_type)
@@ -31,7 +31,7 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, sex, data_type)
 
     % Generate new figure
     figure;
-    t = tiledlayout(1,2);
+    t = tiledlayout(1,6);
     t.TileSpacing = 'compact';
 
     cond_order = [1,3,4,2,5,7,8,6,9,11,12,10];
@@ -97,7 +97,7 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, sex, data_type)
             end 
         end 
    
-        % Mean +/- SEM
+        % % % % Mean +/- SEM PLOT 
         mean_data = nanmean(cond_data);
 
         if data_type == "dist_trav"
@@ -112,12 +112,12 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, sex, data_type)
     
         % Plot subplot for condition
         if ismember(idx2, [1,3,5,7,9,11])
-            subpl = 1;
+            subpl = 1:2;
         else
-            subpl = 2;
+            subpl = 4:5;
         end 
 
-        subplot(1,2,subpl)
+        subplot(1,6,subpl)
 
         if ismember(idx2, [1,2])
             col = 'k';
@@ -157,9 +157,10 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, sex, data_type)
         patch([x fliplr(x)], [y1 fliplr(y2)], 'k', 'FaceAlpha', 0.1, 'EdgeColor', 'none')
         plot(mean_data, 'Color', col, 'LineWidth', lw);    
 
+        % When flicker stimulus started:
+        fl = ceil(mean(fl_start_f));
+
         if idx2>10
-            % When flicker stimulus started:
-            fl = mean(fl_start_f);
             plot([fl fl], rng, 'k', 'LineWidth', 0.5)
             plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
         end 
@@ -169,14 +170,81 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, sex, data_type)
         ax = gca; ax.XAxis.Visible = 'off'; ax.TickDir = 'out'; ax.TickLength = [0.015 0.015]; ax.LineWidth = 1; ax.FontSize = 12;
 
         title(strcat(string(p(3)), 's'), 'FontSize', 11)
-        if subpl == 1
+        if subpl <3
             ylabel(ylb, 'FontSize', 16)
         end 
+
+        % % % % % Errorbar plot of MEAN + SEM 
+
+        % Plot subplot for condition
+        if ismember(idx2, [1,3,5,7,9,11])
+            subpl2 = 3;
+        else
+            subpl2 = 6;
+        end 
+
+        subplot(1,6,subpl2)
+        % Find the mean value during the moving stim and during the flicker
+
+        % Buffer time after start of flicker to exclude. 30 fps. 
+        buffer_t = 30*7; 
+
+        if data_type == "dist_data"
+            % moving stim: 
+            mean_stim = min(mean_data(1:fl));
+            sem_stim = min(sem_data(1:fl));
+    
+            % flicker stim: 
+            mean_flicker = mean(mean_data(fl+buffer_t:end));
+            sem_flicker = mean(sem_data(fl+buffer_t:end));
+        else
+            % moving stim: 
+            mean_stim = mean(mean_data(1:fl));
+            sem_stim = mean(sem_data(1:fl));
+    
+            % flicker stim: 
+            mean_flicker = mean(mean_data(fl+buffer_t:end));
+            sem_flicker = mean(sem_data(fl+buffer_t:end));
+        end 
+
+        jt1 = rand(1)/4;
+        % Add the scatter / error bar plot.
+        errorbar(0.875+jt1, mean_stim, sem_stim, 'Color', col, 'LineWidth', 1.2)
+        hold on
+        % scatter(1, mean_stim, 60, col, 'Marker', 'o', 'LineWidth', 1.2, 'MarkerFaceColor', col, 'MarkerFaceAlpha', 0.2)
+        scatter(0.875+jt1, mean_stim, 120, col, 'Marker', '_', 'LineWidth', 2)
+
+        jt2 = rand(1)/4;
+        errorbar(1.875+jt2, mean_flicker, sem_flicker, 'Color', col, 'LineWidth', 1.2)
+        hold on
+        % scatter(1.875+jt2, mean_flicker, 60, col, 'Marker', 'o', 'LineWidth', 1.2, 'MarkerFaceColor', col, 'MarkerFaceAlpha', 0.2)
+        scatter(1.875+jt2, mean_flicker, 120, col, 'Marker', '_', 'LineWidth', 2)
+
+        plot([0.875+jt1, 1.875+jt2], [mean_stim, mean_flicker], '-', 'LineWidth', 1.2, 'Color', col)
+        
+        if idx2>10 
+            plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
+        end 
+
+        xlim([0.5 2.5])
+        box off
+        ylim(rng)
+        ax = gca; 
+        ax.YAxis.Visible = 'off';
+        ax.TickDir = 'out';
+        ax.TickLength = [0.015 0.015]; 
+        ax.LineWidth = 1; 
+        ax.FontSize = 12;
+
+        xticks([1,2])
+        xticklabels({''})
+        % xticklabels({'Stimulus', 'Flicker'})
+        xtickangle(90)
 
     end 
 
     f = gcf;
-    f.Position = [1   721   836   326];
+    f.Position = [19 667 1009 366]; %[1   721   836   326];
     strain = strrep(strain, '_', '-');
     sgtitle(strcat(strain, '--', sex, '--N=', string(total_flies)), 'FontSize', 16)
     
