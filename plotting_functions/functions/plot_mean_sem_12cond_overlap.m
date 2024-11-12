@@ -50,7 +50,6 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, sex, data_type)
         rep1_str = strcat('R1_condition_', string(cond));   
         rep2_str = strcat('R2_condition_', string(cond));  
     
-        % JUST DO DISTANCE DATA AT THE MOMENT:
         for idx = 1:n_exp
             rep1_data = data(idx).(rep1_str);
     

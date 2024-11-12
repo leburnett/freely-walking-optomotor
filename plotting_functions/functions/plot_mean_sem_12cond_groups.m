@@ -126,7 +126,7 @@ for gp = gps2plot
         if data_type == "dist_data"
             rng = [0 85];
             ylb = 'Distance from centre (mm)';
-            lw = 2;
+            lw = 1.5;
         elseif data_type == "dist_trav"
             rng = [0 1];
             ylb = 'Distance travelled (mm)';
@@ -138,11 +138,11 @@ for gp = gps2plot
         elseif data_type == "heading_data"
             rng = [0 3000];
             ylb = "Heading (deg)";
-            lw = 1.5;
+            lw = 1;
         elseif data_type == "vel_data"
             rng = [0 30];
             ylb = "Velocity (mm s-1)";
-            lw = 1.5;
+            lw = 1;
         end
 
         if plot_sem
