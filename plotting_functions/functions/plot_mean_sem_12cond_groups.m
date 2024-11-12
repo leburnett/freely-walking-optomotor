@@ -110,7 +110,7 @@ for gp = gps2plot
         % Mean +/- SEM
         mean_data = nanmean(cond_data);
 
-        if data_type == "dist_trav"
+        if data_type == "dist_trav" || data_type == "vel_data" 
             mean_data = movmean(mean_data, 5);
         end 
 
@@ -136,8 +136,12 @@ for gp = gps2plot
             ylb = "Angular velocity (deg s-1)";
             lw = 1;
         elseif data_type == "heading_data"
-            rng = [-6000 6000];
+            rng = [0 3000];
             ylb = "Heading (deg)";
+            lw = 1.5;
+        elseif data_type == "vel_data"
+            rng = [0 30];
+            ylb = "Velocity (mm s-1)";
             lw = 1.5;
         end
 

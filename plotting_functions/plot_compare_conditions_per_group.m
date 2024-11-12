@@ -17,7 +17,7 @@ experimental_groups = {
 
 n_exp_groups = height(experimental_groups);
 
-data_types =  {'dist_data', 'dist_trav', 'heading_data', 'av_data'};
+data_types =  {'dist_data', 'dist_trav', 'heading_data', 'av_data', 'vel_data'};
 
 for gp = 1:n_exp_groups
 
@@ -54,6 +54,9 @@ end
 % gps2plot = [1:1:7];
 
 cond_across_grps_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/protocol_10/12cond_groups';
+if ~isfolder(cond_across_grps_save_folder)
+        mkdir(cond_across_grps_save_folder);
+end
 
 gp2 = [1,2,7; 1,3,4; 1,5,6];
 

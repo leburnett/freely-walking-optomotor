@@ -146,9 +146,13 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, sex, data_type)
             ylb = "Angular velocity (deg s-1)";
             lw = 2;
         elseif data_type == "heading_data"
-            rng = [-6000 6000];
+            rng = [0 3000];
             ylb = "Heading (deg)";
             lw = 2;
+        elseif data_type == "vel_data"
+            rng = [0 30];
+            ylb = "Velocity (mm s-1)";
+            lw = 1.5;
         end
 
         plot(x, y1, 'w', 'LineWidth', 1)
