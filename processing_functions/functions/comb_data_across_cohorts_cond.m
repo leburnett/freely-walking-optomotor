@@ -1,4 +1,6 @@
 function DATA = comb_data_across_cohorts_cond(protocol_dir)
+    % Example 'protocol_dir' would be:
+    % '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_10'
     
     % [optomotor_pattern, flicker_pattern, opto_speed, flick_speed, trial_len]
     cond_array =[9, 10, 64, 8, 2;
@@ -17,6 +19,11 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
 
     % Find all processed data for one protocol. 
     filelist = dir(fullfile(protocol_dir, '**/*.mat'));
+
+    % Remove the DATA file. 
+    dnames = {filelist.name};
+    filelist = filelist(~ismember(dnames, 'protocol_10_DATA.mat'));
+
     n_files = length(filelist);
     
     % Initialise a struct 'DATA' to store data in. 

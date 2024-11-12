@@ -1,9 +1,33 @@
-% Plotting function - generate 6 x 2 subplot with the mean + / SEM for all
-% flies from one experimental group. 
+% Plotting function - generate 6 x 2 subplot with the mean + / SEM as one
+% line per experimental group
 
-function f = plot_mean_sem_12cond(DATA, strain, sex, data_type)
+function f = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem)
+
+    % Generate new figure
+    figure;
+    t = tiledlayout(6,2);
+    t.TileSpacing = 'compact';
+
+    cond_order = [1,3,4,2,5,7,8,6,9,11,12,10];
+
+    experimental_groups = {
+    'csw1118', 'F', [0.3 0.3 0.3];%[0 0.45 0.6]; % dark blue
+    'csw1118', 'M', [0.7 0.7 0.7]; %[0.4 0.8 1];% light blue
+    'jfrc49_es_kir', 'F', [0.41 0.22 0.47]; % dark purple
+    'jfrc100_es_shibire', 'F', [0.85 0.4 0.7];% pink
+    'ss324_t4t5_kir', 'F', [0 0.4 0]; %[1 0.6 0]; % dark green / orange
+    'ss324_t4t5_shibire', 'F', [0.6 0.8 0.6];%[0.9 0.85 0.2]; % light green / yellow
+    'jfrc49_l1l4_kir', 'F', [0.4 0.8 1]; %[0.6 0.6 0.6] % grey
+    };
+
+%% For each experimental group (strain-sex):
+for gp = gps2plot
 
     % % Eventually have this as the input to the function 
+    strain = experimental_groups{gp, 1};
+    sex = experimental_groups{gp, 2};
+    col = experimental_groups{gp, 3};
+
     data = DATA.(strain).(sex); 
 
     params =[60, 4, 2;
@@ -21,20 +45,6 @@ function f = plot_mean_sem_12cond(DATA, strain, sex, data_type)
             ];
     
     n_exp = length(data);
-    total_flies = 0;
-    
-    % Calculate the total number of flies in this experimental group:
-    for idx = 1:n_exp
-        n_flies = size(data(idx).acclim_off1.(data_type), 1);
-        total_flies = total_flies + n_flies;
-    end 
-
-    % Generate new figure
-    figure;
-    t = tiledlayout(6,2);
-    t.TileSpacing = 'compact';
-
-    cond_order = [1,3,4,2,5,7,8,6,9,11,12,10];
 
     % Run through the different conditions: 
     for idx2 = 1:1:12 
@@ -99,6 +109,11 @@ function f = plot_mean_sem_12cond(DATA, strain, sex, data_type)
    
         % Mean +/- SEM
         mean_data = nanmean(cond_data);
+
+        if data_type == "dist_trav" || data_type == "vel_data" 
+            mean_data = movmean(mean_data, 5);
+        end 
+
         sem_data = nanstd(cond_data)/sqrt(size(cond_data,1));
         y1 = mean_data+sem_data;
         y2 = mean_data-sem_data;
@@ -106,27 +121,12 @@ function f = plot_mean_sem_12cond(DATA, strain, sex, data_type)
         x = 1:1:nf_comb;
     
         % Plot subplot for condition
-        nexttile
-        % subplot(6,2,idx2)
-
-        if ismember(idx2, [1,2])
-            col = 'k';
-        elseif ismember(idx2, [3,4])
-            col = [0.7 0.7 0.7];
-        elseif ismember(idx2, [5,6])
-            col = [0 0.6 0];
-        elseif ismember(idx2, [7,8])
-            col = [0.6 0.8 0.6];
-        elseif ismember(idx2, [9, 10])
-            col = [0 0 0.5];
-        elseif ismember(idx2, [11, 12])
-            col = [0.6 0.8 0.9];
-        end 
+        subplot(6,2,idx2)
 
         if data_type == "dist_data"
             rng = [0 85];
             ylb = 'Distance from centre (mm)';
-            lw = 2;
+            lw = 1.5;
         elseif data_type == "dist_trav"
             rng = [0 1];
             ylb = 'Distance travelled (mm)';
@@ -134,23 +134,36 @@ function f = plot_mean_sem_12cond(DATA, strain, sex, data_type)
         elseif data_type == "av_data"
             rng = [-15 15];
             ylb = "Angular velocity (deg s-1)";
-            lw = 2;
+            lw = 1;
         elseif data_type == "heading_data"
-            rng = [-6000 6000];
+            rng = [0 3000];
             ylb = "Heading (deg)";
-            lw = 2;
+            lw = 1;
+        elseif data_type == "vel_data"
+            rng = [0 30];
+            ylb = "Velocity (mm s-1)";
+            lw = 1;
         end
 
-        plot(x, y1, 'w', 'LineWidth', 1)
-        hold on
-        plot(x, y2, 'w', 'LineWidth', 1)
-        patch([x fliplr(x)], [y1 fliplr(y2)], 'k', 'FaceAlpha', 0.125, 'EdgeColor', 'none')
+        if plot_sem
+            plot(x, y1, 'w', 'LineWidth', 1)
+            hold on
+            plot(x, y2, 'w', 'LineWidth', 1)
+            patch([x fliplr(x)], [y1 fliplr(y2)], 'k', 'FaceAlpha', 0.1, 'EdgeColor', 'none')
+        end
         plot(mean_data, 'Color', col, 'LineWidth', lw);
+        hold on
     
         % When flicker stimulus started:
-        fl = mean(fl_start_f);
-        plot([fl fl], rng, 'k', 'LineWidth', 0.5)
-        plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
+        if gp == gps2plot(end)
+            fl = mean(fl_start_f);
+            plot([fl fl], rng, 'k', 'LineWidth', 0.5)
+            if data_type == "dist_data"
+                plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
+            elseif data_type == "av_data"
+                plot([0 nf_comb], [0 0], 'k:', 'LineWidth', 0.5)
+            end 
+        end 
         xlim([0 nf_comb])
         ylim(rng)
         box off
@@ -160,10 +173,11 @@ function f = plot_mean_sem_12cond(DATA, strain, sex, data_type)
         
     end 
 
+end 
+
     f = gcf;
     f.Position = [11    78   474   969];
-    strain = strrep(strain, '_', '-');
-    title(t, strcat(strain, '--', sex, '--N=', string(total_flies)), 'FontSize', 16)
-    ylabel(t, ylb, 'FontSize', 16)
+    sgtitle(ylb, 'FontSize', 16)
+    % ylabel(t, ylb, 'FontSize', 16)
 
 end 

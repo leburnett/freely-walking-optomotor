@@ -48,9 +48,9 @@ end
 % has been split into two 'flies' and so you don't get full tracking across
 % the entire experiment. I remove flies that have not been tracked to
 % completion. 
-% 
-% trx([4,10]) = [];
-% feat.data([4,10], :, :) = [];
+% % 
+% trx([1,9,13]) = [];
+% feat.data([1,9,13], :, :) = [];
 % move to correct folders:
 % save('trx.mat', 'trx')
-% save('REC__cam_0_date_2024_11_05_time_14_45_44_v001-feat.mat', 'feat')
+% save('REC__cam_0_date_2024_11_11_time_12_33_27_v001-feat.mat', 'feat')

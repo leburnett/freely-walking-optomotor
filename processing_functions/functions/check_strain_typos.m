@@ -10,7 +10,7 @@ function strain = check_strain_typos(strain)
         strain = "jfrc49_es_kir";
     end 
 
-    if strain == "jfrc49_l1l4"
+    if strain == "jfrc49_l1l4" || strain == "jfrc_l1l4_kir"
         strain = "jfrc49_l1l4_kir";
     end 
 
