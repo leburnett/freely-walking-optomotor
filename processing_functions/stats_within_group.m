@@ -35,6 +35,8 @@ params =[60, 4, 2;
 % - cond2 
 % - ...
 
+data_type = 'dist_data';
+
 % Find out the total number of flies that were used.
 n_exp = length(data);
 total_flies = 0;
@@ -101,42 +103,30 @@ end
 
 T = array2table(fly_data, 'VariableNames', {'Acclim_off', 'Acclim_patt', 'Cond1', 'Cond2', 'Cond3', 'Cond4', 'Cond5', 'Cond6', 'Cond7', 'Cond8', 'Cond9', 'Cond10', 'Cond11', 'Cond12'});
 
-% Meas = table([1 2 3 4 5 6 7 8 9 10]', 'VariableNames', {'Condition'});
-% Define within-subject factor with categorical condition labels
-Meas = table(categorical({'Acclim_off', 'Acclim_patt','Cond5', 'Cond6', 'Cond7', 'Cond8', 'Cond9','Cond10', 'Cond11', 'Cond12'}'), 'VariableNames', {'Condition'});
+T1 = T(45:87, :);
+T2 = T([1:44, 88:end], :);
 
-rm = fitrm(T, 'Acclim_off-Cond12 ~ 1', 'WithinDesign', Meas);
-ranovaResults = ranova(rm);
+T1 = rmmissing(T1, 2);
+T2 = rmmissing(T2, 2);
+
+Meas1 = table(categorical({'Acclim_off', 'Acclim_patt','Cond1', 'Cond2', 'Cond3', 'Cond4', 'Cond5', 'Cond6', 'Cond7', 'Cond8'}'), 'VariableNames', {'Condition'});
+
+rm1 = fitrm(T1, 'Acclim_off-Cond8~ 1', 'WithinDesign', Meas1);
+ranovaResults = ranova(rm1);
+
+if ranovaResults.pValue < 0.05
+    pairwiseResults = multcompare(rm1, 'Condition', 'ComparisonType', 'bonferroni'); % or 'tukey-kramer', 'sidak', etc.
+end
 
 
+Meas2 = table(categorical({'Acclim_off', 'Acclim_patt', 'Cond5', 'Cond6', 'Cond7', 'Cond8', 'Cond9', 'Cond10', 'Cond11', 'Cond12'}'), 'VariableNames', {'Condition'});
 
-data = [1,5,6,9,6; 22, 4, 16, 1, 8; 22, 4, 3, 9, 10];
-T = array2table(data, 'VariableNames', {'Cond1', 'Cond2', 'Cond3', 'Cond4', 'Cond5'});
-Meas = table([1 2 3 4 5]', 'VariableNames', {'Condition'});
-rm = fitrm(T, 'Cond1-Cond5 ~ 1', 'WithinDesign', [1,2,3,4,5]);
-ranovaResults = ranova(rm);
+rm2 = fitrm(T2, 'Acclim_off-Cond12~ 1', 'WithinDesign', Meas2);
+ranovaResults = ranova(rm2);
 
-
-% % Set random seed for reproducibility
-% rng(0);
-% 
-% % Generate random behavioral data for 60 flies across 12 conditions
-% numFlies = 60;
-% numConditions = 12;
-% data = randn(numFlies, numConditions) + (1:numConditions); % Random data with slight trend
-% 
-% % Convert to a table and name the columns as conditions
-% T = array2table(data, 'VariableNames', {'Cond1', 'Cond2', 'Cond3', 'Cond4', 'Cond5','Cond6', 'Cond7', 'Cond8', 'Cond9', 'Cond10', 'Cond11', 'Cond12'});
-% 
-% % Define the within-subject factor as categorical conditions
-% Meas = table(categorical({'Cond1', 'Cond2', 'Cond3', 'Cond4','Cond5', 'Cond6', 'Cond7', 'Cond8', 'Cond9', 'Cond10', 'Cond11', 'Cond12'}'),'VariableNames', {'Condition'});
-% 
-% % Fit the repeated measures model
-% rm = fitrm(T, 'Cond1-Cond12 ~ 1', 'WithinDesign', Meas);
-% 
-% % Run repeated measures ANOVA
-% ranovaResults = ranova(rm);
-% disp(ranovaResults);
+if ranovaResults.pValue < 0.05
+    pairwiseResults = multcompare(rm2, 'Condition', 'ComparisonType', 'bonferroni'); % or 'tukey-kramer', 'sidak', etc.
+end
 
 
 
