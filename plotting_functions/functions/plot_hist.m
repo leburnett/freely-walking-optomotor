@@ -10,7 +10,7 @@ function plot_hist(data, nbins, feature)
         min_val = 0;
     end 
 
-    edges = [min_val:max_val/nbins:max_val];
+    edges = min_val:ceil(max_val/nbins):max_val;
     txt_val = prctile(edges, 95);
     histogram(data, 'BinEdges', edges, 'Normalization', 'probability', 'FaceColor', [0.7 0.7 0.7]);
     box off

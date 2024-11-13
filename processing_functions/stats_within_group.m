@@ -2,11 +2,17 @@
 % parameters?
 
 % Repeated measures ANOVA
+clear
+
+protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_10';
+cd(protocol_dir);
+
+DATA = comb_data_across_cohorts_cond(protocol_dir);
 
 % _______________________________________________________________________
 
 % 1 - Specify which strain/sex you want to look at:
-strain = 'csw1118';
+strain = 'ss324_t4t5_shibire';
 sex = 'F';
 
 % Extract only the data from those experiments:
@@ -50,11 +56,11 @@ data_type = 'dist_data';
 curr_n = 0;
 
 for exp = 1:n_exp
-    disp(strcat('Exp - ', string(exp)))
+    % disp(strcat('Exp - ', string(exp)))
 
     n_flies = size(data(exp).acclim_off1.(data_type), 1);
     for i = 1:n_flies
-        disp(strcat('Fly - ', string(i)))
+        % disp(strcat('Fly - ', string(i)))
 
         % acclim_off
         d_fly = data(exp).acclim_off1.(data_type);
@@ -65,7 +71,7 @@ for exp = 1:n_exp
         fly_data(i+curr_n, 2) = nanmean(d_fly(i, :));
     
         for cond = 1:12
-            disp(strcat('Cond - ', string(cond)))
+            % disp(strcat('Cond - ', string(cond)))
 
             % clear data arrays
             f1_data = [];
@@ -124,21 +130,19 @@ ranovaResults1 = ranova(rm1);
 stats_results.T1.ranova = ranovaResults1;
 stats_results.T1.p_value = ranovaResults1.pValue(1);
 
-
 stats_results.T1.comp_type = comp_type;
-if ranovaResults1.pValue < 0.05
+if ranovaResults1.pValue(1) < 0.05
     pairwiseResults1 = multcompare(rm1, 'Condition', 'ComparisonType', comp_type); % or 'tukey-kramer', 'sidak', etc.
+    pairwiseResults1 = sortrows(pairwiseResults1, 'pValue', 'ascend');
+    % Remove duplicate rows for inverse comparisons.
+    pairwiseResults1(1:2:end,:) = [];
+    stats_results.T1.pairwise = pairwiseResults1;
 end
-
-pairwiseResults1 = sortrows(pairwiseResults1, 'pValue', 'ascend');
-% Remove duplicate rows for inverse comparisons.
-pairwiseResults1(1:2:end,:) = [];
-stats_results.T1.pairwise = pairwiseResults1;
 
 % _______________________________________________________________________
 % Table 2 - conditions 5-12
 
-T1 = rmmissing(T, 1, 'DataVariables', {'Cond9', 'Cond10', 'Cond11', 'Cond12'});
+T2 = rmmissing(T, 1, 'DataVariables', {'Cond9', 'Cond10', 'Cond11', 'Cond12'});
 T2 = rmmissing(T2, 2);
 stats_results.T2.data = T2;
 
@@ -150,19 +154,18 @@ stats_results.T2.n_flies = n_flies2;
 
 Meas2 = table([1,2,7,8,9,10,11,12,13,14]', 'VariableNames', {'Condition'});
 rm2 = fitrm(T2, 'Acclim_off-Cond12~ 1', 'WithinDesign', Meas2);
-ranovaResults = ranova(rm2);
+ranovaResults2 = ranova(rm2);
 stats_results.T2.ranova = ranovaResults2;
 stats_results.T2.p_value = ranovaResults2.pValue(1);
 
 stats_results.T1.comp_type = comp_type;
-if ranovaResults.pValue < 0.05
+if ranovaResults2.pValue(1) < 0.05
     pairwiseResults2 = multcompare(rm2, 'Condition', 'ComparisonType', comp_type); % or 'tukey-kramer', 'sidak', etc.
+    pairwiseResults2 = sortrows(pairwiseResults2, 'pValue', 'ascend');
+    % Remove duplicate rows for inverse comparisons.
+    pairwiseResults2(1:2:end,:) = [];
+    stats_results.T2.pairwise = pairwiseResults2;
 end
-
-pairwiseResults2 = sortrows(pairwiseResults2, 'pValue', 'ascend');
-% Remove duplicate rows for inverse comparisons.
-pairwiseResults2(1:2:end,:) = [];
-stats_results.T2.pairwise = pairwiseResults2;
 
 % _______________________________________________________________________
 

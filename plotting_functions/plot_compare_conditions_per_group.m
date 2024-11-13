@@ -1,6 +1,6 @@
 % Plots for protocol_10
 
-protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_10';
+protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_14';
 cd(protocol_dir);
 
 DATA = comb_data_across_cohorts_cond(protocol_dir);
