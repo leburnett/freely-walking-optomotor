@@ -1,13 +1,21 @@
+%% 1 - Is there a difference WITHIN strains to the different stimulus
+% parameters?
 
-% For csw1118 - F 
+% Repeated measures ANOVA
 
+% _______________________________________________________________________
+
+% 1 - Specify which strain/sex you want to look at:
 strain = 'csw1118';
 sex = 'F';
 
-% Get only data that I want. 
+% Extract only the data from those experiments:
 data = DATA.(strain).(sex); 
 
-params =[60, 4, 2;
+% Condition parameters. 
+params =[0, 0, 0;
+        1, 1, 1;
+        60, 4, 2;
         60, 8, 15;
         60, 4, 15;
         60, 8, 2;
@@ -21,19 +29,9 @@ params =[60, 4, 2;
         15, 8, 2;
         ];
 
-
+% _______________________________________________________________________
 %  1 - Is there a significant difference in the clustering of flies to
 %  different conditions?
-
-
-% Compare distance from centre during the grating stimulus for each of the
-% conditions versus acclim off and acclim patt. 
-
-% - acclim_off
-% - acclim_patt
-% - cond1
-% - cond2 
-% - ...
 
 data_type = 'dist_data';
 
@@ -100,44 +98,80 @@ for exp = 1:n_exp
 
 end 
 
-
 T = array2table(fly_data, 'VariableNames', {'Acclim_off', 'Acclim_patt', 'Cond1', 'Cond2', 'Cond3', 'Cond4', 'Cond5', 'Cond6', 'Cond7', 'Cond8', 'Cond9', 'Cond10', 'Cond11', 'Cond12'});
 
-T1 = T(45:87, :);
-T2 = T([1:44, 88:end], :);
+stats_results = struct();
+stats_results.params = params;
 
+comp_type = 'bonferroni';
+
+% _______________________________________________________________________
+% Table 1 - conditions 1-8
+
+T1 = rmmissing(T, 1, 'DataVariables', {'Cond1', 'Cond2', 'Cond3', 'Cond4' });
 T1 = rmmissing(T1, 2);
-T2 = rmmissing(T2, 2);
+stats_results.T1.data = T1;
 
-Meas1 = table(categorical({'Acclim_off', 'Acclim_patt','Cond1', 'Cond2', 'Cond3', 'Cond4', 'Cond5', 'Cond6', 'Cond7', 'Cond8'}'), 'VariableNames', {'Condition'});
+M1 = mean(T1);
+stats_results.T1.mean = M1; 
 
+n_flies1 = height(T1);
+stats_results.T1.n_flies = n_flies1; 
+
+Meas1 = table(categorical([1:10]'), 'VariableNames', {'Condition'});
 rm1 = fitrm(T1, 'Acclim_off-Cond8~ 1', 'WithinDesign', Meas1);
-ranovaResults = ranova(rm1);
+ranovaResults1 = ranova(rm1);
+stats_results.T1.ranova = ranovaResults1;
+stats_results.T1.p_value = ranovaResults1.pValue(1);
 
-if ranovaResults.pValue < 0.05
-    pairwiseResults = multcompare(rm1, 'Condition', 'ComparisonType', 'bonferroni'); % or 'tukey-kramer', 'sidak', etc.
+
+stats_results.T1.comp_type = comp_type;
+if ranovaResults1.pValue < 0.05
+    pairwiseResults1 = multcompare(rm1, 'Condition', 'ComparisonType', comp_type); % or 'tukey-kramer', 'sidak', etc.
 end
 
+pairwiseResults1 = sortrows(pairwiseResults1, 'pValue', 'ascend');
+% Remove duplicate rows for inverse comparisons.
+pairwiseResults1(1:2:end,:) = [];
+stats_results.T1.pairwise = pairwiseResults1;
 
-Meas2 = table(categorical({'Acclim_off', 'Acclim_patt', 'Cond5', 'Cond6', 'Cond7', 'Cond8', 'Cond9', 'Cond10', 'Cond11', 'Cond12'}'), 'VariableNames', {'Condition'});
+% _______________________________________________________________________
+% Table 2 - conditions 5-12
 
+T1 = rmmissing(T, 1, 'DataVariables', {'Cond9', 'Cond10', 'Cond11', 'Cond12'});
+T2 = rmmissing(T2, 2);
+stats_results.T2.data = T2;
+
+M2 = mean(T2);
+stats_results.T2.mean = M2; 
+
+n_flies2 = height(T2);
+stats_results.T2.n_flies = n_flies2; 
+
+Meas2 = table([1,2,7,8,9,10,11,12,13,14]', 'VariableNames', {'Condition'});
 rm2 = fitrm(T2, 'Acclim_off-Cond12~ 1', 'WithinDesign', Meas2);
 ranovaResults = ranova(rm2);
+stats_results.T2.ranova = ranovaResults2;
+stats_results.T2.p_value = ranovaResults2.pValue(1);
 
+stats_results.T1.comp_type = comp_type;
 if ranovaResults.pValue < 0.05
-    pairwiseResults = multcompare(rm2, 'Condition', 'ComparisonType', 'bonferroni'); % or 'tukey-kramer', 'sidak', etc.
+    pairwiseResults2 = multcompare(rm2, 'Condition', 'ComparisonType', comp_type); % or 'tukey-kramer', 'sidak', etc.
 end
 
+pairwiseResults2 = sortrows(pairwiseResults2, 'pValue', 'ascend');
+% Remove duplicate rows for inverse comparisons.
+pairwiseResults2(1:2:end,:) = [];
+stats_results.T2.pairwise = pairwiseResults2;
 
+% _______________________________________________________________________
 
-
-
-
-
-
-
-
-
+save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/results/stats/within_group';
+if ~isfolder(save_folder)
+    mkdir(save_folder);
+end
+save_str = strcat('STATS_', strain, '_', sex, '_', data_type, '.mat');
+save(fullfile(save_folder, save_str), 'stats_results')
 
 
 
