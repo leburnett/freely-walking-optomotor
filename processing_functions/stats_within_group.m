@@ -1,13 +1,27 @@
+%% 1 - Is there a difference WITHIN strains to the different stimulus
+% parameters?
 
-% For csw1118 - F 
+% Repeated measures ANOVA
+clear
 
-strain = 'csw1118';
+protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_10';
+cd(protocol_dir);
+
+DATA = comb_data_across_cohorts_cond(protocol_dir);
+
+% _______________________________________________________________________
+
+% 1 - Specify which strain/sex you want to look at:
+strain = 'ss324_t4t5_shibire';
 sex = 'F';
 
-% Get only data that I want. 
+% Extract only the data from those experiments:
 data = DATA.(strain).(sex); 
 
-params =[60, 4, 2;
+% Condition parameters. 
+params =[0, 0, 0;
+        1, 1, 1;
+        60, 4, 2;
         60, 8, 15;
         60, 4, 15;
         60, 8, 2;
@@ -21,19 +35,11 @@ params =[60, 4, 2;
         15, 8, 2;
         ];
 
-
+% _______________________________________________________________________
 %  1 - Is there a significant difference in the clustering of flies to
 %  different conditions?
 
-
-% Compare distance from centre during the grating stimulus for each of the
-% conditions versus acclim off and acclim patt. 
-
-% - acclim_off
-% - acclim_patt
-% - cond1
-% - cond2 
-% - ...
+data_type = 'dist_data';
 
 % Find out the total number of flies that were used.
 n_exp = length(data);
@@ -50,11 +56,11 @@ data_type = 'dist_data';
 curr_n = 0;
 
 for exp = 1:n_exp
-    disp(strcat('Exp - ', string(exp)))
+    % disp(strcat('Exp - ', string(exp)))
 
     n_flies = size(data(exp).acclim_off1.(data_type), 1);
     for i = 1:n_flies
-        disp(strcat('Fly - ', string(i)))
+        % disp(strcat('Fly - ', string(i)))
 
         % acclim_off
         d_fly = data(exp).acclim_off1.(data_type);
@@ -65,7 +71,7 @@ for exp = 1:n_exp
         fly_data(i+curr_n, 2) = nanmean(d_fly(i, :));
     
         for cond = 1:12
-            disp(strcat('Cond - ', string(cond)))
+            % disp(strcat('Cond - ', string(cond)))
 
             % clear data arrays
             f1_data = [];
@@ -98,56 +104,77 @@ for exp = 1:n_exp
 
 end 
 
-
 T = array2table(fly_data, 'VariableNames', {'Acclim_off', 'Acclim_patt', 'Cond1', 'Cond2', 'Cond3', 'Cond4', 'Cond5', 'Cond6', 'Cond7', 'Cond8', 'Cond9', 'Cond10', 'Cond11', 'Cond12'});
 
-% Meas = table([1 2 3 4 5 6 7 8 9 10]', 'VariableNames', {'Condition'});
-% Define within-subject factor with categorical condition labels
-Meas = table(categorical({'Acclim_off', 'Acclim_patt','Cond5', 'Cond6', 'Cond7', 'Cond8', 'Cond9','Cond10', 'Cond11', 'Cond12'}'), 'VariableNames', {'Condition'});
+stats_results = struct();
+stats_results.params = params;
 
-rm = fitrm(T, 'Acclim_off-Cond12 ~ 1', 'WithinDesign', Meas);
-ranovaResults = ranova(rm);
+comp_type = 'bonferroni';
 
+% _______________________________________________________________________
+% Table 1 - conditions 1-8
 
+T1 = rmmissing(T, 1, 'DataVariables', {'Cond1', 'Cond2', 'Cond3', 'Cond4' });
+T1 = rmmissing(T1, 2);
+stats_results.T1.data = T1;
 
-data = [1,5,6,9,6; 22, 4, 16, 1, 8; 22, 4, 3, 9, 10];
-T = array2table(data, 'VariableNames', {'Cond1', 'Cond2', 'Cond3', 'Cond4', 'Cond5'});
-Meas = table([1 2 3 4 5]', 'VariableNames', {'Condition'});
-rm = fitrm(T, 'Cond1-Cond5 ~ 1', 'WithinDesign', [1,2,3,4,5]);
-ranovaResults = ranova(rm);
+M1 = mean(T1);
+stats_results.T1.mean = M1; 
 
+n_flies1 = height(T1);
+stats_results.T1.n_flies = n_flies1; 
 
-% % Set random seed for reproducibility
-% rng(0);
-% 
-% % Generate random behavioral data for 60 flies across 12 conditions
-% numFlies = 60;
-% numConditions = 12;
-% data = randn(numFlies, numConditions) + (1:numConditions); % Random data with slight trend
-% 
-% % Convert to a table and name the columns as conditions
-% T = array2table(data, 'VariableNames', {'Cond1', 'Cond2', 'Cond3', 'Cond4', 'Cond5','Cond6', 'Cond7', 'Cond8', 'Cond9', 'Cond10', 'Cond11', 'Cond12'});
-% 
-% % Define the within-subject factor as categorical conditions
-% Meas = table(categorical({'Cond1', 'Cond2', 'Cond3', 'Cond4','Cond5', 'Cond6', 'Cond7', 'Cond8', 'Cond9', 'Cond10', 'Cond11', 'Cond12'}'),'VariableNames', {'Condition'});
-% 
-% % Fit the repeated measures model
-% rm = fitrm(T, 'Cond1-Cond12 ~ 1', 'WithinDesign', Meas);
-% 
-% % Run repeated measures ANOVA
-% ranovaResults = ranova(rm);
-% disp(ranovaResults);
+Meas1 = table(categorical([1:10]'), 'VariableNames', {'Condition'});
+rm1 = fitrm(T1, 'Acclim_off-Cond8~ 1', 'WithinDesign', Meas1);
+ranovaResults1 = ranova(rm1);
+stats_results.T1.ranova = ranovaResults1;
+stats_results.T1.p_value = ranovaResults1.pValue(1);
 
+stats_results.T1.comp_type = comp_type;
+if ranovaResults1.pValue(1) < 0.05
+    pairwiseResults1 = multcompare(rm1, 'Condition', 'ComparisonType', comp_type); % or 'tukey-kramer', 'sidak', etc.
+    pairwiseResults1 = sortrows(pairwiseResults1, 'pValue', 'ascend');
+    % Remove duplicate rows for inverse comparisons.
+    pairwiseResults1(1:2:end,:) = [];
+    stats_results.T1.pairwise = pairwiseResults1;
+end
 
+% _______________________________________________________________________
+% Table 2 - conditions 5-12
 
+T2 = rmmissing(T, 1, 'DataVariables', {'Cond9', 'Cond10', 'Cond11', 'Cond12'});
+T2 = rmmissing(T2, 2);
+stats_results.T2.data = T2;
 
+M2 = mean(T2);
+stats_results.T2.mean = M2; 
 
+n_flies2 = height(T2);
+stats_results.T2.n_flies = n_flies2; 
 
+Meas2 = table([1,2,7,8,9,10,11,12,13,14]', 'VariableNames', {'Condition'});
+rm2 = fitrm(T2, 'Acclim_off-Cond12~ 1', 'WithinDesign', Meas2);
+ranovaResults2 = ranova(rm2);
+stats_results.T2.ranova = ranovaResults2;
+stats_results.T2.p_value = ranovaResults2.pValue(1);
 
+stats_results.T1.comp_type = comp_type;
+if ranovaResults2.pValue(1) < 0.05
+    pairwiseResults2 = multcompare(rm2, 'Condition', 'ComparisonType', comp_type); % or 'tukey-kramer', 'sidak', etc.
+    pairwiseResults2 = sortrows(pairwiseResults2, 'pValue', 'ascend');
+    % Remove duplicate rows for inverse comparisons.
+    pairwiseResults2(1:2:end,:) = [];
+    stats_results.T2.pairwise = pairwiseResults2;
+end
 
+% _______________________________________________________________________
 
-
-
+save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/results/stats/within_group';
+if ~isfolder(save_folder)
+    mkdir(save_folder);
+end
+save_str = strcat('STATS_', strain, '_', sex, '_', data_type, '.mat');
+save(fullfile(save_folder, save_str), 'stats_results')
 
 
 
