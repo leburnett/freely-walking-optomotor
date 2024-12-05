@@ -66,7 +66,6 @@ for gp = gps2plot
         rep1_str = strcat('R1_condition_', string(cond));   
         rep2_str = strcat('R2_condition_', string(cond));  
     
-        % JUST DO DISTANCE DATA AT THE MOMENT:
         for idx = 1:n_exp
             rep1_data = data(idx).(rep1_str);
     
@@ -115,6 +114,8 @@ for gp = gps2plot
    
         % Mean +/- SEM
         mean_data = nanmean(cond_data);
+        n_flies_in_cond = size(cond_data, 1);
+        % disp(strcat("Number of flies: ", num2str(n_flies_in_cond)))
 
         if data_type == "dist_trav" || data_type == "vel_data" 
             mean_data = movmean(mean_data, 5);
@@ -176,7 +177,17 @@ for gp = gps2plot
         ax = gca; ax.XAxis.Visible = 'off'; ax.TickDir = 'out'; ax.TickLength = [0.015 0.015]; ax.LineWidth = 1; ax.FontSize = 12;
 
         title(strcat(string(p(1)), 'deg-', string(p(2)), 'Hz-', string(p(3)), 's'), 'FontSize', 11)
-        
+
+        % where to position text annotation
+        if gp == gps2plot(1)
+            pos_data = [nf_comb-450, rng(2)*0.1]; 
+        elseif gp == gps2plot(2)
+            pos_data = [nf_comb-450, rng(2)*0.2];
+        elseif gp == gps2plot(3)
+            pos_data = [nf_comb-450, rng(2)*0.3];
+        end 
+
+        text(pos_data(1), pos_data(2), strcat("N = ", num2str(n_flies_in_cond)), 'Color', col);
     end 
 
 end 

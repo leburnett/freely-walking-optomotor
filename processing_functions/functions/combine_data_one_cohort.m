@@ -3,7 +3,7 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
     % quick overview plots while processing. 
 
     % Check tracking and ignore flies that have not been well tracked.
-    flies2ignore = check_tracking(trx);
+    flies2ignore = check_tracking_FlyTrk(trx);
     trx(flies2ignore) = [];
     feat.data(flies2ignore, :, :) = [];
 

@@ -1,4 +1,4 @@
-function idxes = check_tracking(trx)
+function idxes = check_tracking_FlyTrk(trx)
 
 % Extract the number of frames for all flies:
 d = [trx.nframes];
@@ -12,6 +12,6 @@ fun = @(x) trx(x).nframes ~= nframes_video;
 tf2 = arrayfun(fun, 1:numel(d));
 idxes = find(tf2);
 
-disp(num2str(numel(idxes)), " flies had poor tracking and will be ignored.")
+disp(strcat(num2str(numel(idxes)), " flies had poor tracking and will be ignored."))
 
 end 
