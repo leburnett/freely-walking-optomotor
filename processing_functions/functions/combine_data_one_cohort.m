@@ -1,6 +1,11 @@
-function combined_data = combine_data_one_cohort(feat, trx)
+function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
     % Combine the data about different features together to use when plotting
     % quick overview plots while processing. 
+
+    % Check tracking and ignore flies that have not been well tracked.
+    flies2ignore = check_tracking(trx);
+    trx(flies2ignore) = [];
+    feat.data(flies2ignore, :, :) = [];
 
     FPS = 30; % videos acquired at 30 FPS
     
@@ -22,7 +27,7 @@ function combined_data = combine_data_one_cohort(feat, trx)
     t_window = 16;
     cutoff = [];
 
-    heading_data = []; 
+    heading_data_unwrap = []; 
     heading_wrap = [];
     av_data = [];
     for idx = 1:n_flies

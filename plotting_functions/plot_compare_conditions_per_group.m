@@ -57,7 +57,7 @@ end
 % gps2plot = [1:1:7];
 
 % RNA + control 
-gps2plot = [1,8,9,10];
+gps2plot = [1,8];
 
 cond_across_grps_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/protocol_10/12cond_groups';
 if ~isfolder(cond_across_grps_save_folder)
