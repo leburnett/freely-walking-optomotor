@@ -11,13 +11,16 @@ function f = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem)
     cond_order = [1,3,4,2,5,7,8,6,9,11,12,10];
 
     experimental_groups = {
-    'csw1118', 'F', [0.3 0.3 0.3];%[0 0.45 0.6]; % dark blue
-    'csw1118', 'M', [0.7 0.7 0.7]; %[0.4 0.8 1];% light blue
+    'csw1118', 'F', [0.3 0.3 0.3];%[0 0.45 0.6]; % dark grey
+    'csw1118', 'M', [0.7 0.7 0.7]; %[0.4 0.8 1];% light grey
     'jfrc49_es_kir', 'F', [0.41 0.22 0.47]; % dark purple
     'jfrc100_es_shibire', 'F', [0.85 0.4 0.7];% pink
     'ss324_t4t5_kir', 'F', [0 0.4 0]; %[1 0.6 0]; % dark green / orange
     'ss324_t4t5_shibire', 'F', [0.6 0.8 0.6];%[0.9 0.85 0.2]; % light green / yellow
     'jfrc49_l1l4_kir', 'F', [0.4 0.8 1]; %[0.6 0.6 0.6] % grey
+    't4t5_RNAi_control', 'F', [0.7 0.7 0.7];
+    't4t5_mmd_RNAi', 'F', [0.8, 0 , 0]; % red
+    't4t5_ttl_RNAi', 'F', [0.9, 0.5, 0]; %orange
     };
 
 %% For each experimental group (strain-sex):
@@ -46,8 +49,11 @@ for gp = gps2plot
     
     n_exp = length(data);
 
+    % Find out which conditions exist:
+    [min_val, max_val] = range_of_conditions(data);
+
     % Run through the different conditions: 
-    for idx2 = 1:1:12 
+    for idx2 = min_val:1:max_val 
         cond = cond_order(idx2);
 
         p = params(cond, :);
