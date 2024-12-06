@@ -185,6 +185,8 @@ for gp = gps2plot
             pos_data = [nf_comb-450, rng(2)*0.2];
         elseif gp == gps2plot(3)
             pos_data = [nf_comb-450, rng(2)*0.3];
+        elseif gp == gps2plot(4)
+            pos_data = [nf_comb-450, rng(2)*0.4];
         end 
 
         text(pos_data(1), pos_data(2), strcat("N = ", num2str(n_flies_in_cond)), 'Color', col);

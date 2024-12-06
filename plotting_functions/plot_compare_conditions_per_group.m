@@ -57,7 +57,7 @@ end
 % gps2plot = [1:1:7];
 
 % RNA + control 
-% gps2plot = [1,8];
+% gps2plot = [1,8, 9, 10];
 
 cond_across_grps_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/protocol_10/12cond_groups';
 if ~isfolder(cond_across_grps_save_folder)
@@ -72,7 +72,7 @@ for gps = 1:3
     gps2plot = gp2(gps, :);
     titl = group_titles{gps};
 
-    for typ = 1%:length(data_types)
+    for typ = 2:length(data_types)
         data_type = data_types{typ};
         
         plot_sem = false;
