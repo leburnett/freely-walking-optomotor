@@ -33,7 +33,12 @@ if ~isfolder(strain_folder)
     mkdir(strain_folder)
 end
 
-sex_folder = fullfile(strain_folder, params.Sex);
+landing_folder = fullfile(strain_folder, params.Landing);
+if ~isfolder(landing_folder)
+    mkdir(landing_folder)
+end
+
+sex_folder = fullfile(landing_folder, params.Sex);
 if ~isfolder(sex_folder)
     mkdir(sex_folder)
 end
@@ -60,6 +65,7 @@ if func_name == "protocol_v5"
     LOG.fly_age = params.Age;
     LOG.fly_sex = params.Sex;
     LOG.light_cycle = params.LightCycle;
+    LOG.landing_site = params.Landing;
 else
     LOG.meta.date = date_str;
     LOG.meta.time = time_str;
@@ -68,6 +74,7 @@ else
     LOG.meta.fly_age = params.Age;
     LOG.meta.fly_sex = params.Sex;
     LOG.meta.light_cycle = params.LightCycle;
+    LOG.meta.landing_site = params.Landing;
 end 
 
 end 

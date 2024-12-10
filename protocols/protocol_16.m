@@ -1,7 +1,6 @@
-%Protocol_v10_all_tests.m - testing spatial frequencies, speed, and trial lengths in
-%one big protocol
+%Protocol_16 - testing the sider gap skinny bars (2ON 6OFF) (2ON 6OFF)
 clear 
-
+tic
 % Initialize the temperature recording.
 d = initialize_temp_recording();
 
@@ -9,29 +8,13 @@ d = initialize_temp_recording();
 t_acclim = 20; 
 t_pause = 0.015;
 
-% All conditions - 8 pix and 4 pix
-% all_conditions = [
-%     6, 7, 64, 8, 2, 5; 
-%     6, 7, 127, 16, 15, 6;
-%     6, 7, 64, 8, 15, 7;
-%     6, 7, 127, 16, 2, 8;
-%     4, 5, 64, 8, 2, 9; 
-%     4, 5, 127, 16, 15, 10;
-%     4, 5, 64, 8, 15, 11;
-%     4, 5, 127, 16, 2, 12; 
-% ];
-
-% T4T5 experiments: 8 pix and 16 pix.
+% All Conditions - 
 all_conditions = [
-    6, 7, 64, 8, 2, 5; 
-    6, 7, 127, 16, 15, 6;
-    6, 7, 64, 8, 15, 7;
-    6, 7, 127, 16, 2, 8;
-    9, 10, 64, 8, 2, 1;
-    9, 10, 127, 16, 15, 2;
-    9, 10, 64, 8, 15, 3;
-    9, 10, 127, 16, 2, 4;
-];  
+    4, 5, 64, 8, 15, 1; % standard 4ON 4OFF
+    11, 12, 64, 8, 15, 2; % 2ON 6OFF
+    15, 12, 64, 8, 15, 3; % 6ON 2OFF
+];
+
 
 num_conditions = height(all_conditions); 
 
@@ -132,3 +115,4 @@ disp('Log saved')
 % clear temp
 clear d ch1
 
+toc
