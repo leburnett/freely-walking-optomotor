@@ -1,6 +1,6 @@
 % Plots for protocol_10
 
-protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_14';
+protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_10';
 cd(protocol_dir);
 
 DATA = comb_data_across_cohorts_cond(protocol_dir);
@@ -12,7 +12,10 @@ experimental_groups = {
     'jfrc100_es_shibire', 'F';
     'ss324_t4t5_kir', 'F';
     'ss324_t4t5_shibire', 'F';
-    'jfrc49_l1l4_kir', 'F'
+    'jfrc49_l1l4_kir', 'F';
+    't4t5_RNAi_control', 'F';
+    't4t5_mmd_RNAi', 'F';
+    't4t5_ttl_RNAi', 'F';
     };
 
 n_exp_groups = height(experimental_groups);
@@ -53,19 +56,23 @@ end
 % Plot all of the experimental groups.
 % gps2plot = [1:1:7];
 
+% RNA + control 
+% gps2plot = [1,8, 9, 10];
+
 cond_across_grps_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/protocol_10/12cond_groups';
 if ~isfolder(cond_across_grps_save_folder)
-        mkdir(cond_across_grps_save_folder);
+    mkdir(cond_across_grps_save_folder);
 end
 
 gp2 = [1,2,7; 1,3,4; 1,5,6];
 group_titles = {'CS_L1L4', 'CS_ES', 'CS_T4T5'};
+% group_titles = {'csw1118', 'RNAi_control', 'RNAi_mmd', 'RNAi_ttl'};
 
 for gps = 1:3
     gps2plot = gp2(gps, :);
     titl = group_titles{gps};
 
-    for typ = 1:length(data_types)
+    for typ = 2:length(data_types)
         data_type = data_types{typ};
         
         plot_sem = false;

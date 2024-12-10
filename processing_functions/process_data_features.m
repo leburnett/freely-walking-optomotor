@@ -102,7 +102,7 @@ function process_data_features(path_to_folder, save_folder, date_str)
         end
 
         %% Generate quick overview plots:
-        combined_data = combine_data_one_cohort(feat, trx);
+        [combined_data, feat, trx] = combine_data_one_cohort(feat, trx);
 
         % 1 - histograms of locomotor parameters
         f_overview = make_overview(combined_data, strain, sex, protocol);

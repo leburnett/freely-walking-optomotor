@@ -1,6 +1,11 @@
-function combined_data = combine_data_one_cohort(feat, trx)
+function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
     % Combine the data about different features together to use when plotting
     % quick overview plots while processing. 
+
+    % Check tracking and ignore flies that have not been well tracked.
+    flies2ignore = check_tracking_FlyTrk(trx);
+    trx(flies2ignore) = [];
+    feat.data(flies2ignore, :, :) = [];
 
     FPS = 30; % videos acquired at 30 FPS
     
@@ -22,7 +27,7 @@ function combined_data = combine_data_one_cohort(feat, trx)
     t_window = 16;
     cutoff = [];
 
-    heading_data = []; 
+    heading_data_unwrap = []; 
     heading_wrap = [];
     av_data = [];
     for idx = 1:n_flies
@@ -49,8 +54,9 @@ end
 % the entire experiment. I remove flies that have not been tracked to
 % completion. 
 % % 
-% trx([1,9,13]) = [];
-% feat.data([1,9,13], :, :) = [];
-% move to correct folders:
+% rows_to_remove = [1,9,11];
+% trx(rows_to_remove) = [];
+% feat.data(rows_to_remove, :, :) = [];
+% % move to correct folders:
 % save('trx.mat', 'trx')
-% save('REC__cam_0_date_2024_11_11_time_12_33_27_v001-feat.mat', 'feat')
+% save('REC__cam_0_date_2024_12_04_time_14_59_43_v001-feat.mat', 'feat')
