@@ -39,14 +39,23 @@ function process_data_features(path_to_folder, save_folder, date_str)
 
         data_path = cd;
         subfolders = split(data_path, '/');
-        sex = subfolders{end-1};
-        strain = subfolders{end-2};
-        protocol = subfolders{end-3};
 
-        date_str = strrep(date_str, '_', '-');
-        time_str = strrep(time_str, '_', '-');
-
-        save_str = strcat(date_str, '_', time_str, '_', strain, '_', protocol, '_', sex);
+        if height(subfolders)>12 % landing site included.
+            sex = subfolders{end-1};
+            landing = subfolders{end-2}; 
+            strain = subfolders{end-3};
+            protocol = subfolders{end-4};
+            date_str = strrep(date_str, '_', '-');
+            time_str = strrep(time_str, '_', '-');
+            save_str = strcat(date_str, '_', time_str, '_', strain, '_', landing, '_',  protocol, '_', sex);
+        else % no landing site specified
+            sex = subfolders{end-1};
+            strain = subfolders{end-2};
+            protocol = subfolders{end-3};
+            date_str = strrep(date_str, '_', '-');
+            time_str = strrep(time_str, '_', '-');
+            save_str = strcat(date_str, '_', time_str, '_', strain, '_', protocol, '_', sex);
+        end 
 
         % Check in case there is something wrong with the folder structure.
         if protocol(1)~='p'

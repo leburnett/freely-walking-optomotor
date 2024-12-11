@@ -6,7 +6,7 @@ function process_freely_walking_data()
     clc
     
     %% Enter date to be analysed here:
-    date_to_analyse = '2024_11_29';
+    date_to_analyse = '2024_11_21';
 
     %% If data recorded after 24/09/2024 - - - new logging / saving system that saves in subfolders. 
     PROJECT_ROOT = '/Users/burnettl/Documents/Projects/oaky_cokey/'; %% Update for your computer. 
@@ -33,29 +33,40 @@ function process_freely_walking_data()
         n_strains = length(strain_folders);
     
         for strain_idx = 1:n_strains
-            genotype_to_analyse =  strain_folders(strain_idx).name;
+            landing_to_analyse =  strain_folders(strain_idx).name;
             cd(fullfile(strain_folders(strain_idx).folder, strain_folders(strain_idx).name))
             
-            sex_folders = dir();
+            landing_folders = dir();
             % make sure only appropriate folders are considered.
-            sex_folders = sex_folders(3:end, :);
-            sex_names = {sex_folders.name};
-            sex_folders = sex_folders(~strcmp(sex_names, '.DS_Store'));
-            n_sexes = length(sex_folders);
+            landing_folders = landing_folders(3:end, :);
+            landing_names = {landing_folders.name};
+            landing_folders = landing_folders(~strcmp(landing_names, '.DS_Store'));
+            n_landing = length(landing_folders);
 
-            for sex_idx = 1:n_sexes
-                sex_to_analyse = sex_folders(sex_idx).name;
-                cd(fullfile(sex_folders(sex_idx).folder, sex_folders(sex_idx).name))
+            for land_idx = 1:n_landing
 
-                path_to_folder = fullfile(data_path, date_to_analyse, protocol_to_analyse, genotype_to_analyse, sex_to_analyse);
-                save_folder = fullfile(results_path, protocol_to_analyse, genotype_to_analyse, sex_to_analyse);
+                genotype_to_analyse =  landing_folders(land_idx).name;
+                cd(fullfile(landing_folders(land_idx).folder, landing_folders(land_idx).name))
 
-                % Process the data and save the processed data:
-                process_data_features(path_to_folder, save_folder, date_to_analyse)
-
-            end
-        end 
+                sex_folders = dir();
+                % make sure only appropriate folders are considered.
+                sex_folders = sex_folders(3:end, :);
+                sex_names = {sex_folders.name};
+                sex_folders = sex_folders(~strcmp(sex_names, '.DS_Store'));
+                n_sexes = length(sex_folders);
     
+                for sex_idx = 1:n_sexes
+                    sex_to_analyse = sex_folders(sex_idx).name;
+                    cd(fullfile(sex_folders(sex_idx).folder, sex_folders(sex_idx).name))
+    
+                    path_to_folder = fullfile(data_path, date_to_analyse, protocol_to_analyse, landing_to_analyse, genotype_to_analyse, sex_to_analyse);
+                    save_folder = fullfile(results_path, protocol_to_analyse, landing_to_analyse, genotype_to_analyse, sex_to_analyse);
+    
+                    % Process the data and save the processed data:
+                    process_data_features(path_to_folder, save_folder, date_to_analyse)
+    
+                end
+            end 
+        end 
     end 
-
 end 
