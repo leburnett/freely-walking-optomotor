@@ -12,13 +12,19 @@ experimental_groups = {
     'jfrc49_es_kir', 'attP2', 'M';
     'jfrc49_es_kir', 'attP6', 'F';
     'jfrc49_es_kir', 'attP6', 'M'; % none at the moment.
-    'jfrc100_es_shibire', 'F';
-    'ss324_t4t5_kir', 'F';
-    'ss324_t4t5_shibire', 'F';
-    'jfrc49_l1l4_kir', 'F';
-    't4t5_RNAi_control', 'F';
-    't4t5_mmd_RNAi', 'F';
-    't4t5_ttl_RNAi', 'F';
+    'jfrc100_es_shibire', 'attP5', 'F';
+    'jfrc100_es_shibire', 'attP5', 'M';
+    'ss324_t4t5_kir', 'attP2', 'F';
+    'ss324_t4t5_kir', 'attP2', 'M';
+    'ss324_t4t5_shibire', 'attP5', 'F';
+    'ss324_t4t5_shibire', 'attP5', 'M';
+    'jfrc49_l1l4_kir', 'attP2', 'F';
+    'jfrc49_l1l4_kir', 'attP2', 'M';
+    'l1l4_jfrc100_shibire', 'attP5', 'F';
+    'l1l4_jfrc100_shibire', 'attP5', 'M';
+    't4t5_RNAi_control', 'none', 'F';
+    't4t5_mmd_RNAi', 'none', 'F';
+    't4t5_ttl_RNAi', 'none', 'F';
     };
 
 n_exp_groups = height(experimental_groups);
@@ -37,10 +43,10 @@ for gp = 1:n_exp_groups
     end
  
     % Plot the 6 conditions for each trial length overlapped.
-    for typ = 1:length(data_types)
+    for typ = [1,2,4] %1:length(data_types)
         data_type = data_types{typ};
-        f = plot_mean_sem_12cond_overlap(DATA, strain, sex, data_type);
-        saveas(f, fullfile(overlap_cond_save_folder, strcat(strain, '_', sex, '_', data_type, '.png')))
+        f = plot_mean_sem_12cond_overlap(DATA, strain, landing, sex, data_type);
+        saveas(f, fullfile(overlap_cond_save_folder, strcat(strain, '_',landing, '_', sex, '_', data_type, '.png')))
     end 
 
 end 
