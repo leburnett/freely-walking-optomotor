@@ -6,9 +6,12 @@ cd(protocol_dir);
 DATA = comb_data_across_cohorts_cond(protocol_dir);
 
 experimental_groups = {
-    'csw1118', 'F';
-    'csw1118', 'M';
-    'jfrc49_es_kir', 'F';
+    'csw1118', 'none', 'F';
+    'csw1118', 'none', 'M';
+    'jfrc49_es_kir', 'attP2', 'F';
+    'jfrc49_es_kir', 'attP2', 'M';
+    'jfrc49_es_kir', 'attP6', 'F';
+    'jfrc49_es_kir', 'attP6', 'M'; % none at the moment.
     'jfrc100_es_shibire', 'F';
     'ss324_t4t5_kir', 'F';
     'ss324_t4t5_shibire', 'F';
@@ -25,7 +28,8 @@ data_types =  {'dist_data', 'dist_trav', 'heading_data', 'av_data', 'vel_data'};
 for gp = 1:n_exp_groups
 
     strain = experimental_groups{gp, 1};
-    sex = experimental_groups{gp, 2};
+    landing = experimental_groups{gp, 2};
+    sex = experimental_groups{gp, 3};
     
     overlap_cond_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/protocol_10/12cond_overlap';
     if ~isfolder(overlap_cond_save_folder)

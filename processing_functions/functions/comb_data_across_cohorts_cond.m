@@ -22,7 +22,7 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
 
     % Remove the DATA file. 
     dnames = {filelist.name};
-    filelist = filelist(~ismember(dnames, 'protocol_10_DATA.mat'));
+    filelist = filelist(~ismember(dnames, 'protocol_10_DATA*'));
 
     n_files = length(filelist);
     
@@ -48,6 +48,9 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
             landing = LOG.meta.landing_site;
             if contains(landing, 'su')
                 landing = landing(end-4:end);
+            end 
+            if contains(strain, 'shibire') && contains(landing, 'attP2') % correct for wrong landing with Shibire
+                landing = 'attP5';
             end 
         else
             if contains(strain, 'kir')
