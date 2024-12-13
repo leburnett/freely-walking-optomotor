@@ -20,6 +20,10 @@ experimental_groups = {
     'ss324_t4t5_shibire', 'attP5', 'M';
     'jfrc49_l1l4_kir', 'attP2', 'F';
     'jfrc49_l1l4_kir', 'attP2', 'M';
+    'jfrc49_l1l4_kir', 'attP6', 'F';
+    'jfrc49_l1l4_kir', 'attP6', 'M';
+    'jfrc49_l1l4_kir', 'VK00005', 'F';
+    'jfrc49_l1l4_kir', 'VK00005', 'M';
     'l1l4_jfrc100_shibire', 'attP5', 'F';
     'l1l4_jfrc100_shibire', 'attP5', 'M';
     't4t5_RNAi_control', 'none', 'F';
@@ -69,31 +73,60 @@ end
 % RNA + control 
 % gps2plot = [1,8, 9, 10];
 
-cond_across_grps_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/protocol_10/12cond_groups';
+cond_across_grps_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/protocol_10/12cond_groups_241212';
 if ~isfolder(cond_across_grps_save_folder)
     mkdir(cond_across_grps_save_folder);
 end
 
-gp2 = [1,2,7; 1,3,4; 1,5,6];
-group_titles = {'CS_L1L4', 'CS_ES', 'CS_T4T5'};
+% gp2 = [1,2,7; 1,3,4; 1,5,6];
+% group_titles = {'CS_L1L4', 'CS_ES', 'CS_T4T5'};
 % group_titles = {'csw1118', 'RNAi_control', 'RNAi_mmd', 'RNAi_ttl'};
+% 
+% for gps = 1:3
+%     gps2plot = gp2(gps, :);
+%     titl = group_titles{gps};
+% 
+%     for typ = 2:length(data_types)
+%         data_type = data_types{typ};
+% 
+%         plot_sem = false;
+% 
+%         f2 = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem);
+%         saveas(f2, fullfile(cond_across_grps_save_folder, strcat(titl, '_', data_type, '.png')))
+%     end 
+% 
+% end 
+% gps2plot = [1,2]; % cwsw1118
+% gps2plot = [1, 3, 5, 7]; %  ES females
+% gps2plot = [2, 4, 8]; %  ES males
+% gps2plot = [1, 9, 11]; % t4t5 females
+% gps2plot = [2, 10, 12]; % t4t5 males
+gps2plot = [1, 17]; % l1l4 females
 
-for gps = 1:3
-    gps2plot = gp2(gps, :);
-    titl = group_titles{gps};
+gps2plot = [7, 13];
+gps2plot = [7, 15];
+gps2plot = [7, 19];
 
-    for typ = 2:length(data_types)
-        data_type = data_types{typ};
-        
-        plot_sem = false;
+gps2plot = [1, 3, 9, 13];
 
-        f2 = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem);
-        saveas(f2, fullfile(cond_across_grps_save_folder, strcat(titl, '_', data_type, '.png')))
-    end 
+gps2plot = [1, 7, 11, 19];
+% gps2plot = [2, 14, 18, 20]; % l1l4 males
+% gps2plot = [1, 21, 22, 23];
+/Users/burnettl/Documents/Projects/nested_RF_stimulus/protocol2/data
 
+gps2plot = [1, 13, 15, 17];
+
+data_types =  {'dist_data', 'dist_trav', 'heading_data', 'av_data', 'vel_data'};
+
+for typ = 1 %2:length(data_types)
+
+    data_type = data_types{typ};
+    
+    plot_sem = false;
+
+    f2 = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem);
+    saveas(f2, fullfile(cond_across_grps_save_folder, strcat(titl, '_', data_type, '.png')))
 end 
-
-
 
 
 

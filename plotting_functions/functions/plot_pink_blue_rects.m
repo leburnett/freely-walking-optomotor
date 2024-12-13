@@ -2,7 +2,7 @@ function plot_pink_blue_rects(LOG, protocol, min_val, max_val)
 % Plot pink and blue rectangles on a plot corresponding to when the
 % gratings are moving clockwise or counterclockwise. 
 
-    if protocol == "protocol_10" || protocol == "protocol_15"  
+    if protocol == "protocol_10" || protocol == "protocol_15" || protocol == "protocol_18"  
 
         log_names = fieldnames(LOG);
 
