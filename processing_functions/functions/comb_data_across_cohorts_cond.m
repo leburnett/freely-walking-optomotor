@@ -20,9 +20,12 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
     % Find all processed data for one protocol. 
     filelist = dir(fullfile(protocol_dir, '**/*.mat'));
 
+    str_spl = split(protocol_dir, '/');
+    protocol_name = str_spl{end};
+
     % Remove the DATA file. 
     dnames = {filelist.name};
-    filelist = filelist(~ismember(dnames, 'protocol_10_DATA*'));
+    filelist = filelist(~ismember(dnames, strcat(protocol_name, '_DATA*')));
 
     n_files = length(filelist);
     
