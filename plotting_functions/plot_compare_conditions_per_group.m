@@ -138,6 +138,11 @@ end
 
 
 
+for typ = 1:length(data_types)
+    data_type = data_types{typ};
+    plot_sem = false;
+    f = plot_mean_sem_diff_intervals(DATA, data_type, plot_sem);
+end 
 
 
 

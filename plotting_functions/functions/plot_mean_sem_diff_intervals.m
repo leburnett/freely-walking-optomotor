@@ -40,15 +40,7 @@ for gp = [1, 2]
         rep_data = rep_data.(data_type);
 
         % Number of frames in each rep
-        nf1 = size(rep_data, 2);
-
-        if nf1>nf2
-            nf = nf2;
-        elseif nf2>nf1
-            nf = nf1;
-        else 
-            nf = nf1;
-        end 
+        nf = size(rep_data, 2);
 
         % Trim data to same length
         rep_data = rep_data(:, 1:nf);
@@ -143,15 +135,7 @@ for gp = [1, 2]
             rep_data = rep_data.(data_type);
     
             % Number of frames in each rep
-            nf1 = size(rep_data, 2);
-    
-            if nf1>nf2
-                nf = nf2;
-            elseif nf2>nf1
-                nf = nf1;
-            else 
-                nf = nf1;
-            end 
+            nf = size(rep_data, 2);
     
             % Trim data to same length
             rep_data = rep_data(:, 1:nf);
