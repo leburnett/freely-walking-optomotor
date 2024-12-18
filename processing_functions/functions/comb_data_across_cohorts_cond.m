@@ -1,8 +1,13 @@
 function DATA = comb_data_across_cohorts_cond(protocol_dir)
     % Example 'protocol_dir' would be:
     % '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_10'
+
+    % NOTE: a separate function exists for processing protocol 14. This
+    % function works for all protocols that have been generated in the
+    % style of protocol 10 with a random condition structure.
     
     % [optomotor_pattern, flicker_pattern, opto_speed, flick_speed, trial_len]
+
     strs = split(protocol_dir, '/');
     protocol = strs(end);
 
@@ -35,9 +40,9 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
             20, 10, 64, 8, 15, 5; % OFF curtain
             20, 10, 127, 8, 15, 6;
         ];
-    elseif protocool == "protocol_19"
+    elseif protocol == "protocol_19"
         cond_array =  [
-            9, 10, 127, 8, 15, 1; % normal stripes
+            9, 10, 127, 8, 15, 1; % normal stripes - wide
             9, 10, 64, 8, 15, 2;
             19, 10, 64, 8, 15, 3; % ON curtain
             19, 10, 127, 8, 15, 4;
@@ -151,7 +156,7 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         %% Then run through the next 16 logs. 
         for log_n = 1:n_cond
     
-            Log = LOG.(logfields(log_n));
+            Log = LOG.(logfields{log_n});
     
             if log_n <(n_cond/2)+1
                 rep_str = 'R1_condition_';
