@@ -3,7 +3,11 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
     % '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_10'
     
     % [optomotor_pattern, flicker_pattern, opto_speed, flick_speed, trial_len]
-    cond_array =[9, 10, 64, 8, 2;
+    strs = split(protocol_dir, '/');
+    protocol = strs(end);
+
+    if protocol == "protocol_10"
+        cond_array =[9, 10, 64, 8, 2;
             9, 10, 127, 16, 15;
             9, 10, 64, 8, 15;
             9, 10, 127, 16, 2;
@@ -16,6 +20,33 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
             4, 5, 64, 8, 15;
             4, 5, 127, 16, 2;
             ];
+    elseif protocol == "protocol_15"
+        cond_array = [
+            4, 5, 64, 8, 15; % standard 4ON 4OFF
+            13, 14, 64, 8, 15; % 4ON 12OFF
+            16, 14, 64, 8, 15; % 12 ON 4OFF
+            ];
+    elseif protocol == "protocol_18"
+        cond_array = [
+            9, 10, 127, 8, 15, 1; % Normal gratings
+            9, 10, 64, 8, 15, 2;
+            19, 10, 64, 8, 15, 3; % ON curtain
+            19, 10, 127, 8, 15, 4;
+            20, 10, 64, 8, 15, 5; % OFF curtain
+            20, 10, 127, 8, 15, 6;
+        ];
+    elseif protocool == "protocol_19"
+        cond_array =  [
+            9, 10, 127, 8, 15, 1; % normal stripes
+            9, 10, 64, 8, 15, 2;
+            19, 10, 64, 8, 15, 3; % ON curtain
+            19, 10, 127, 8, 15, 4;
+            20, 10, 64, 8, 15, 5; % OFF curtain
+            20, 10, 127, 8, 15, 6;
+            17, 18, 64, 8, 15, 7; % 2ON 14OFF grating
+            17, 18, 127, 8, 15, 8;
+        ];
+    end 
 
     % Find all processed data for one protocol. 
     filelist = dir(fullfile(protocol_dir, '**/*.mat'));
@@ -111,13 +142,18 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         DATA.(strain).(landing).(sex)(sz).acclim_patt.av_data = comb_data.av_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_patt.heading_data = comb_data.heading_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_patt.heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
-    
+
+        % Find out how many unique conditions there are:
+        fields = fieldnames(LOG);
+        logfields = fields(startsWith(fields, 'log_'));
+        n_cond = height(logfields);
+
         %% Then run through the next 16 logs. 
-        for log_n = 1:16
+        for log_n = 1:n_cond
     
-            Log = LOG.(strcat('log_', string(log_n)));
+            Log = LOG.(logfields(log_n));
     
-            if log_n <9
+            if log_n <(n_cond/2)+1
                 rep_str = 'R1_condition_';
             else
                 rep_str = 'R2_condition_';
@@ -172,8 +208,7 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
     
     end 
 
-    strs = split(protocol_dir, '/');
     todaysdate =  string(datetime('now', 'Format','yyyy-MM-dd'));
-    save(string(fullfile(protocol_dir, strcat(strs(end), '_DATA_', todaysdate, '.mat'))), 'DATA');
+    save(string(fullfile(protocol_dir, strcat(protocol, '_DATA_', todaysdate, '.mat'))), 'DATA');
 
 end 
