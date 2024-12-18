@@ -100,25 +100,52 @@ function DATA = comb_data_across_cohorts_cond_v14(protocol_dir)
     
         %% Then run through the next logs: 
 
-        for log_n = 3:26
-    
-            start_f = Log.start_f(log_n);
-            stop_f = Log.stop_f(log_n);
-    
-            DATA.(strain).(landing).(sex)(sz).(strcat('trial_', string(log_n))).trial_len = LOG.trial_len;
-            DATA.(strain).(landing).(sex)(sz).(strcat('trial_', string(log_n))).optomotor_pattern = LOG.optomotor_pattern;
-            DATA.(strain).(landing).(sex)(sz).(strcat('trial_', string(log_n))).optomotor_speed = LOG.optomotor_speed;
-            DATA.(strain).(landing).(sex)(sz).(strcat('trial_', string(log_n))).flicker_pattern = LOG.flicker_pattern;
-            DATA.(strain).(landing).(sex)(sz).(strcat('trial_', string(log_n))).flicker_speed = LOG.flicker_speed;
-            DATA.(strain).(landing).(sex)(sz).(strcat('trial_', string(log_n))).contrast = Log.contrast(log_n);
-            DATA.(strain).(landing).(sex)(sz).(strcat('trial_', string(log_n))).dir = Log.dir(log_n);
-    
-            DATA.(strain).(landing).(sex)(sz).(strcat('trial_', string(log_n))).vel_data = comb_data.vel_data(:, start_f:stop_f);
-            DATA.(strain).(landing).(sex)(sz).(strcat('trial_', string(log_n))).dist_data = comb_data.dist_data(:, start_f:stop_f);
-            DATA.(strain).(landing).(sex)(sz).(strcat('trial_', string(log_n))).dist_trav = comb_data.dist_trav(:, start_f:stop_f);
-            DATA.(strain).(landing).(sex)(sz).(strcat('trial_', string(log_n))).av_data = comb_data.av_data(:, start_f:stop_f);
-            DATA.(strain).(landing).(sex)(sz).(strcat('trial_', string(log_n))).heading_data = comb_data.heading_data(:, start_f:stop_f);
-            DATA.(strain).(landing).(sex)(sz).(strcat('trial_', string(log_n))).heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
+        for log_n = 1:4
+
+            for rep = 1:2
+
+                if rep == 1
+                    if log_n == 1
+                        st_row = 3; end_row = 5;
+                    elseif log_n == 2
+                        st_row = 6; end_row = 8;
+                    elseif log_n == 3
+                        st_row = 9; end_row = 11;
+                    elseif log_n == 4 
+                        st_row = 12; end_row = 14;
+                    end 
+                elseif rep == 2
+                    if log_n == 1
+                        st_row = 15; end_row = 17;
+                    elseif log_n == 2
+                        st_row = 18; end_row = 20;
+                    elseif log_n == 3
+                        st_row = 21; end_row = 23;
+                    elseif log_n == 4 
+                        st_row = 24; end_row = 26;
+                    end 
+                end 
+
+                str_cond = strcat('rep', string(rep), '_cond', string(log_n));
+
+                start_f = Log.start_f(st_row);
+                stop_f = Log.stop_f(end_row);
+        
+                DATA.(strain).(landing).(sex)(sz).(str_cond).trial_len = LOG.trial_len;
+                DATA.(strain).(landing).(sex)(sz).(str_cond).optomotor_pattern = LOG.optomotor_pattern;
+                DATA.(strain).(landing).(sex)(sz).(str_cond).optomotor_speed = LOG.optomotor_speed;
+                DATA.(strain).(landing).(sex)(sz).(str_cond).flicker_pattern = LOG.flicker_pattern;
+                DATA.(strain).(landing).(sex)(sz).(str_cond).flicker_speed = LOG.flicker_speed;
+                DATA.(strain).(landing).(sex)(sz).(str_cond).contrast = Log.contrast(end_row);
+                DATA.(strain).(landing).(sex)(sz).(str_cond).dir = Log.dir(end_row);
+        
+                DATA.(strain).(landing).(sex)(sz).(str_cond).vel_data = comb_data.vel_data(:, start_f:stop_f);
+                DATA.(strain).(landing).(sex)(sz).(str_cond).dist_data = comb_data.dist_data(:, start_f:stop_f);
+                DATA.(strain).(landing).(sex)(sz).(str_cond).dist_trav = comb_data.dist_trav(:, start_f:stop_f);
+                DATA.(strain).(landing).(sex)(sz).(str_cond).av_data = comb_data.av_data(:, start_f:stop_f);
+                DATA.(strain).(landing).(sex)(sz).(str_cond).heading_data = comb_data.heading_data(:, start_f:stop_f);
+                DATA.(strain).(landing).(sex)(sz).(str_cond).heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
+            end 
     
         end 
     

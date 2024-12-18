@@ -3,7 +3,7 @@ function plot_pink_blue_rects(LOG, protocol, min_val, max_val)
 % gratings are moving clockwise or counterclockwise. 
 
 
-    if protocol == "protocol_10" || protocol == "protocol_15" || protocol == "protocol_18"  
+    if protocol == "protocol_10" || protocol == "protocol_15" || protocol == "protocol_18" || protocol == "protocol_19" || protocol == "protocol_17"   
 
         log_names = fieldnames(LOG);
 

@@ -3,7 +3,14 @@
 protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_10';
 cd(protocol_dir);
 
-DATA = comb_data_across_cohorts_cond(protocol_dir);
+strs = split(protocol_dir, '/');
+protocol = strs(end);
+
+if protocol == "protocol_14"
+    DATA = comb_data_across_cohorts_cond_v14(protocol_dir);
+else 
+    DATA = comb_data_across_cohorts_cond(protocol_dir);
+end 
 
 experimental_groups = {
     'csw1118', 'none', 'F';
@@ -112,7 +119,6 @@ gps2plot = [1, 3, 9, 13];
 gps2plot = [1, 7, 11, 19];
 % gps2plot = [2, 14, 18, 20]; % l1l4 males
 % gps2plot = [1, 21, 22, 23];
-/Users/burnettl/Documents/Projects/nested_RF_stimulus/protocol2/data
 
 gps2plot = [1, 13, 15, 17];
 
