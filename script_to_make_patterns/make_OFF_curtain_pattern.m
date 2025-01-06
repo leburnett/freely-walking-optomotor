@@ -3,7 +3,7 @@
 % 16 pixel total width
 total_width = 16;
 
-pattern.x_num = total_width; % There are 192 pixel around the display (24x8) 
+pattern.x_num = total_width+1;
 pattern.y_num = 1; % frames of Y, at different contrast levels
 pattern.num_panels = 72; % This is the number of unique Panel IDs required.
 pattern.gs_val = 1; % This pattern will use 8 intensity levels
@@ -15,11 +15,11 @@ Pats = zeros(3, 192, pattern.x_num, pattern.y_num);
 % Generate the curtain patterns:
 
 for i = 0:total_width
-    n_off = i;
-    n_on = total_width - n_off;
-    array  = [zeros(1, n_off), ones(1, n_on)];
-    px_array = repmat(array, [1, 2]);
-    Pats(:, :, i+1) = repmat(px_array, 3, 6); 
+        n_off = i;
+        n_on = total_width - n_off;
+        array  = [zeros(1, n_off), ones(1, n_on)];
+        px_array = repmat(array, [1, 2]);
+        Pats(:, :, i+1) = repmat(px_array, 3, 6); 
 end 
 
 pattern.Pats = Pats;
@@ -35,7 +35,7 @@ save(str, 'pattern');
 
 %% Code to view pattern to check 
 
-% % % display stimulus
+% % % % display stimulus
 % figure;
 % for k = 1:numel(Pats(1, 1, :))
 %     imshow(Pats(:,:,k));

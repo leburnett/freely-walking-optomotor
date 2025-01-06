@@ -3,7 +3,7 @@
 % 16 pixel total width
 total_width = 16;
 
-pattern.x_num = total_width; % There are 192 pixel around the display (24x8) 
+pattern.x_num = total_width+1; 
 pattern.y_num = 1; % frames of Y, at different contrast levels
 pattern.num_panels = 72; % This is the number of unique Panel IDs required.
 pattern.gs_val = 1; % This pattern will use 8 intensity levels
