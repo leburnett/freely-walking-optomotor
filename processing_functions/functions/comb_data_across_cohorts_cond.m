@@ -40,16 +40,29 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
             20, 10, 64, 8, 15, 5; % OFF curtain
             20, 10, 127, 8, 15, 6;
         ];
-    elseif protocol == "protocol_19"
+    % elseif protocol == "protocol_19" % BEFORE JAN 2025
+    %     cond_array =  [
+    %         9, 10, 127, 8, 15, 1; % normal stripes - wide
+    %         9, 10, 64, 8, 15, 2;
+    %         19, 10, 64, 8, 15, 3; % ON curtain
+    %         19, 10, 127, 8, 15, 4;
+    %         20, 10, 64, 8, 15, 5; % OFF curtain
+    %         20, 10, 127, 8, 15, 6;
+    %         17, 18, 64, 8, 15, 7; % 2ON 14OFF grating
+    %         17, 18, 127, 8, 15, 8;
+    %     ];
+    elseif protocol == "protocol_19" % AFTER JAN 2025
         cond_array =  [
-            9, 10, 127, 8, 15, 1; % normal stripes - wide
-            9, 10, 64, 8, 15, 2;
+            9, 10, 64, 8, 15, 1; % normal stripes - wide
+            9, 10, 127, 8, 15, 2;
             19, 10, 64, 8, 15, 3; % ON curtain
             19, 10, 127, 8, 15, 4;
             20, 10, 64, 8, 15, 5; % OFF curtain
             20, 10, 127, 8, 15, 6;
-            17, 18, 64, 8, 15, 7; % 2ON 14OFF grating
-            17, 18, 127, 8, 15, 8;
+            17, 10, 64, 8, 15, 7; % 2ON 14OFF grating
+            17, 10, 127, 8, 15, 8;
+            24, 10, 64, 8, 15, 9; % 2OFF 14ON grating
+            24, 10, 127, 8, 15, 10;
         ];
     end 
 
@@ -104,7 +117,7 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         sex = LOG.meta.fly_sex;
     
         %% Extract all of the data from the entire experiment:
-        comb_data = combine_data_one_cohort(feat, trx);
+        [comb_data, feat, trx] = combine_data_one_cohort(feat, trx);
     
         if isfield(DATA, strain)
             if isfield(DATA.(strain), landing)
@@ -157,7 +170,7 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         for log_n = 1:n_cond
     
             Log = LOG.(logfields{log_n});
-    
+
             if log_n <(n_cond/2)+1
                 rep_str = 'R1_condition_';
             else
@@ -179,10 +192,10 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
                 params = [optomotor_pattern, flicker_pattern, opto_speed, flick_speed, trial_len];
                 condition_n = find(ismember(cond_array, params, 'rows'));
             end 
-    
+
             start_f = Log.start_f(1);
             stop_f = Log.stop_f(end);
-    
+
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).trial_len = Log.trial_len;
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).n_trials = Log.num_trials;
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).optomotor_pattern = Log.optomotor_pattern;
@@ -190,14 +203,14 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).flicker_pattern = Log.flicker_pattern;
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).flicker_speed = Log.flicker_speed;
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).start_flicker_f = Log.start_f(end)-start_f;
-    
+
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).vel_data = comb_data.vel_data(:, start_f:stop_f);
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).dist_data = comb_data.dist_data(:, start_f:stop_f);
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).dist_trav = comb_data.dist_trav(:, start_f:stop_f);
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).av_data = comb_data.av_data(:, start_f:stop_f);
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).heading_data = comb_data.heading_data(:, start_f:stop_f);
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
-    
+
         end 
     
         %% Add data from acclim_off2

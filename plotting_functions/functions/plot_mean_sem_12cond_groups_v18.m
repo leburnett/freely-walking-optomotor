@@ -1,27 +1,12 @@
 % Plotting function - generate 6 x 2 subplot with the mean + / SEM as one
 % line per experimental group
 
-function f = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem)
+function f = plot_mean_sem_12cond_groups_v18(DATA, data_type, gps2plot, plot_sem)
 
     % Generate new figure
     figure;
-    t = tiledlayout(6,2);
+    t = tiledlayout(3,2);
     t.TileSpacing = 'compact';
-
-    cond_order = [1,3,4,2,5,7,8,6,9,11,12,10];
-
-    % experimental_groups = {
-    % 'csw1118', 'F', [0.3 0.3 0.3];%[0 0.45 0.6]; % dark grey
-    % 'csw1118', 'M', [0.7 0.7 0.7]; %[0.4 0.8 1];% light grey
-    % 'jfrc49_es_kir', 'F', [0.41 0.22 0.47]; % dark purple
-    % 'jfrc100_es_shibire', 'F', [0.85 0.4 0.7];% pink
-    % 'ss324_t4t5_kir', 'F', [0 0.4 0]; %[1 0.6 0]; % dark green / orange
-    % 'ss324_t4t5_shibire', 'F', [0.6 0.8 0.6];%[0.9 0.85 0.2]; % light green / yellow
-    % 'jfrc49_l1l4_kir', 'F', [0.4 0.8 1]; %[0.6 0.6 0.6] % grey
-    % 't4t5_RNAi_control', 'F', [0.7 0.7 0.7];
-    % 't4t5_mmd_RNAi', 'F', [0.8, 0 , 0]; % red
-    % 't4t5_ttl_RNAi', 'F', [0.9, 0.5, 0]; %orange
-    % };
 
     experimental_groups = {
     'csw1118', 'none', 'F', [0.3 0.3 0.3]; % 1
@@ -60,19 +45,14 @@ for gp = gps2plot
 
     data = DATA.(strain).(landing).(sex); 
 
-    params =[60, 4, 2;
-            60, 8, 15;
-            60, 4, 15;
-            60, 8, 2;
-            30, 4, 2;
-            30, 8, 15;
-            30, 4, 15;
-            30, 8, 2;
-            15, 4, 2;
-            15, 8, 15;
-            15, 4, 15;
-            15, 8, 2;
-            ];
+    params = [
+        60, 8, 15; % Normal gratings
+        60, 4, 15;
+        1, 4, 15; % ON curtain
+        1, 8, 15;
+        0, 4, 15; % OFF curtain
+        0, 8, 15;
+    ];
 
     n_exp = length(data);
 
@@ -81,13 +61,13 @@ for gp = gps2plot
 
     % Run through the different conditions: 
     for idx2 = min_val:1:max_val 
-        cond = cond_order(idx2);
-        rep1_str = strcat('R1_condition_', string(cond));   
-        rep2_str = strcat('R2_condition_', string(cond));  
+
+        rep1_str = strcat('R1_condition_', string(idx2));   
+        rep2_str = strcat('R2_condition_', string(idx2));  
 
         if isfield(data, rep1_str)
 
-        p = params(cond, :);
+        p = params(idx2, :);
 
         cond_data = [];
         nf_comb = size(cond_data, 2);
@@ -156,7 +136,7 @@ for gp = gps2plot
         x = 1:1:nf_comb;
     
         % Plot subplot for condition
-        subplot(6,2,idx2)
+        subplot(3,2,idx2)
 
         if data_type == "dist_data"
             rng = [0 85];
@@ -226,7 +206,7 @@ for gp = gps2plot
 end 
 
     f = gcf;
-    f.Position = [11    78   474   969];
+    f.Position = [11   548   474   499];
     sgtitle(ylb, 'FontSize', 16)
     % ylabel(t, ylb, 'FontSize', 16)
 

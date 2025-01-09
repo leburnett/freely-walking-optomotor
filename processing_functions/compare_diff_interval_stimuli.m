@@ -1,3 +1,5 @@
+% % For PROTOCOL 14
+
 clear
 
 path_to_data = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_14/csw1118/M';

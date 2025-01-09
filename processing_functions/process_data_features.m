@@ -111,10 +111,10 @@ function process_data_features(path_to_folder, save_folder, date_str)
         end
 
         %% Generate quick overview plots:
-        [combined_data, feat, trx] = combine_data_one_cohort(feat, trx);
+        [comb_data, feat, trx] = combine_data_one_cohort(feat, trx);
 
         % 1 - histograms of locomotor parameters
-        f_overview = make_overview(combined_data, strain, sex, protocol);
+        f_overview = make_overview(comb_data, strain, sex, protocol);
 
         hist_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/loco_histograms';
         if ~isfolder(hist_save_folder)
@@ -123,7 +123,7 @@ function process_data_features(path_to_folder, save_folder, date_str)
         saveas(f_overview, fullfile(hist_save_folder, strcat(save_str, '_hist.png')), 'png')
 
         % 2 - features - with individual traces per fly
-        f_feat = plot_all_features(LOG, feat, trx, protocol, save_str);
+        f_feat = plot_all_features_filt(LOG, comb_data, protocol, save_str);
 
         feat_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/feat_overview';
         if ~isfolder(feat_save_folder)
@@ -141,6 +141,7 @@ function process_data_features(path_to_folder, save_folder, date_str)
             , 'LOG' ...
             , 'feat' ...
             , 'trx' ...
+            , 'comb_data' ...
             );
     end
 

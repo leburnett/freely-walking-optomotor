@@ -1,11 +1,22 @@
-% % For protocol with different interval stimuli - PROTOCOL 14
+% Plotting function - generate 1 x 2 subplot with the mean + / SEM for all
+% flies from one experimental group. 
 
-function f = plot_mean_sem_12cond_overlap_diff_intervals(DATA, strain, landing, sex, data_type)
+function f = plot_mean_sem_cond_overlap_protocol19(DATA, strain, landing, sex, data_type)
 
     % % Eventually have this as the input to the function 
     data = DATA.(strain).(landing).(sex); 
 
-    params ={'flicker','static','ON','OFF'};
+    params =[60, 4, 15; % 60 deg gratings 
+            60, 8, 15;
+            1, 4, 15; % ON curtain
+            1, 8, 15;
+            0, 4, 15; % OFF curtain
+            0, 8, 15; 
+            21, 4, 15; % 2ON 14OFF grating 
+            21, 8, 15;
+            20, 4, 15; % 2OFF 14ON grating
+            20, 8, 15;
+            ];
     
     n_exp = length(data);
     total_flies = 0;
@@ -18,19 +29,23 @@ function f = plot_mean_sem_12cond_overlap_diff_intervals(DATA, strain, landing, 
 
     % Generate new figure
     figure;
+    t = tiledlayout(5, 3);
+    t.TileSpacing = 'compact';
 
     % Run through the different conditions: 
-    for idx2 = 1:1:4
+    for idx2 = 1:1:height(params) 
 
-        rep1_str = strcat('rep1_cond', string(idx2));   
-        rep2_str = strcat('rep2_cond', string(idx2)); 
+        rep1_str = strcat('R1_condition_', string(idx2));   
+        rep2_str = strcat('R2_condition_', string(idx2)); 
 
         if isfield(data, rep1_str)
 
-            p = params{idx2};
+            p = params(idx2, :);
     
             cond_data = [];
             nf_comb = size(cond_data, 2);
+    
+            fl_start_f = [];
         
             for idx = 1:n_exp
                 rep1_data = data(idx).(rep1_str);
@@ -71,6 +86,10 @@ function f = plot_mean_sem_12cond_overlap_diff_intervals(DATA, strain, landing, 
                         end 
                         cond_data = vertcat(cond_data, rep1_data, rep2_data);
                     end
+    
+                    fl_start = data(idx).(rep1_str).start_flicker_f;
+                    fl_start_f = [fl_start_f, fl_start];
+      
                 end 
             end 
        
@@ -86,21 +105,32 @@ function f = plot_mean_sem_12cond_overlap_diff_intervals(DATA, strain, landing, 
             y2 = mean_data-sem_data;
             nf_comb = size(cond_data, 2);
             x = 1:1:nf_comb;
+        
+            % Plot subplot for condition
+            if ismember(idx2, [1,2])
+                subpl = 1:2;
+                ttl = '60deg gratings';
+            elseif ismember(idx2, [3,4])
+                subpl = 4:5;
+                ttl = 'ON curtain';
+            elseif ismember(idx2, [5,6])
+                subpl = 7:8;
+                ttl = 'OFF curtain';
+            elseif ismember(idx2, [7,8])
+                subpl = 10:11;
+                ttl = 'ON 2:14';
+            elseif ismember(idx2, [9,10])
+                subpl = 13:14;
+                ttl = 'OFF 2:14';
+            end 
     
-            if ismember(idx2, [1])
-                col = [0.9 0.8 0.2]; % yellow = flicker
-            elseif ismember(idx2, [2])
-                col = [0.6 0.8 0.9]; % blue = static
-            elseif ismember(idx2, [3])
-                col = [1.0 0.7 0.8]; % pink = ON
-            elseif ismember(idx2, [4])
-                col = [0.6 0.8 0.6]; % green = OFF
-
-                
-            % elseif ismember(idx2, [9, 10])
-            %     col = [0 0 0.5];
-            % elseif ismember(idx2, [11, 12])
-            %     col = [0.6 0.8 0.9];
+            subplot(5,3,subpl)
+            title(ttl, 'FontSize', 11)
+    
+            if ismember(idx2, [1,3,5,7,9])
+                col = 'k';
+            elseif ismember(idx2, [2,4,6,8,10])
+                col = [0.8 0.8 0.8];
             end 
     
             if data_type == "dist_data"
@@ -124,18 +154,18 @@ function f = plot_mean_sem_12cond_overlap_diff_intervals(DATA, strain, landing, 
                 ylb = "Velocity (mm s-1)";
                 lw = 1.5;
             end
-
-            subplot(1,3,1:2)
-
+    
             plot(x, y1, 'w', 'LineWidth', 1)
             hold on
             plot(x, y2, 'w', 'LineWidth', 1)
             patch([x fliplr(x)], [y1 fliplr(y2)], 'k', 'FaceAlpha', 0.1, 'EdgeColor', 'none')
-            plot(mean_data, 'Color', col, 'LineWidth', lw);    
+            plot(mean_data, 'Color', col, 'LineWidth', lw); 
     
-            if idx2>3
-                plot([600 600], rng, 'k', 'LineWidth', 0.5)
-                plot([300 300], rng, 'k', 'LineWidth', 0.5)
+            % When flicker stimulus started:
+            fl = ceil(mean(fl_start_f));
+    
+            if ismember(idx2, [2,4,6,8,10])
+                plot([fl fl], rng, 'k', 'LineWidth', 0.5)
                 if data_type == "dist_data"
                     plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
                 elseif data_type == "av_data"
@@ -146,19 +176,29 @@ function f = plot_mean_sem_12cond_overlap_diff_intervals(DATA, strain, landing, 
             ylim(rng)
             box off
             ax = gca; ax.XAxis.Visible = 'off'; ax.TickDir = 'out'; ax.TickLength = [0.015 0.015]; ax.LineWidth = 1; ax.FontSize = 12;
-    
-            % title(strcat(string(p{idx2}), 's'), 'FontSize', 11)
-            if idx2 == 4
+
+            if idx2 == 6
                 ylabel(ylb, 'FontSize', 16)
             end 
     
             % % % % % Errorbar plot of MEAN + SEM 
     
-            subplot(1,3,3)
-
+            % Plot subplot for condition
+            if ismember(idx2, [1,2])
+                subpl2 = 3;
+            elseif ismember(idx2, [3,4])
+                subpl2 = 6;
+            elseif ismember(idx2, [5,6])
+                subpl2 = 9;
+            elseif ismember(idx2, [7,8])
+                subpl2 = 12;
+            elseif ismember(idx2, [9,10])
+                subpl2 = 15;
+            end 
+    
+            subplot(5,3,subpl2)
             % Find the mean value during the moving stim and during the flicker
-            fl = 600; 
-
+    
             % Buffer time after start of flicker to exclude. 30 fps. 
             if data_type == "dist_trav"
                 buffer_t = 1;
@@ -204,7 +244,7 @@ function f = plot_mean_sem_12cond_overlap_diff_intervals(DATA, strain, landing, 
     
             plot([0.875+jt1, 1.875+jt2], [mean_stim, mean_flicker], '-', 'LineWidth', 1.2, 'Color', col)
             
-            if idx2>3
+            if idx2>10 
                 if data_type == "dist_data"
                     plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
                 end 
@@ -229,9 +269,13 @@ function f = plot_mean_sem_12cond_overlap_diff_intervals(DATA, strain, landing, 
     end 
 
     f = gcf;
-    f.Position = [19   683   893   350];
+    f.Position = [19    73   388   974];
     strain = strrep(strain, '_', '-');
     sgtitle(strcat(strain, '--',landing, '--', sex, '--N=', string(total_flies)), 'FontSize', 16)
     
 
 end 
+
+
+
+

@@ -26,8 +26,9 @@ function V = vel_estimate(D, samp_rate, method, t_window, cutoff)
 % 
 %  Michael Reiser, Jan 2005
 
-d = D; % D*2*pi./(max(D));   % unwrap the data
-D_unw = unwrap(d); %.*max(D)/2/pi;
+d = D*2*pi./(max(D));   % unwrap the data
+D_unw = unwrap(d).*max(D)/2/pi;
+D_unw = reshape(D_unw, [1, numel(D_unw)]);
 
 switch lower(method)
     case 'lpfilt'
@@ -37,8 +38,9 @@ switch lower(method)
         
     case 'line_fit'
         %pad start and finish with points to make output same length as input
-        D_start = D_unw(1)*ones(t_window/2 ,1); D_end = D_unw(end)*ones(t_window/2 ,1);
-        D_unw = [D_start' D_unw' D_end']';
+        D_start = D_unw(1)*ones(t_window/2 ,1); 
+        D_end = D_unw(end)*ones(t_window/2 ,1);
+        D_unw = [D_start' D_unw D_end']';
         % make A matrix of time and ones vector for solving the line fit
         t = [0:t_window - 1]*samp_rate;
         A = [t; ones(size(t))]';
