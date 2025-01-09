@@ -8,7 +8,7 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
     feat.data(flies2ignore, :, :) = [];
 
     FPS = 30; % videos acquired at 30 FPS
-    pix_per_mm = 4.1691;
+    % pix_per_mm = 4.1691;
     smooth_kernel = [1 2 1]/4;
     
     % velocity % % % % % % % % % % % 

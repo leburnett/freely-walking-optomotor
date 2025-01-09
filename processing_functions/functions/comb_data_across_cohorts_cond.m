@@ -86,7 +86,7 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         fname = filelist(idx).name;
         f_folder = filelist(idx).folder; 
     
-        % Load 'LOG', 'feat' and 'trx'
+        % Load 'combined_data', 'LOG', 'feat' and 'trx'
         load(fullfile(f_folder, fname));
 
         % Get key information about strain and sex:
@@ -117,7 +117,7 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         sex = LOG.meta.fly_sex;
     
         %% Extract all of the data from the entire experiment:
-        [comb_data, feat, trx] = combine_data_one_cohort(feat, trx);
+        % [comb_data, feat, trx] = combine_data_one_cohort(feat, trx);
     
         if isfield(DATA, strain)
             if isfield(DATA.(strain), landing)
@@ -144,9 +144,11 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         end 
         stop_f = Log.stop_f(end);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.vel_data = comb_data.vel_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_off1.fv_data = comb_data.fv_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.dist_data = comb_data.dist_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.dist_trav = comb_data.dist_trav(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.av_data = comb_data.av_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_off1.curv_data = comb_data.curv_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.heading_data = comb_data.heading_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
     
@@ -155,9 +157,11 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         start_f = Log.start_f(1);
         stop_f = Log.stop_f(end);
         DATA.(strain).(landing).(sex)(sz).acclim_patt.vel_data = comb_data.vel_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_patt.fv_data = comb_data.fv_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_patt.dist_data = comb_data.dist_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_patt.dist_trav = comb_data.dist_trav(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_patt.av_data = comb_data.av_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_patt.curv_data = comb_data.curv_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_patt.heading_data = comb_data.heading_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_patt.heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
 
@@ -193,7 +197,8 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
                 condition_n = find(ismember(cond_array, params, 'rows'));
             end 
 
-            start_f = Log.start_f(1);
+            framesb4 = 300; % include 10s before the start of the trial in the data
+            start_f = Log.start_f(1)-framesb4;
             stop_f = Log.stop_f(end);
 
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).trial_len = Log.trial_len;
@@ -205,9 +210,11 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).start_flicker_f = Log.start_f(end)-start_f;
 
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).vel_data = comb_data.vel_data(:, start_f:stop_f);
+            DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).fv_data = comb_data.fv_data(:, start_f:stop_f);
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).dist_data = comb_data.dist_data(:, start_f:stop_f);
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).dist_trav = comb_data.dist_trav(:, start_f:stop_f);
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).av_data = comb_data.av_data(:, start_f:stop_f);
+            DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).curv_data = comb_data.curv_data(:, start_f:stop_f);
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).heading_data = comb_data.heading_data(:, start_f:stop_f);
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
 
@@ -218,9 +225,11 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         start_f = Log.start_f(1);
         stop_f = Log.stop_f(end);
         DATA.(strain).(landing).(sex)(sz).acclim_off2.vel_data = comb_data.vel_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.fv_data = comb_data.fv_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off2.dist_data = comb_data.dist_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off2.dist_trav = comb_data.dist_trav(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off2.av_data = comb_data.av_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.curv_data = comb_data.curv_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off2.heading_data = comb_data.heading_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off2.heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
     

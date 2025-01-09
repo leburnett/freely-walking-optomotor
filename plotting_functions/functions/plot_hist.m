@@ -15,7 +15,7 @@ function plot_hist(data, nbins, feature)
     histogram(data, 'BinEdges', edges, 'Normalization', 'probability', 'FaceColor', [0.7 0.7 0.7]);
     box off
     if feature == "vel"
-        xlabel('Velocity (mm s-1)')
+        xlabel('Forward velocity (mm s-1)')
         lims =[0 1];
     elseif feature == "angvel"
         xlabel('Angular velocity (deg s-1)') 

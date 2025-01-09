@@ -18,13 +18,11 @@ function f = plot_all_features_filt(LOG, comb_data, protocol, title_str)
     %       title to use in the plot.
     
     % Fixed paramters: 
-    n_flies = length(trx);
-
     figure
 
     % % % % % % % % Subplot 1 = VELOCITY % % % % % % % % %
     velocity_data = comb_data.fv_data;
-    xmax = size(velocity_data, 2);
+    [n_flies, xmax] = size(velocity_data);
 
     subplot(4, 1, 1)
    
@@ -40,7 +38,7 @@ function f = plot_all_features_filt(LOG, comb_data, protocol, title_str)
     plot(mean(velocity_data), 'w', 'LineWidth', 1.25)
     plot(smoothdata(mean(velocity_data), 'lowess'), 'k', 'LineWidth', 1.25)
     ylabel('Forward velocity (mm s-1)')
-    % ylim([-2 50])
+    ylim([-2 30])
     xlim([0 xmax])
     % % % % % % % % Subplot 2 = ANG VEL % % % % % % % % %
 
@@ -48,8 +46,8 @@ function f = plot_all_features_filt(LOG, comb_data, protocol, title_str)
     
     ang_vel_data = comb_data.av_data;
 
-    max_val = prctile(ang_vel_data(:), 99.5);
-    min_val = prctile(ang_vel_data(:), 0.5);
+    max_val = prctile(ang_vel_data(:), 98.5);
+    min_val = prctile(ang_vel_data(:), 1.5);
 
     % Plot the boundaries between when the stimulus changes.
     plot_pink_blue_rects(LOG, protocol, min_val, max_val)
@@ -61,7 +59,7 @@ function f = plot_all_features_filt(LOG, comb_data, protocol, title_str)
 
     % Plot the ang vel
     plot(mean(ang_vel_data), 'w', 'LineWidth', 1.25)
-    plot(smoothdata(mean(ang_vel_data), 'lowess'), 'k', 'LineWidth', 1.5)
+    plot(smoothdata(mean(ang_vel_data), 'lowess'), 'k', 'LineWidth', 1.25)
     ylabel('Angular velocity (deg s-1)')
     xlim([0 xmax])
 
@@ -71,8 +69,8 @@ function f = plot_all_features_filt(LOG, comb_data, protocol, title_str)
 
     subplot(4, 1, 3)
 
-    max_val = prctile(curv_data(:), 99.5);
-    min_val = prctile(curv_data(:), 0.5);
+    max_val = prctile(curv_data(:), 98.5);
+    min_val = prctile(curv_data(:), 1.5);
     
     % Plot the boundaries between when the stimulus changes.
     plot_pink_blue_rects(LOG, protocol, min_val, max_val)
@@ -84,7 +82,7 @@ function f = plot_all_features_filt(LOG, comb_data, protocol, title_str)
     % Plot 
     plot(mean(curv_data), 'w', 'LineWidth', 1.25)
     % plot(smoothdata(mean(curv_data), 'lowess'), 'k', 'LineWidth', 1)
-    plot(smoothdata(mean(curv_data), 'movmedian'), 'k', 'LineWidth', 1)
+    plot(smoothdata(mean(curv_data), 'movmedian'), 'k', 'LineWidth', 1.25)
     ylabel('Curvature (deg/mm)')
     xlim([0 xmax])
 
