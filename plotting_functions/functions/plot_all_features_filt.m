@@ -47,7 +47,8 @@ function f = plot_all_features_filt(LOG, comb_data, protocol, title_str)
 
     % % % % % % % % Subplot 2 = VELOCITY % % % % % % % % %
 
-    velocity_data = comb_data.vel_data;
+    velocity_data = comb_data.fv_data;
+    
     subplot(4, 1, 2)
    
     % Plot the boundaries between when the stimulus changes.
@@ -61,7 +62,7 @@ function f = plot_all_features_filt(LOG, comb_data, protocol, title_str)
     % Plot the velocity
     plot(mean(velocity_data), 'k', 'LineWidth', 2.5)
     ylabel('Velocity (mm s-1)')
-    ylim([-2 50])
+    % ylim([-2 50])
     xlim([0 xmax])
     % % % % % % % % Subplot 3 = ANG VEL % % % % % % % % %
 

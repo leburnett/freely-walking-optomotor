@@ -15,8 +15,8 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
     vel_data = feat.data(:, :, 1);
     d_wall_data = feat.data(:, :, 9);
     heading_data = cell2mat(arrayfun(@(x) x.theta, trx, 'UniformOutput', false))';
-    x_data = cell2mat(arrayfun(@(x) x.x, trx, 'UniformOutput', false))';
-    y_data = cell2mat(arrayfun(@(x) x.y, trx, 'UniformOutput', false))';
+    x_data = cell2mat(arrayfun(@(x) x.x_mm, trx, 'UniformOutput', false))';
+    y_data = cell2mat(arrayfun(@(x) x.y_mm, trx, 'UniformOutput', false))';
 
     for k = 1:height(vel_data)
         dv = diff(vel_data(k, :));
@@ -86,14 +86,18 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
         dy = diff(y);
         vx = dx / samp_rate;
         vy = dy / samp_rate;
-        fv = vx .* cos(D(1:end-1)) + vy .* sin(D(1:end-1)) * FPS/pix_per_mm; % mm /s 
+        fv = (vx .* cos(D(1:end-1)) + vy .* sin(D(1:end-1))); % mm /s 
+        fv(fv<0)=NaN; % remove negative forward velocity.
+        fv(fv>50)=NaN; % remove forward velocity > 50mm/s - too high.
+        fv = fillmissing(fv, 'linear');
         fv_data(idx, :) = [fv(1), fv];
 
         c_data = [];
         c_data = av_data(idx, :)./fv_data(idx, :);
-        vals_fv_zero = abs(fv_data(idx, :))<0.01;
+        vals_fv_zero = abs(fv_data(idx, :))<0.1;
         c_data(abs(c_data)==Inf)=NaN;
         c_data(vals_fv_zero) = NaN;
+        c_data = fillmissing(c_data, 'previous');
         curv_data(idx, :) = c_data;
     end
 
