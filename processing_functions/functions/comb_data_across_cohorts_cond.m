@@ -151,6 +151,8 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         DATA.(strain).(landing).(sex)(sz).acclim_off1.curv_data = comb_data.curv_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.heading_data = comb_data.heading_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_off1.x_data = comb_data.x_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_off1.y_data = comb_data.y_data(:, start_f:stop_f);
     
         %% Add data from acclim_patt
         Log = LOG.acclim_patt;
@@ -164,6 +166,8 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         DATA.(strain).(landing).(sex)(sz).acclim_patt.curv_data = comb_data.curv_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_patt.heading_data = comb_data.heading_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_patt.heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_patt.x_data = comb_data.x_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_patt.y_data = comb_data.y_data(:, start_f:stop_f);
 
         % Find out how many unique conditions there are:
         fields = fieldnames(LOG);
@@ -217,6 +221,8 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).curv_data = comb_data.curv_data(:, start_f:stop_f);
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).heading_data = comb_data.heading_data(:, start_f:stop_f);
             DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
+            DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).x_data = comb_data.x_data(:, start_f:stop_f);
+            DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).y_data = comb_data.y_data(:, start_f:stop_f);
 
         end 
     
@@ -232,6 +238,8 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         DATA.(strain).(landing).(sex)(sz).acclim_off2.curv_data = comb_data.curv_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off2.heading_data = comb_data.heading_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off2.heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.x_data = comb_data.x_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.y_data = comb_data.y_data(:, start_f:stop_f);
     
     end 
 

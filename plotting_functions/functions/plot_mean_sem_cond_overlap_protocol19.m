@@ -142,7 +142,7 @@ function f = plot_mean_sem_cond_overlap_protocol19(DATA, strain, landing, sex, d
                 ylb = 'Distance travelled (mm)';
                 lw = 1; 
             elseif data_type == "av_data"
-                rng = [-15 15];
+                rng = [-200 200];
                 ylb = "Angular velocity (deg s-1)";
                 lw = 2;
             elseif data_type == "heading_data"
@@ -152,6 +152,14 @@ function f = plot_mean_sem_cond_overlap_protocol19(DATA, strain, landing, sex, d
             elseif data_type == "vel_data"
                 rng = [0 30];
                 ylb = "Velocity (mm s-1)";
+                lw = 1.5;
+            elseif data_type == "fv_data"
+                rng = [0 30];
+                ylb = "Forward velocity (mm s-1)";
+                lw = 1.5;
+            elseif data_type == "curv_data"
+                rng = [-200 200];
+                ylb = "Turning rate (deg mm-1)";
                 lw = 1.5;
             end
     
@@ -165,7 +173,9 @@ function f = plot_mean_sem_cond_overlap_protocol19(DATA, strain, landing, sex, d
             fl = ceil(mean(fl_start_f));
     
             if ismember(idx2, [2,4,6,8,10])
-                plot([fl fl], rng, 'k', 'LineWidth', 0.5)
+                plot([300 300], rng, 'k', 'LineWidth', 0.5) % beginning of stim
+                plot([750 740], rng, 'Color', [0.6 0.6 0.6], 'LineWidth', 0.3) % change of direction
+                plot([fl fl], rng, 'k', 'LineWidth', 0.5) % when flicker starts
                 if data_type == "dist_data"
                     plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
                 elseif data_type == "av_data"

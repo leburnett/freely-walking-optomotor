@@ -113,7 +113,7 @@ for gp = gps2plot
             ylb = 'Distance travelled (mm)';
             lw = 1; 
         elseif data_type == "av_data"
-            rng = [-15 15];
+            rng = [-150 150];
             ylb = "Angular velocity (deg s-1)";
             lw = 1;
         elseif data_type == "heading_data"
@@ -123,6 +123,14 @@ for gp = gps2plot
         elseif data_type == "vel_data"
             rng = [0 30];
             ylb = "Velocity (mm s-1)";
+            lw = 1;
+        elseif data_type == "fv_data"
+            rng = [0 30];
+            ylb = "Forward velocity (mm s-1)";
+            lw = 1;
+        elseif data_type == "curv_data"
+            rng = [-200 200];
+            ylb = "Turning rate (deg mm-1)";
             lw = 1;
         end
 
@@ -139,6 +147,8 @@ for gp = gps2plot
         if gp == gps2plot(end)
             fl = mean(fl_start_f);
             plot([fl fl], rng, 'k', 'LineWidth', 0.5)
+            plot([300 300], rng, 'k', 'LineWidth', 0.5) % beginning of stim
+            plot([750 740], rng, 'Color', [0.6 0.6 0.6], 'LineWidth', 0.3) % change of direction   
             if data_type == "dist_data"
                 plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
             elseif data_type == "av_data"
@@ -153,16 +163,42 @@ for gp = gps2plot
         title(strcat(string(p(1)), 'deg-', string(p(2)), 'Hz-', string(p(3)), 's'), 'FontSize', 11)
 
         % where to position text annotation
-        if gp == gps2plot(1)
-            pos_data = [nf_comb-450, rng(2)*0.1]; 
-        elseif gp == gps2plot(2)
-            pos_data = [nf_comb-450, rng(2)*0.2];
-        elseif gp == gps2plot(3)
-            pos_data = [nf_comb-450, rng(2)*0.3];
-        elseif gp == gps2plot(4)
-            pos_data = [nf_comb-450, rng(2)*0.4];
-        elseif gp == gps2plot(5)
-            pos_data = [nf_comb-450, rng(2)*0.5];
+        if rng(1)==0 && data_type~="fv_data"
+            if gp == gps2plot(1)
+                pos_data = [nf_comb-450, rng(2)*0.1]; 
+            elseif gp == gps2plot(2)
+                pos_data = [nf_comb-450, rng(2)*0.2];
+            elseif gp == gps2plot(3)
+                pos_data = [nf_comb-450, rng(2)*0.3];
+            elseif gp == gps2plot(4)
+                pos_data = [nf_comb-450, rng(2)*0.4];
+            elseif gp == gps2plot(5)
+                pos_data = [nf_comb-450, rng(2)*0.5];
+            end 
+        elseif data_type == "fv_data"
+            if gp == gps2plot(1)
+                pos_data = [nf_comb-450, rng(2)*0.9]; 
+            elseif gp == gps2plot(2)
+                pos_data = [nf_comb-450, rng(2)*0.8];
+            elseif gp == gps2plot(3)
+                pos_data = [nf_comb-450, rng(2)*0.7];
+            elseif gp == gps2plot(4)
+                pos_data = [nf_comb-450, rng(2)*0.6];
+            elseif gp == gps2plot(5)
+                pos_data = [nf_comb-450, rng(2)*0.5];
+            end 
+        else
+            if gp == gps2plot(1)
+                pos_data = [nf_comb-450, rng(2)*0.9]; 
+            elseif gp == gps2plot(2)
+                pos_data = [nf_comb-450, rng(2)*0.7];
+            elseif gp == gps2plot(3)
+                pos_data = [nf_comb-450, rng(2)*0.5];
+            elseif gp == gps2plot(4)
+                pos_data = [nf_comb-450, rng(2)*0.3];
+            elseif gp == gps2plot(5)
+                pos_data = [nf_comb-450, rng(2)*0.1];
+            end 
         end 
 
         text(pos_data(1), pos_data(2), strcat("N = ", num2str(n_flies_in_cond)), 'Color', col);

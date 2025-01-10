@@ -1,6 +1,6 @@
 % Generate plots for protocol_10-type protocols: 
 
-protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_19';
+protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_14';
 cd(protocol_dir);
 
 strs = split(protocol_dir, '/');
@@ -42,17 +42,17 @@ gp_data = {
 
 n_exp_groups = height(gp_data);
 
-data_types =  {'dist_data', 'dist_trav', 'heading_data', 'av_data', 'vel_data'};
+data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_trav', 'heading_data', 'vel_data'};
 
 %% Compare the responses of a single experimental group to multiple conditions:
 
-gp = 25; % csw1118 females
+gp = 23; % csw1118 females
 strain = gp_data{gp, 1};
 landing = gp_data{gp, 2};
 sex = gp_data{gp, 3};
 
 % Set the data type to be analysed:
-typ = 4; 
+typ = 2; 
 data_type = data_types{typ};
 
 % Generate the plot:
@@ -100,26 +100,21 @@ end
 
 % The indices of the different groups to plot: 
 
-% csw1118 F, M and L1L4
-% gps2plot = [1,2,7];
-
-% % csw1118 F , ES Kir, ES Shibire
-% gps2plot = [1,3,4];
-
-% % csw1118 F , T4T5 Kir, T4T5 Shibire
-% gps2plot = [1,5,6];
-
-% Plot all of the experimental groups.
-% gps2plot = [1:1:7];
-
 % RNA + control 
-gps2plot = [23, 24, 25];
+% gps2plot = [1,3,7]; % ES females
+% gps2plot = [2,4,8]; % ES males
+% gps2plot = [1, 9, 11]; % T4T5 females
+% gps2plot = [2, 10, 12]; % T4T5 males
+% gps2plot = [1, 13, 19]; % l1l4 females
+% gps2plot = [2, 14, 20]; % l1l4 males
+gps2plot = [21, 22, 23]; % RNAi
+
 
 % If saving the figures - create a folder to save them in:
-    cond_across_grps_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/protocol_10/12cond_groups_241212';
-    if ~isfolder(cond_across_grps_save_folder)
-        mkdir(cond_across_grps_save_folder);
-    end
+% cond_across_grps_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/protocol_10/12cond_groups_241212';
+% if ~isfolder(cond_across_grps_save_folder)
+%     mkdir(cond_across_grps_save_folder);
+% end
 
 % Condition parameters for protocol 19: 
 params =[60, 4, 15; % 60 deg gratings 
@@ -136,12 +131,19 @@ params =[60, 4, 15; % 60 deg gratings
 
 plot_sem = 0;
 
+
+data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_trav', 'heading_data', 'vel_data'};
+
+
+% For protocol 19 - ON / OFF
 f5 = plot_allcond_acrossgroups(DATA, gp_data, params, data_type, gps2plot, plot_sem);
 
 
-
-
-
+for typ = 1:4
+    data_type = data_types{typ};
+    % For protocol 10:
+    f = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem);
+end 
 
 
 
@@ -164,29 +166,29 @@ f5 = plot_allcond_acrossgroups(DATA, gp_data, params, data_type, gps2plot, plot_
 % 
 % end 
 
-
-gps2plot = [1, 2]; % l1l4 females
-
-data_types =  {'dist_data', 'dist_trav', 'heading_data', 'av_data', 'vel_data'};
-
-for typ = 1 %2:length(data_types)
-
-    data_type = data_types{typ};
-    
-    plot_sem = false;
-
-    f2 = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem);
-    saveas(f2, fullfile(cond_across_grps_save_folder, strcat(titl, '_', data_type, '.png')))
-end 
-
-
-for typ = 1:length(data_types)
-    data_type = data_types{typ};
-    plot_sem = false;
-    f = plot_mean_sem_diff_intervals(DATA, data_type, plot_sem);
-end 
-
-
-
+% 
+% gps2plot = [1, 2]; % l1l4 females
+% 
+% data_types =  {'dist_data', 'dist_trav', 'heading_data', 'av_data', 'vel_data'};
+% 
+% for typ = 1 %2:length(data_types)
+% 
+%     data_type = data_types{typ};
+% 
+%     plot_sem = false;
+% 
+%     f2 = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem);
+%     saveas(f2, fullfile(cond_across_grps_save_folder, strcat(titl, '_', data_type, '.png')))
+% end 
+% 
+% 
+% for typ = 1:length(data_types)
+%     data_type = data_types{typ};
+%     plot_sem = false;
+%     f = plot_mean_sem_diff_intervals(DATA, data_type, plot_sem);
+% end 
+% 
+% 
+% 
 
 

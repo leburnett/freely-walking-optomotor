@@ -82,6 +82,8 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
         y = y_data(idx, :); % y position in pixels. 
         x(2:end-1) = conv(x,smooth_kernel,'valid');
         y(2:end-1) = conv(y,smooth_kernel,'valid');
+        x_data(idx, :) = x;
+        y_data(idx, :) = y;
         dx = diff(x);
         dy = diff(y);
         vx = dx / samp_rate;
@@ -110,5 +112,7 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
     combined_data.curv_data = curv_data;
     combined_data.heading_data = heading_data_unwrap;
     combined_data.heading_wrap = heading_wrap;
+    combined_data.x_data = x_data;
+    combined_data.y_data = y_data;
 
 end 

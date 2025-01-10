@@ -81,22 +81,30 @@ function DATA = comb_data_across_cohorts_cond_v14(protocol_dir)
         end 
         stop_f = Log.stop_f(1);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.vel_data = comb_data.vel_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_off1.fv_data = comb_data.fv_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.dist_data = comb_data.dist_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.dist_trav = comb_data.dist_trav(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.av_data = comb_data.av_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.heading_data = comb_data.heading_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_off1.curv_data = comb_data.curv_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_off1.x_data = comb_data.x_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_off1.y_data = comb_data.y_data(:, start_f:stop_f);
     
         %% Add data from acclim_patt
 
         start_f = Log.start_f(2);
         stop_f = Log.stop_f(2);
         DATA.(strain).(landing).(sex)(sz).acclim_patt.vel_data = comb_data.vel_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_patt.fv_data = comb_data.fv_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_patt.dist_data = comb_data.dist_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_patt.dist_trav = comb_data.dist_trav(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_patt.av_data = comb_data.av_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_patt.curv_data = comb_data.curv_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_patt.heading_data = comb_data.heading_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_patt.heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_patt.x_data = comb_data.x_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_patt.y_data = comb_data.y_data(:, start_f:stop_f);
     
         %% Then run through the next logs: 
 
@@ -140,11 +148,15 @@ function DATA = comb_data_across_cohorts_cond_v14(protocol_dir)
                 DATA.(strain).(landing).(sex)(sz).(str_cond).dir = Log.dir(end_row);
         
                 DATA.(strain).(landing).(sex)(sz).(str_cond).vel_data = comb_data.vel_data(:, start_f:stop_f);
+                DATA.(strain).(landing).(sex)(sz).(str_cond).fv_data = comb_data.fv_data(:, start_f:stop_f);
                 DATA.(strain).(landing).(sex)(sz).(str_cond).dist_data = comb_data.dist_data(:, start_f:stop_f);
                 DATA.(strain).(landing).(sex)(sz).(str_cond).dist_trav = comb_data.dist_trav(:, start_f:stop_f);
                 DATA.(strain).(landing).(sex)(sz).(str_cond).av_data = comb_data.av_data(:, start_f:stop_f);
+                DATA.(strain).(landing).(sex)(sz).(str_cond).curv_data = comb_data.curv_data(:, start_f:stop_f);
                 DATA.(strain).(landing).(sex)(sz).(str_cond).heading_data = comb_data.heading_data(:, start_f:stop_f);
                 DATA.(strain).(landing).(sex)(sz).(str_cond).heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
+                DATA.(strain).(landing).(sex)(sz).(str_cond).x_data = comb_data.x_data(:, start_f:stop_f);
+                DATA.(strain).(landing).(sex)(sz).(str_cond).y_data = comb_data.y_data(:, start_f:stop_f);
             end 
     
         end 
@@ -153,11 +165,15 @@ function DATA = comb_data_across_cohorts_cond_v14(protocol_dir)
         start_f = Log.start_f(27);
         stop_f = Log.stop_f(27);
         DATA.(strain).(landing).(sex)(sz).acclim_off2.vel_data = comb_data.vel_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.fv_data = comb_data.fv_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off2.dist_data = comb_data.dist_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off2.dist_trav = comb_data.dist_trav(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off2.av_data = comb_data.av_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.curv_data = comb_data.curv_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off2.heading_data = comb_data.heading_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off2.heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.x_data = comb_data.x_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.y_data = comb_data.y_data(:, start_f:stop_f);
     
     end 
 
