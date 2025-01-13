@@ -1,6 +1,6 @@
 % Generate plots for protocol_10-type protocols: 
 
-protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_14';
+protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_10';
 cd(protocol_dir);
 
 strs = split(protocol_dir, '/');
@@ -45,52 +45,72 @@ n_exp_groups = height(gp_data);
 data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_trav', 'heading_data', 'vel_data'};
 
 %% Compare the responses of a single experimental group to multiple conditions:
+% ACROSS CONDITIONS
+
+Xcond_save_folder = strcat('/Users/burnettl/Documents/Projects/oaky_cokey/figures/', protocol, "/Xcond");
+if ~isfolder(Xcond_save_folder)
+    mkdir(Xcond_save_folder);
+end
 
 gp = 23; % csw1118 females
+
 strain = gp_data{gp, 1};
 landing = gp_data{gp, 2};
 sex = gp_data{gp, 3};
 
-% Set the data type to be analysed:
-typ = 2; 
-data_type = data_types{typ};
-
-% Generate the plot:
-% Some protocols have different functions:
-
-% - - - protocol 19 - ON / OFF stimuli
-f = plot_mean_sem_cond_overlap_protocol19(DATA, strain, landing, sex, data_type);
-
-% - - - protocol 14 - different interval stimuli
-f2 = plot_mean_sem_12cond_overlap_diff_intervals(DATA, strain, landing, sex, data_type);
-
-% - - - other protocols - must be based on protocol 10 condition structure:
-f3 = plot_mean_sem_12cond_overlap(DATA, strain, landing, sex, data_type);
-
-
-%% For running through multiple groups:
-
-for gp = 1:n_exp_groups
-
-    strain = gp_data{gp, 1};
-    landing = gp_data{gp, 2};
-    sex = gp_data{gp, 3};
-    
-    overlap_cond_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/protocol_10/12cond_overlap';
-    if ~isfolder(overlap_cond_save_folder)
-        mkdir(overlap_cond_save_folder);
-    end
- 
-    % Plot the 6 conditions for each trial length overlapped.
-    for typ = [1,2,4] %1:length(data_types)
+if protocol == "protocol_14"
+    % - - - protocol 14 - different interval stimuli
+    for typ = 1:4
         data_type = data_types{typ};
-        f = plot_mean_sem_12cond_overlap(DATA, strain, landing, sex, data_type);
-        saveas(f, fullfile(overlap_cond_save_folder, strcat(strain, '_',landing, '_', sex, '_', data_type, '.png')))
+        f_xcond = plot_mean_sem_12cond_overlap_diff_intervals(DATA, strain, landing, sex, data_type);
+        savefig(f_xcond, fullfile(Xcond_save_folder, strcat(strain, '_',landing, '_', sex, '_', data_type)))
     end 
-
+elseif protocol == "protocol_19"
+    for typ = 1:4
+        data_type = data_types{typ};
+        % - - - protocol 19 - ON / OFF stimuli
+        % Compare each stimuli at the 2 speeds - 5 x 1 plot. 2 speeds overlaid. 
+        % f_speed_overlap = plot_mean_sem_cond_overlap_protocol19(DATA, strain, landing, sex, data_type);
+        
+        % Compare all stimuli at the same speed. 1 x 2 plot for the 4Hz & 8Hz
+        % stimuli. 
+        f_xcond = plot_mean_sem_overlap_2speeds_v19(DATA, strain, landing, sex, data_type);
+        savefig(f_xcond, fullfile(Xcond_save_folder, strcat(strain, '_',landing, '_', sex, '_', data_type)))
+    end 
+else
+    for typ = 1:4
+        data_type = data_types{typ};
+        % - - - other protocols - must be based on protocol 10 condition structure:
+        f_xcond = plot_mean_sem_12cond_overlap(DATA, strain, landing, sex, data_type);
+        savefig(f_xcond, fullfile(Xcond_save_folder, strcat(strain, '_',landing, '_', sex, '_', data_type)))
+    end 
 end 
 
 
+
+%% For running through multiple groups:
+% 
+% for gp = 1:n_exp_groups
+% 
+%     strain = gp_data{gp, 1};
+%     landing = gp_data{gp, 2};
+%     sex = gp_data{gp, 3};
+% 
+%     overlap_cond_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/protocol_10/12cond_overlap';
+%     if ~isfolder(overlap_cond_save_folder)
+%         mkdir(overlap_cond_save_folder);
+%     end
+% 
+%     % Plot the 6 conditions for each trial length overlapped.
+%     for typ = [1,2,4] %1:length(data_types)
+%         data_type = data_types{typ};
+%         f = plot_mean_sem_12cond_overlap(DATA, strain, landing, sex, data_type);
+%         saveas(f, fullfile(overlap_cond_save_folder, strcat(strain, '_',landing, '_', sex, '_', data_type, '.png')))
+%     end 
+% 
+% end 
+% 
+% 
 
 
 
@@ -107,14 +127,16 @@ end
 % gps2plot = [2, 10, 12]; % T4T5 males
 % gps2plot = [1, 13, 19]; % l1l4 females
 % gps2plot = [2, 14, 20]; % l1l4 males
-gps2plot = [21, 22, 23]; % RNAi
+% gps2plot = [21, 22, 23]; % RNAi
+% gps2plot = [1,2]; % csw1118 M F
 
+gps2plot = [23, 24, 25];
 
 % If saving the figures - create a folder to save them in:
-% cond_across_grps_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/protocol_10/12cond_groups_241212';
-% if ~isfolder(cond_across_grps_save_folder)
-%     mkdir(cond_across_grps_save_folder);
-% end
+Xgrp_save_folder = strcat('/Users/burnettl/Documents/Projects/oaky_cokey/figures/', protocol, "/Xgrp");
+if ~isfolder(Xgrp_save_folder)
+    mkdir(Xgrp_save_folder);
+end
 
 % Condition parameters for protocol 19: 
 params =[60, 4, 15; % 60 deg gratings 
@@ -129,66 +151,23 @@ params =[60, 4, 15; % 60 deg gratings
         20, 8, 15;
         ];
 
-plot_sem = 0;
-
+plot_sem = 1;
 
 data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_trav', 'heading_data', 'vel_data'};
 
-
 % For protocol 19 - ON / OFF
-f5 = plot_allcond_acrossgroups(DATA, gp_data, params, data_type, gps2plot, plot_sem);
-
-
 for typ = 1:4
     data_type = data_types{typ};
-    % For protocol 10:
-    f = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem);
+    % f_grp_overlap = plot_allcond_acrossgroups(DATA, gp_data, params, data_type, gps2plot, plot_sem);
+    f_xgrp = plot_allcond_acrossgroups_tuning(DATA, gp_data, params, data_type, gps2plot, plot_sem);
+    savefig(f_xgrp, fullfile(Xgrp_save_folder, strcat(join(string(gps2plot), "-"), '_',landing, '_', sex, '_', data_type)));
+end
+
+% For protocol 10:
+for typ = 1:4
+    data_type = data_types{typ};
+    f_xgrp = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem);
 end 
 
-
-
-% gp2 = [1,2,7; 1,3,4; 1,5,6];
-% group_titles = {'CS_L1L4', 'CS_ES', 'CS_T4T5'};
-% group_titles = {'csw1118', 'RNAi_control', 'RNAi_mmd', 'RNAi_ttl'};
-% 
-% for gps = 1:3
-%     gps2plot = gp2(gps, :);
-%     titl = group_titles{gps};
-% 
-%     for typ = 2:length(data_types)
-%         data_type = data_types{typ};
-% 
-%         plot_sem = false;
-% 
-%         f2 = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem);
-%         saveas(f2, fullfile(cond_across_grps_save_folder, strcat(titl, '_', data_type, '.png')))
-%     end 
-% 
-% end 
-
-% 
-% gps2plot = [1, 2]; % l1l4 females
-% 
-% data_types =  {'dist_data', 'dist_trav', 'heading_data', 'av_data', 'vel_data'};
-% 
-% for typ = 1 %2:length(data_types)
-% 
-%     data_type = data_types{typ};
-% 
-%     plot_sem = false;
-% 
-%     f2 = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem);
-%     saveas(f2, fullfile(cond_across_grps_save_folder, strcat(titl, '_', data_type, '.png')))
-% end 
-% 
-% 
-% for typ = 1:length(data_types)
-%     data_type = data_types{typ};
-%     plot_sem = false;
-%     f = plot_mean_sem_diff_intervals(DATA, data_type, plot_sem);
-% end 
-% 
-% 
-% 
 
 

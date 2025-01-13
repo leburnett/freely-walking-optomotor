@@ -112,7 +112,7 @@ function f = plot_mean_sem_12cond_overlap_diff_intervals(DATA, strain, landing, 
                 ylb = 'Distance travelled (mm)';
                 lw = 1; 
             elseif data_type == "av_data"
-                rng = [-15 15];
+                rng = [-100 100];
                 ylb = "Angular velocity (deg s-1)";
                 lw = 2;
             elseif data_type == "heading_data"
@@ -123,6 +123,14 @@ function f = plot_mean_sem_12cond_overlap_diff_intervals(DATA, strain, landing, 
                 rng = [0 30];
                 ylb = "Velocity (mm s-1)";
                 lw = 1.5;
+            elseif data_type == "fv_data"
+                rng = [0 30];
+                ylb = "Forward velocity (mm s-1)";
+                lw = 1;
+            elseif data_type == "curv_data"
+                rng = [-100 100];
+                ylb = "Turning rate (deg mm-1)";
+                lw = 1;
             end
 
             subplot(1,3,1:2)

@@ -136,7 +136,8 @@ function DATA = comb_data_across_cohorts_cond_v14(protocol_dir)
 
                 str_cond = strcat('rep', string(rep), '_cond', string(log_n));
 
-                start_f = Log.start_f(st_row);
+                framesb4 = 300; % include 10s before the start of the trial in the data
+                start_f = Log.start_f(st_row)-framesb4;
                 stop_f = Log.stop_f(end_row);
         
                 DATA.(strain).(landing).(sex)(sz).(str_cond).trial_len = LOG.trial_len;

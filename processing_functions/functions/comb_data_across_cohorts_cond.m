@@ -84,6 +84,7 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
     for idx = 1:n_files
         
         fname = filelist(idx).name;
+        disp(fname)
         f_folder = filelist(idx).folder; 
     
         % Load 'combined_data', 'LOG', 'feat' and 'trx'
