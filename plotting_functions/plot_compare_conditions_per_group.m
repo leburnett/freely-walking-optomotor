@@ -52,7 +52,7 @@ if ~isfolder(Xcond_save_folder)
     mkdir(Xcond_save_folder);
 end
 
-gp = 23; % csw1118 females
+gp = 22; % csw1118 females
 
 strain = gp_data{gp, 1};
 landing = gp_data{gp, 2};
@@ -124,13 +124,13 @@ end
 % gps2plot = [1,3,7]; % ES females
 % gps2plot = [2,4,8]; % ES males
 % gps2plot = [1, 9, 11]; % T4T5 females
-% gps2plot = [2, 10, 12]; % T4T5 males
-% gps2plot = [1, 13, 19]; % l1l4 females
+gps2plot = [2, 10, 12]; % T4T5 males
+% gps2plot = [1,2,15,16]; % l1l4 females
 % gps2plot = [2, 14, 20]; % l1l4 males
 % gps2plot = [21, 22, 23]; % RNAi
 % gps2plot = [1,2]; % csw1118 M F
 
-gps2plot = [23, 24, 25];
+% gps2plot = [23, 24, 25];
 
 % If saving the figures - create a folder to save them in:
 Xgrp_save_folder = strcat('/Users/burnettl/Documents/Projects/oaky_cokey/figures/', protocol, "/Xgrp");
@@ -160,13 +160,14 @@ for typ = 1:4
     data_type = data_types{typ};
     % f_grp_overlap = plot_allcond_acrossgroups(DATA, gp_data, params, data_type, gps2plot, plot_sem);
     f_xgrp = plot_allcond_acrossgroups_tuning(DATA, gp_data, params, data_type, gps2plot, plot_sem);
-    savefig(f_xgrp, fullfile(Xgrp_save_folder, strcat(join(string(gps2plot), "-"), '_',landing, '_', sex, '_', data_type)));
+    % savefig(f_xgrp, fullfile(Xgrp_save_folder, strcat(join(string(gps2plot), "-"), '_', data_type)));
 end
 
 % For protocol 10:
 for typ = 1:4
     data_type = data_types{typ};
     f_xgrp = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem);
+    savefig(f_xgrp, fullfile(Xgrp_save_folder, strcat(join(string(gps2plot), "-"), '_', data_type)));
 end 
 
 

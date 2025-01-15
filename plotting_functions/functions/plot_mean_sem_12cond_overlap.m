@@ -35,10 +35,10 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, landing, sex, data_type)
     t = tiledlayout(1,6);
     t.TileSpacing = 'compact';
 
-    cond_order = [1,3,4,2,5,7,8,6,9,11,12,10];
+    cond_order = [1,3,4,2,5,7,8,6,9,12,11,10];
 
     % Run through the different conditions: 
-    for idx2 = 1:1:n_cond
+    for idx2 = 1:1:numel(cond_order)
         cond = cond_order(idx2);
 
         rep1_str = strcat('R1_condition_', string(cond));   
@@ -101,19 +101,19 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, landing, sex, data_type)
        
             % % % % Mean +/- SEM PLOT 
             mean_data = nanmean(cond_data);
+            sem_data = nanstd(cond_data)/sqrt(size(cond_data,1));
     
             if data_type == "dist_trav"
                 mean_data = movmean(mean_data, 5);
             end 
     
-            sem_data = nanstd(cond_data)/sqrt(size(cond_data,1));
-            y1 = mean_data+sem_data;
-            y2 = mean_data-sem_data;
+            % y1 = mean_data+sem_data;
+            % y2 = mean_data-sem_data;
             nf_comb = size(cond_data, 2);
-            x = 1:1:nf_comb;
+            % x = 1:1:nf_comb;
         
             % Plot subplot for condition
-            if ismember(idx2, [1,3,5,7,9,11])
+            if p(3) == 2
                 subpl = 1:2;
             else
                 subpl = 4:5;
@@ -121,18 +121,18 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, landing, sex, data_type)
     
             subplot(1,6,subpl)
     
-            if ismember(idx2, [1,2])
+            if ismember(idx2, [5, 6]) % 30 deg - 4 hz
                 col = 'k';
-            elseif ismember(idx2, [3,4])
+            elseif ismember(idx2, [7, 8]) % 30 deg - 8Hz
                 col = [0.8 0.8 0.8];
-            elseif ismember(idx2, [5,6])
-                col = [1 0.6 0.6]; %[0 0.6 0];
-            elseif ismember(idx2, [7,8])
-                col = [0.8 0 0]; %[0.6 0.8 0.6];
-            elseif ismember(idx2, [9, 10])
+            elseif ismember(idx2, [1, 2]) % 60 deg - 4hz
+                col = [0.8 0 0];
+            elseif ismember(idx2, [3, 4]) % 60 deg - 8hz
+                col = [1 0.6 0.6];
+            elseif ismember(idx2, [9, 11]) % 15 deg 4Hz
                 col = [0 0 0.5];
-            elseif ismember(idx2, [11, 12])
-                col = [0.6 0.8 0.9];
+            elseif ismember(idx2, [10, 12]) % 15 deg 8 Hz
+                col = [0.6 0.8 1.0];
             end 
     
             if data_type == "dist_data"
@@ -160,7 +160,7 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, landing, sex, data_type)
                 ylb = "Forward velocity (mm s-1)";
                 lw = 1;
             elseif data_type == "curv_data"
-                rng = [-130 130];
+                rng = [-200 200];
                 ylb = "Turning rate (deg mm-1)";
                 lw = 1;
             end
@@ -175,7 +175,7 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, landing, sex, data_type)
             % When flicker stimulus started:
             fl = ceil(mean(fl_start_f));
     
-            if idx2>n_cond-2
+            if idx2>n_cond-3
                 plot([300 300], rng, 'k', 'LineWidth', 0.5)
                 plot([fl fl], rng, 'k', 'LineWidth', 0.5)
                 if data_type == "dist_data"
@@ -197,7 +197,7 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, landing, sex, data_type)
             % % % % % Errorbar plot of MEAN + SEM 
     
             % Plot subplot for condition
-            if ismember(idx2, [1,3,5,7,9,11])
+            if p(3) == 2
                 subpl2 = 3;
             else
                 subpl2 = 6;
@@ -217,7 +217,7 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, landing, sex, data_type)
                 mean_data = abs(mean_data);
                 sem_data = abs(sem_data);
             end 
-    
+
             mean_pre = mean(mean_data(1:300));
             sem_pre = mean(sem_data(1:300));
     
@@ -239,50 +239,50 @@ function f = plot_mean_sem_12cond_overlap(DATA, strain, landing, sex, data_type)
                 sem_stim2 = mean(sem_data(750:fl));
             end 
     
-           jt3 = rand(1)/4;
-            % Add the scatter / error bar plot.
-            errorbar(0.875+jt3, mean_pre, sem_pre, 'Color', col, 'LineWidth', 1.2)
-            hold on
-            % scatter(1, mean_stim, 60, col, 'Marker', 'o', 'LineWidth', 1.2, 'MarkerFaceColor', col, 'MarkerFaceAlpha', 0.2)
-            scatter(0.875+jt3, mean_pre, 120, col, 'Marker', '_', 'LineWidth', 2)
-    
-            jt1 = rand(1)/4;
-            % Add the scatter / error bar plot.
-            errorbar(1.875+jt1, mean_stim1, sem_stim1, 'Color', col, 'LineWidth', 1.2)
-            hold on
-            scatter(1.875+jt1, mean_stim1, 120, col, 'Marker', '_', 'LineWidth', 2)
-    
-            jt4 = rand(1)/4;
-            % Add the scatter / error bar plot.
-            errorbar(2.875+jt4, mean_stim2, sem_stim2, 'Color', col, 'LineWidth', 1.2)
-            hold on
-            scatter(2.875+jt4, mean_stim2, 120, col, 'Marker', '_', 'LineWidth', 2)
-    
-            jt2 = rand(1)/4;
-            errorbar(3.875+jt2, mean_flicker, sem_flicker, 'Color', col, 'LineWidth', 1.2)
-            hold on
-            % scatter(1.875+jt2, mean_flicker, 60, col, 'Marker', 'o', 'LineWidth', 1.2, 'MarkerFaceColor', col, 'MarkerFaceAlpha', 0.2)
-            scatter(3.875+jt2, mean_flicker, 120, col, 'Marker', '_', 'LineWidth', 2)
-    
-            plot([0.875+jt3, 1.875+jt1, 2.875+jt4, 3.875+jt2], [mean_pre, mean_stim1, mean_stim2, mean_flicker], '-', 'LineWidth', 1.2, 'Color', col)
-                
-            if data_type == "dist_data"
-                plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
-            elseif data_type == "av_data" || data_type == "curv_data"
-                plot([0 nf_comb], [0 0], 'k:', 'LineWidth', 0.5)
-            end 
-    
-            xlim([0.5 4.5])
-            box off
-            ylim(rng)
-            ax = gca; 
-            ax.YAxis.Visible = 'off';
-            ax.TickDir = 'out';
-            ax.TickLength = [0.015 0.015]; 
-            ax.LineWidth = 1; 
-            ax.FontSize = 12;
-    
-            xticks([1,2,3,4])
+        jt3 = rand(1)/4;
+        % Add the scatter / error bar plot.
+        errorbar(0.875+jt3, mean_pre, sem_pre, 'Color', col, 'LineWidth', 1.2)
+        hold on
+        % scatter(1, mean_stim, 60, col, 'Marker', 'o', 'LineWidth', 1.2, 'MarkerFaceColor', col, 'MarkerFaceAlpha', 0.2)
+        scatter(0.875+jt3, mean_pre, 120, col, 'Marker', '_', 'LineWidth', 2)
+
+        jt1 = rand(1)/4;
+        % Add the scatter / error bar plot.
+        errorbar(1.875+jt1, mean_stim1, sem_stim1, 'Color', col, 'LineWidth', 1.2)
+        hold on
+        scatter(1.875+jt1, mean_stim1, 120, col, 'Marker', '_', 'LineWidth', 2)
+
+        jt4 = rand(1)/4;
+        % Add the scatter / error bar plot.
+        errorbar(2.875+jt4, mean_stim2, sem_stim2, 'Color', col, 'LineWidth', 1.2)
+        hold on
+        scatter(2.875+jt4, mean_stim2, 120, col, 'Marker', '_', 'LineWidth', 2)
+
+        jt2 = rand(1)/4;
+        errorbar(3.875+jt2, mean_flicker, sem_flicker, 'Color', col, 'LineWidth', 1.2)
+        hold on
+        % scatter(1.875+jt2, mean_flicker, 60, col, 'Marker', 'o', 'LineWidth', 1.2, 'MarkerFaceColor', col, 'MarkerFaceAlpha', 0.2)
+        scatter(3.875+jt2, mean_flicker, 120, col, 'Marker', '_', 'LineWidth', 2)
+
+        plot([0.875+jt3, 1.875+jt1, 2.875+jt4, 3.875+jt2], [mean_pre, mean_stim1, mean_stim2, mean_flicker], '-', 'LineWidth', 1.2, 'Color', col)
+            
+        if data_type == "dist_data"
+            plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
+        elseif data_type == "av_data" || data_type == "curv_data"
+            plot([0 nf_comb], [0 0], 'k:', 'LineWidth', 0.5)
+        end 
+
+        xlim([0.5 4.5])
+        box off
+        ylim(rng)
+        ax = gca; 
+        ax.YAxis.Visible = 'off';
+        ax.TickDir = 'out';
+        ax.TickLength = [0.015 0.015]; 
+        ax.LineWidth = 1; 
+        ax.FontSize = 12;
+
+        xticks([1,2,3,4])
         xticklabels({''})
         xticklabels({'B4', 'ST1', 'ST2','FL'})
         xtickangle(90)
