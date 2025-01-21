@@ -6,7 +6,7 @@ function f = plot_allcond_acrossgroups_tuning(DATA, gp_data, params, data_type, 
 
     % Generate new figure
     figure;
-    n_cond = height(params);
+    n_cond = length(params);
     t = tiledlayout(n_cond/2,6);
     t.TileSpacing = 'compact';
 
@@ -34,7 +34,7 @@ for gp = gps2plot
 
         if isfield(data, rep1_str)
 
-        p = params(idx2, :);
+        p = params{idx2};
 
         cond_data = [];
         nf_comb = size(cond_data, 2);
@@ -126,7 +126,7 @@ for gp = gps2plot
             ylb = "Velocity (mm s-1)";
             lw = 1;
         elseif data_type == "fv_data"
-            rng = [0 30];
+            rng = [0 22];
             ylb = "Forward velocity (mm s-1)";
             lw = 1;
         elseif data_type == "curv_data"
@@ -161,7 +161,7 @@ for gp = gps2plot
         box off
         ax = gca; ax.XAxis.Visible = 'off'; ax.TickDir = 'out'; ax.TickLength = [0.015 0.015]; ax.LineWidth = 1; ax.FontSize = 12;
 
-        title(strcat(string(p(1)), 'deg-', string(p(2)), 'Hz-', string(p(3)), 's'), 'FontSize', 11)
+        title(p, 'FontSize', 11)
 
         % where to position text annotation
         if rng(1)==0 && data_type~="fv_data"
@@ -275,17 +275,18 @@ for gp = gps2plot
         xlim([0.5 4.5])
         box off
         ylim(rng)
+        % ylim([-1 22])
         ax = gca; 
-        ax.YAxis.Visible = 'off';
+        % ax.YAxis.Visible = 'off';
         ax.TickDir = 'out';
-        ax.TickLength = [0.015 0.015]; 
+        ax.TickLength = [0.02 0.02]; 
         ax.LineWidth = 1; 
         ax.FontSize = 12;
 
         xticks([1,2,3,4])
         xticklabels({''})
-        xticklabels({'B4', 'ST1', 'ST2','FL'})
-        xtickangle(90)
+        xticklabels({'Acc', 'Dir1', 'Dir2','Int'})
+        % xtickangle(90)
 
         end 
 

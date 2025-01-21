@@ -1,6 +1,6 @@
 % Generate plots for protocol_10-type protocols: 
 
-protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_10';
+protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_19';
 cd(protocol_dir);
 
 strs = split(protocol_dir, '/');
@@ -13,15 +13,15 @@ else
 end 
 
 gp_data = {
-    'csw1118', 'none', 'F', [0.3 0.3 0.3]; % 1
+    'csw1118', 'none', 'F', [0.7 0.7 0.7]; % 1
     'csw1118', 'none', 'M', [0.7 0.7 0.7]; % 2
     'jfrc49_es_kir', 'attP2', 'F',  [0.51 0.32 0.57]; % 3
     'jfrc49_es_kir', 'attP2', 'M',  [0.51 0.32 0.57]; % 4  - - none?
     'jfrc49_es_kir', 'attP6', 'F',  [0.31 0.12 0.37]; % 5
     'jfrc49_es_kir', 'attP6', 'M',  [0.31 0.12 0.37]; % 6 - - - none at the moment.
-    'jfrc100_es_shibire', 'attP5', 'F', [0.85 0.4 0.7]; % 7
-    'jfrc100_es_shibire', 'attP5', 'M', [0.85 0.4 0.7]; % 8
-    'ss324_t4t5_kir', 'attP2', 'F', [0 0.4 0]; % 9
+    'jfrc100_es_shibire_kir', 'none', 'F', [0.85 0.4 0.7]; % 7
+    'jfrc100_es_shibire', 'none', 'M', [0.85 0.4 0.7]; % 8
+    'ss324_t4t5_kir', 'none', 'F', [0 0.4 0]; % 9
     'ss324_t4t5_kir', 'attP2', 'M', [0 0.4 0]; % 10
     'ss324_t4t5_shibire', 'attP5', 'F', [0.6 0.8 0.6]; % 11
     'ss324_t4t5_shibire', 'attP5', 'M', [0.6 0.8 0.6]; % 12
@@ -52,7 +52,7 @@ if ~isfolder(Xcond_save_folder)
     mkdir(Xcond_save_folder);
 end
 
-gp = 22; % csw1118 females
+gp = 1; % csw1118 females
 
 strain = gp_data{gp, 1};
 landing = gp_data{gp, 2};
@@ -75,7 +75,7 @@ elseif protocol == "protocol_19"
         % Compare all stimuli at the same speed. 1 x 2 plot for the 4Hz & 8Hz
         % stimuli. 
         f_xcond = plot_mean_sem_overlap_2speeds_v19(DATA, strain, landing, sex, data_type);
-        savefig(f_xcond, fullfile(Xcond_save_folder, strcat(strain, '_',landing, '_', sex, '_', data_type)))
+        % savefig(f_xcond, fullfile(Xcond_save_folder, strcat(strain, '_',landing, '_', sex, '_', data_type)))
     end 
 else
     for typ = 1:4
@@ -124,13 +124,14 @@ end
 % gps2plot = [1,3,7]; % ES females
 % gps2plot = [2,4,8]; % ES males
 % gps2plot = [1, 9, 11]; % T4T5 females
-gps2plot = [2, 10, 12]; % T4T5 males
+% gps2plot = [2, 10, 12]; % T4T5 males
 % gps2plot = [1,2,15,16]; % l1l4 females
 % gps2plot = [2, 14, 20]; % l1l4 males
 % gps2plot = [21, 22, 23]; % RNAi
 % gps2plot = [1,2]; % csw1118 M F
 
-% gps2plot = [23, 24, 25];
+% gps2plot = [23, 24, 25, 9];
+gps2plot = [1,7,9,13];
 
 % If saving the figures - create a folder to save them in:
 Xgrp_save_folder = strcat('/Users/burnettl/Documents/Projects/oaky_cokey/figures/', protocol, "/Xgrp");
@@ -151,6 +152,18 @@ params =[60, 4, 15; % 60 deg gratings
         20, 8, 15;
         ];
 
+cond_titles = {"60deg gratings - 4Hz"...
+    , "60deg gratings - 8Hz"...
+    , "ON curtain - 4Hz"...
+    , "ON curtain - 8Hz"...
+    , "OFF curtain - 4Hz"...
+    , "OFF curtain - 8Hz"...
+    , "2pix ON bar - 4Hz"...
+    , "2pix ON bar - 8Hz"...
+    , "2pix OFF bar - 4Hz"...
+    , "2pix OFF bar - 8Hz"...
+    };
+
 plot_sem = 1;
 
 data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_trav', 'heading_data', 'vel_data'};
@@ -159,9 +172,11 @@ data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_trav', 'hea
 for typ = 1:4
     data_type = data_types{typ};
     % f_grp_overlap = plot_allcond_acrossgroups(DATA, gp_data, params, data_type, gps2plot, plot_sem);
-    f_xgrp = plot_allcond_acrossgroups_tuning(DATA, gp_data, params, data_type, gps2plot, plot_sem);
+    f_xgrp = plot_allcond_acrossgroups_tuning(DATA, gp_data, cond_titles, data_type, gps2plot, plot_sem);
     % savefig(f_xgrp, fullfile(Xgrp_save_folder, strcat(join(string(gps2plot), "-"), '_', data_type)));
 end
+close all
+
 
 % For protocol 10:
 for typ = 1:4
