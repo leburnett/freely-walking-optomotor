@@ -8,7 +8,7 @@ function Log = present_optomotor_stimulus_curtain(current_condition, all_conditi
  trial_len = all_conditions(current_condition, 5);
  which_condition = all_conditions(current_condition, 6);
 
-t_flicker = 1; 
+t_flicker = 30; 
 t_pause = 0.015;
 
 if trial_len == 2

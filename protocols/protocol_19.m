@@ -7,7 +7,7 @@ clear
 d = initialize_temp_recording();
 
 % Protocol parameters: 
-t_acclim = 1; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+t_acclim = 20; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 t_pause = 0.015;
 
 % T4T5 experiments: 
@@ -21,16 +21,16 @@ t_pause = 0.015;
 all_conditions = [ 
     9, 10, 64, 8, 15, 1; % grating - 60 deg
     9, 10, 127, 8, 15, 2;
-    4, 10, 64, 8, 15, 11; % grating - 15 deg
-    4, 10, 127, 8, 15, 12;
-    19, 10, 64, 8, 15, 3; % ON curtain
-    19, 10, 127, 8, 15, 4;
-    20, 10, 64, 8, 15, 5; % OFF curtain 
-    20, 10, 127, 8, 15, 6;
-    17, 10, 64, 8, 15, 7; % 2ON 14OFF grating - jan 25 changed flicker from 18 -> 10
-    17, 10, 127, 8, 15, 8;
-    24, 10, 64, 8, 15, 9; % 2OFF 14ON grating - jan 25 changed flicker from 18 -> 10
-    24, 10, 127, 8, 15, 10;
+    4, 10, 64, 8, 15, 11; % grating - 15 deg - - 3
+    4, 10, 127, 8, 15, 12; % - - 4
+    19, 10, 64, 8, 15, 3; % ON curtain - - 5
+    19, 10, 127, 8, 15, 4; % - - 6
+    20, 10, 64, 8, 15, 5; % OFF curtain - - 7
+    20, 10, 127, 8, 15, 6; % - - 8
+    17, 10, 64, 8, 15, 7; % 2ON 14OFF grating - - 9
+    17, 10, 127, 8, 15, 8; % - - 10
+    24, 10, 64, 8, 15, 9; % 2OFF 14ON grating - - 11
+    24, 10, 127, 8, 15, 10; %  - - 12
 ];  
 
 num_conditions = height(all_conditions); 

@@ -14,7 +14,7 @@ function Log = present_optomotor_stimulus(current_condition, all_conditions, vid
  % disp (flicker_speed);
  % disp (trial_len);
 
-t_flicker = 1; 
+t_flicker = 30; 
 t_pause = 0.015;
 
 if trial_len == 2
