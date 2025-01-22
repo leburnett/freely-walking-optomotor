@@ -14,7 +14,7 @@ arena_temp = 24.8;
 
 % Protocol parameters:
 trial_len = 10; 
-t_acclim = 60;
+t_acclim = 10;
 t_flicker = 10;
 num_trials_per_block = 7;
 num_directions = 2; 
@@ -24,7 +24,7 @@ num_acclim = 3;
 
 % Pattern settings
 optomotor_pattern = 1;
-flicker_pattern = 2;
+flicker_pattern = 7;
 optomotor_speed = 64; % in frames per second
 flicker_speed = 8;
 

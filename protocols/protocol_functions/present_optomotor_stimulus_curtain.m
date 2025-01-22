@@ -1,4 +1,4 @@
-function Log = present_optomotor_stimulus(current_condition, all_conditions, vidobj)
+function Log = present_optomotor_stimulus_curtain(current_condition, all_conditions, vidobj)
 
 % set condition variables based on row in all conditions
  optomotor_pattern = all_conditions(current_condition, 1);
@@ -7,12 +7,6 @@ function Log = present_optomotor_stimulus(current_condition, all_conditions, vid
  flicker_speed = all_conditions(current_condition, 4);
  trial_len = all_conditions(current_condition, 5);
  which_condition = all_conditions(current_condition, 6);
-
- % disp (optomotor_pattern); 
- % disp (flicker_pattern);
- % disp (optomotor_speed);
- % disp (flicker_speed);
- % disp (trial_len);
 
 t_flicker = 1; 
 t_pause = 0.015;
@@ -26,16 +20,31 @@ end
 idx_value = 1;
 %%%%% 
 
+% Set the pattern number
 Panel_com('set_pattern_id', optomotor_pattern); pause(t_pause)
 
 % Start stimulus 
 dir_val = -1;
+
 for tr_ind = 1:num_trials
+
+    % If the pattern is a 'curtain' pattern - then change to the other
+    % pattern for the opposite direction.
+    if tr_ind == 2 && which_condition > 2 % For the reverse direction of a 'curtain' stimulus.
+
+        if optomotor_pattern == 19
+            reverse_pattern = 20; 
+        elseif optomotor_pattern == 20 
+            reverse_pattern = 19;
+        end 
+        
+        Panel_com('set_pattern_id', reverse_pattern); pause(t_pause)
+    end 
 
     disp(['trial number = ' num2str(tr_ind)])
 
     dir_val = dir_val*-1;
-    % JFRC49_ES
+
     % Log
     Log.trial(idx_value) = idx_value;
     Log.dir(idx_value) = dir_val;
