@@ -130,8 +130,8 @@ end
 % gps2plot = [21, 22, 23]; % RNAi
 % gps2plot = [1,2]; % csw1118 M F
 
-% gps2plot = [23, 24, 25, 9];
-gps2plot = [1,7,9,13];
+gps2plot = [23, 24, 25];
+% gps2plot = [1,7,9,13];
 
 % If saving the figures - create a folder to save them in:
 Xgrp_save_folder = strcat('/Users/burnettl/Documents/Projects/oaky_cokey/figures/', protocol, "/Xgrp");

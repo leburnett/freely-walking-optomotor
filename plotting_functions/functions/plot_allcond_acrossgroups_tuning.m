@@ -126,7 +126,7 @@ for gp = gps2plot
             ylb = "Velocity (mm s-1)";
             lw = 1;
         elseif data_type == "fv_data"
-            rng = [0 22];
+            rng = [0 20];
             ylb = "Forward velocity (mm s-1)";
             lw = 1;
         elseif data_type == "curv_data"
@@ -161,7 +161,7 @@ for gp = gps2plot
         box off
         ax = gca; ax.XAxis.Visible = 'off'; ax.TickDir = 'out'; ax.TickLength = [0.015 0.015]; ax.LineWidth = 1; ax.FontSize = 12;
 
-        title(p, 'FontSize', 11)
+        % title(p, 'FontSize', 11)
 
         % where to position text annotation
         if rng(1)==0 && data_type~="fv_data"
