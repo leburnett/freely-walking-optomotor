@@ -298,7 +298,7 @@ for gp = gps2plot
         ylb = 'Distance travelled (mm)';
         lw = 1; 
     elseif data_type == "av_data"
-        rng = [-60 60];
+        rng = [-5 160];
         ylb = "Angular velocity (deg s-1)";
         lw = 1;
     elseif data_type == "heading_data"
@@ -328,7 +328,7 @@ for gp = gps2plot
     if value_to_plot == "var"
         mean_data = nanvar(d1')';
     elseif value_to_plot == "mean"
-        mean_data = nanmean(d1, 2);
+        mean_data = nanmean(abs(d1), 2);
     end 
     mean_gp = mean(mean_data);
     n_ind = size(d1, 1);
@@ -340,7 +340,7 @@ for gp = gps2plot
         if value_to_plot == "var"
             mean_ind = nanvar(d1(id, :));
         elseif value_to_plot == "mean"
-            mean_ind = nanmean(d1(id, :));
+            mean_ind = nanmean(abs(d1(id, :)));
         end 
         plot(jit_num, mean_ind, 'o', 'Color', [0.88 0.88 0.88], 'MarkerSize', 8);
         hold on
@@ -375,7 +375,7 @@ for gp = gps2plot
     if value_to_plot == "var"
         mean_data = nanvar(d2')';
     elseif value_to_plot == "mean"
-        mean_data = nanmean(d2, 2);
+        mean_data = nanmean(abs(d2), 2);
     end 
     mean_gp = mean(mean_data);
     n_ind = size(d2, 1);
@@ -387,7 +387,7 @@ for gp = gps2plot
         if value_to_plot == "var"
             mean_ind = nanvar(d2(id, :));
         elseif value_to_plot == "mean"
-            mean_ind = nanmean(d2(id, :));
+            mean_ind = nanmean(abs(d2(id, :)));
         end
         plot(jit_num, mean_ind, 'o', 'Color', [0.88 0.88 0.88], 'MarkerSize', 8);
         hold on
@@ -419,7 +419,7 @@ for gp = gps2plot
     if value_to_plot == "var"
         mean_data = nanvar(d3')';
     elseif value_to_plot == "mean"
-        mean_data = nanmean(d3, 2);
+        mean_data = nanmean(abs(d3), 2);
     end 
     mean_gp = mean(mean_data);
     n_ind = size(d3, 1);
@@ -431,7 +431,7 @@ for gp = gps2plot
         if value_to_plot == "var"
             mean_ind = nanvar(d3(id, :));
         elseif value_to_plot == "mean"
-            mean_ind = nanmean(d3(id, :));
+            mean_ind = nanmean(abs(d3(id, :)));
         end
         plot(jit_num, mean_ind, 'o', 'Color', [0.88 0.88 0.88], 'MarkerSize', 8);
         hold on
@@ -525,6 +525,10 @@ for grp = 1:n_gps
         d3 = vertcat(d3, data3); % acclim OFF 2
 
     end 
+
+    d1 = abs(d1);
+    d2 = abs(d2);
+    d3 = abs(d3);
 
     mean_off1(1:size(d1, 1), grp) = nanmean(d1,2);   
     mean_patt(1:size(d2, 1), grp) = nanmean(d2,2); 

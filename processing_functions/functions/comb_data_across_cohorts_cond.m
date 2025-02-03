@@ -52,18 +52,32 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
     %         17, 18, 127, 8, 15, 8;
     %     ];
     elseif protocol == "protocol_19" % AFTER JAN 2025
-        cond_array =  [
-            9, 10, 64, 8, 15, 1; % normal stripes - wide
+        % cond_array =  [
+        %     9, 10, 64, 8, 15, 1; % normal stripes - wide
+        %     9, 10, 127, 8, 15, 2;
+        %     19, 10, 64, 8, 15, 3; % ON curtain
+        %     19, 10, 127, 8, 15, 4;
+        %     20, 10, 64, 8, 15, 5; % OFF curtain
+        %     20, 10, 127, 8, 15, 6;
+        %     17, 10, 64, 8, 15, 7; % 2ON 14OFF grating
+        %     17, 10, 127, 8, 15, 8;
+        %     24, 10, 64, 8, 15, 9; % 2OFF 14ON grating
+        %     24, 10, 127, 8, 15, 10;
+        % ];
+        cond_array = [
+            9, 10, 64, 8, 15, 1; % grating - 60 deg
             9, 10, 127, 8, 15, 2;
-            19, 10, 64, 8, 15, 3; % ON curtain
-            19, 10, 127, 8, 15, 4;
-            20, 10, 64, 8, 15, 5; % OFF curtain
-            20, 10, 127, 8, 15, 6;
-            17, 10, 64, 8, 15, 7; % 2ON 14OFF grating
-            17, 10, 127, 8, 15, 8;
-            24, 10, 64, 8, 15, 9; % 2OFF 14ON grating
-            24, 10, 127, 8, 15, 10;
-        ];
+            19, 10, 64, 8, 15, 3; % ON curtain - - 5
+            19, 10, 127, 8, 15, 4; % - - 6
+            20, 10, 64, 8, 15, 5; % OFF curtain - - 7
+            20, 10, 127, 8, 15, 6; % - - 8
+            17, 10, 64, 8, 15, 7; % 2ON 14OFF grating - - 9
+            17, 10, 127, 8, 15, 8; % - - 10
+            24, 10, 64, 8, 15, 9; % 2OFF 14ON grating - - 11
+            24, 10, 127, 8, 15, 10; %  - - 12
+            4, 10, 64, 8, 15, 11; % grating - 15 deg - - 3
+            4, 10, 127, 8, 15, 12; % - - 4
+            ];
     end 
 
     % Find all processed data for one protocol. 
@@ -143,6 +157,12 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         if start_f ==0 
             start_f = 1;
         end 
+
+        if Log.stop_t(end)<3
+            stop_f = 600; %
+        else
+            stop_f = Log.stop_f(end);
+        end
         stop_f = Log.stop_f(end);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.vel_data = comb_data.vel_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.fv_data = comb_data.fv_data(:, start_f:stop_f);
@@ -201,8 +221,15 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
                 params = [optomotor_pattern, flicker_pattern, opto_speed, flick_speed, trial_len];
                 condition_n = find(ismember(cond_array, params, 'rows'));
             end 
+            disp(condition_n)
 
-            framesb4 = 300; % include 10s before the start of the trial in the data
+            if LOG.acclim_off1.stop_t(end)<3 && log_n == 1
+                framesb4 = 0;
+            else
+                framesb4 = 300;
+            end
+            % framesb4 = 300; % include 10s before the start of the trial in the data
+
             start_f = Log.start_f(1)-framesb4;
             stop_f = Log.stop_f(end);
 
@@ -231,16 +258,16 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         Log = LOG.acclim_off2;
         start_f = Log.start_f(1);
         stop_f = Log.stop_f(end);
-        DATA.(strain).(landing).(sex)(sz).acclim_off2.vel_data = comb_data.vel_data(:, start_f:stop_f);
-        DATA.(strain).(landing).(sex)(sz).acclim_off2.fv_data = comb_data.fv_data(:, start_f:stop_f);
-        DATA.(strain).(landing).(sex)(sz).acclim_off2.dist_data = comb_data.dist_data(:, start_f:stop_f);
-        DATA.(strain).(landing).(sex)(sz).acclim_off2.dist_trav = comb_data.dist_trav(:, start_f:stop_f);
-        DATA.(strain).(landing).(sex)(sz).acclim_off2.av_data = comb_data.av_data(:, start_f:stop_f);
-        DATA.(strain).(landing).(sex)(sz).acclim_off2.curv_data = comb_data.curv_data(:, start_f:stop_f);
-        DATA.(strain).(landing).(sex)(sz).acclim_off2.heading_data = comb_data.heading_data(:, start_f:stop_f);
-        DATA.(strain).(landing).(sex)(sz).acclim_off2.heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
-        DATA.(strain).(landing).(sex)(sz).acclim_off2.x_data = comb_data.x_data(:, start_f:stop_f);
-        DATA.(strain).(landing).(sex)(sz).acclim_off2.y_data = comb_data.y_data(:, start_f:stop_f);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.vel_data = comb_data.vel_data(:, start_f:end);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.fv_data = comb_data.fv_data(:, start_f:end);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.dist_data = comb_data.dist_data(:, start_f:end);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.dist_trav = comb_data.dist_trav(:, start_f:end);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.av_data = comb_data.av_data(:, start_f:end);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.curv_data = comb_data.curv_data(:, start_f:end);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.heading_data = comb_data.heading_data(:, start_f:end);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.heading_wrap = comb_data.heading_wrap(:, start_f:end);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.x_data = comb_data.x_data(:, start_f:end);
+        DATA.(strain).(landing).(sex)(sz).acclim_off2.y_data = comb_data.y_data(:, start_f:end);
     
     end 
 
