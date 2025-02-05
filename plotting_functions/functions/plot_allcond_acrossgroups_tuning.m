@@ -12,6 +12,7 @@ function f = plot_allcond_acrossgroups_tuning(DATA, gp_data, params, data_type, 
         data_type = "dist_data";
         delta = 1;
         d_fv = 1;
+        plot_sem = 0;
     else 
         delta = 0;
         d_fv = 0;

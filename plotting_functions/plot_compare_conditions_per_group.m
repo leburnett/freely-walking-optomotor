@@ -42,53 +42,120 @@ gp_data = {
     'l1l4_jfrc100_shibire_kir', 'none', 'M', [0.4 0.8 1]; % 27
     };
 
-n_exp_groups = height(gp_data);
+%% Compare the responses of multiple experimental groups to the same condition. 
+% Generate a plot of multiple different conditions - as above - but with
+% different coloured lines for the different experimental groups: 
 
-data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_trav', 'heading_data', 'vel_data'};
+% The indices of the different groups to plot: 
+close all
+% gps2plot = [3, 7]; % ES Kir versus ES Shibire kir
+% gps2plot = [9, 13]; % T4T5 Kir versus T4T5 Shibire kir
+% gps2plot = [15, 26]; % L1L4 Kir versus L1L4 Shibire kir
+
+% gps2plot= [7, 13, 26]; % compare 3 dbl effectors
+gps2plot= [3, 9, 15]; % compare 3 kir effectors
+
+grp_title = "ES_T4T5_L1L4_kir";
+
+% Store figures in folders of the day that they were created too. Can go
+% back and look at previous versions. 
+date_str = string(datetime('now','TimeZone','local','Format','yyyy_MM_dd'));
+
+% If saving the figures - create a folder to save them in:
+Xgrp_save_folder = strcat('/Users/burnettl/Documents/Projects/oaky_cokey/figures/', protocol, "/Xgrp/", date_str);
+if ~isfolder(Xgrp_save_folder)
+    mkdir(Xgrp_save_folder);
+end
+
+cond_titles = {"60deg gratings - 4Hz"...
+    , "60deg gratings - 8Hz"...
+    , "ON curtain - 4Hz"...
+    , "ON curtain - 8Hz"...
+    , "OFF curtain - 4Hz"...
+    , "OFF curtain - 8Hz"...
+    , "2pix ON bar - 4Hz"...
+    , "2pix ON bar - 8Hz"...
+    , "2pix OFF bar - 4Hz"...
+    , "2pix OFF bar - 8Hz"...
+    , "15deg gratings - 4Hz"...
+    , "15deg gratings - 8Hz"...
+    };
+
+plot_sem = 1;
+
+data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_data_delta', 'dist_data_fv', 'dist_trav', 'heading_data', 'vel_data'};
+
+% For protocol 19 - ON / OFF
+for typ = 1:6
+    data_type = data_types{typ};
+    % Data in time series are downsampled by 10.
+    f_xgrp = plot_allcond_acrossgroups_tuning(DATA, gp_data, cond_titles, data_type, gps2plot, plot_sem);
+    % save as a PDF - 'Padding' option only for MATLAB online.
+    % fname = fullfile(Xgrp_save_folder, strcat(join(string(gps2plot), "-"), '_', data_type) + ".pdf");
+    fname = fullfile(Xgrp_save_folder, strcat(grp_title, '_', data_type, ".pdf"));
+    exportgraphics(f_xgrp ...
+        , fname ...
+        , 'ContentType', 'vector' ...
+        , 'BackgroundColor', 'none' ...
+        ); 
+end
+
+% % For protocol 10:
+% if protocol == "protocol_10"
+%     for typ = 1:4
+%         data_type = data_types{typ};
+%         f_xgrp = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem);
+%         savefig(f_xgrp, fullfile(Xgrp_save_folder, strcat(join(string(gps2plot), "-"), '_', data_type)));
+%     end 
+% end 
+
+
 
 %% Compare the responses of a single experimental group to multiple conditions:
 % ACROSS CONDITIONS
-
-Xcond_save_folder = strcat('/Users/burnettl/Documents/Projects/oaky_cokey/figures/', protocol, "/Xcond");
-if ~isfolder(Xcond_save_folder)
-    mkdir(Xcond_save_folder);
-end
-
-gp = 1; % csw1118 females
-
-strain = gp_data{gp, 1};
-landing = gp_data{gp, 2};
-sex = gp_data{gp, 3};
-
-if protocol == "protocol_14"
-    % - - - protocol 14 - different interval stimuli
-    for typ = 1:4
-        data_type = data_types{typ};
-        f_xcond = plot_mean_sem_12cond_overlap_diff_intervals(DATA, strain, landing, sex, data_type);
-        savefig(f_xcond, fullfile(Xcond_save_folder, strcat(strain, '_',landing, '_', sex, '_', data_type)))
-    end 
-elseif protocol == "protocol_19"
-    for typ = 1:4
-        data_type = data_types{typ};
-        % - - - protocol 19 - ON / OFF stimuli
-        % Compare each stimuli at the 2 speeds - 5 x 1 plot. 2 speeds overlaid. 
-        % f_speed_overlap = plot_mean_sem_cond_overlap_protocol19(DATA, strain, landing, sex, data_type);
-        
-        % Compare all stimuli at the same speed. 1 x 2 plot for the 4Hz & 8Hz
-        % stimuli. 
-        f_xcond = plot_mean_sem_overlap_2speeds_v19(DATA, strain, landing, sex, data_type);
-        % savefig(f_xcond, fullfile(Xcond_save_folder, strcat(strain, '_',landing, '_', sex, '_', data_type)))
-    end 
-else
-    for typ = 1:4
-        data_type = data_types{typ};
-        % - - - other protocols - must be based on protocol 10 condition structure:
-        f_xcond = plot_mean_sem_12cond_overlap(DATA, strain, landing, sex, data_type);
-        savefig(f_xcond, fullfile(Xcond_save_folder, strcat(strain, '_',landing, '_', sex, '_', data_type)))
-    end 
-end 
-
-
+% 
+% n_exp_groups = height(gp_data);
+% 
+% data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_trav', 'heading_data', 'vel_data'};
+% 
+% Xcond_save_folder = strcat('/Users/burnettl/Documents/Projects/oaky_cokey/figures/', protocol, "/Xcond");
+% if ~isfolder(Xcond_save_folder)
+%     mkdir(Xcond_save_folder);
+% end
+% 
+% gp = 1; % csw1118 females
+% 
+% strain = gp_data{gp, 1};
+% landing = gp_data{gp, 2};
+% sex = gp_data{gp, 3};
+% 
+% if protocol == "protocol_14"
+%     % - - - protocol 14 - different interval stimuli
+%     for typ = 1:4
+%         data_type = data_types{typ};
+%         f_xcond = plot_mean_sem_12cond_overlap_diff_intervals(DATA, strain, landing, sex, data_type);
+%         savefig(f_xcond, fullfile(Xcond_save_folder, strcat(strain, '_',landing, '_', sex, '_', data_type)))
+%     end 
+% elseif protocol == "protocol_19"
+%     for typ = 1:4
+%         data_type = data_types{typ};
+%         % - - - protocol 19 - ON / OFF stimuli
+%         % Compare each stimuli at the 2 speeds - 5 x 1 plot. 2 speeds overlaid. 
+%         % f_speed_overlap = plot_mean_sem_cond_overlap_protocol19(DATA, strain, landing, sex, data_type);
+% 
+%         % Compare all stimuli at the same speed. 1 x 2 plot for the 4Hz & 8Hz
+%         % stimuli. 
+%         f_xcond = plot_mean_sem_overlap_2speeds_v19(DATA, strain, landing, sex, data_type);
+%         % savefig(f_xcond, fullfile(Xcond_save_folder, strcat(strain, '_',landing, '_', sex, '_', data_type)))
+%     end 
+% else
+%     for typ = 1:4
+%         data_type = data_types{typ};
+%         % - - - other protocols - must be based on protocol 10 condition structure:
+%         f_xcond = plot_mean_sem_12cond_overlap(DATA, strain, landing, sex, data_type);
+%         savefig(f_xcond, fullfile(Xcond_save_folder, strcat(strain, '_',landing, '_', sex, '_', data_type)))
+%     end 
+% end 
 
 %% For running through multiple groups:
 % 
@@ -113,81 +180,3 @@ end
 % end 
 % 
 % 
-
-
-
-%% Compare the responses of multiple experimental groups to the same condition. 
-% Generate a plot of multiple different conditions - as above - but with
-% different coloured lines for the different experimental groups: 
-
-% The indices of the different groups to plot: 
-
-% gps2plot = [3, 7]; % ES Kir versus ES Shibire kir
-gps2plot = [9, 13]; % T4T5 Kir versus T4T5 Shibire kir
-% gps2plot = [15, 26]; % T4T5 Kir versus T4T5 Shibire kir
-
-% gps2plot= [7, 13, 26]; % compare 3 dbl effectors
-% gps2plot= [3, 9, 15]; % compare 3 kir effectors
-
-% If saving the figures - create a folder to save them in:
-Xgrp_save_folder = strcat('/Users/burnettl/Documents/Projects/oaky_cokey/figures/', protocol, "/Xgrp");
-if ~isfolder(Xgrp_save_folder)
-    mkdir(Xgrp_save_folder);
-end
-
-% Condition parameters for protocol 19: 
-% params =[60, 4, 15; % 60 deg gratings 
-%         60, 8, 15;
-%         1, 4, 15; % ON curtain
-%         1, 8, 15;
-%         0, 4, 15; % OFF curtain
-%         0, 8, 15; 
-%         21, 4, 15; % 2ON 14OFF grating 
-%         21, 8, 15;
-%         20, 4, 15; % 2OFF 14ON grating
-%         20, 8, 15;
-%         15, 4, 15; % 60 deg gratings 
-%         15, 8, 15;
-%         ];
-
-cond_titles = {"60deg gratings - 4Hz"...
-    , "60deg gratings - 8Hz"...
-    , "ON curtain - 4Hz"...
-    , "ON curtain - 8Hz"...
-    , "OFF curtain - 4Hz"...
-    , "OFF curtain - 8Hz"...
-    , "2pix ON bar - 4Hz"...
-    , "2pix ON bar - 8Hz"...
-    , "2pix OFF bar - 4Hz"...
-    , "2pix OFF bar - 8Hz"...
-    , "15deg gratings - 4Hz"...
-    , "15deg gratings - 8Hz"...
-    };
-
-plot_sem = 1;
-
-data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_data_delta', 'dist_data_fv', 'dist_trav', 'heading_data', 'vel_data'};
-
-% For protocol 19 - ON / OFF
-for typ = 1:6
-    data_type = data_types{typ};
-    f_xgrp = plot_allcond_acrossgroups_tuning(DATA, gp_data, cond_titles, data_type, gps2plot, plot_sem);
-    % save as a PDF - 'Padding' option only for MATLAB online.
-    exportgraphics(f_xgrp ...
-        , fullfile(Xgrp_save_folder, strcat(join(string(gps2plot), "-"), '_', data_type) + ".pdf") ...
-        , 'ContentType', 'vector' ...
-        , 'BackgroundColor', 'none' ...
-        ); 
-end
-close all
-
-
-% For protocol 10:
-if protocol == "protocol_10"
-    for typ = 1:4
-        data_type = data_types{typ};
-        f_xgrp = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem);
-        savefig(f_xgrp, fullfile(Xgrp_save_folder, strcat(join(string(gps2plot), "-"), '_', data_type)));
-    end 
-end 
-
