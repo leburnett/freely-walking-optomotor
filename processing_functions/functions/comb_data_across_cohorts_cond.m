@@ -64,7 +64,7 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         %     24, 10, 64, 8, 15, 9; % 2OFF 14ON grating
         %     24, 10, 127, 8, 15, 10;
         % ];
-        cond_array = [
+        cond_array = [  % From 27th Jan onwards - added thin gratings back in. 
             9, 10, 64, 8, 15, 1; % grating - 60 deg
             9, 10, 127, 8, 15, 2;
             19, 10, 64, 8, 15, 3; % ON curtain - - 5
@@ -221,7 +221,6 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
                 params = [optomotor_pattern, flicker_pattern, opto_speed, flick_speed, trial_len];
                 condition_n = find(ismember(cond_array, params, 'rows'));
             end 
-            disp(condition_n)
 
             if LOG.acclim_off1.stop_t(end)<3 && log_n == 1
                 framesb4 = 0;
