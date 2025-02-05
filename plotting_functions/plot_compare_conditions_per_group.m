@@ -15,20 +15,20 @@ end
 gp_data = {
     'csw1118', 'none', 'F', [0.7 0.7 0.7]; % 1
     'csw1118', 'none', 'M', [0.7 0.7 0.7]; % 2
-    'jfrc49_es_kir', 'attP2', 'F',  [0.51 0.32 0.57]; % 3
-    'jfrc49_es_kir', 'attP2', 'M',  [0.51 0.32 0.57]; % 4  - - none?
+    'jfrc49_es_kir', 'none', 'F',  [0.51 0.32 0.57]; % 3
+    'jfrc49_es_kir', 'none', 'M',  [0.51 0.32 0.57]; % 4  - - none?
     'jfrc49_es_kir', 'attP6', 'F',  [0.31 0.12 0.37]; % 5
     'jfrc49_es_kir', 'attP6', 'M',  [0.31 0.12 0.37]; % 6 - - - none at the moment.
     'jfrc100_es_shibire_kir', 'none', 'F', [0.85 0.4 0.7]; % 7
     'jfrc100_es_shibire', 'none', 'M', [0.85 0.4 0.7]; % 8
     'ss324_t4t5_kir', 'none', 'F', [0 0.4 0]; % 9
-    'ss324_t4t5_kir', 'attP2', 'M', [0 0.4 0]; % 10
+    'ss324_t4t5_kir', 'none', 'M', [0 0.4 0]; % 10
     'ss324_t4t5_shibire', 'attP5', 'F', [0.6 0.8 0.6]; % 11
     'ss324_t4t5_shibire', 'attP5', 'M', [0.6 0.8 0.6]; % 12
-    'ss324_t4t5_shibire_kir', 'none', 'F', [0, 0, 0]; % 13
+    'ss324_t4t5_shibire_kir', 'none', 'F', [0.6 0.8 0.6]; % 13
     'ss324_t4t5_shibire_kir', 'none', 'M', [0, 0, 0]; % 14
-    'jfrc49_l1l4_kir', 'attP2', 'F', [0.2 0.4 0.7]; %15
-    'jfrc49_l1l4_kir', 'attP2', 'M', [0.2 0.4 0.7]; %16
+    'jfrc49_l1l4_kir', 'none', 'F', [0.2 0.4 0.7]; %15
+    'jfrc49_l1l4_kir', 'none', 'M', [0.2 0.4 0.7]; %16
     'jfrc49_l1l4_kir', 'attP6', 'F', [0.4 0.6 1]; % 17 
     'jfrc49_l1l4_kir', 'attP6', 'M', [0.4 0.6 1]; % 18 
     'jfrc49_l1l4_kir', 'VK00005', 'F', [0.1 0.2 0.5]; %19
@@ -38,6 +38,8 @@ gp_data = {
     't4t5_RNAi_control', 'none', 'F', [0.7 0.7 0.7]; %23
     't4t5_mmd_RNAi', 'none', 'F', [0.8, 0 , 0]; % 24
     't4t5_ttl_RNAi', 'none', 'F', [0.9, 0.5, 0]; % 25
+    'l1l4_jfrc100_shibire_kir', 'none', 'F', [0.4 0.8 1]; %26
+    'l1l4_jfrc100_shibire_kir', 'none', 'M', [0.4 0.8 1]; % 27
     };
 
 n_exp_groups = height(gp_data);
@@ -120,18 +122,12 @@ end
 
 % The indices of the different groups to plot: 
 
-% RNA + control 
-% gps2plot = [1,3,7]; % ES females
-% gps2plot = [2,4,8]; % ES males
-% gps2plot = [1, 9, 11]; % T4T5 females
-% gps2plot = [2, 10, 12]; % T4T5 males
-% gps2plot = [1,2,15,16]; % l1l4 females
-% gps2plot = [2, 14, 20]; % l1l4 males
-% gps2plot = [21, 22, 23]; % RNAi
-% gps2plot = [1,2]; % csw1118 M F
+% gps2plot = [3, 7]; % ES Kir versus ES Shibire kir
+gps2plot = [9, 13]; % T4T5 Kir versus T4T5 Shibire kir
+% gps2plot = [15, 26]; % T4T5 Kir versus T4T5 Shibire kir
 
-gps2plot = [23, 24, 25];
-% gps2plot = [1,7,9,13];
+% gps2plot= [7, 13, 26]; % compare 3 dbl effectors
+% gps2plot= [3, 9, 15]; % compare 3 kir effectors
 
 % If saving the figures - create a folder to save them in:
 Xgrp_save_folder = strcat('/Users/burnettl/Documents/Projects/oaky_cokey/figures/', protocol, "/Xgrp");
@@ -140,17 +136,19 @@ if ~isfolder(Xgrp_save_folder)
 end
 
 % Condition parameters for protocol 19: 
-params =[60, 4, 15; % 60 deg gratings 
-        60, 8, 15;
-        1, 4, 15; % ON curtain
-        1, 8, 15;
-        0, 4, 15; % OFF curtain
-        0, 8, 15; 
-        21, 4, 15; % 2ON 14OFF grating 
-        21, 8, 15;
-        20, 4, 15; % 2OFF 14ON grating
-        20, 8, 15;
-        ];
+% params =[60, 4, 15; % 60 deg gratings 
+%         60, 8, 15;
+%         1, 4, 15; % ON curtain
+%         1, 8, 15;
+%         0, 4, 15; % OFF curtain
+%         0, 8, 15; 
+%         21, 4, 15; % 2ON 14OFF grating 
+%         21, 8, 15;
+%         20, 4, 15; % 2OFF 14ON grating
+%         20, 8, 15;
+%         15, 4, 15; % 60 deg gratings 
+%         15, 8, 15;
+%         ];
 
 cond_titles = {"60deg gratings - 4Hz"...
     , "60deg gratings - 8Hz"...
@@ -162,18 +160,24 @@ cond_titles = {"60deg gratings - 4Hz"...
     , "2pix ON bar - 8Hz"...
     , "2pix OFF bar - 4Hz"...
     , "2pix OFF bar - 8Hz"...
+    , "15deg gratings - 4Hz"...
+    , "15deg gratings - 8Hz"...
     };
 
 plot_sem = 1;
 
-data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_trav', 'heading_data', 'vel_data'};
+data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_data_delta', 'dist_data_fv', 'dist_trav', 'heading_data', 'vel_data'};
 
 % For protocol 19 - ON / OFF
-for typ = 1:4
+for typ = 1:6
     data_type = data_types{typ};
-    % f_grp_overlap = plot_allcond_acrossgroups(DATA, gp_data, params, data_type, gps2plot, plot_sem);
     f_xgrp = plot_allcond_acrossgroups_tuning(DATA, gp_data, cond_titles, data_type, gps2plot, plot_sem);
-    % savefig(f_xgrp, fullfile(Xgrp_save_folder, strcat(join(string(gps2plot), "-"), '_', data_type)));
+    % save as a PDF - 'Padding' option only for MATLAB online.
+    exportgraphics(f_xgrp ...
+        , fullfile(Xgrp_save_folder, strcat(join(string(gps2plot), "-"), '_', data_type) + ".pdf") ...
+        , 'ContentType', 'vector' ...
+        , 'BackgroundColor', 'none' ...
+        ); 
 end
 close all
 

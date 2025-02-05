@@ -7,8 +7,14 @@ function f = plot_allcond_acrossgroups_tuning(DATA, gp_data, params, data_type, 
     if data_type == "dist_data_delta"
         data_type = "dist_data";
         delta = 1;
+        d_fv = 0 ;
+    elseif data_type == "dist_data_fv"
+        data_type = "dist_data";
+        delta = 1;
+        d_fv = 1;
     else 
         delta = 0;
+        d_fv = 0;
     end 
 
     % Generate new figure
@@ -44,6 +50,9 @@ for gp = gps2plot
         p = params{idx2};
 
         cond_data = [];
+        if d_fv 
+            cond_data_fv = [];
+        end 
         nf_comb = size(cond_data, 2);
 
         fl_start_f = [];
@@ -52,6 +61,12 @@ for gp = gps2plot
             rep1_data = data(idx).(rep1_str);
     
             if ~isempty(rep1_data) % check that the row is not empty.
+
+                if d_fv 
+                    rep1_data_fv = rep1_data.fv_data;
+                    rep2_data_fv = data(idx).(rep2_str).fv_data;
+                end 
+
                 % Extract the relevant data
                 rep1_data = rep1_data.(data_type);
                 rep2_data = data(idx).(rep2_str).(data_type);
@@ -71,21 +86,42 @@ for gp = gps2plot
                 % Trim data to same length
                 rep1_data = rep1_data(:, 1:nf);
                 rep2_data = rep2_data(:, 1:nf);
+
+                if d_fv 
+                    rep1_data_fv = rep1_data_fv(:, 1:nf);
+                    rep2_data_fv = rep2_data_fv(:, 1:nf);
+                end 
                 nf_comb = size(cond_data, 2);
     
                 if idx == 1 || nf_comb == 0
                     cond_data = vertcat(cond_data, rep1_data, rep2_data);
+                    if d_fv
+                        cond_data_fv = vertcat(cond_data_fv, rep1_data_fv, rep2_data_fv);
+                    end 
                 else
                     if nf>nf_comb % trim incoming data
                         rep1_data = rep1_data(:, 1:nf_comb);
                         rep2_data = rep2_data(:, 1:nf_comb);
+
+                        if d_fv
+                            rep1_data_fv = rep1_data_fv(:, 1:nf_comb);
+                            rep2_data_fv = rep2_data_fv(:, 1:nf_comb);
+                        end 
+
                     elseif nf_comb>nf % Add NaNs to end
                         diff_f = nf_comb-nf+1;
                         n_flies = size(rep1_data, 1);
                         rep1_data(:, nf:nf_comb) = NaN(n_flies, diff_f);
                         rep2_data(:, nf:nf_comb) = NaN(n_flies, diff_f);
+                        if d_fv 
+                            rep1_data_fv(:, nf:nf_comb) = NaN(n_flies, diff_f);
+                            rep2_data_fv(:, nf:nf_comb) = NaN(n_flies, diff_f);
+                        end 
                     end 
                     cond_data = vertcat(cond_data, rep1_data, rep2_data);
+                    if d_fv
+                        cond_data_fv = vertcat(cond_data_fv, rep1_data_fv, rep2_data_fv);
+                    end 
                 end
 
                 fl_start = data(idx).(rep1_str).start_flicker_f;
@@ -98,6 +134,10 @@ for gp = gps2plot
         mean_data = nanmean(cond_data);
         if delta == 1
             mean_data = mean_data - mean_data(1);
+            if d_fv
+                mean_data_fv = nanmean(cond_data_fv);
+                mean_data = mean_data./mean_data_fv;
+            end 
         end 
         n_flies_in_cond = size(cond_data, 1)/2;
 
@@ -116,15 +156,17 @@ for gp = gps2plot
         subplot(n_cond/2, 6, (3*idx2-2):(3*idx2-1))
 
         if data_type == "dist_data"
-            if delta == 1
+            if d_fv == 1
+                rng = [-7 2];
+                ylb = 'Distance from centre / fv-data - delta (mm)';
+            elseif delta == 1
                 rng = [-40 15];
                 ylb = 'Distance from centre - delta (mm)';
-                lw = 1.5;
             else
                 rng = [0 80];
                 ylb = 'Distance from centre (mm)';
-                lw = 1.5;
             end 
+            lw = 1.5;
         elseif data_type == "dist_trav"
             rng = [0 1];
             ylb = 'Distance travelled (mm)';
@@ -325,7 +367,7 @@ for gp = gps2plot
 end 
 
     f = gcf;
-    f.Position = [1  78  1044 969];
+    f.Position = [1   161   751   886]; % new smaller size.
     sgtitle(ylb, 'FontSize', 16)
 
 end 
