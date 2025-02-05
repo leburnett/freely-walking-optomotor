@@ -146,10 +146,14 @@ for gp = gps2plot
             mean_data = movmean(mean_data, 5);
         end 
 
+        dwn_factor = 10;
+        mean_data_dwn = downsample(mean_data, dwn_factor);
+
         sem_data = nanstd(cond_data)/sqrt(size(cond_data,1));
-        y1 = mean_data+sem_data;
-        y2 = mean_data-sem_data;
-        nf_comb = size(cond_data, 2);
+        sem_data_dwn = downsample(sem_data, 10);
+        y1 = mean_data_dwn+sem_data_dwn;
+        y2 = mean_data_dwn-sem_data_dwn;
+        nf_comb = size(mean_data_dwn, 2);
         x = 1:1:nf_comb;
     
         %% Plot subplot for condition
@@ -158,7 +162,7 @@ for gp = gps2plot
         if data_type == "dist_data"
             if d_fv == 1
                 rng = [-7 2];
-                ylb = 'Distance from centre / fv-data - delta (mm)';
+                ylb = 'Distance from centre / fv-data - delta (s)';
             elseif delta == 1
                 rng = [-40 15];
                 ylb = 'Distance from centre - delta (mm)';
@@ -201,15 +205,15 @@ for gp = gps2plot
             plot(x, y2, 'w', 'LineWidth', 1)
             patch([x fliplr(x)], [y1 fliplr(y2)], 'k', 'FaceAlpha', 0.1, 'EdgeColor', 'none')
         end
-        plot(mean_data, 'Color', col, 'LineWidth', lw);
+        plot(mean_data_dwn, 'Color', col, 'LineWidth', lw);
         hold on
     
         % When flicker stimulus started:
         fl = int16(mean(fl_start_f));
         if gp == gps2plot(end)
-            plot([fl fl], rng, 'k', 'LineWidth', 0.5)
-            plot([300 300], rng, 'k', 'LineWidth', 0.5) % beginning of stim
-            plot([750 740], rng, 'Color', [0.6 0.6 0.6], 'LineWidth', 0.3) % change of direction   
+            plot([fl/dwn_factor fl/dwn_factor], rng, 'k', 'LineWidth', 0.5)
+            plot([300/dwn_factor 300/dwn_factor], rng, 'k', 'LineWidth', 0.5) % beginning of stim
+            plot([750/dwn_factor 740/dwn_factor], rng, 'Color', [0.6 0.6 0.6], 'LineWidth', 0.3) % change of direction   
             if data_type == "dist_data"
                 plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
             elseif data_type == "av_data"
@@ -224,53 +228,54 @@ for gp = gps2plot
         title(p, 'FontSize', 11)
 
         % where to position text annotation
+        xpos = nf_comb-(450/dwn_factor);
         if rng(1)==0 && data_type~="fv_data"
             if gp == gps2plot(1)
-                pos_data = [nf_comb-450, rng(2)*0.1]; 
+                pos_data = [xpos, rng(2)*0.1]; 
             elseif gp == gps2plot(2)
-                pos_data = [nf_comb-450, rng(2)*0.2];
+                pos_data = [xpos, rng(2)*0.2];
             elseif gp == gps2plot(3)
-                pos_data = [nf_comb-450, rng(2)*0.3];
+                pos_data = [xpos, rng(2)*0.3];
             elseif gp == gps2plot(4)
-                pos_data = [nf_comb-450, rng(2)*0.4];
+                pos_data = [xpos, rng(2)*0.4];
             elseif gp == gps2plot(5)
-                pos_data = [nf_comb-450, rng(2)*0.5];
+                pos_data = [xpos, rng(2)*0.5];
             end 
         elseif data_type == "fv_data"
             if gp == gps2plot(1)
-                pos_data = [nf_comb-450, rng(2)*0.9]; 
+                pos_data = [xpos, rng(2)*0.9]; 
             elseif gp == gps2plot(2)
-                pos_data = [nf_comb-450, rng(2)*0.8];
+                pos_data = [xpos, rng(2)*0.8];
             elseif gp == gps2plot(3)
-                pos_data = [nf_comb-450, rng(2)*0.7];
+                pos_data = [xpos, rng(2)*0.7];
             elseif gp == gps2plot(4)
-                pos_data = [nf_comb-450, rng(2)*0.6];
+                pos_data = [xpos, rng(2)*0.6];
             elseif gp == gps2plot(5)
-                pos_data = [nf_comb-450, rng(2)*0.5];
+                pos_data = [xpos, rng(2)*0.5];
             end 
         elseif data_type == "dist_data" && delta == 1
             if gp == gps2plot(1)
-                pos_data = [nf_comb-450, rng(1)*0.9]; 
+                pos_data = [xpos, rng(1)*0.9]; 
             elseif gp == gps2plot(2)
-                pos_data = [nf_comb-450, rng(1)*0.7];
+                pos_data = [xpos, rng(1)*0.7];
             elseif gp == gps2plot(3)
-                pos_data = [nf_comb-450, rng(1)*0.5];
+                pos_data = [xpos, rng(1)*0.5];
             elseif gp == gps2plot(4)
-                pos_data = [nf_comb-450, rng(1)*0.3];
+                pos_data = [xpos, rng(1)*0.3];
             elseif gp == gps2plot(5)
-                pos_data = [nf_comb-450, rng(1)*0.1];
+                pos_data = [xpos, rng(1)*0.1];
             end 
         else
             if gp == gps2plot(1)
-                pos_data = [nf_comb-450, rng(2)*0.9]; 
+                pos_data = [xpos, rng(2)*0.9]; 
             elseif gp == gps2plot(2)
-                pos_data = [nf_comb-450, rng(2)*0.7];
+                pos_data = [xpos, rng(2)*0.7];
             elseif gp == gps2plot(3)
-                pos_data = [nf_comb-450, rng(2)*0.5];
+                pos_data = [xpos, rng(2)*0.5];
             elseif gp == gps2plot(4)
-                pos_data = [nf_comb-450, rng(2)*0.3];
+                pos_data = [xpos, rng(2)*0.3];
             elseif gp == gps2plot(5)
-                pos_data = [nf_comb-450, rng(2)*0.1];
+                pos_data = [xpos, rng(2)*0.1];
             end 
         end 
 

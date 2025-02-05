@@ -183,11 +183,11 @@ close all
 
 
 % For protocol 10:
-for typ = 1:4
-    data_type = data_types{typ};
-    f_xgrp = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem);
-    savefig(f_xgrp, fullfile(Xgrp_save_folder, strcat(join(string(gps2plot), "-"), '_', data_type)));
+if protocol == "protocol_10"
+    for typ = 1:4
+        data_type = data_types{typ};
+        f_xgrp = plot_mean_sem_12cond_groups(DATA, data_type, gps2plot, plot_sem);
+        savefig(f_xgrp, fullfile(Xgrp_save_folder, strcat(join(string(gps2plot), "-"), '_', data_type)));
+    end 
 end 
-
-
 
