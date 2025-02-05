@@ -122,7 +122,8 @@ function process_data_features(path_to_folder, save_folder, date_str)
         end
         saveas(f_overview, fullfile(hist_save_folder, strcat(save_str, '_hist.png')), 'png')
 
-        % 2 - features - with individual traces per fly
+        % 2 - features - with individual traces per fly across entire
+        % experiment.
         f_feat = plot_all_features_filt(LOG, comb_data, protocol, save_str);
 
         feat_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/feat_overview';
@@ -130,6 +131,25 @@ function process_data_features(path_to_folder, save_folder, date_str)
             mkdir(feat_save_folder);
         end
         saveas(f_feat, fullfile(feat_save_folder, strcat(save_str, '_feat.png')), 'png')
+
+        % 3 - Make plot with data per condition for only the one cohort
+        DATA = comb_data_one_cohort_cond(LOG, comb_data, protocol);
+        plot_sem = 1;
+
+        data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data'};
+
+        for typ = 1:numel(data_types)
+            data_type = data_types{typ};
+            fig_save_folder = strcat('/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/', data_type);
+            f_cond = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_sem);
+            % Add folder to save individual figures per cohort
+            fname = fullfile(fig_save_folder, strcat(save_str, '_', data_type, '.pdf'));
+            exportgraphics(f_cond ...
+                , fname ...
+                , 'ContentType', 'vector' ...
+                , 'BackgroundColor', 'none' ...
+                ); 
+        end 
 
         %% SAVE
         if ~isfolder(save_folder)

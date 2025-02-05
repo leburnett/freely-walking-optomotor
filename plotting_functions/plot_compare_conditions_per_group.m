@@ -13,33 +13,33 @@ else
 end 
 
 gp_data = {
-    'csw1118', 'none', 'F', [0.7 0.7 0.7]; % 1
-    'csw1118', 'none', 'M', [0.7 0.7 0.7]; % 2
-    'jfrc49_es_kir', 'none', 'F',  [0.51 0.32 0.57]; % 3
-    'jfrc49_es_kir', 'none', 'M',  [0.51 0.32 0.57]; % 4  - - none?
-    'jfrc49_es_kir', 'attP6', 'F',  [0.31 0.12 0.37]; % 5
-    'jfrc49_es_kir', 'attP6', 'M',  [0.31 0.12 0.37]; % 6 - - - none at the moment.
-    'jfrc100_es_shibire_kir', 'none', 'F', [0.85 0.4 0.7]; % 7
-    'jfrc100_es_shibire', 'none', 'M', [0.85 0.4 0.7]; % 8
-    'ss324_t4t5_kir', 'none', 'F', [0 0.4 0]; % 9
-    'ss324_t4t5_kir', 'none', 'M', [0 0.4 0]; % 10
-    'ss324_t4t5_shibire', 'attP5', 'F', [0.6 0.8 0.6]; % 11
-    'ss324_t4t5_shibire', 'attP5', 'M', [0.6 0.8 0.6]; % 12
-    'ss324_t4t5_shibire_kir', 'none', 'F', [0.6 0.8 0.6]; % 13
-    'ss324_t4t5_shibire_kir', 'none', 'M', [0, 0, 0]; % 14
-    'jfrc49_l1l4_kir', 'none', 'F', [0.2 0.4 0.7]; %15
-    'jfrc49_l1l4_kir', 'none', 'M', [0.2 0.4 0.7]; %16
-    'jfrc49_l1l4_kir', 'attP6', 'F', [0.4 0.6 1]; % 17 
-    'jfrc49_l1l4_kir', 'attP6', 'M', [0.4 0.6 1]; % 18 
-    'jfrc49_l1l4_kir', 'VK00005', 'F', [0.1 0.2 0.5]; %19
-    'jfrc49_l1l4_kir', 'VK00005', 'M', [0.1 0.2 0.5]; %20
-    'l1l4_jfrc100_shibire', 'attP5', 'F', [0.4 0.8 1]; %21
-    'l1l4_jfrc100_shibire', 'attP5', 'M', [0.4 0.8 1]; % 22
-    't4t5_RNAi_control', 'none', 'F', [0.7 0.7 0.7]; %23
-    't4t5_mmd_RNAi', 'none', 'F', [0.8, 0 , 0]; % 24
-    't4t5_ttl_RNAi', 'none', 'F', [0.9, 0.5, 0]; % 25
-    'l1l4_jfrc100_shibire_kir', 'none', 'F', [0.4 0.8 1]; %26
-    'l1l4_jfrc100_shibire_kir', 'none', 'M', [0.4 0.8 1]; % 27
+    'csw1118', 'none', 'F', [0.7 0.7 0.7], 1; 
+    'csw1118', 'none', 'M', [0.7 0.7 0.7], 2;
+    'jfrc49_es_kir', 'none', 'F',  [0.51 0.32 0.57], 3;
+    'jfrc49_es_kir', 'none', 'M',  [0.51 0.32 0.57], 4;
+    'jfrc49_es_kir', 'attP6', 'F',  [0.31 0.12 0.37], 5;
+    'jfrc49_es_kir', 'attP6', 'M',  [0.31 0.12 0.37], 6;
+    'jfrc100_es_shibire_kir', 'none', 'F', [0.85 0.4 0.7], 7;
+    'jfrc100_es_shibire', 'none', 'M', [0.85 0.4 0.7], 8;
+    'ss324_t4t5_kir', 'none', 'F', [0 0.4 0], 9;
+    'ss324_t4t5_kir', 'none', 'M', [0 0.4 0], 10;
+    'ss324_t4t5_shibire', 'attP5', 'F', [0.6 0.8 0.6], 11;
+    'ss324_t4t5_shibire', 'attP5', 'M', [0.6 0.8 0.6], 12;
+    'ss324_t4t5_shibire_kir', 'none', 'F', [0.6 0.8 0.6], 13;
+    'ss324_t4t5_shibire_kir', 'none', 'M', [0, 0, 0], 14;
+    'jfrc49_l1l4_kir', 'none', 'F', [0.2 0.4 0.7], 15;
+    'jfrc49_l1l4_kir', 'none', 'M', [0.2 0.4 0.7], 16;
+    'jfrc49_l1l4_kir', 'attP6', 'F', [0.4 0.6 1], 17; 
+    'jfrc49_l1l4_kir', 'attP6', 'M', [0.4 0.6 1], 18; 
+    'jfrc49_l1l4_kir', 'VK00005', 'F', [0.1 0.2 0.5], 19;
+    'jfrc49_l1l4_kir', 'VK00005', 'M', [0.1 0.2 0.5], 20;
+    'l1l4_jfrc100_shibire', 'attP5', 'F', [0.4 0.8 1], 21;
+    'l1l4_jfrc100_shibire', 'attP5', 'M', [0.4 0.8 1], 22;
+    't4t5_RNAi_control', 'none', 'F', [0.7 0.7 0.7], 23;
+    't4t5_mmd_RNAi', 'none', 'F', [0.8, 0 , 0], 24;
+    't4t5_ttl_RNAi', 'none', 'F', [0.9, 0.5, 0], 25;
+    'l1l4_jfrc100_shibire_kir', 'none', 'F', [0.4 0.8 1], 26;
+    'l1l4_jfrc100_shibire_kir', 'none', 'M', [0.4 0.8 1], 27;
     };
 
 %% Compare the responses of multiple experimental groups to the same condition. 
@@ -67,6 +67,9 @@ if ~isfolder(Xgrp_save_folder)
     mkdir(Xgrp_save_folder);
 end
 
+%Save the groups that were used for the plots
+writecell(gp_data, fullfile(Xgrp_save_folder,'group_data.txt'), 'Delimiter', ';')
+
 cond_titles = {"60deg gratings - 4Hz"...
     , "60deg gratings - 8Hz"...
     , "ON curtain - 4Hz"...
@@ -80,6 +83,9 @@ cond_titles = {"60deg gratings - 4Hz"...
     , "15deg gratings - 4Hz"...
     , "15deg gratings - 8Hz"...
     };
+
+%Save the groups that were used for the plots
+writecell(cond_titles, fullfile(Xgrp_save_folder,'cond_titles.txt'), 'Delimiter', ';')
 
 plot_sem = 1;
 
