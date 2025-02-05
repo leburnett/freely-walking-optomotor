@@ -4,6 +4,13 @@
 
 function f = plot_allcond_acrossgroups_tuning(DATA, gp_data, params, data_type, gps2plot, plot_sem)
 
+    if data_type == "dist_data_delta"
+        data_type = "dist_data";
+        delta = 1;
+    else 
+        delta = 0;
+    end 
+
     % Generate new figure
     figure;
     n_cond = length(params);
@@ -89,7 +96,10 @@ for gp = gps2plot
    
         % Mean +/- SEM
         mean_data = nanmean(cond_data);
-        n_flies_in_cond = size(cond_data, 1);
+        if delta == 1
+            mean_data = mean_data - mean_data(1);
+        end 
+        n_flies_in_cond = size(cond_data, 1)/2;
 
         % smooth data if velocity / distance travelled. 
         if data_type == "dist_trav" || data_type == "vel_data" 
@@ -106,15 +116,22 @@ for gp = gps2plot
         subplot(n_cond/2, 6, (3*idx2-2):(3*idx2-1))
 
         if data_type == "dist_data"
-            rng = [0 80];
-            ylb = 'Distance from centre (mm)';
-            lw = 1.5;
+            if delta == 1
+                rng = [-40 15];
+                ylb = 'Distance from centre - delta (mm)';
+                lw = 1.5;
+            else
+                rng = [0 80];
+                ylb = 'Distance from centre (mm)';
+                lw = 1.5;
+            end 
         elseif data_type == "dist_trav"
             rng = [0 1];
             ylb = 'Distance travelled (mm)';
             lw = 1; 
         elseif data_type == "av_data"
             rng = [-170 170];
+            % rng = [-50 50];
             ylb = "Angular velocity (deg s-1)";
             lw = 1;
         elseif data_type == "heading_data"
@@ -130,7 +147,8 @@ for gp = gps2plot
             ylb = "Forward velocity (mm s-1)";
             lw = 1;
         elseif data_type == "curv_data"
-            rng = [-130 130];
+            rng = [-150 150];
+            % rng = [-50 50];
             ylb = "Turning rate (deg mm-1)";
             lw = 1;
         end
@@ -161,7 +179,7 @@ for gp = gps2plot
         box off
         ax = gca; ax.XAxis.Visible = 'off'; ax.TickDir = 'out'; ax.TickLength = [0.015 0.015]; ax.LineWidth = 1; ax.FontSize = 12;
 
-        % title(p, 'FontSize', 11)
+        title(p, 'FontSize', 11)
 
         % where to position text annotation
         if rng(1)==0 && data_type~="fv_data"
@@ -187,6 +205,18 @@ for gp = gps2plot
                 pos_data = [nf_comb-450, rng(2)*0.6];
             elseif gp == gps2plot(5)
                 pos_data = [nf_comb-450, rng(2)*0.5];
+            end 
+        elseif data_type == "dist_data" && delta == 1
+            if gp == gps2plot(1)
+                pos_data = [nf_comb-450, rng(1)*0.9]; 
+            elseif gp == gps2plot(2)
+                pos_data = [nf_comb-450, rng(1)*0.7];
+            elseif gp == gps2plot(3)
+                pos_data = [nf_comb-450, rng(1)*0.5];
+            elseif gp == gps2plot(4)
+                pos_data = [nf_comb-450, rng(1)*0.3];
+            elseif gp == gps2plot(5)
+                pos_data = [nf_comb-450, rng(1)*0.1];
             end 
         else
             if gp == gps2plot(1)
