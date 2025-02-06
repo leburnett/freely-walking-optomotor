@@ -38,7 +38,8 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
     t.TileSpacing = 'compact';
 
     % % Eventually have this as the input to the function 
-    col = [0.4 0.8 1]; %light blue 
+    % col = [0.4 0.8 1]; %light blue 
+    col = [0.2 0.2 0.2]; % dark grey
     landing = 'none';
 
     data = DATA.(strain).(landing).(sex); 
@@ -318,6 +319,9 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
 
         xlim([0.5 4.5])
         box off
+        if data_type == "av_data" ||  data_type == "curv_data" 
+            rng(1) = -5;
+        end 
         ylim(rng)
         % ylim([-1 22])
         ax = gca; 

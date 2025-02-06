@@ -9,7 +9,7 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
     % [optomotor_pattern, flicker_pattern, opto_speed, flick_speed, trial_len]
 
     strs = split(protocol_dir, '/');
-    protocol = strs(end);
+    protocol = strs{end};
 
     if protocol == "protocol_10"
         cond_array =[9, 10, 64, 8, 2;
@@ -163,7 +163,7 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         else
             stop_f = Log.stop_f(end);
         end
-        
+
         DATA.(strain).(landing).(sex)(sz).acclim_off1.vel_data = comb_data.vel_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.fv_data = comb_data.fv_data(:, start_f:stop_f);
         DATA.(strain).(landing).(sex)(sz).acclim_off1.dist_data = comb_data.dist_data(:, start_f:stop_f);

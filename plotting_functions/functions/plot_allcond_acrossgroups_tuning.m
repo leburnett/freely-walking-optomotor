@@ -162,7 +162,7 @@ for gp = gps2plot
 
         if data_type == "dist_data"
             if d_fv == 1
-                rng = [-7 2];
+                rng = [-10 5];
                 ylb = 'Distance from centre / fv-data - delta (s)';
             elseif delta == 1
                 rng = [-40 15];
@@ -352,6 +352,9 @@ for gp = gps2plot
 
         xlim([0.5 4.5])
         box off
+        if data_type == "av_data" ||  data_type == "curv_data" 
+            rng(1) = -5;
+        end 
         ylim(rng)
         % ylim([-1 22])
         ax = gca; 
