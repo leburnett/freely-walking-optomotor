@@ -39,14 +39,23 @@ function process_data_features(path_to_folder, save_folder, date_str)
 
         data_path = cd;
         subfolders = split(data_path, '/');
-        sex = subfolders{end-1};
-        strain = subfolders{end-2};
-        protocol = subfolders{end-3};
 
-        date_str = strrep(date_str, '_', '-');
-        time_str = strrep(time_str, '_', '-');
-
-        save_str = strcat(date_str, '_', time_str, '_', strain, '_', protocol, '_', sex);
+        if height(subfolders)>12 % landing site included.
+            sex = subfolders{end-1};
+            landing = subfolders{end-2}; 
+            strain = subfolders{end-3};
+            protocol = subfolders{end-4};
+            date_str = strrep(date_str, '_', '-');
+            time_str = strrep(time_str, '_', '-');
+            save_str = strcat(date_str, '_', time_str, '_', strain, '_', landing, '_',  protocol, '_', sex);
+        else % no landing site specified
+            sex = subfolders{end-1};
+            strain = subfolders{end-2};
+            protocol = subfolders{end-3};
+            date_str = strrep(date_str, '_', '-');
+            time_str = strrep(time_str, '_', '-');
+            save_str = strcat(date_str, '_', time_str, '_', strain, '_', protocol, '_', sex);
+        end 
 
         % Check in case there is something wrong with the folder structure.
         if protocol(1)~='p'
@@ -102,10 +111,10 @@ function process_data_features(path_to_folder, save_folder, date_str)
         end
 
         %% Generate quick overview plots:
-        [combined_data, feat, trx] = combine_data_one_cohort(feat, trx);
+        [comb_data, feat, trx] = combine_data_one_cohort(feat, trx);
 
         % 1 - histograms of locomotor parameters
-        f_overview = make_overview(combined_data, strain, sex, protocol);
+        f_overview = make_overview(comb_data, strain, sex, protocol);
 
         hist_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/loco_histograms';
         if ~isfolder(hist_save_folder)
@@ -113,14 +122,34 @@ function process_data_features(path_to_folder, save_folder, date_str)
         end
         saveas(f_overview, fullfile(hist_save_folder, strcat(save_str, '_hist.png')), 'png')
 
-        % 2 - features - with individual traces per fly
-        f_feat = plot_all_features(LOG, feat, trx, protocol, save_str);
+        % 2 - features - with individual traces per fly across entire
+        % experiment.
+        f_feat = plot_all_features_filt(LOG, comb_data, protocol, save_str);
 
         feat_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/feat_overview';
         if ~isfolder(feat_save_folder)
             mkdir(feat_save_folder);
         end
         saveas(f_feat, fullfile(feat_save_folder, strcat(save_str, '_feat.png')), 'png')
+
+        % 3 - Make plot with data per condition for only the one cohort
+        DATA = comb_data_one_cohort_cond(LOG, comb_data, protocol);
+        plot_sem = 1;
+
+        data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data'};
+
+        for typ = 1:numel(data_types)
+            data_type = data_types{typ};
+            fig_save_folder = strcat('/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/', data_type);
+            f_cond = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_sem);
+            % Add folder to save individual figures per cohort
+            fname = fullfile(fig_save_folder, strcat(save_str, '_', data_type, '.pdf'));
+            exportgraphics(f_cond ...
+                , fname ...
+                , 'ContentType', 'vector' ...
+                , 'BackgroundColor', 'none' ...
+                ); 
+        end 
 
         %% SAVE
         if ~isfolder(save_folder)
@@ -132,6 +161,7 @@ function process_data_features(path_to_folder, save_folder, date_str)
             , 'LOG' ...
             , 'feat' ...
             , 'trx' ...
+            , 'comb_data' ...
             );
     end
 

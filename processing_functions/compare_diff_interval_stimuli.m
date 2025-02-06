@@ -1,3 +1,5 @@
+% % For PROTOCOL 14
+
 clear
 
 path_to_data = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_14/csw1118/M';
@@ -61,6 +63,8 @@ pairwiseResults1 = multcompare(rm1, 'Condition', 'ComparisonType', comp_type); %
 pairwiseResults1 = sortrows(pairwiseResults1, 'pValue', 'ascend');
 pairwiseResults1(2:2:end,:) = [];
 
+
+%% 
 
 
 

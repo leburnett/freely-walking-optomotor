@@ -5,10 +5,10 @@ function f = make_overview(combined_data, strain, sex, protocol)
 
 % Analysis of metrics across the entire experiment. 
 
-data = combined_data.vel_data;
+data = combined_data.fv_data;
 n_flies = height(data);
 % Set any values > 300 mm s-1 as NaN.
-data(data(:, :)>300) = NaN;
+% data(data(:, :)>300) = NaN;
 
 % Initialise figure
 t = tiledlayout(3,2, 'TileSpacing', 'compact', 'Padding','loose');
