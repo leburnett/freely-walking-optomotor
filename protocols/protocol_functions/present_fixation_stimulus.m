@@ -12,7 +12,7 @@ function Log = present_fixation_stimulus(current_condition, all_conditions, vido
  trial_len = all_conditions(current_condition, 5);
  which_condition = all_conditions(current_condition, 6);
 
-t_flicker = 3; 
+t_flicker = 30; 
 t_pause = 0.015;
 
 if trial_len == 2
