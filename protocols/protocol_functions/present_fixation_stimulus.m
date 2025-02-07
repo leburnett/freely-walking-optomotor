@@ -1,4 +1,8 @@
-function Log = present_optomotor_stimulus(current_condition, all_conditions, vidobj)
+function Log = present_fixation_stimulus(current_condition, all_conditions, vidobj)
+% Used to display bar fixation pattern.
+% We only really care about 'trial' length here. 
+% The bar fixation pattern should only have 2 frames. 
+% Show frame 1 for 'trial_len' then show frame 2 for 'trial_len'.
 
 % set condition variables based on row in all conditions
  optomotor_pattern = all_conditions(current_condition, 1);
@@ -7,12 +11,6 @@ function Log = present_optomotor_stimulus(current_condition, all_conditions, vid
  flicker_speed = all_conditions(current_condition, 4);
  trial_len = all_conditions(current_condition, 5);
  which_condition = all_conditions(current_condition, 6);
-
- % disp (optomotor_pattern); 
- % disp (flicker_pattern);
- % disp (optomotor_speed);
- % disp (flicker_speed);
- % disp (trial_len);
 
 t_flicker = 3; 
 t_pause = 0.015;
@@ -35,14 +33,19 @@ for tr_ind = 1:num_trials
     disp(['trial number = ' num2str(tr_ind)])
 
     dir_val = dir_val*-1;
-    % JFRC49_ES
+    % if dir_val > 0 
+    %     frame_id = 1;
+    % elseif dir_val < 0 
+    %     frame_id = 2;
+    % end 
+
     % Log
     Log.trial(idx_value) = idx_value;
-    Log.dir(idx_value) = dir_val;
+    Log.dir(idx_value) = dir_val; % set direction as frame_id
 
-    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]);
+    Panel_com('send_gain_bias', [0 0 0 0]); % set speed as zero. 
     pause(t_pause);
-    Panel_com('set_position', [1 1]);
+    Panel_com('set_position', [tr_ind 1]); % set frame
     pause(t_pause);
     Panel_com('start'); 
     pause(t_pause);
