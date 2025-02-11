@@ -97,7 +97,7 @@ for j = [1,2]
 
          end 
     
-        if current_condition < 5
+        if current_condition < 5 || current_condition > 8
             Log = present_optomotor_stimulus(current_condition, all_conditions, vidobj);
             % Add the 'Log' from each condition to the overall log 'LOG'.
             fieldName = sprintf('log_%d', log_n);

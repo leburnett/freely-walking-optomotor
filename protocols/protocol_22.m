@@ -22,9 +22,9 @@ all_conditions = [
     31, 29, 32, 1, 15, 2; % reverse phi - 1px step
     32, 29, 32, 1, 15, 3; % 4 px step
     33, 29, 32, 1, 15, 4; % 8 px step
-    34, 29, 32, 1, 15, 5; % reverse phi - 1px step
-    35, 29, 32, 1, 15, 6; % 4 px step
-    36, 29, 32, 1, 15, 7; % 8 px step
+    34, 29, 32, 1, 15, 5; % FoE - 30deg
+    35, 29, 32, 1, 15, 6; % 15 deg
+    36, 29, 32, 1, 15, 7; % 60 deg
 ];  
 
 num_conditions = height(all_conditions); 
