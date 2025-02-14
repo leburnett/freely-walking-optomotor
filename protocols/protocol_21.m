@@ -30,8 +30,8 @@ all_conditions = [
     19, 29, 32, 1, 15, 6; % - - 6
     20, 29, 16, 1, 15, 7; % OFF curtain - - 7
     20, 29, 32, 1, 15, 8; % - - 8
-    10, 29, 4, 1, 15, 9; % Flicker as a stimulus - 60 deg - slow
-    10, 29, 8, 1, 15, 10; % Flicker as a stimulus - 60 deg - fast
+    7, 29, 4, 1, 15, 9; % Flicker as a stimulus - 60 deg - slow
+    7, 29, 8, 1, 15, 10; % Flicker as a stimulus - 60 deg - fast
 ];  
 
 num_conditions = height(all_conditions); 
