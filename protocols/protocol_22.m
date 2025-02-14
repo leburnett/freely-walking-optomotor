@@ -18,13 +18,14 @@ t_pause = 0.015;
 
 % [pattern_id, interval_id, speed_patt, speed_int, trial_dur, condition_n]
 all_conditions = [ 
-    30, 29, 1, 1, 15, 1; % 1 = bar fixation
-    31, 29, 32, 1, 15, 2; % reverse phi - 1px step
-    32, 29, 32, 1, 15, 3; % 4 px step
-    33, 29, 32, 1, 15, 4; % 8 px step
-    34, 29, 32, 1, 15, 5; % FoE - 30deg
-    35, 29, 32, 1, 15, 6; % 15 deg
-    36, 29, 32, 1, 15, 7; % 60 deg
+    37, 29, 1, 1, 15, 1; % 1 = bar fixation - OFF bar
+    38, 29, 1, 1, 15, 2; % 1 = bar fixation - ON bar
+    31, 29, 32, 1, 15, 3; % reverse phi - 1px step
+    32, 29, 32, 1, 15, 4; % 4 px step
+    33, 29, 32, 1, 15, 5; % 8 px step
+    34, 29, 48, 1, 15, 6; % FoE - 30deg
+    35, 29, 48, 1, 15, 7; % 15 deg
+    36, 29, 48, 1, 15, 8; % 60 deg
 ];  
 
 num_conditions = height(all_conditions); 
@@ -90,7 +91,7 @@ for j = [1,2]
 
          end 
     
-        if current_condition == 1 
+        if current_condition < 3
             Log = present_fixation_stimulus(current_condition, all_conditions, vidobj);
             % Add the 'Log' from each condition to the overall log 'LOG'.
             fieldName = sprintf('log_%d', log_n);
@@ -128,7 +129,7 @@ LOG.meta.end_temp_ring = t_ring_end;
 %% save LOG file
 log_fname =  fullfile(exp_folder, strcat('LOG_', string(date_str), '_', t_str, '.mat'));
 save(log_fname, 'LOG');
-disp('Log saved')
+disp('Log saved') 
 
 % clear temp
 clear d ch1
