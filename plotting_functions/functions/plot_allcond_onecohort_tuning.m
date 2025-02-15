@@ -17,33 +17,36 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
         d_fv = 0;
     end 
 
-    params = {"60deg gratings - 4Hz"...
-    , "60deg gratings - 8Hz"...
-    , "ON curtain - 4Hz"...
-    , "ON curtain - 8Hz"...
-    , "OFF curtain - 4Hz"...
-    , "OFF curtain - 8Hz"...
-    , "2pix ON bar - 4Hz"...
-    , "2pix ON bar - 8Hz"...
-    , "2pix OFF bar - 4Hz"...
-    , "2pix OFF bar - 8Hz"...
-    , "15deg gratings - 4Hz"...
-    , "15deg gratings - 8Hz"...
-    };
+    % params = {"60deg gratings - 4Hz"...
+    % , "60deg gratings - 8Hz"...
+    % , "ON curtain - 4Hz"...
+    % , "ON curtain - 8Hz"...
+    % , "OFF curtain - 4Hz"...
+    % , "OFF curtain - 8Hz"...
+    % , "2pix ON bar - 4Hz"...
+    % , "2pix ON bar - 8Hz"...
+    % , "2pix OFF bar - 4Hz"...
+    % , "2pix OFF bar - 8Hz"...
+    % , "15deg gratings - 4Hz"...
+    % , "15deg gratings - 8Hz"...
+    % };
 
     % Generate new figure
     figure;
-    n_cond = length(params);
-    t = tiledlayout(n_cond/2,6);
+
+    landing = 'none';
+    data = DATA.(strain).(landing).(sex); 
+    n_exp = length(data);
+    data_fields = fieldnames(data);
+    cond_fields = data_fields(cellfun(@(x) ~isempty(regexp(x, 'condition', 'ONCE')), data_fields));
+    n_cond = numel(cond_fields)/2; % R1 and R2. 
+
+    t = tiledlayout(ceil(n_cond/2),6);
     t.TileSpacing = 'compact';
 
     % % Eventually have this as the input to the function 
     % col = [0.4 0.8 1]; %light blue 
     col = [0.2 0.2 0.2]; % dark grey
-    landing = 'none';
-
-    data = DATA.(strain).(landing).(sex); 
-    n_exp = length(data);
 
     % Find out which conditions exist:
     [min_val, max_val] = range_of_conditions(data);
@@ -55,8 +58,6 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
         rep2_str = strcat('R2_condition_', string(idx2));  
 
         if isfield(data, rep1_str)
-
-        p = params{idx2};
 
         cond_data = [];
         if d_fv 
@@ -75,6 +76,12 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
                     rep1_data_fv = rep1_data.fv_data;
                     rep2_data_fv = data(idx).(rep2_str).fv_data;
                 end 
+
+                % Get meta information about what stimulus was presented
+                % during the condition:
+                cond_datafields = fieldnames(rep1_data);  % Get all field names
+                values = struct2cell(rep1_data); % Convert struct to cell array
+                cond_meta = cell2struct(values(1:6), cond_datafields(1:6), 1);
 
                 % Extract the relevant data
                 rep1_data = rep1_data.(data_type);
@@ -166,7 +173,7 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
         x = 1:1:nf_comb;
     
         %% Plot subplot for condition
-        subplot(n_cond/2, 6, (3*idx2-2):(3*idx2-1))
+        subplot(ceil(n_cond/2), 6, (3*idx2-2):(3*idx2-1))
 
         if data_type == "dist_data"
             if d_fv == 1
@@ -176,7 +183,7 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
                 rng = [-40 15];
                 ylb = 'Distance from centre - delta (mm)';
             else
-                rng = [0 80];
+                rng = [0 120];
                 ylb = 'Distance from centre (mm)';
             end 
             lw = 1.5;
@@ -233,7 +240,8 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
         box off
         ax = gca; ax.XAxis.Visible = 'off'; ax.TickDir = 'out'; ax.TickLength = [0.015 0.015]; ax.LineWidth = 1; ax.FontSize = 12;
 
-        title(p, 'FontSize', 11)
+        title_str = get_title_from_meta(cond_meta);
+        title(title_str, 'FontSize', 11)
 
         % where to position text annotation
         xpos = nf_comb-(450/dwn_factor);
@@ -250,7 +258,7 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
         text(pos_data(1), pos_data(2), strcat("N = ", num2str(n_flies_in_cond)), 'Color', col);
 
         %% Add Errorbar tuning curve plot
-         subplot(n_cond/2, 6, 3*idx2)
+         subplot(ceil(n_cond/2), 6, 3*idx2)
 
          if data_type == "dist_data"
             buffer_t = 30*7;

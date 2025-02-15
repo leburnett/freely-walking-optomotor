@@ -35,12 +35,12 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
         y_data(k, vals_to_rm) = NaN;
 
         % Fill NaNs with spline. 
-        acc_data(k, :) = fillmissing(acc_data(k, :), 'spline');
-        vel_data(k, :) = fillmissing(vel_data(k, :), 'spline');
-        d_wall_data(k, :) = fillmissing(d_wall_data(k, :), 'spline');
-        heading_data(k, :) = fillmissing(heading_data(k, :), 'previous');
-        x_data(k, :) = fillmissing(x_data(k, :), 'spline');
-        y_data(k, :) = fillmissing(y_data(k, :), 'spline');
+        acc_data(k, :) = fillmissing(acc_data(k, :)', 'spline')';
+        vel_data(k, :) = fillmissing(vel_data(k, :)', 'spline');
+        d_wall_data(k, :) = fillmissing(d_wall_data(k, :)', 'spline');
+        heading_data(k, :) = fillmissing(heading_data(k, :)', 'previous');
+        x_data(k, :) = fillmissing(x_data(k, :)', 'spline');
+        y_data(k, :) = fillmissing(y_data(k, :)', 'spline');
     end 
 
     dist_trav = vel_data/FPS;
@@ -91,7 +91,7 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
         fv = (vx .* cos(D(1:end-1)) + vy .* sin(D(1:end-1))); % mm /s 
         fv(fv<0)=NaN; % remove negative forward velocity.
         fv(fv>50)=NaN; % remove forward velocity > 50mm/s - too high.
-        fv = fillmissing(fv, 'linear');
+        fv = fillmissing(fv', 'linear')';
         fv_data(idx, :) = [fv(1), fv];
 
         c_data = [];
@@ -99,7 +99,7 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
         vals_fv_zero = abs(fv_data(idx, :))<0.1;
         c_data(abs(c_data)==Inf)=NaN;
         c_data(vals_fv_zero) = NaN;
-        c_data = fillmissing(c_data, 'previous');
+        c_data = fillmissing(c_data', 'previous')';
         curv_data(idx, :) = c_data;
     end
 
