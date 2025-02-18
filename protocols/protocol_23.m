@@ -122,6 +122,14 @@ log_fname =  fullfile(exp_folder, strcat('LOG_', string(date_str), '_', t_str, '
 save(log_fname, 'LOG');
 disp('Log saved') 
 
+% Add notes at the end:
+prompt = "Notes at end: ";
+notes_str_end = input(prompt, 's');
+params.NotesEnd = notes_str_end;
+
+% Export to the google sheet log:
+export_to_google_sheets(params)
+
 % clear temp
 clear d ch1
 
