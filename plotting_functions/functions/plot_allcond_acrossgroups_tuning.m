@@ -21,7 +21,7 @@ function f = plot_allcond_acrossgroups_tuning(DATA, gp_data, params, data_type, 
     % Generate new figure
     figure;
     n_cond = length(params);
-    t = tiledlayout(n_cond/2,6);
+    t = tiledlayout(ceil(n_cond/2),6);
     t.TileSpacing = 'compact';
 
 %% For each experimental group (strain-sex):
@@ -158,17 +158,17 @@ for gp = gps2plot
         x = 1:1:nf_comb;
     
         %% Plot subplot for condition
-        subplot(n_cond/2, 6, (3*idx2-2):(3*idx2-1))
+        subplot(ceil(n_cond/2), 6, (3*idx2-2):(3*idx2-1))
 
         if data_type == "dist_data"
             if d_fv == 1
-                rng = [-10 5];
+                rng = [-15 5];
                 ylb = 'Distance from centre / fv-data - delta (s)';
             elseif delta == 1
-                rng = [-40 15];
+                rng = [-50 15];
                 ylb = 'Distance from centre - delta (mm)';
             else
-                rng = [0 80];
+                rng = [0 100];
                 ylb = 'Distance from centre (mm)';
             end 
             lw = 1.5;
@@ -177,7 +177,7 @@ for gp = gps2plot
             ylb = 'Distance travelled (mm)';
             lw = 1; 
         elseif data_type == "av_data"
-            rng = [-170 170];
+            rng = [-190 190];
             % rng = [-50 50];
             ylb = "Angular velocity (deg s-1)";
             lw = 1;
@@ -190,11 +190,11 @@ for gp = gps2plot
             ylb = "Velocity (mm s-1)";
             lw = 1;
         elseif data_type == "fv_data"
-            rng = [0 20];
+            rng = [0 25];
             ylb = "Forward velocity (mm s-1)";
             lw = 1;
         elseif data_type == "curv_data"
-            rng = [-150 150];
+            rng = [-170 170];
             % rng = [-50 50];
             ylb = "Turning rate (deg mm-1)";
             lw = 1;
@@ -283,7 +283,7 @@ for gp = gps2plot
         text(pos_data(1), pos_data(2), strcat("N = ", num2str(n_flies_in_cond)), 'Color', col);
 
         %% Add Errorbar tuning curve plot
-         subplot(n_cond/2, 6, 3*idx2)
+         subplot(ceil(n_cond/2), 6, 3*idx2)
 
          if data_type == "dist_data"
             buffer_t = 30*7;

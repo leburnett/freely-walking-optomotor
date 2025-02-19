@@ -113,6 +113,9 @@ function title_str = get_title_from_meta(cond_meta)
         case 7
             flicker_str = "30deg-flicker";
 
+        case 9
+            flicker_str = "30deg_gratings";
+
         case 10
             flicker_str = "60deg-flicker";
 

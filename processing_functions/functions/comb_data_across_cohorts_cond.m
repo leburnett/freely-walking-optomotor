@@ -78,6 +78,34 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
             4, 10, 64, 8, 15, 11; % grating - 15 deg - - 3
             4, 10, 127, 8, 15, 12; % - - 4
             ];
+    elseif protocol == "protocol_21"
+        cond_array = [ 
+                27, 29, 64, 1, 15, 1; % grating - 60 deg
+                27, 29, 127, 1, 15, 2;
+                26, 29, 64, 1, 15, 3; % grating - 30 deg - - 3
+                26, 29, 127, 1, 15, 4; % - - 4
+                19, 29, 16, 1, 15, 5; % ON curtain - - 5
+                19, 29, 32, 1, 15, 6; % - - 6
+                20, 29, 16, 1, 15, 7; % OFF curtain - - 7
+                20, 29, 32, 1, 15, 8; % - - 8
+                10, 29, 4, 1, 15, 9; % Flicker as a stimulus - 60 deg - slow
+                10, 29, 8, 1, 15, 10; % Flicker as a stimulus - 60 deg - fast
+            ]; 
+    elseif protocol == "protocol_22"
+        cond_array = [ 
+            30, 29, 1, 1, 15, 1; % 1 = bar fixation
+            31, 29, 32, 1, 15, 2; % reverse phi - 1px step
+            32, 29, 32, 1, 15, 3; % 4 px step
+            33, 29, 32, 1, 15, 4; % 8 px step
+            34, 29, 32, 1, 15, 5; % FoE - 30deg
+            35, 29, 32, 1, 15, 6; % 15 deg
+            36, 29, 32, 1, 15, 7; % 60 deg
+        ]; 
+    elseif protocol == "protocol_23"
+        cond_array = [ 
+            45, 9, 1, 127, 60, 7; % 1 = bar fixation
+            46, 9, 1, 127, 60, 8; % 2 = bar fixation
+        ]; 
     end 
 
     % Find all processed data for one protocol. 

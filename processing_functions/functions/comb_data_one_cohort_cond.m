@@ -90,6 +90,11 @@ function DATA = comb_data_one_cohort_cond(LOG, comb_data, protocol)
             35, 29, 32, 1, 15, 6; % 15 deg
             36, 29, 32, 1, 15, 7; % 60 deg
         ]; 
+    elseif protocol == "protocol_23"
+        cond_array = [ 
+            45, 9, 1, 127, 60, 7; % 1 = bar fixation
+            46, 9, 1, 127, 60, 8; % 2 = bar fixation
+        ]; 
     end 
 
 
@@ -103,23 +108,23 @@ function DATA = comb_data_one_cohort_cond(LOG, comb_data, protocol)
     % Check for landing site field in LOG. 
     % If there is no field - i.e. before added - use 'attP2' if Kir, 
     % 'attP5' if shibire and 'none' is other. 
-    if isfield(LOG.meta, 'landing_site')
-        landing = LOG.meta.landing_site;
-        if contains(landing, 'su')
-            landing = landing(end-4:end);
-        end 
-        if contains(strain, 'shibire') && contains(landing, 'attP2') % correct for wrong landing with Shibire
-            landing = 'attP5';
-        end 
-    else
-        if contains(strain, 'kir')
-            landing = "attP2";
-        elseif contains(strain, 'shibire')
-            landing = "attP5";
-        else
+    % if isfield(LOG.meta, 'landing_site')
+    %     landing = LOG.meta.landing_site;
+    %     if contains(landing, 'su')
+    %         landing = landing(end-4:end);
+    %     end 
+    %     if contains(strain, 'shibire') && contains(landing, 'attP2') % correct for wrong landing with Shibire
+    %         landing = 'attP5';
+    %     end 
+    % else
+    %     if contains(strain, 'kir')
+    %         landing = "attP2";
+    %     elseif contains(strain, 'shibire')
+    %         landing = "attP5";
+    %     else
             landing = "none";
-        end 
-    end 
+    %     end 
+    % end 
 
     sex = LOG.meta.fly_sex;
 
