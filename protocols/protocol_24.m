@@ -15,12 +15,13 @@
 % stationary bars = 60s only one position
 
 clear 
-tic
+
 % Initialize the temperature recording.
 d = initialize_temp_recording();
 
 % Protocol parameters: 
 t_acclim_start = 300; %10; %300; % Make this 300 eventually. 
+t_flash = 15;
 t_acclim_end = 30; %30;
 t_interval = 30; %30;
 t_pause = 0.01;
@@ -88,7 +89,9 @@ for j = [1,2]
             flash_speed = 8; % fps
              
             % acclim_patt.condition = optomotor_pattern;
-            acclim_patt.optomotor_pattern = flash_pattern;
+            acclim_patt.flash_pattern = flash_pattern;
+            acclim_patt.flash_speed = flash_speed;
+            acclim_patt.flash_dur = t_flash;
             acclim_patt.dir = 0;
             acclim_patt.start_t = vidobj.getTimeStamp().value;
             acclim_patt.start_f = vidobj.getFrameCount().value;
@@ -97,7 +100,7 @@ for j = [1,2]
             Panel_com('send_gain_bias', [flash_speed 0 0 0]); pause(t_pause)
             Panel_com('set_position', [1 1]); pause(t_pause)
             Panel_com('start'); 
-            pause(t_acclim_end); 
+            pause(t_flash); 
             Panel_com('stop'); pause(t_pause); 
 
             acclim_patt.stop_t = vidobj.getTimeStamp().value;
@@ -105,6 +108,28 @@ for j = [1,2]
 
             LOG.acclim_patt = acclim_patt;
             disp('Flashes ended')
+
+            % % Interval after flashes
+            disp('Interval')
+            Panel_com('set_pattern_id', 47); % bkg pattern with 0.
+            pause(t_pause);
+            Panel_com('send_gain_bias', [0 0 0 0]); 
+            pause(t_pause);
+            Panel_com('set_position', [1 1]);
+            pause(t_pause);
+            Panel_com('start'); 
+            pause(t_pause);
+            
+            % get frame and log it
+            acclim_patt.start_t_int = vidobj.getTimeStamp().value;
+            acclim_patt.start_f_int = vidobj.getFrameCount().value;
+            
+            % Set duration and stop.
+            pause(interval_dur); 
+            Panel_com('stop'); 
+             
+            acclim_patt.stop_t_int = vidobj.getTimeStamp().value;
+            acclim_patt.stop_f_int = vidobj.getFrameCount().value;
 
          end 
 
@@ -144,6 +169,9 @@ disp('Camera OFF')
 [t_outside_end, t_ring_end] = get_temp_rec(d);
 
 %% add parameters to LOG.meta
+LOG.meta.t_acclim_start = t_acclim_start;
+LOG.meta.t_flash = t_flash;
+LOG.meta.t_acclim_end = t_acclim_end;
 LOG.meta.start_temp_outside = t_outside_start;
 LOG.meta.start_temp_ring = t_ring_start;
 LOG.meta.end_temp_outside = t_outside_end;
@@ -163,7 +191,6 @@ params.NotesEnd = notes_str_end;
 % Export to the google sheet log:
 export_to_google_sheets(params)
 
-toc
 % clear temp
 clear d ch1
 
