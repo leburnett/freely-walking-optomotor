@@ -2,14 +2,14 @@ function Log = present_optomotor_stimulus_curtain(current_condition, all_conditi
 
 % set condition variables based on row in all conditions
  optomotor_pattern = all_conditions(current_condition, 1);
- flicker_pattern = all_conditions(current_condition, 2);
+ interval_pattern = all_conditions(current_condition, 2);
  optomotor_speed = all_conditions(current_condition, 3);
- flicker_speed = all_conditions(current_condition, 4);
+ interval_speed = all_conditions(current_condition, 4);
  trial_len = all_conditions(current_condition, 5);
- which_condition = all_conditions(current_condition, 6);
+ interval_dur = all_conditions(current_condition, 6);
+ which_condition = all_conditions(current_condition, 7);
 
-t_flicker = 30; 
-t_pause = 0.015;
+t_pause = 0.01;
 
 if trial_len == 2
     num_trials = 15;
@@ -29,8 +29,8 @@ dir_val = -1;
 for tr_ind = 1:num_trials
 
     % If the pattern is a 'curtain' pattern - then change to the other
-    % pattern for the opposite direction.
-    if tr_ind == 2 && which_condition > 2 % For the reverse direction of a 'curtain' stimulus.
+    % pattern for the opposite direction during the second trial.
+    if tr_ind == 2
 
         if optomotor_pattern == 19
             reverse_pattern = 20; 
@@ -71,12 +71,12 @@ for tr_ind = 1:num_trials
 
     % Protocol parameters:
     Log.trial_len=trial_len;
-    Log.t_flicker=t_flicker;
+    Log.interval_dur=interval_dur;
     Log.num_trials=num_trials;
     Log.optomotor_pattern = optomotor_pattern;
-    Log.flicker_pattern = flicker_pattern;
+    Log.interval_pattern = interval_pattern;
     Log.optomotor_speed = optomotor_speed;
-    Log.flicker_speed = flicker_speed;
+    Log.interval_speed = interval_speed;
     Log.which_condition = which_condition;
 
     idx_value = idx_value+1;
@@ -84,38 +84,34 @@ for tr_ind = 1:num_trials
 end
 
 %% Flicker pattern 
-disp('trial number = flicker 1')
-% Panel_com('set_pattern_id', flicker_pattern);
-Panel_com('all_off');
-% idx_value = idx_value+1;
-% set dir_val as positive (1)
+disp('Interval')
+Panel_com('set_pattern_id', interval_pattern);
+
 dir_val = 0;
 
 % Log
 Log.trial(idx_value) = idx_value;
 Log.dir(idx_value) = dir_val;
 
-% Panel_com('send_gain_bias', [flicker_speed 0 0 0]); 
-% pause(t_pause);
-% Panel_com('set_position', [1 1]);
-% pause(t_pause);
-% Panel_com('start'); 
-% pause(t_pause);
+Panel_com('send_gain_bias', [interval_speed 0 0 0]); 
+pause(t_pause);
+Panel_com('set_position', [1 1]);
+pause(t_pause);
+Panel_com('start'); 
+pause(t_pause);
 
 % get frame and log it
 Log.start_t(idx_value) = vidobj.getTimeStamp().value;
 Log.start_f(idx_value) = vidobj.getFrameCount().value;
 
-pause(t_flicker); 
-% pause(t_pause); % The pattern will run for this ‘Time’
-% Panel_com('stop'); 
-% pause(t_pause);
+pause(interval_dur); 
+
+Panel_com('stop'); 
+pause(t_pause);
 
 % % get frame and log it 
 Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
 Log.stop_f(idx_value) = vidobj.getFrameCount().value;
-controller_mode = [0 0];
-Panel_com('set_mode',controller_mode); pause(t_pause)
 
 end
 
