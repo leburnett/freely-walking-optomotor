@@ -22,8 +22,8 @@ all_conditions = [
     % 42, 9, 1, 127, 15, 4; % bar fixation - OFF bar, contrast = 2
     % 43, 9, 1, 127, 15, 5; % bar fixation - OFF bar, contrast = 4
     % 44, 9, 1, 127, 15, 6; % bar fixation - OFF bar, contrast = 6
-    45, 9, 1, 127, 60, 7; % bar fixation - 16px ON
-    46, 9, 1, 127, 60, 8; % bar fixation - 16px OFF
+    45, 9, 1, 127, 60, 1; % bar fixation - 16px ON
+    46, 9, 1, 127, 60, 2; % bar fixation - 16px OFF
 ];  
 
 num_conditions = height(all_conditions); 
@@ -121,6 +121,14 @@ LOG.meta.end_temp_ring = t_ring_end;
 log_fname =  fullfile(exp_folder, strcat('LOG_', string(date_str), '_', t_str, '.mat'));
 save(log_fname, 'LOG');
 disp('Log saved') 
+
+% Add notes at the end:
+prompt = "Notes at end: ";
+notes_str_end = input(prompt, 's');
+params.NotesEnd = notes_str_end;
+
+% Export to the google sheet log:
+export_to_google_sheets(params)
 
 % clear temp
 clear d ch1
