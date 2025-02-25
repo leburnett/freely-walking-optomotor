@@ -4,7 +4,7 @@
 % be 4-bit in the future. ---- THIS IS THE 4 BIT VERSION
 
 % 2 x 4 pixel bars at 180 degrees from each other. 
-on_off = 0; % 1 = ON, 0 = OFF.
+on_off = 1; % 1 = ON, 0 = OFF.
 
 pattern.x_num = 2; % There are 2 frames. 
 pattern.y_num = 1; % frames of Y, at different contrast levels
@@ -15,9 +15,9 @@ pattern.row_compression = 1;
 % Generate empty array with zeros - [3, 192] x frames (192)
 Pats = zeros(3, 192, pattern.x_num, pattern.y_num); 	
 
-bar_pw = 8;
+bar_pw = 16;
 int_pw = 96-bar_pw;
-con_val = 6;
+con_val = 3;
 
 if on_off == 0 % dark bar on bright bkg:
     % Generate 2 frame pattern with identical frames.
@@ -37,7 +37,7 @@ pattern.Panel_map = fliplr(flipud(reshape(A, 3, 24)));
 pattern.BitMapIndex = process_panel_map(pattern);
 pattern.data = make_pattern_vector(pattern);
 directory_name = 'C:\MatlabRoot\Patterns\patterns_oaky';
-str = [directory_name '\Pattern_44_8px_bar_fixation_OFF_6con.mat']; 	% name must begin with ‘Pattern_’
+str = [directory_name '\Pattern_50_16px_bar_fixation_ON_3con.mat']; 	% name must begin with ‘Pattern_’
 save(str, 'pattern');
 
 

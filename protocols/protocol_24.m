@@ -20,10 +20,10 @@ clear
 d = initialize_temp_recording();
 
 % Protocol parameters: 
-t_acclim_start = 300; %10; %300; % Make this 300 eventually. 
-t_flash = 15;
+t_acclim_start = 30; %10; %300; % Make this 300 eventually. 
+t_flash = 5;
 t_acclim_end = 30; %30;
-t_interval = 30; %30;
+t_interval = 20; %30;
 t_pause = 0.01;
 
 % [pattern_id, interval_id, speed_patt, speed_int, trial_dur, int_dur, condition_n]
@@ -38,8 +38,8 @@ all_conditions = [
     32, 47, 64, 1, 15, t_interval, 8;  % Reverse Phi - 4px step - 8Hz
     10, 47, 8, 1, 15, t_interval, 9;  % Flicker - 4Hz
     10, 47, 16, 1, 15, t_interval, 10; % Flicker - 8Hz
-    45, 47, 1, 1, 60, t_interval, 11; % bar fixation - 16px ON
-    46, 47, 1, 1, 60, t_interval, 12; % bar fixation - 16px OFF
+    50, 47, 1, 1, 60, t_interval, 11; % bar fixation - 16px ON
+    49, 47, 1, 1, 60, t_interval, 12; % bar fixation - 16px OFF
 ];  
  
 num_conditions = height(all_conditions); 
@@ -86,7 +86,7 @@ for j = [1,2]
              % % ACCLIM PATT
             disp('Full field flashes')
             flash_pattern = 48; % Full field ON - OFF 
-            flash_speed = 8; % fps
+            flash_speed = 4; % fps
              
             % acclim_patt.condition = optomotor_pattern;
             acclim_patt.flash_pattern = flash_pattern;
@@ -125,7 +125,7 @@ for j = [1,2]
             acclim_patt.start_f_int = vidobj.getFrameCount().value;
             
             % Set duration and stop.
-            pause(interval_dur); 
+            pause(t_interval); 
             Panel_com('stop'); 
              
             acclim_patt.stop_t_int = vidobj.getTimeStamp().value;
