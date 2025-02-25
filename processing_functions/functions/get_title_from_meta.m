@@ -5,8 +5,8 @@ function title_str = get_title_from_meta(cond_meta)
     optomotor_pattern = cond_meta.optomotor_pattern;
     % disp(optomotor_pattern)
     optomotor_speed = cond_meta.optomotor_speed;
-    flicker_pattern = cond_meta.flicker_pattern;
-    flicker_speed = cond_meta.flicker_speed;
+    interval_pattern = cond_meta.interval_pattern;
+    interval_speed = cond_meta.interval_speed;
 
     switch optomotor_pattern
 
@@ -29,10 +29,10 @@ function title_str = get_title_from_meta(cond_meta)
             pattern_str = "4ON-12OFF-bar";
 
         case 16 
-            pattern_str = "12ON-4OFF_bar";
+            pattern_str = "12ON-4OFF-bar";
 
         case 17
-            pattern_str = "2ON-14OFF_bar";
+            pattern_str = "2ON-14OFF-bar";
 
         case 19 
             pattern_str = "ON-curtains";
@@ -41,7 +41,7 @@ function title_str = get_title_from_meta(cond_meta)
             pattern_str = "OFF-curtain";
 
         case 24
-            pattern_str = "2OFF-14ON_bar";
+            pattern_str = "2OFF-14ON-bar";
 
         case 26
             pattern_str = "30deg-grating";
@@ -103,33 +103,48 @@ function title_str = get_title_from_meta(cond_meta)
         case 46
             pattern_str = "8px-OFF-bars";
 
+        case 47
+            pattern_str = "bkg-0";
+
+        case 48
+            pattern_str = "full-field-flashes";
+
+        case 49 
+            pattern_str = "bar-fixation-off";
+
+        case 50
+            pattern_str = "bar-fixation-on";
+
     end    
 
-    switch flicker_pattern
+    switch interval_pattern
 
         case 5
-            flicker_str = "15deg-flicker";
+            interval_str = "15deg-flicker";
 
         case 7
-            flicker_str = "30deg-flicker";
+            interval_str = "30deg-flicker";
 
         case 9
-            flicker_str = "30deg_gratings";
+            interval_str = "30deg_gratings";
 
         case 10
-            flicker_str = "60deg-flicker";
+            interval_str = "60deg-flicker";
 
         case 14
-            flicker_str = "4ON12OFF-flicker";
+            interval_str = "4ON12OFF-flicker";
 
         case 29 
-            flicker_str = "greyscale";
+            interval_str = "greyscale";
+
+        case 47
+            interval_str = "dark";
     end 
 
     pattern_speed = string(optomotor_speed);
-    flicker_speed = string(flicker_speed);
+    interval_speed = string(interval_speed);
     len_str = string(trial_len);
 
-    title_str = strcat(pattern_str, "-", pattern_speed, "fps-", flicker_str, "-", flicker_speed, "fps-", len_str, "s");
+    title_str = strcat(pattern_str, "-", pattern_speed, "fps-", interval_str, "-", interval_speed, "fps-", len_str, "s");
 
 end 

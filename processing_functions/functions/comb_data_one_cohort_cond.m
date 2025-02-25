@@ -95,6 +95,8 @@ function DATA = comb_data_one_cohort_cond(LOG, comb_data, protocol)
             45, 9, 1, 127, 60, 7; % 1 = bar fixation
             46, 9, 1, 127, 60, 8; % 2 = bar fixation
         ]; 
+    elseif protocol == "protocol_24"
+        cond_array = LOG.meta.cond_array; % cond_array is now in built. 
     end 
 
 
@@ -210,11 +212,11 @@ function DATA = comb_data_one_cohort_cond(LOG, comb_data, protocol)
             % Find the condition number before 'which_condition' has
             % been used as a parameter.
             optomotor_pattern = Log.optomotor_pattern;
-            flicker_pattern = Log.flicker_pattern;
+            interval_pattern = Log.interval_pattern;
             opto_speed = Log.optomotor_speed;
-            flick_speed = Log.flicker_speed;
+            interval_speed = Log.interval_speed;
             trial_len = Log.trial_len;
-            params = [optomotor_pattern, flicker_pattern, opto_speed, flick_speed, trial_len];
+            params = [optomotor_pattern, interval_pattern, opto_speed, interval_speed, trial_len];
             condition_n = find(ismember(cond_array, params, 'rows'));
         end 
 
@@ -229,11 +231,15 @@ function DATA = comb_data_one_cohort_cond(LOG, comb_data, protocol)
         stop_f = Log.stop_f(end);
 
         DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).trial_len = Log.trial_len;
-        DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).n_trials = Log.num_trials;
+        if isfield(Log, 'num_trials')
+            DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).n_trials = Log.num_trials;
+        else
+            DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).n_trials = 1;
+        end 
         DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).optomotor_pattern = Log.optomotor_pattern;
         DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).optomotor_speed = Log.optomotor_speed;
-        DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).flicker_pattern = Log.flicker_pattern;
-        DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).flicker_speed = Log.flicker_speed;
+        DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).interval_pattern = Log.interval_pattern;
+        DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).interval_speed = Log.interval_speed;
         DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).start_flicker_f = Log.start_f(end)-start_f;
 
         DATA.(strain).(landing).(sex)(sz).(strcat(rep_str, string(condition_n))).vel_data = comb_data.vel_data(:, start_f:stop_f);
