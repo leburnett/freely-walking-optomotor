@@ -29,11 +29,10 @@ for gp = gps2plot
 
     % % Eventually have this as the input to the function 
     strain = gp_data{gp, 1};
-    landing = gp_data{gp, 2};
-    sex = gp_data{gp, 3};
+    sex = gp_data{gp, 3}; 
     col = gp_data{gp, 4};
 
-    data = DATA.(strain).(landing).(sex); 
+    data = DATA.(strain).(sex); 
 
     n_exp = length(data);
 
@@ -165,7 +164,7 @@ for gp = gps2plot
                 rng = [-15 5];
                 ylb = 'Distance from centre / fv-data - delta (s)';
             elseif delta == 1
-                rng = [-50 15];
+                rng = [-60 30];
                 ylb = 'Distance from centre - delta (mm)';
             else
                 rng = [0 100];

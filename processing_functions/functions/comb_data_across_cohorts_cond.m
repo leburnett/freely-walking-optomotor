@@ -106,8 +106,6 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
             45, 9, 1, 127, 60, 7; % 1 = bar fixation
             46, 9, 1, 127, 60, 8; % 2 = bar fixation
         ]; 
-    elseif protocol == "protocol_24"
-        cond_array = LOG.meta.cond_array; % cond_array is now in built. 
     end 
 
     % Find all processed data for one protocol. 
@@ -133,6 +131,10 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
     
         % Load 'combined_data', 'LOG', 'feat' and 'trx'
         load(fullfile(f_folder, fname));
+
+        if protocol == "protocol_24"
+            cond_array = LOG.meta.cond_array;
+        end 
 
         % Get key information about strain and sex:
         strain = LOG.meta.fly_strain;
@@ -211,38 +213,23 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
                 rep_str = 'R2_condition_';
             end 
 
-            % check if 'which_condition' is a field. 
-            which_exists = isfield(Log, 'which_condition');
-            if which_exists
-                condition_n = Log.which_condition;
-            else
-                % Find the condition number before 'which_condition' has
-                % been used as a parameter.
-                optomotor_pattern = Log.optomotor_pattern;
-                flicker_pattern = Log.flicker_pattern;
-                opto_speed = Log.optomotor_speed;
-                flick_speed = Log.flicker_speed;
-                trial_len = Log.trial_len;
-                params = [optomotor_pattern, flicker_pattern, opto_speed, flick_speed, trial_len];
-                condition_n = find(ismember(cond_array, params, 'rows'));
-            end 
+            condition_n = Log.which_condition;
 
             if LOG.acclim_off1.stop_t(end)<3 && log_n == 1
                 framesb4 = 0;
             else
                 framesb4 = 300;
             end
-            % framesb4 = 300; % include 10s before the start of the trial in the data
 
             start_f = Log.start_f(1)-framesb4;
             stop_f = Log.stop_f(end);
 
             DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).trial_len = Log.trial_len;
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).n_trials = Log.num_trials;
+            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).interval_dur = Log.interval_dur;
             DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).optomotor_pattern = Log.optomotor_pattern;
             DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).optomotor_speed = Log.optomotor_speed;
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).flicker_pattern = Log.flicker_pattern;
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).flicker_speed = Log.flicker_speed;
+            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).interval_pattern = Log.interval_pattern;
+            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).interval_speed = Log.interval_speed;
             DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).start_flicker_f = Log.start_f(end)-start_f;
 
             DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).vel_data = comb_data.vel_data(:, start_f:stop_f);
