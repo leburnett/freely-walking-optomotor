@@ -4,7 +4,7 @@
 clear 
 
 % Initialize the temperature recording.
-% d = initialize_temp_recording();
+d = initialize_temp_recording();
 
 % Protocol parameters: 
 t_acclim = 20; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
@@ -45,7 +45,7 @@ project_data_folder = 'C:\MatlabRoot\FreeWalkOptomotor\data';
 controller_mode = [0 0]; % double open loop
 
 %% get start temperature
-% [t_outside_start, t_ring_start] = get_temp_rec(d);
+[t_outside_start, t_ring_start] = get_temp_rec(d);
 
 %% start camera
 vidobj.startCapture();
@@ -123,13 +123,13 @@ vidobj.stopCapture();
 disp('Camera OFF')
 
 % get end temp
-% [t_outside_end, t_ring_end] = get_temp_rec(d);
+[t_outside_end, t_ring_end] = get_temp_rec(d);
 
 %% add parameters to LOG.meta
-% LOG.meta.start_temp_outside = t_outside_start;
-% LOG.meta.start_temp_ring = t_ring_start;
-% LOG.meta.end_temp_outside = t_outside_end;
-% LOG.meta.end_temp_ring = t_ring_end;
+LOG.meta.start_temp_outside = t_outside_start;
+LOG.meta.start_temp_ring = t_ring_start;
+LOG.meta.end_temp_outside = t_outside_end;
+LOG.meta.end_temp_ring = t_ring_end;
 
 %% save LOG file
 log_fname =  fullfile(exp_folder, strcat('LOG_', string(date_str), '_', t_str, '.mat'));
