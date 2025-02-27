@@ -14,11 +14,13 @@ end
 
 % % % % % Screen strains:
 gp_data = {
-    'jfrc100_es_shibire_kir', 'attP2', 'F', [0.7 0.7 0.7], 1; %[0.85 0.4 0.7]
-    'ss324_t4t5_shibire_kir', 'none', 'F', [0.6 0.8 0.6], 2;
-    'l1l4_jfrc100_shibire_kir', 'none', 'F', [0.4 0.8 1], 3;
-    'ss26283_H1_shibire_kir', 'none', 'F', [0.8, 0 , 0], 4;
-    'ss01027_H2_shibire_kir', 'none', 'F', [0.9, 0.5, 0], 5;
+    'csw1118', 'attP2', 'F', [0.7 0.7 0.7], 1; %[0.85 0.4 0.7]
+    'jfrc100_es_shibire_kir', 'attP2', 'F', [0.7 0.7 0.7], 2; %[0.85 0.4 0.7] [0.7 0.7 0.7]
+    'ss324_t4t5_shibire_kir', 'none', 'F', [0.6 0.8 0.6], 3;
+    'l1l4_jfrc100_shibire_kir', 'none', 'F', [0.4 0.8 1], 4;
+    'ss26283_H1_shibire_kir', 'none', 'F', [0.8, 0 , 0], 5;
+    'ss01027_H2_shibire_kir', 'none', 'F', [0.9, 0.5, 0], 6;
+    't4t5_RNAi_control', 'none', 'F', [0.9, 0.5, 0], 7;
     };
 
 % % % % RNAi flies:
@@ -39,7 +41,7 @@ close all
 % gps2plot= [7, 13, 26]; % compare 3 dbl effectors
 % gps2plot= [3, 9, 15]; % compare 3 kir effectors
 
-gps2plot = [1,3,4,5];
+gps2plot = [2,4,5,6];
 
 grp_title = "ES_CS";
 
@@ -84,6 +86,7 @@ writecell(gp_data, fullfile(Xgrp_save_folder,'group_data.txt'), 'Delimiter', ';'
 %     , "60deg flicker - 4Hz"...
 %     };
 
+% P 22
 % cond_titles = {"OFF bar fixation"...
 %     , "ON bar fixation"...
 %     , "30deg-ReversePhi - 1px step"...
@@ -94,6 +97,7 @@ writecell(gp_data, fullfile(Xgrp_save_folder,'group_data.txt'), 'Delimiter', ';'
 %     , "60deg-FoE"...
 %     };
 
+% P 24
 cond_titles = {"60deg-gratings-4Hz"...
     , "60deg-gratings-8Hz"...
     , "narrow-ON-bars-4Hz"...
@@ -111,7 +115,7 @@ cond_titles = {"60deg-gratings-4Hz"...
 %Save the groups that were used for the plots
 writecell(cond_titles, fullfile(Xgrp_save_folder,'cond_titles.txt'), 'Delimiter', ';')
 
-plot_sem = 1;
+plot_sem = 0;
 
 data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_data_delta', 'dist_data_fv', 'dist_trav', 'heading_data', 'vel_data'};
 
@@ -119,7 +123,7 @@ data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_data_delta'
 for typ = 1:6
     data_type = data_types{typ};
     % Data in time series are downsampled by 10.
-    % f_xgrp = plot_allcond_acrossgroups_tuning(DATA, gp_data, cond_titles, data_type, gps2plot, plot_sem);
+    f_xgrp = plot_allcond_acrossgroups_tuning(DATA, gp_data, cond_titles, data_type, gps2plot, plot_sem);
     f_scbox = scatter_boxchart_per_cond_per_grp(DATA, gp_data, cond_titles, data_type, gps2plot);
     % save as a PDF - 'Padding' option only for MATLAB online.
     % fname = fullfile(Xgrp_save_folder, strcat(join(string(gps2plot), "-"), '_', data_type) + ".pdf");

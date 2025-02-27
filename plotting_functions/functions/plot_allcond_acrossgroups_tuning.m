@@ -133,7 +133,7 @@ for gp = gps2plot
         % Mean +/- SEM
         mean_data = nanmean(cond_data);
         if delta == 1
-            mean_data = mean_data - mean_data(1);
+            mean_data = mean_data - mean_data(300);
             if d_fv
                 mean_data_fv = nanmean(cond_data_fv);
                 mean_data = mean_data./mean_data_fv;
@@ -167,7 +167,7 @@ for gp = gps2plot
                 rng = [-60 30];
                 ylb = 'Distance from centre - delta (mm)';
             else
-                rng = [0 100];
+                rng = [0 75];
                 ylb = 'Distance from centre (mm)';
             end 
             lw = 1.5;
@@ -176,7 +176,13 @@ for gp = gps2plot
             ylb = 'Distance travelled (mm)';
             lw = 1; 
         elseif data_type == "av_data"
-            rng = [-190 190];
+            if idx2 <3 
+                rng = [-300 300];
+            elseif idx2 >2 && idx2 <5
+                rng = [-190 190];
+            elseif idx2 > 4
+                rng = [-90 90];    
+            end 
             % rng = [-50 50];
             ylb = "Angular velocity (deg s-1)";
             lw = 1;

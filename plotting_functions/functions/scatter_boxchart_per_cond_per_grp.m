@@ -53,7 +53,7 @@ for idx2 = min_val:1:max_val
             col = gp_data{gp, 4};
         
             data = DATA.(strain).(sex); 
-            n_exp = length(data);
+            n_exp = length(data); % Number of experiments run for this strain / sex.
     
             rep1_str = strcat('R1_condition_', string(idx2));   
             rep2_str = strcat('R2_condition_', string(idx2));  
@@ -62,7 +62,8 @@ for idx2 = min_val:1:max_val
     
             p = cond_titles{idx2};
     
-            cond_data = []; % contains one row per fly and rep - combines data across all flies and all reps.
+            % contains one row per fly and rep - combines data across all flies and all reps.
+            cond_data = []; 
             if d_fv 
                 cond_data_fv = [];
             end 
@@ -99,18 +100,31 @@ for idx2 = min_val:1:max_val
                     % Trim data to same length
                     rep1_data = rep1_data(:, 1:nf);
                     rep2_data = rep2_data(:, 1:nf);
+
+                    % Initialise empty array:
+                    rep_data = zeros(size(rep1_data));
     
                     if d_fv 
                         rep1_data_fv = rep1_data_fv(:, 1:nf);
                         rep2_data_fv = rep2_data_fv(:, 1:nf);
+                        rep_data_fv = zeros(size(rep1_data_fv));
                     end 
+
                     nf_comb = size(cond_data, 2);
         
-                    if idx == 1 || nf_comb == 0
-                        cond_data = vertcat(cond_data, rep1_data, rep2_data);
-                        if d_fv
-                            cond_data_fv = vertcat(cond_data_fv, rep1_data_fv, rep2_data_fv);
+                    if idx == 1 || nf_comb == 0 % 
+
+                        for rr = 1:size(rep1_data, 1)
+                            rep_data(rr, :) = mean(vertcat(rep1_data(rr, :), rep2_data(rr, :)));
                         end 
+                        cond_data = vertcat(cond_data, rep_data);
+                        if d_fv
+                            for rr = 1:size(rep1_data_fv, 1)
+                                rep_data_fv(rr, :) = mean(vertcat(rep1_data_fv(rr, :), rep2_data_fv(rr, :)));
+                            end 
+                            cond_data_fv = vertcat(cond_data_fv, rep_data_fv);
+                        end 
+
                     else
                         if nf>nf_comb % trim incoming data
                             rep1_data = rep1_data(:, 1:nf_comb);
@@ -131,9 +145,15 @@ for idx2 = min_val:1:max_val
                                 rep2_data_fv(:, nf:nf_comb) = NaN(n_flies, diff_f);
                             end 
                         end 
-                        cond_data = vertcat(cond_data, rep1_data, rep2_data);
+                        
+                        % For 'cond_data' have one row per fly - mean of 2
+                        % reps - not one row per rep. 
+                        rep_data = mean(vertcat(rep1_data, rep2_data));
+                        cond_data = vertcat(cond_data, rep_data);
+
                         if d_fv
-                            cond_data_fv = vertcat(cond_data_fv, rep1_data_fv, rep2_data_fv);
+                            rep_data_fv = mean(vertcat(rep1_data_fv, rep2_data_fv));
+                            cond_data_fv = vertcat(cond_data_fv, rep_data_fv);
                         end 
                     end
     
@@ -150,7 +170,7 @@ for idx2 = min_val:1:max_val
             % Subtract initial value when stimulus starts if required. 
             if delta == 1
                 for j = 1:n_datapoints
-                    cond_data(j, :) = cond_data(j, :) - cond_data(j, 300); % subtract position at beginning of stimulus.
+                    cond_data(j, :) = cond_data(j, :) - cond_data(j, 300); % largest difference from the position when the stimulus started.
                 end 
             end 
     
@@ -170,37 +190,51 @@ for idx2 = min_val:1:max_val
             % 901:end (1800) = 30s of interval.
     
             if data_type == "dist_data"
+                % Look at the position during the last 5s of the stimulus:
                 if d_fv == 1 % delta and forward vel
-                    y_data = prctile(cond_data(:, 301:900)', 2); % Get the 2% value per rep. (min)
+                    y_data = prctile(cond_data(:, 750:900)', 2)'; % Get the 2% value per rep. (min)
                     rng = [-15 5];
                     ylb = 'Distance from centre / fv-data - delta (s)';
                 elseif delta == 1 % delta dist
-                    y_data = prctile(cond_data(:, 301:900)', 2); % Get the 2% value per rep. (min)
-                    rng = [-120 20];
+                    y_data = prctile(cond_data(:, 750:900)', 2)'; % Get the 2% value per rep. (min)
+                    % y_data = cond_data(:, 900)- cond_data(:, 300);
+                    rng = [-100 60];
                     ylb = 'Distance from centre - delta (mm)';
                 else % absolute dist
-                    y_data = prctile(cond_data(:, 301:900)', 2); % Get the 2% value per rep. (min)
-                    rng = [-5 125];
+                    y_data = prctile(cond_data(:, 750:900)', 2)'; % Get the 2% value per rep. (min)
+                    rng = [-5 120];
                     ylb = 'Distance from centre (mm)';
                 end 
+
             elseif data_type == "av_data"
                 y_data = mean(abs(cond_data(:, 301:900)), 2);
-                rng = [-190 190];
+                if idx2 <3
+                    rng = [0 350];
+                elseif idx2 >=3 && idx2 < 5
+                    rng = [0 200];
+                else
+                    rng = [0 120];
+                end 
+                % rng = [0 250];
                 ylb = "Angular velocity (deg s-1)";
             elseif data_type == "fv_data"
                 y_data = mean(abs(cond_data(:, 301:900)), 2);
-                rng = [0 25];
+                rng = [-2 25];
                 ylb = "Forward velocity (mm s-1)";
             elseif data_type == "curv_data"
                 % For turning rate - find the mean across the condition. abs.
                 y_data = mean(abs(cond_data(:, 301:900)), 2);
-                rng = [-170 170];
+                if idx2 < 5
+                    rng = [0 200];
+                else
+                    rng = [0 100];
+                end 
                 ylb = "Turning rate (deg mm-1)";
             end
 
             % Need to combine the x and y data across groups:
             x_grp = vertcat(x_grp, x_data);
-            y_grp = vertcat(y_grp, y_data');
+            y_grp = vertcat(y_grp, y_data);
             col_grp = vertcat(col_grp, col);
             col_grp_scatter = vertcat(col_grp_scatter, col_data);
 
@@ -212,7 +246,7 @@ for idx2 = min_val:1:max_val
         nexttile
         
         % Plot individual data points - fly and rep:
-        swarmchart(x_grp, y_grp, 15, [0.7 0.7 0.7])
+        swarmchart(x_grp, y_grp, 15, [0.7 0.7 0.7], 'MarkerEdgeAlpha', 0.5)
         hold on
         % Plot box plot
         boxplot(y_grp, x_grp, 'Colors', col_grp, 'symbol', '');
@@ -222,18 +256,15 @@ for idx2 = min_val:1:max_val
             patch(get(h(j),'XData'), get(h(j),'YData'), col_grp(n_groups+1-j,:),'FaceAlpha',.5);
         end
         h2 = findobj(ax,'Tag','Median');
-        set(h2,'LineWidth', 3);
-        % hold on 
-        % Add scatter points for each rep for each fly:
-        % scatter(x_data, y_data, 2,'o', 'jitter', 'on', 'jitter')
-        % swarmchart(x_grp, y_grp, 20, col_grp_scatter)
-        % swarmchart(x_grp, y_grp, 20, [0.7 0.7 0.7])
+        set(h2,'LineWidth', 2.1);
         ylim(rng)
 
         if data_type == "dist_data"
-            plot([0 n_groups+1], [60 60], 'k:', 'LineWidth', 0.5)
-        elseif data_type == "av_data"
-            plot([0 n_groups+1], [0 0], 'k:', 'LineWidth', 0.5)
+            if delta == 1
+                plot([0 n_groups+1], [0 0], 'Color', 'k', 'LineWidth', 0.1)
+            else
+                plot([0 n_groups+1], [60 60], 'k', 'LineWidth', 0.1)
+            end 
         end 
 
         title(p, 'FontSize', 11)
