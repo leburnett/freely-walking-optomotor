@@ -16,11 +16,18 @@
 
 clear 
 
+% Make sure to disconnect camera before start - in case accidentally still
+% connected.
+ip = '127.0.0.1';
+port = 5010;
+vidobj = SimpleBiasCameraInterface(ip, port);
+vidobj.disconnect();
+
 % Initialize the temperature recording.
 d = initialize_temp_recording();
 
 % Protocol parameters: 
-t_acclim_start = 30; %10; %300; % Make this 300 eventually. 
+t_acclim_start = 300; %10; %300; % Make this 300 eventually. 
 t_flash = 5;
 t_acclim_end = 30; %30;
 t_interval = 20; %30;
@@ -34,12 +41,12 @@ all_conditions = [
     24, 47, 127, 1, 15, t_interval, 4; % 2:14 OFF bars - 4Hz
     19, 47, 127, 1, 15, t_interval, 5; % ON curtains - 8Hz
     20, 47, 127, 1, 15, t_interval, 6; % OFF curtains - 8Hz
-    32, 47, 32, 1, 15, t_interval, 7;  % Reverse Phi - 4px step - 4Hz
-    32, 47, 64, 1, 15, t_interval, 8;  % Reverse Phi - 4px step - 8Hz
+    32, 47, 16, 1, 15, t_interval, 7;  % Reverse Phi - 4px step - 4Hz
+    32, 47, 32, 1, 15, t_interval, 8;  % Reverse Phi - 4px step - 8Hz
     10, 47, 8, 1, 15, t_interval, 9;  % Flicker - 4Hz
     10, 47, 16, 1, 15, t_interval, 10; % Flicker - 8Hz
-    50, 47, 1, 1, 60, t_interval, 11; % bar fixation - 16px ON
-    49, 47, 1, 1, 60, t_interval, 12; % bar fixation - 16px OFF
+    % 50, 47, 1, 1, 60, t_interval, 11; % bar fixation - 16px ON
+    % 49, 47, 1, 1, 60, t_interval, 12; % bar fixation - 16px OFF
 ];  
  
 num_conditions = height(all_conditions); 
@@ -49,6 +56,7 @@ func_name = string(mfilename());
 
 %% block of initializations
 project_data_folder = 'C:\MatlabRoot\FreeWalkOptomotor\data';
+
 [LOG, vidobj, exp_folder, date_str, t_str, params] = initialize_video_and_folders(project_data_folder, func_name);
 % Pattern settings
 controller_mode = [0 0]; % double open loop
@@ -189,7 +197,7 @@ notes_str_end = input(prompt, 's');
 params.NotesEnd = notes_str_end;
 
 % Export to the google sheet log:
-export_to_google_sheets(params)
+% export_to_google_sheets(params)
 
 % clear temp
 clear d ch1
