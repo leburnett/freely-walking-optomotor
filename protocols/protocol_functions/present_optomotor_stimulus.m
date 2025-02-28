@@ -1,4 +1,7 @@
-function Log = present_optomotor_stimulus(current_condition, all_conditions, vidobj)
+function Log = present_optomotor_stimulus(current_condition, all_conditions, vidobj, d)
+
+% Get temp at the start:
+[t_outside_start, t_ring_start] = get_temp_rec(d);
 
 % set condition variables based on row in all conditions
  optomotor_pattern = all_conditions(current_condition, 1);
@@ -93,6 +96,15 @@ Panel_com('stop');
 % % get frame and log it 
 Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
 Log.stop_f(idx_value) = vidobj.getFrameCount().value;
+
+% Get the temp at the end
+[t_outside_end, t_ring_end] = get_temp_rec(d);
+
+% Log temperature:
+Log.t_outside_start = t_outside_start;
+Log.t_ring_start = t_ring_start;
+Log.t_outside_end = t_outside_end;
+Log.t_ring_end = t_ring_end;
 
 end
 

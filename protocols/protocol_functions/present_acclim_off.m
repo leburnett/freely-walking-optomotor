@@ -1,4 +1,7 @@
-function LOG = present_acclim_off(LOG, vidobj, t_pause, t_acclim, rep)
+function LOG = present_acclim_off(LOG, vidobj, t_pause, t_acclim, rep, d)
+
+    % Get temp at the start:
+    [t_outside_start, t_ring_start] = get_temp_rec(d);
 
     if rep == 1
 
@@ -17,8 +20,18 @@ function LOG = present_acclim_off(LOG, vidobj, t_pause, t_acclim, rep)
         % get frame and log it 
         acclim_off1.stop_t = vidobj.getTimeStamp().value;
         acclim_off1.stop_f = vidobj.getFrameCount().value;
+
+        % Get the temp at the end
+        [t_outside_end, t_ring_end] = get_temp_rec(d);
+        
+        % Log temperature:
+        acclim_off1.t_outside_start = t_outside_start;
+        acclim_off1.t_ring_start = t_ring_start;
+        acclim_off1.t_outside_end = t_outside_end;
+        acclim_off1.t_ring_end = t_ring_end;
         
         LOG.acclim_off1 = acclim_off1;
+
 
     elseif rep == 2
 
@@ -37,6 +50,15 @@ function LOG = present_acclim_off(LOG, vidobj, t_pause, t_acclim, rep)
         % get frame and log it 
         acclim_off2.stop_t = vidobj.getTimeStamp().value;
         acclim_off2.stop_f = vidobj.getFrameCount().value;
+
+        % Get the temp at the end
+        [t_outside_end, t_ring_end] = get_temp_rec(d);
+        
+        % Log temperature:
+        acclim_off2.t_outside_start = t_outside_start;
+        acclim_off2.t_ring_start = t_ring_start;
+        acclim_off2.t_outside_end = t_outside_end;
+        acclim_off2.t_ring_end = t_ring_end;
         
         LOG.acclim_off2 = acclim_off2;
     

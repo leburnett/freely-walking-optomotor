@@ -48,7 +48,7 @@ all_conditions = [
     % 50, 47, 1, 1, 60, t_interval, 11; % bar fixation - 16px ON
     % 49, 47, 1, 1, 60, t_interval, 12; % bar fixation - 16px OFF
 ];  
- 
+
 num_conditions = height(all_conditions); 
 
 %% Protocol name
@@ -74,7 +74,7 @@ random_order = randperm(num_conditions);
 display (random_order);
 
 %% % ACCLIM OFF
-LOG = present_acclim_off(LOG, vidobj, t_pause, t_acclim_start, 1);
+LOG = present_acclim_off(LOG, vidobj, t_pause, t_acclim_start, 1, d);
 disp('Recording behaviour in darkness')
 
 %% Present stimuli
@@ -145,15 +145,15 @@ for j = [1,2]
         disp (current_condition);
     
         if current_condition > 10 % Bar fixation stimuli
-            Log = present_fixation_stimulus(current_condition, all_conditions, vidobj);
+            Log = present_fixation_stimulus(current_condition, all_conditions, vidobj, d);
             fieldName = sprintf('log_%d', log_n);
             LOG.(fieldName) = Log;
         elseif current_condition == 5 || current_condition == 6
-            Log = present_optomotor_stimulus_curtain(current_condition, all_conditions, vidobj);
+            Log = present_optomotor_stimulus_curtain(current_condition, all_conditions, vidobj, d);
             fieldName = sprintf('log_%d', log_n);
             LOG.(fieldName) = Log;
         else
-            Log = present_optomotor_stimulus(current_condition, all_conditions, vidobj);
+            Log = present_optomotor_stimulus(current_condition, all_conditions, vidobj, d);
             % Add the 'Log' from each condition to the overall log 'LOG'.
             fieldName = sprintf('log_%d', log_n);
             LOG.(fieldName) = Log;
@@ -185,6 +185,7 @@ LOG.meta.start_temp_ring = t_ring_start;
 LOG.meta.end_temp_outside = t_outside_end;
 LOG.meta.end_temp_ring = t_ring_end;
 LOG.meta.cond_array = all_conditions;
+LOG.meta.random_order = random_order;
 
 %% save LOG file
 log_fname =  fullfile(exp_folder, strcat('LOG_', string(date_str), '_', t_str, '.mat'));
@@ -197,7 +198,7 @@ notes_str_end = input(prompt, 's');
 params.NotesEnd = notes_str_end;
 
 % Export to the google sheet log:
-% export_to_google_sheets(params)
+export_to_google_sheets(params)
 
 % clear temp
 clear d ch1
