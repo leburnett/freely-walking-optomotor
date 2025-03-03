@@ -137,4 +137,4 @@ save(log_fname, 'LOG');
 disp('Log saved')
 
 % clear temp
-% clear d ch1
+clear d ch1
