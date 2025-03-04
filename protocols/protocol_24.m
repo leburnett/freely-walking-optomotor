@@ -167,7 +167,7 @@ end
 %% Acclim at the end 
 % Record the behaviour of the flies without any lights on in the arena
 % after running the stimulus. 
-LOG = present_acclim_off(LOG, vidobj, t_pause, t_acclim_end, 2);
+LOG = present_acclim_off(LOG, vidobj, t_pause, t_acclim_end, 2, d);
 
 %% stop camera
 vidobj.stopCapture();
