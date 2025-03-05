@@ -1,16 +1,14 @@
-% Protocol_25.m  - short protocol for running with single flies
+% Protocol_25.m  - short protocol for testing individual flies.
 
 % Includes:
 % - off background interval - pattern 47
 % - 60 deg gratings - 2 speeds
-%  - flicker - 1 speed
+% - flicker - 1 speed
 
-% 30s interval
+% 20s interval
 % 30s trial duration - 2x15s trials
 
 clear 
-
-tic
 
 % Make sure to disconnect camera before start - in case accidentally still
 % connected.
@@ -23,10 +21,10 @@ vidobj.disconnect();
 d = initialize_temp_recording();
 
 % Protocol parameters: 
-t_acclim_start = 300; %300; % 5 minutes of recording behaviour in the dark before the experiment begins.
+t_acclim_start = 300; %00; %300; % 5 minutes of recording behaviour in the dark before the experiment begins.
 t_flash = 10; % 10s of full field flashing 
 t_acclim_end = 30; %30;
-t_interval = 30; % 30s interval between stimuli
+t_interval = 20; % 30s interval between stimuli
 t_pause = 0.01;
 
 % [pattern_id, interval_id, speed_patt, speed_int, trial_dur, int_dur, condition_n]
@@ -70,7 +68,7 @@ log_n = 1;
 Panel_com('set_mode', controller_mode); pause(t_pause)
 
 % Run through all conditions three times
-n_reps = 3;
+n_reps = 2;
 for j = 1:n_reps 
 
     %start LOOP
@@ -179,8 +177,6 @@ params.NotesEnd = notes_str_end;
 
 % Export to the google sheet log:
 export_to_google_sheets(params)
-
-toc
 
 % clear temp
 clear d ch1
