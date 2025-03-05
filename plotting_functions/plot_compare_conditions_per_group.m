@@ -20,8 +20,18 @@ gp_data = {
     'l1l4_jfrc100_shibire_kir', 'none', 'F', [0.4 0.8 1], 4;
     'ss26283_H1_shibire_kir', 'none', 'F', [0.8, 0 , 0], 5;
     'ss01027_H2_shibire_kir', 'none', 'F', [0.9, 0.5, 0], 6;
-    't4t5_RNAi_control', 'none', 'F', [0.9, 0.5, 0], 7;
+    't4t5_RNAi_control', 'none', 'F', [0.7, 0.7, 0.7], 7; %[0.9, 0.5, 0]
+    'test', 'none', 'F', [0.2 0.2 0.2], 8; % Test flies 
     };
+
+% gp_data = {
+%     'jfrc49_es_kir', 'none', 'F',  [0.51 0.32 0.57], 1; % % % % 
+%     'jfrc100_es_shibire', 'attP2', 'F', [0.85 0.4 0.7], 2; % % % %
+%     'ss324_t4t5_kir', 'none', 'F', [0 0.4 0], 3;
+%     'ss324_t4t5_shibire', 'attP5', 'F', [0.6 0.8 0.6], 3;
+%     'jfrc49_l1l4_kir', 'none', 'F', [0.2 0.4 0.7], 5;
+%     'l1l4_jfrc100_shibire', 'attP5', 'F', [0.4 0.8 1], 6;
+%     };
 
 % % % % RNAi flies:
 % gp_data = {'t4t5_RNAi_control', 'none', 'F', [0.9, 0.5, 0], 1;
@@ -41,7 +51,9 @@ close all
 % gps2plot= [7, 13, 26]; % compare 3 dbl effectors
 % gps2plot= [3, 9, 15]; % compare 3 kir effectors
 
-gps2plot = [2,4,5,6];
+% gps2plot = 1:6;
+% gps2plot = [1,3,5];
+gps2plot = [2,5,6];
 
 grp_title = "ES_CS";
 
@@ -57,6 +69,22 @@ end
 
 %Save the groups that were used for the plots
 writecell(gp_data, fullfile(Xgrp_save_folder,'group_data.txt'), 'Delimiter', ';')
+
+% P 10
+% 
+% cond_titles = {"60deg-gratings-2s-64fps" ...
+%     , "60deg-gratings-15s-127fps" ...
+%     , "60deg-gratings-15s-64fps" ...
+%     , "60deg-gratings-2s-127fps" ...
+%     , "30deg-gratings-2s-64fps" ...
+%     , "30deg-gratings-15s-127fps" ...
+%     , "30deg-gratings-15s-64fps" ...
+%     , "30deg-gratings-2s-127fps" ...
+%     , "15deg-gratings-2s-64fps" ...
+%     , "15deg-gratings-15s-127fps" ...
+%     , "15deg-gratings-15s-64fps" ...
+%     , "15deg-gratings-2s-127fps" ...
+%     };
 
 % P 19
 % cond_titles = {"60deg gratings - 4Hz"...
@@ -104,12 +132,12 @@ cond_titles = {"60deg-gratings-4Hz"...
     , "narrow-OFF-bars-4Hz"...
     , "ON-curtains-8Hz"...
     , "OFF-curtains-8Hz"...
+    , "reverse-phi-2Hz"...
     , "reverse-phi-4Hz"...
-    , "reverse-phi-8Hz"...
     , "60deg-flicker-4Hz"...
     , "60deg-flicker-8Hz"...
-    , "32px-bar-ON"...
-    , "32px-bar-OFF"...
+    % , "32px-bar-ON"...
+    % , "32px-bar-OFF"...
     };
 
 %Save the groups that were used for the plots
@@ -245,3 +273,115 @@ end
     % 'ss26283_H1_shibire_kir', 'none', 'F', [0.8, 0 , 0], 28;
     % 'ss01027_H2_shibire_kir', 'none', 'F', [0.9, 0.5, 0], 29;
     % };
+
+
+%% 
+gps2plot = [2,5,6];
+data_type = "curv_data";
+f_all_gps = scatter_boxchart_per_cond_per_grp(DATA, gp_data, cond_titles, data_type, gps2plot);
+
+%% For protocol 10 - BOX PLOTS - different conditions - one experimental group
+
+grp2plot = 6; 
+
+% protocol 10 
+% cond2plot = [11,10,7,6,3,2]; % 15s duration - 15 to 60 deg - slow, fast. 
+% cond2plot = [9,12,5,8,1,4]; % 2s duration
+
+% protocol 19
+% cond2plot = [3,4,5,6,11,12,9,10,7,8,1,2];
+
+% protocol 21
+% cond2plot = [3,4,5,6];
+
+% protocol 24
+cond2plot = 1:10;
+
+data_type = "dist_data_delta";
+f_scatter_xcond = scatter_boxchart_per_cond_one_grp(DATA, gp_data, data_type, grp2plot, cond2plot);
+ylim([0 300])
+
+%% For protocol 10 - LINE PLOTS
+
+% % % 15s duration:
+% slow - 15, 30, 60 = [3,7,11];
+% fast - 15, 30, 60 = [2,6,10];
+
+% % % 2s duration:
+% slow - 15, 30, 60 = [1, 5, 9];
+% fast - 15, 30, 60 = [4,8,12];
+
+% grp2plot = 2;
+
+%% 15s duration 
+
+% Kir flies
+figure
+for grp2plot = [1,3,5]
+
+    cond2plot = [11,7,3];
+    fast_slow = "slow";
+    f = line_per_cond_one_grp(DATA, gp_data, data_type, grp2plot, cond2plot, fast_slow);
+    
+    cond2plot = [10,6,2];
+    fast_slow = "fast";
+    line_per_cond_one_grp(DATA, gp_data, data_type, grp2plot, cond2plot, fast_slow);
+end 
+
+% Shibire flies
+
+figure
+for grp2plot = [2,4,6]
+
+    cond2plot = [11,7,3];
+    fast_slow = "slow";
+    f = line_per_cond_one_grp(DATA, gp_data, data_type, grp2plot, cond2plot, fast_slow);
+    
+    cond2plot = [10,6,2];
+    fast_slow = "fast";
+    line_per_cond_one_grp(DATA, gp_data, data_type, grp2plot, cond2plot, fast_slow);
+end 
+
+
+%% 2s duration 
+
+figure
+for grp2plot = [1,3,5]
+
+    cond2plot = [9,5,1];
+    fast_slow = "slow";
+    f = line_per_cond_one_grp(DATA, gp_data, data_type, grp2plot, cond2plot, fast_slow);
+    
+    cond2plot = [12,8,4];
+    fast_slow = "fast";
+    line_per_cond_one_grp(DATA, gp_data, data_type, grp2plot, cond2plot, fast_slow);
+end 
+
+
+figure
+for grp2plot = [2,4,6]
+
+    cond2plot = [9,5,1];
+    fast_slow = "slow";
+    f = line_per_cond_one_grp(DATA, gp_data, data_type, grp2plot, cond2plot, fast_slow);
+    
+    cond2plot = [12,8,4];
+    fast_slow = "fast";
+    line_per_cond_one_grp(DATA, gp_data, data_type, grp2plot, cond2plot, fast_slow);
+end 
+
+%% For a single group: 
+grp2plot = 2;
+
+figure
+cond2plot = [11,7,3];
+fast_slow = "slow";
+f = line_per_cond_one_grp(DATA, gp_data, data_type, grp2plot, cond2plot, fast_slow);
+
+cond2plot = [10,6,2];
+fast_slow = "fast";
+line_per_cond_one_grp(DATA, gp_data, data_type, grp2plot, cond2plot, fast_slow);
+
+ylim([-40 0])
+% hold on 
+% plot([0 4], [60 60], 'k', 'LineWidth', 0.5)

@@ -167,7 +167,7 @@ for gp = gps2plot
                 rng = [-60 30];
                 ylb = 'Distance from centre - delta (mm)';
             else
-                rng = [0 75];
+                rng = [0 90];
                 ylb = 'Distance from centre (mm)';
             end 
             lw = 1.5;
@@ -199,7 +199,7 @@ for gp = gps2plot
             ylb = "Forward velocity (mm s-1)";
             lw = 1;
         elseif data_type == "curv_data"
-            rng = [-170 170];
+            rng = [-200 200];
             % rng = [-50 50];
             ylb = "Turning rate (deg mm-1)";
             lw = 1;
@@ -231,7 +231,7 @@ for gp = gps2plot
         box off
         ax = gca; ax.XAxis.Visible = 'off'; ax.TickDir = 'out'; ax.TickLength = [0.015 0.015]; ax.LineWidth = 1; ax.FontSize = 12;
 
-        title(p, 'FontSize', 11)
+        title(p, 'FontSize', 9)
 
         % where to position text annotation
         xpos = nf_comb-(450/dwn_factor);

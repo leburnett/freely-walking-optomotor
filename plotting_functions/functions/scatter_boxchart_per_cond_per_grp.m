@@ -207,15 +207,16 @@ for idx2 = min_val:1:max_val
                 end 
 
             elseif data_type == "av_data"
-                y_data = mean(abs(cond_data(:, 301:900)), 2);
+                y_data = median(abs(cond_data(:, 301:900)), 2);
+                % y_data = prctile(abs(cond_data(:, 301:900))', 98)';
                 if idx2 <3
-                    rng = [0 350];
+                    rng = [0 400];
                 elseif idx2 >=3 && idx2 < 5
-                    rng = [0 200];
+                    rng = [0 250];
                 else
-                    rng = [0 120];
+                    rng = [0 100];
                 end 
-                % rng = [0 250];
+                % rng = [0 220];
                 ylb = "Angular velocity (deg s-1)";
             elseif data_type == "fv_data"
                 y_data = mean(abs(cond_data(:, 301:900)), 2);
@@ -224,10 +225,12 @@ for idx2 = min_val:1:max_val
             elseif data_type == "curv_data"
                 % For turning rate - find the mean across the condition. abs.
                 y_data = mean(abs(cond_data(:, 301:900)), 2);
-                if idx2 < 5
-                    rng = [0 200];
+                if idx2 <3
+                    rng = [0 220];
+                elseif idx2 >=3 && idx2 < 5
+                    rng = [0 130];
                 else
-                    rng = [0 100];
+                    rng = [0 50];
                 end 
                 ylb = "Turning rate (deg mm-1)";
             end
@@ -246,14 +249,14 @@ for idx2 = min_val:1:max_val
         nexttile
         
         % Plot individual data points - fly and rep:
-        swarmchart(x_grp, y_grp, 15, [0.7 0.7 0.7], 'MarkerEdgeAlpha', 0.5)
+        swarmchart(x_grp, y_grp, 15, [0.7 0.7 0.7], 'MarkerEdgeAlpha', 0.8)
         hold on
         % Plot box plot
         boxplot(y_grp, x_grp, 'Colors', col_grp, 'symbol', '');
         ax = gca;
         h = findobj(ax,'Tag','Box');
         for j=1:length(h)
-            patch(get(h(j),'XData'), get(h(j),'YData'), col_grp(n_groups+1-j,:),'FaceAlpha',.5);
+            patch(get(h(j),'XData'), get(h(j),'YData'), col_grp(numel(h)+1-j,:),'FaceAlpha',.5);
         end
         h2 = findobj(ax,'Tag','Median');
         set(h2,'LineWidth', 2.1);
@@ -267,16 +270,17 @@ for idx2 = min_val:1:max_val
             end 
         end 
 
-        title(p, 'FontSize', 11)
+        title(p, 'FontSize', 9)
         box off
         ax.TickDir = 'out';
         ax.XAxis.Visible = 'off';
         ax.TickLength = [0.02 0.02];
+        xlim([0.5 n_groups+0.5])
 
 end 
 
     f = gcf;
-    f.Position = [171    71   292   976]; 
+    f.Position = [171    71   342   976]; %[171    71   292   976]; 
     sgtitle(ylb, 'FontSize', 16)
 
 end 
