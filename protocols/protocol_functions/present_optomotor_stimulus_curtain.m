@@ -35,10 +35,19 @@ for tr_ind = 1:num_trials
     % pattern for the opposite direction during the second trial.
     if tr_ind == 2
 
-        if optomotor_pattern == 19
-            reverse_pattern = 20; 
-        elseif optomotor_pattern == 20 
-            reverse_pattern = 19;
+        switch optomotor_pattern
+            case 19
+                reverse_pattern = 20; 
+            case 20 
+                reverse_pattern = 19;
+            case 51 
+                reverse_pattern = 52;
+            case 52 
+                reverse_pattern = 51;
+            case 53
+                reverse_pattern = 54;
+            case 55
+                reverse_pattern = 56;
         end 
         
         Panel_com('set_pattern_id', reverse_pattern); pause(t_pause)

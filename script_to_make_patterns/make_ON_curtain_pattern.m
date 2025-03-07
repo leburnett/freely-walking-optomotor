@@ -1,12 +1,14 @@
 % Create 'curtain' patterns of ON moving edge. 16 pixel wide curtain area.
 
 % 16 pixel total width
-total_width = 16;
+total_width = 32;
+bkg_colour = 4;
+curt_colour = 0; % max 14
 
 pattern.x_num = total_width+1; 
 pattern.y_num = 1; % frames of Y, at different contrast levels
 pattern.num_panels = 72; % This is the number of unique Panel IDs required.
-pattern.gs_val = 1; % This pattern will use 8 intensity levels
+pattern.gs_val = 4; % This pattern will use 8 intensity levels
 pattern.row_compression = 1;
 
 % Generate empty array with zeros - [3, 192] x frames (192)
@@ -17,9 +19,9 @@ Pats = zeros(3, 192, pattern.x_num, pattern.y_num);
 for i = 0:total_width
     n_on = i;
     n_off = total_width - n_on;
-    array  = [ones(1, n_on), zeros(1, n_off)];
+    array  = [ones(1, n_on)*curt_colour, ones(1, n_off)*bkg_colour];
     px_array = repmat(array, [1, 2]);
-    Pats(:, :, i+1) = repmat(px_array, 3, 6); 
+    Pats(:, :, i+1) = repmat(px_array, 3, 192/(total_width*2)); 
 end 
 
 pattern.Pats = Pats;
@@ -29,15 +31,22 @@ pattern.Panel_map = fliplr(flipud(reshape(A, 3, 24)));
 pattern.BitMapIndex = process_panel_map(pattern);
 pattern.data = make_pattern_vector(pattern);
 directory_name = 'C:\MatlabRoot\Patterns\patterns_oaky';
-str = [directory_name '\Pattern_19_ON_curtains_16px.mat']; 	% name must begin with ‘Pattern_’
+str = [directory_name '\Pattern_56_OFF_R_curtains_32px_4_0.mat']; 	% name must begin with ‘Pattern_’
 save(str, 'pattern');
 
+
+% [0 15]
+% For greyscale - 
+% ON curtain - 
+% - 5 - 10 
+% OFF curtain - 
+% - 5- 0
 
 %% Code to view pattern to check 
 
 % % % display stimulus
 % figure;
 % for k = 1:numel(Pats(1, 1, :))
-%     imshow(Pats(:,:,k));
+%     imagesc(Pats(:,:,k));
 %     pause(0.25)
 % end
