@@ -29,10 +29,10 @@ function title_str = get_title_from_meta(cond_meta)
             pattern_str = "4ON-12OFF-bar";
 
         case 16 
-            pattern_str = "12ON-4OFF_bar";
+            pattern_str = "12ON-4OFF-bar";
 
         case 17
-            pattern_str = "2ON-14OFF_bar";
+            pattern_str = "2ON-14OFF-bar";
 
         case 19 
             pattern_str = "ON-curtains";
@@ -41,7 +41,7 @@ function title_str = get_title_from_meta(cond_meta)
             pattern_str = "OFF-curtain";
 
         case 24
-            pattern_str = "2OFF-14ON_bar";
+            pattern_str = "2OFF-14ON-bar";
 
         case 26
             pattern_str = "30deg-grating";
@@ -80,22 +80,22 @@ function title_str = get_title_from_meta(cond_meta)
             pattern_str = "8px-ON-bars";
 
         case 39
-            pattern_str = "8px-ON-bars_2bkg";
+            pattern_str = "8px-ON-bars-2bkg";
 
         case 40
-            pattern_str = "8px-ON-bars_4bkg";
+            pattern_str = "8px-ON-bars-4bkg";
 
         case 41
-            pattern_str = "8px-ON-bars_6bkg";
+            pattern_str = "8px-ON-bars-6bkg";
 
         case 42
-            pattern_str = "8px-OFF-bars_2bkg";
+            pattern_str = "8px-OFF-bars-2bkg";
 
         case 43
-            pattern_str = "8px-OFF-bars_4bkg";
+            pattern_str = "8px-OFF-bars-4bkg";
 
         case 44
-            pattern_str = "8px-OFF-bars_6bkg";
+            pattern_str = "8px-OFF-bars-6bkg";
 
         case 45
             pattern_str = "8px-ON-bars";

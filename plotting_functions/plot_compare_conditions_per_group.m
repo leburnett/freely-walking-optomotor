@@ -53,7 +53,7 @@ close all
 % gps2plot = [15, 26]; % L1L4 Kir versus L1L4 Shibire kir
 
 % gps2plot= [7, 13, 26]; % compare 3 dbl effectors
-gps2plot= [3, 9, 15]; % compare 3 kir effectors
+gps2plot= [23, 24, 25]; % compare 3 kir effectors
 
 grp_title = "ES_T4T5_L1L4_kir";
 

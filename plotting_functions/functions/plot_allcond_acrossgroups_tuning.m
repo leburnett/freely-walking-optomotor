@@ -165,7 +165,7 @@ for gp = gps2plot
                 rng = [-10 5];
                 ylb = 'Distance from centre / fv-data - delta (s)';
             elseif delta == 1
-                rng = [-40 15];
+                rng = [-50 15];
                 ylb = 'Distance from centre - delta (mm)';
             else
                 rng = [0 80];
@@ -177,7 +177,7 @@ for gp = gps2plot
             ylb = 'Distance travelled (mm)';
             lw = 1; 
         elseif data_type == "av_data"
-            rng = [-170 170];
+            rng = [-200 200];
             % rng = [-50 50];
             ylb = "Angular velocity (deg s-1)";
             lw = 1;
@@ -190,7 +190,7 @@ for gp = gps2plot
             ylb = "Velocity (mm s-1)";
             lw = 1;
         elseif data_type == "fv_data"
-            rng = [0 20];
+            rng = [0 25];
             ylb = "Forward velocity (mm s-1)";
             lw = 1;
         elseif data_type == "curv_data"
