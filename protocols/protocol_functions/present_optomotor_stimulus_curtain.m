@@ -48,6 +48,8 @@ for tr_ind = 1:num_trials
                 reverse_pattern = 54;
             case 55
                 reverse_pattern = 56;
+            case 56
+                reverse_pattern = 55;
         end 
         
         Panel_com('set_pattern_id', reverse_pattern); pause(t_pause)
