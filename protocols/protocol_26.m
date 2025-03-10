@@ -28,12 +28,12 @@ t_pause = 0.01;
 
 % [pattern_id, interval_id, speed_patt, speed_int, trial_dur, int_dur, condition_n]
 all_conditions = [ 
-    19, 47, 127, 1, 15, t_interval, 1; % ON - 16 px - binary
-    20, 47, 127, 1, 15, t_interval, 2; % OFF - 16 px - binary
-    51, 47, 127, 1, 15, t_interval, 3; % ON - 32px - binary
-    52, 47, 127, 1, 15, t_interval, 4; % OFF - 32 px - binary
-    53, 47, 127, 1, 15, t_interval, 5; % ON - 32px - greyscale
-    55, 47, 127, 1, 15, t_interval, 6; % OFF - 32px - greyscale
+    % 19, 47, 127, 1, 15, t_interval, 1; % ON - 16 px - binary
+    % 20, 47, 127, 1, 15, t_interval, 2; % OFF - 16 px - binary
+    51, 47, 127, 1, 15, t_interval, 1; % ON - 32px - binary - 1-0
+    52, 47, 127, 1, 15, t_interval, 2; % OFF - 32 px - binary - 1-0
+    56, 47, 127, 1, 15, t_interval, 3; % ON - 32px - greyscale - 4-0
+    55, 47, 127, 1, 15, t_interval, 4; % OFF - 32px - greyscale - 4-0
 ];  
 
 num_conditions = height(all_conditions); 
