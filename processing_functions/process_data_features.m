@@ -15,6 +15,7 @@ function process_data_features(path_to_folder, save_folder, date_str)
     %          Path to save the processed data.        
    
     % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+    PROJECT_ROOT = '\Users\burnettl\Documents\oakey-cokey\';
 
     cd(path_to_folder)
 
@@ -38,7 +39,11 @@ function process_data_features(path_to_folder, save_folder, date_str)
         cd(fullfile(time_folders(exp).folder, time_folders(exp).name))
 
         data_path = cd;
-        subfolders = split(data_path, '/');
+        % Check if windows / mac
+        % MAC
+        % subfolders = split(data_path, '/');
+        % WINDOWS
+        subfolders = split(data_path, '\');
 
         if height(subfolders)>12 % landing site included.
             sex = subfolders{end-1};
@@ -126,7 +131,8 @@ function process_data_features(path_to_folder, save_folder, date_str)
         % experiment.
         f_feat = plot_all_features_filt(LOG, comb_data, protocol, save_str);
 
-        feat_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/feat_overview';
+        feat_save_folder = fullfile(PROJECT_ROOT, 'figures\overview_figs\feat_overview');
+        % feat_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/feat_overview';
         if ~isfolder(feat_save_folder)
             mkdir(feat_save_folder);
         end
@@ -140,7 +146,11 @@ function process_data_features(path_to_folder, save_folder, date_str)
 
         for typ = 1:numel(data_types)
             data_type = data_types{typ};
-            fig_save_folder = strcat('/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/', data_type);
+            fig_save_folder = fullfile(PROJECT_ROOT, 'figures\overview_figs\', data_type);
+            if ~isfolder(fig_save_folder)
+                mkdir(fig_save_folder);
+            end
+            % fig_save_folder = strcat('/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/', data_type);
             f_cond = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_sem);
             fname = fullfile(fig_save_folder, strcat(save_str, '_', data_type, '.pdf'));
             exportgraphics(f_cond ...

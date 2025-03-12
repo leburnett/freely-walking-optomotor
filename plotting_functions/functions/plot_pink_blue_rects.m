@@ -41,7 +41,7 @@ function plot_pink_blue_rects(LOG, protocol, min_val, max_val)
                 end 
             
                 % Plot rectangles in the background of when the stimulus changes. 
-                rectangle('Position', [st_fr, min_val, w, h], 'FaceColor', col, 'FaceAlpha', 0.3, 'EdgeColor', [0.6 0.6 0.6])
+                rectangle('Position', [st_fr, min_val, w, h], 'FaceColor', col, 'EdgeColor', [0.6 0.6 0.6]) % FaceAlpha only supported in 2024a onwards: 'FaceAlpha', 0.3,
                 ylim([min_val, max_val])
                 hold on 
                 box off
