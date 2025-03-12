@@ -157,6 +157,7 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
 
         %% Start filling in the struct.
         DATA.(strain).(sex)(sz).meta = LOG.meta;
+        DATA.(strain).(sex)(sz).meta.n_flies = length(trx);
     
         %% Add data from acclim_off1
         Log = LOG.acclim_off1;
