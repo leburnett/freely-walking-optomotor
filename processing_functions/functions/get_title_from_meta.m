@@ -23,7 +23,7 @@ function title_str = get_title_from_meta(cond_meta)
             pattern_str = "60deg-gratings";
 
         case 10
-            pattern_str = "flicker-60deg";
+            pattern_str = "60deg-flicker";
 
         case 13 
             pattern_str = "4ON-12OFF-bar";
@@ -39,6 +39,9 @@ function title_str = get_title_from_meta(cond_meta)
 
         case 20 
             pattern_str = "OFF-curtain";
+
+        case 21 
+            pattern_str = "60deg-gratings-offset-0.8";
 
         case 24
             pattern_str = "2OFF-14ON-bar";
@@ -111,9 +114,27 @@ function title_str = get_title_from_meta(cond_meta)
 
         case 49 
             pattern_str = "bar-fixation-off";
+            optomotor_speed = "";
 
         case 50
             pattern_str = "bar-fixation-on";
+            optomotor_speed = "";
+
+        case 51
+            pattern_str = "ON-curtains-32px-1-0";
+
+        case 52
+            pattern_str = "OFF-curtains-32px-1-0";
+
+        case 53
+            pattern_str = "ON-curtains-32px-4-9";
+
+        case 55
+            pattern_str = "OFF-curtains-32px-4-0";
+
+        case 57 
+            pattern_str = "32px-ON-single-bar";
+            optomotor_speed = "";
 
     end    
 

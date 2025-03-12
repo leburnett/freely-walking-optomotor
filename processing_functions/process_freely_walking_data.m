@@ -6,7 +6,7 @@ function process_freely_walking_data()
     clc
     
     %% Enter date to be analysed here:
-    date_to_analyse = '2025_02_28';
+    date_to_analyse = '2025_03_10';
 
     %% If data recorded after 24/09/2024 - - - new logging / saving system that saves in subfolders. 
     PROJECT_ROOT = '/Users/burnettl/Documents/Projects/oaky_cokey/'; %% Update for your computer. 
@@ -20,7 +20,7 @@ function process_freely_walking_data()
     protocol_folders = dir('*rotocol_*');
     n_protocols = height(protocol_folders);
     
-    for proto_idx = 1:n_protocols
+    for proto_idx = n_protocols
     
         protocol_to_analyse = protocol_folders(proto_idx).name;
         cd(fullfile(protocol_folders(proto_idx).folder, protocol_folders(proto_idx).name))
