@@ -19,7 +19,7 @@ function tracking_log = batch_track_ufmf(date_folder)
     options.save_seg     = 0;
     
     % Set path to calibration file.
-    input_calibration_file_name = 'C:\MatlabRoot\FreeWalkOptomotor\data\calibration.mat';
+    input_calibration_file_name = 'C:\Users\burnettl\Documents\GitHub\freely-walking-optomotor\tracking\calibration.mat';
 
     video_names = cell(n_videos, 1);
     t2track = zeros(n_videos, 1);
@@ -46,6 +46,6 @@ function tracking_log = batch_track_ufmf(date_folder)
     end
 
     tracking_log = table(video_names, t2track);
-    log_fname = fullfile('C:\MatlabRoot\FreeWalkOptomotor\tracking_log', strcat('Tracked_', date_folder(end-9:end), '.mat'));
+    log_fname = fullfile('C:\Users\burnettl\Documents\oakey-cokey\tracking_log', strcat('Tracked_', date_folder(end-9:end), '.mat'));
     save(log_fname, 'tracking_log')
 end 
