@@ -1,4 +1,4 @@
-% Protocol_27.m  - Screen protocol 2
+% Protocol_27.m  - Screen protocol 2 - updated 10th March 2025
 % Based on protocol 24
 
 % Includes:
@@ -8,9 +8,9 @@
 % - curtains - fast  - on / off - 32px not 16 px
 % - reverse phi - 2 speeds
 % - flicker - 1 speed
-% - stationary grating pattern
-% - stationary bar - on - phototaxis
-% - shifted centre of rotation
+% - stationary grating pattern - 60 deg
+% - stationary bar - on - phototaxis - 32px
+% - shifted centre of rotation - 60 deg - 0.8
 
 % 20s interval
 % 30s trial duration - 2x trials
@@ -41,14 +41,14 @@ all_conditions = [
     27, 47, 127, 1, 15, t_interval, 2; % 60 deg gratings - 8Hz - 2px step pattern
     17, 47, 127, 1, 15, t_interval, 3; % 2:14 ON bars - 4Hz
     24, 47, 127, 1, 15, t_interval, 4; % 2:14 OFF bars - 4Hz
-    51, 47, 127, 1, 15, t_interval, 5; % ON curtains - 8Hz - 32p
+    51, 47, 127, 1, 15, t_interval, 5; % ON curtains - 8Hz - 32 px
     52, 47, 127, 1, 15, t_interval, 6; % OFF curtains - 8Hz - 32 px
     32, 47, 16, 1, 15, t_interval, 7;  % Reverse Phi - 4px step - 4Hz
     32, 47, 32, 1, 15, t_interval, 8;  % Reverse Phi - 4px step - 8Hz
     10, 47, 8, 1, 15, t_interval, 9;  % Flicker - 4Hz
     10, 47, 0, 1, 15, t_interval, 10; % static grating - 60deg
     21, 47, 127, 1, 15, t_interval, 11; % shifted centre of rotation - 60deg - 0.8
-    57, 47, 1, 1, 60, t_interval, 12; % bar fixation - 16px ON - single bar
+    57, 47, 1, 1, 60, t_interval, 12; % bar fixation - 32px ON - single bar
 ];  
 
 num_conditions = height(all_conditions); 
@@ -199,11 +199,14 @@ prompt = "Notes at end: ";
 notes_str_end = input(prompt, 's');
 params.NotesEnd = notes_str_end;
 
-if ~params.Strain == "test"
-    % Export to the google sheet log:
-    export_to_google_sheets(params)
-else
+% % Export to the google sheet log:
+% export_to_google_sheets(params)
+
+if params.Strain == "test"
     disp("Data not sent to google sheet since this is a test.")
+else
+    % Export to the google sheet log:
+    export_to_google_sheets(params)   
 end 
 
 % clear temp
