@@ -63,6 +63,7 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
     av_data = [];
     fv_data = [];
     curv_data = [];
+    view_dist = [];
 
     for idx = 1:n_flies
 
@@ -77,7 +78,7 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
         av_data_rad = vel_estimate(D, samp_rate, method, t_window, cutoff);
         av_data(idx, :) = rad2deg(av_data_rad); %convert to deg/s.
 
-        % forward velocity
+        % forward velocity - speed in the direction of heading
         x = x_data(idx, :); % x position in pixels.
         y = y_data(idx, :); % y position in pixels. 
         x(2:end-1) = conv(x,smooth_kernel,'valid');
@@ -94,6 +95,7 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
         fv = fillmissing(fv', 'linear')';
         fv_data(idx, :) = [fv(1), fv];
 
+        % turning rate
         c_data = [];
         c_data = av_data(idx, :)./fv_data(idx, :);
         vals_fv_zero = abs(fv_data(idx, :))<0.1;
@@ -101,6 +103,11 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
         c_data(vals_fv_zero) = NaN;
         c_data = fillmissing(c_data', 'previous')';
         curv_data(idx, :) = c_data;
+
+        % viewing distance - distance from fly centre to edge of arena in
+        % direction of heading. 
+        view_dist = calculate_viewing_distance(x_data, y_data, heading_data);
+
     end
 
     % Combine the matrices into an overall struct
@@ -114,5 +121,6 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
     combined_data.heading_wrap = heading_wrap;
     combined_data.x_data = x_data;
     combined_data.y_data = y_data;
+    combined_data.view_dist = view_dist;
 
 end 
