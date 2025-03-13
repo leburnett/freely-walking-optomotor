@@ -3,19 +3,19 @@
 % Swaps between ON and OFF bar every frame.
 % 8 pixel width bar - 24 pixels of greyscale background in between. 
 
-bkg_colour = 3; 
-on_colour = 8;
+bkg_colour = 1; 
+on_colour = 3;
 off_colour = 0;
 
-bar_width_px = 8; 
-gap_px = 24;
+bar_width_px = 16; 
+gap_px = 16;
 
-shiftpx = 8;
+shiftpx = 4;
 
 pattern.x_num = 192/shiftpx; % There are 192 frames in this pattern
 pattern.y_num = 1; % frames of Y, at different contrast levels
 pattern.num_panels = 72; % This is the number of unique Panel IDs required.
-pattern.gs_val = 4; % GREYSCALE - This pattern will use 8 intensity levels
+pattern.gs_val = 2; % GREYSCALE - This pattern will use 7 intensity levels
 pattern.row_compression = 1;
 
 %% Generate separate ON and OFF patterns first:
@@ -59,7 +59,7 @@ pattern.Panel_map = fliplr(flipud(reshape(A, 3, 24)));
 pattern.BitMapIndex = process_panel_map(pattern);
 pattern.data = make_pattern_vector(pattern);
 directory_name = 'C:\MatlabRoot\Patterns\patterns_oaky';
-str = [directory_name '\Pattern_33_RevPhi_0_3_8_8px_step.mat']; 	% name must begin with ‘Pattern_’
+str = [directory_name '\Pattern_62_RevPhi_gsval2_0_1_3_16-16px_4px_step.mat']; 	% name must begin with ‘Pattern_’
 save(str, 'pattern');
 
 
