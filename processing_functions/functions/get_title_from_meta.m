@@ -136,6 +136,19 @@ function title_str = get_title_from_meta(cond_meta)
             pattern_str = "32px-ON-single-bar";
             optomotor_speed = "";
 
+        case 58 
+            pattern_str = "rev-phi-8pxbar-4pxstep-0-3-7";
+
+        case 59
+            pattern_str = "rev-phi-16pxbar-4pxstep-0-3-7";
+
+        case 60
+            pattern_str = "rev-phi-16pxbar-8pxstep-0-3-7";
+
+        case 61
+            pattern_str = "rev-phi-16pxbar-8pxstep-0-2-7";
+
+
     end    
 
     switch interval_pattern
