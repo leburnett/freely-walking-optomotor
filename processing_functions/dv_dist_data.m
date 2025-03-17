@@ -80,17 +80,35 @@ for idx = 1:n_exp
 end 
 
 
+%% 
+
+figure; imagesc(cond_data); 
+colormap("parula"); colorbar
+hold on 
+plot([300 300], [0 150], 'w')
+plot([1200 1200], [0 150], 'w')
+clim([50 150])
 
 
+figure; plot(nanmean(cond_data)); 
+hold on
+plot([300 300], [80 120], 'r')
+plot([1200 1200], [80 120], 'r')
+ylabel('Viewing distance (mm)')
+
+figure; imagesc(nanmean(view_dist)); 
+
+%%
+rng = 300:1200;
+
+figure;
+scatter(movmean(view_dist(1, rng),15), movmean(dv(rng),15), 'ko')
+
+figure;
+plot(movmean(view_dist(1, rng),15), movmean(d(rng),15), 'k')
 
 
-
-
-
-
-
-
-% Relationship between the position of the fly at the beginning of the
+%% Relationship between the position of the fly at the beginning of the
 % stimulus versus the amount the fly moves towards the centre. 
 
 % Use only condition 1 - 4Hz 60deg gratings - protocol 24 - ES flies.
@@ -127,20 +145,26 @@ n_flies = height(cond_data);
 time_peak = zeros(1, n_flies);
 val_peak = zeros(1, n_flies);
 dist_peak = zeros(1, n_flies);
+view_d = zeros(1, n_flies); 
 
 figure
 for idx = 1:n_flies
     d = movmean(cond_data(idx, :), 10);
+    vdist = view_dist(idx, :);
     dv = diff(d);
     time_peak(1,idx) = find(dv(300:1200)==min(dv(300:1200)));
     val_peak(1,idx) = min(dv(300:1200));
     dist_peak(1,idx) = d(time_peak(1, idx)+300);
+    view_d(1,idx) = vdist(time_peak(1, idx)+300);
 
-    subplot(1,2,1)
-    plot(time_peak(idx), val_peak(idx), 'ko');
+    subplot(1,3,1)
+    plot(time_peak(1,idx), val_peak(1,idx), 'ko');
     hold on
-    subplot(1,2,2)
-    plot(dist_peak(idx),val_peak(idx), 'ko');
+    subplot(1,3,2)
+    plot(dist_peak(1, idx),val_peak(1, idx), 'ko');
+    hold on
+    subplot(1,3,3)
+    plot(view_d(1,idx) ,val_peak(1, idx), 'ko');
     hold on
 end
 
@@ -148,6 +172,7 @@ end
 figure; histogram(time_peak)
 figure; histogram(val_peak)
 figure; histogram(dist_peak)
+figure; histogram(view_d)
 
 %% Whether the extent of centring behaviour is related to the fly's distance from the centre.
 % Compare the maximum centring of a fly to the location where this maximum
@@ -364,6 +389,64 @@ sum(abs(a_neg))
 
 
 
+
+%% Scatterplot 
+% per fly
+% Maximum angular velocity during gratings
+% VERSUS
+% Total distance moved towards the centre during gratings. 
+
+n_flies  = height(cond_data);
+
+% figure
+% for fly_id = 1:n_flies
+% 
+%     % angular velocity
+%     max_av = prctile(abs(av_data(fly_id, 300:1200)), 98);
+% 
+%     % distance translated towards centre
+%     if cond_data(fly_id, 300)>0
+%         dist_delta = cond_data(fly_id, 300:1200)-cond_data(fly_id, 300);
+%         % dist_moved = prctile(dist_delta, 2);
+%         dist_moved = prctile(dist_delta(850:900), 2);
+% 
+%         scatter(max_av, dist_moved, 40, 'k'); hold on
+%     end 
+% end 
+% xlabel('Max angular velocity during gratings (deg s^-^1)')
+% ylabel('Maximum distance moved towards the centre (mm)')
+% 
+
+
+% dist_start = 
+
+figure
+for fly_id = 1:n_flies
+
+    % angular velocity
+    max_av = prctile(abs(av_data(fly_id, 300:1200)), 98);
+
+    % distance translated towards centre
+  
+    if cond_data(fly_id, 300)<55
+        col = [1 0.7 0.7];
+    elseif cond_data(fly_id, 300)<70
+        col = [1 1 1];
+    elseif cond_data(fly_id, 300)<85
+        col = [0.75 0.75 0.75];
+    elseif cond_data(fly_id, 300)<105
+        col = [0.4 0.4 0.4];
+    elseif cond_data(fly_id, 300)<130 %edge
+        col = 'k';
+    end 
+    dist_delta = cond_data(fly_id, 300:1200)-cond_data(fly_id, 300);
+    % dist_moved = prctile(dist_delta, 2);
+    dist_moved = prctile(dist_delta(850:900), 2);
+    
+    scatter(max_av, dist_moved, 150, col, 'filled', 'LineWidth', 0.5, 'MarkerEdgeColor', 'k'); hold on
+end 
+xlabel('Max angular velocity during gratings (deg s^-^1)')
+ylabel('Maximum distance moved towards the centre (mm)')
 
 
 
