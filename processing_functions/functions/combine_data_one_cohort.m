@@ -1,6 +1,10 @@
-function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
-    % Combine the data about different features together to use when plotting
-    % quick overview plots while processing. 
+function [comb_data, feat, trx] = combine_data_one_cohort(feat, trx)
+    % Combine the timeseries data of different features per fly for a
+    % single cohort into a single struct 'comb_data'. This struct is then
+    % saved per experiment in the "results" folder and then combined across
+    % experiments to form the larger structure 'DATA' with the timeseries
+    % data for all flies, across all strains and experiments for a single
+    % protocol.
 
     % Check tracking and ignore flies that have not been well tracked.
     flies2ignore = check_tracking_FlyTrk(trx);
@@ -8,15 +12,13 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
     feat.data(flies2ignore, :, :) = [];
 
     FPS = 30; % videos acquired at 30 FPS
-    % pix_per_mm = 4.1691;
-    smooth_kernel = [1 2 1]/4;
     
     % velocity % % % % % % % % % % % 
-    vel_data = feat.data(:, :, 1);
+    % vel_data = feat.data(:, :, 1);
     d_wall_data = feat.data(:, :, 9);
     heading_data = cell2mat(arrayfun(@(x) x.theta, trx, 'UniformOutput', false))';
-    x_data = cell2mat(arrayfun(@(x) x.x_mm, trx, 'UniformOutput', false))';
-    y_data = cell2mat(arrayfun(@(x) x.y_mm, trx, 'UniformOutput', false))';
+    x_data = cell2mat(arrayfun(@(x) x.x_mm, trx, 'UniformOutput', false))'; % x position in mm. 
+    y_data = cell2mat(arrayfun(@(x) x.y_mm, trx, 'UniformOutput', false))'; % y position in mm.
 
     for k = 1:height(vel_data)
         dv = diff(vel_data(k, :));
@@ -28,7 +30,7 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
 
         % Fill with NaNs
         acc_data(k, vals_to_rm) = NaN;
-        vel_data(k, vals_to_rm) = NaN;
+        % vel_data(k, vals_to_rm) = NaN;
         d_wall_data(k, vals_to_rm) = NaN;
         heading_data(k, vals_to_rm) = NaN;
         x_data(k, vals_to_rm) = NaN;
@@ -36,7 +38,7 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
 
         % Fill NaNs with spline. 
         acc_data(k, :) = fillmissing(acc_data(k, :)', 'spline')';
-        vel_data(k, :) = fillmissing(vel_data(k, :)', 'spline');
+        % vel_data(k, :) = fillmissing(vel_data(k, :)', 'spline');
         d_wall_data(k, :) = fillmissing(d_wall_data(k, :)', 'spline');
         heading_data(k, :) = fillmissing(heading_data(k, :)', 'previous');
         x_data(k, :) = fillmissing(x_data(k, :)', 'spline');
@@ -64,6 +66,7 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
     fv_data = [];
     curv_data = [];
     view_dist = [];
+    v_data = [];
 
     for idx = 1:n_flies
 
@@ -79,10 +82,10 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
         av_data(idx, :) = rad2deg(av_data_rad); %convert to deg/s.
 
         % forward velocity - speed in the direction of heading
-        x = x_data(idx, :); % x position in pixels.
-        y = y_data(idx, :); % y position in pixels. 
-        x(2:end-1) = conv(x,smooth_kernel,'valid');
-        y(2:end-1) = conv(y,smooth_kernel,'valid');
+        x = x_data(idx, :); % x position in mm.
+        y = y_data(idx, :); % y position in mm. 
+        x = gaussian_conv(x);
+        y = gaussian_conv(y);
         x_data(idx, :) = x;
         y_data(idx, :) = y;
         dx = diff(x);
@@ -94,6 +97,10 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
         fv(fv>50)=NaN; % remove forward velocity > 50mm/s - too high.
         fv = fillmissing(fv', 'linear')';
         fv_data(idx, :) = [fv(1), fv];
+
+        % three point velocity in any direction
+        v = calculate_three_point_velocity(x,y);
+        v_data(idx, :) = v;
 
         % turning rate
         c_data = [];
@@ -111,16 +118,16 @@ function [combined_data, feat, trx] = combine_data_one_cohort(feat, trx)
     end
 
     % Combine the matrices into an overall struct
-    combined_data.vel_data = vel_data;
-    combined_data.dist_data = dist_data;
-    combined_data.dist_trav = dist_trav;
-    combined_data.av_data = av_data;
-    combined_data.fv_data = fv_data;
-    combined_data.curv_data = curv_data;
-    combined_data.heading_data = heading_data_unwrap;
-    combined_data.heading_wrap = heading_wrap;
-    combined_data.x_data = x_data;
-    combined_data.y_data = y_data;
-    combined_data.view_dist = view_dist;
+    comb_data.vel_data = v_data; 
+    comb_data.dist_data = dist_data;
+    comb_data.dist_trav = dist_trav;
+    comb_data.av_data = av_data;
+    comb_data.fv_data = fv_data;
+    comb_data.curv_data = curv_data;
+    comb_data.heading_data = heading_data_unwrap;
+    comb_data.heading_wrap = heading_wrap;
+    comb_data.x_data = x_data;
+    comb_data.y_data = y_data;
+    comb_data.view_dist = view_dist;
 
 end 
