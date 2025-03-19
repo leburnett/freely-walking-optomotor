@@ -95,7 +95,7 @@ function DATA = comb_data_one_cohort_cond(LOG, comb_data, protocol)
             45, 9, 1, 127, 60, 7; % 1 = bar fixation
             46, 9, 1, 127, 60, 8; % 2 = bar fixation
         ]; 
-    elseif protocol == "protocol_24"
+    elseif protocol == "protocol_24" ||  protocol == "protocol_27"
         cond_array = LOG.meta.cond_array; % cond_array is now in built. 
     end 
 
@@ -106,6 +106,8 @@ function DATA = comb_data_one_cohort_cond(LOG, comb_data, protocol)
     % Get key information about strain and sex:
     strain = LOG.meta.fly_strain;
     strain = check_strain_typos(strain);
+    % Struct can't have fields with '-' in name. 
+    strain = strrep(strain, '-', '_');
 
     % Check for landing site field in LOG. 
     % If there is no field - i.e. before added - use 'attP2' if Kir, 
