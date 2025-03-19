@@ -117,6 +117,8 @@ function [comb_data, feat, trx] = combine_data_one_cohort(feat, trx)
 
     end
 
+    % Add interfly distance and interfly angle. Only to the one nearest
+    % fly. 
     [IFD_data, IFA_data] = calculate_distance_to_nearest_fly(x_data, y_data, heading_wrap);
 
     % Combine the matrices into an overall struct
