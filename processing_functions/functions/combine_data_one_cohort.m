@@ -117,6 +117,8 @@ function [comb_data, feat, trx] = combine_data_one_cohort(feat, trx)
 
     end
 
+    [IFD_data, IFA_data] = calculate_distance_to_nearest_fly(x_data, y_data, heading_wrap);
+
     % Combine the matrices into an overall struct
     comb_data.vel_data = v_data; 
     comb_data.dist_data = dist_data;
@@ -128,6 +130,7 @@ function [comb_data, feat, trx] = combine_data_one_cohort(feat, trx)
     comb_data.heading_wrap = heading_wrap;
     comb_data.x_data = x_data;
     comb_data.y_data = y_data;
-    comb_data.view_dist = view_dist;
-
+    comb_data.view_dist = view_dist; % distance to wall in direction of heading.
+    comb_data.IFD_data = IFD_data;
+    comb_data.IFA_data = IFA_data;
 end 
