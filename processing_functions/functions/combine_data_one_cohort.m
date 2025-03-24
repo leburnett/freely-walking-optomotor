@@ -14,7 +14,7 @@ function [comb_data, feat, trx] = combine_data_one_cohort(feat, trx)
     FPS = 30; % videos acquired at 30 FPS
     
     % velocity % % % % % % % % % % % 
-    % vel_data = feat.data(:, :, 1);
+    vel_data = feat.data(:, :, 1);
     d_wall_data = feat.data(:, :, 9);
     heading_data = cell2mat(arrayfun(@(x) x.theta, trx, 'UniformOutput', false))';
     x_data = cell2mat(arrayfun(@(x) x.x_mm, trx, 'UniformOutput', false))'; % x position in mm. 
