@@ -90,13 +90,25 @@ for gp = gps2plot
                 if d_fv 
                     rep1_data_fv = rep1_data_fv(:, 1:nf);
                     rep2_data_fv = rep2_data_fv(:, 1:nf);
+                    rep_data_fv = zeros(size(rep1_data_fv));
                 end 
+
                 nf_comb = size(cond_data, 2);
     
                 if idx == 1 || nf_comb == 0
-                    cond_data = vertcat(cond_data, rep1_data, rep2_data);
+
+                        % Initialise empty array:
+                        rep_data = zeros(size(rep1_data));
+
+                        for rr = 1:size(rep1_data, 1)
+                            rep_data(rr, :) = mean(vertcat(rep1_data(rr, :), rep2_data(rr, :)));
+                        end 
+                        cond_data = vertcat(cond_data, rep_data);
                     if d_fv
-                        cond_data_fv = vertcat(cond_data_fv, rep1_data_fv, rep2_data_fv);
+                        for rr = 1:size(rep1_data_fv, 1)
+                            rep_data_fv(rr, :) = mean(vertcat(rep1_data_fv(rr, :), rep2_data_fv(rr, :)));
+                        end 
+                        cond_data_fv = vertcat(cond_data_fv, rep_data_fv);
                     end 
                 else
                     if nf>nf_comb % trim incoming data
@@ -109,6 +121,7 @@ for gp = gps2plot
                         end 
 
                     elseif nf_comb>nf % Add NaNs to end
+
                         diff_f = nf_comb-nf+1;
                         n_flies = size(rep1_data, 1);
                         rep1_data(:, nf:nf_comb) = NaN(n_flies, diff_f);
@@ -118,9 +131,20 @@ for gp = gps2plot
                             rep2_data_fv(:, nf:nf_comb) = NaN(n_flies, diff_f);
                         end 
                     end 
-                    cond_data = vertcat(cond_data, rep1_data, rep2_data);
+
+                    % Initialise empty array:
+                    rep_data = zeros(size(rep1_data));
+
+                    % reps - not one row per rep. 
+                    for rr = 1:size(rep1_data, 1)
+                            rep_data(rr, :) = nanmean(vertcat(rep1_data(rr, :), rep2_data(rr, :)));
+                    end 
+                    cond_data = vertcat(cond_data, rep_data);
                     if d_fv
-                        cond_data_fv = vertcat(cond_data_fv, rep1_data_fv, rep2_data_fv);
+                        for rr = 1:size(rep1_data_fv, 1)
+                            rep_data_fv(rr, :) = nanmean(vertcat(rep1_data_fv(rr, :), rep2_data_fv(rr, :)));
+                        end
+                        cond_data_fv = vertcat(cond_data_fv, rep_data_fv);
                     end 
                 end
 
@@ -129,6 +153,9 @@ for gp = gps2plot
   
             end 
         end 
+
+        % "cond_data" is used from now on:
+
    
         % Mean +/- SEM
         mean_data = nanmean(cond_data);
@@ -139,7 +166,7 @@ for gp = gps2plot
                 mean_data = mean_data./mean_data_fv;
             end 
         end 
-        n_flies_in_cond = size(cond_data, 1)/2;
+        n_flies_in_cond = size(cond_data, 1);
 
         % smooth data if velocity / distance travelled. 
         if data_type == "dist_trav" || data_type == "vel_data" 
@@ -176,16 +203,18 @@ for gp = gps2plot
             ylb = 'Distance travelled (mm)';
             lw = 1; 
         elseif data_type == "av_data"
-            % if idx2 == 11
-            %     rng = [-190 190]; 
-            % elseif idx2 <3 
-            %     rng = [-300 300];
-            % elseif idx2 >2 && idx2 <5
-            %     rng = [-190 190];
-            % elseif idx2 > 4
-            %     rng = [-90 90];    
-            % end 
-            rng = [-110 110];
+            if idx2 == 11
+                rng = [-190 190]; 
+            elseif idx2 <3 
+                rng = [-310 310];
+            elseif idx2 >2 && idx2 <5
+                rng = [-190 190];
+            elseif idx2 ==7 || idx2 == 8 
+                rng = [-200 100];
+            elseif idx2 > 4
+                rng = [-100 100];    
+            end 
+            % rng = [-110 110];
             ylb = "Angular velocity (deg s-1)";
             lw = 1;
         elseif data_type == "heading_data"
@@ -204,6 +233,10 @@ for gp = gps2plot
             rng = [-200 200];
             % rng = [-50 50];
             ylb = "Turning rate (deg mm-1)";
+            lw = 1;
+        elseif data_type == "IFD_data"
+            rng = [0 40];
+            ylb = "Distance to nearest fly (mm)";
             lw = 1;
         end
 
@@ -303,25 +336,25 @@ for gp = gps2plot
             sem_data = abs(sem_data);
         end 
 
-        mean_pre = mean(mean_data(1:300));
+        mean_pre = nanmean(mean_data(1:300));
         sem_pre = mean(sem_data(1:300));
 
         % flicker stim: 
-        mean_flicker = mean(mean_data(fl+buffer_t:end));
-        sem_flicker = mean(sem_data(fl+buffer_t:end));
+        mean_flicker = nanmean(mean_data(fl+buffer_t:end));
+        sem_flicker = nanmean(sem_data(fl+buffer_t:end));
 
         if data_type == "dist_data"
             % moving stim: 
             mean_stim1 = min(mean_data(300:750));
-            sem_stim1 = mean(sem_data(300:750));
+            sem_stim1 = nanmean(sem_data(300:750));
             mean_stim2 = min(mean_data(750:fl));
-            sem_stim2 = mean(sem_data(750:fl));
+            sem_stim2 = nanmean(sem_data(750:fl));
         else
             % moving stim: 
-            mean_stim1 = mean(mean_data(300:750));
-            sem_stim1 = mean(sem_data(300:750));
-            mean_stim2 = mean(mean_data(750:fl));
-            sem_stim2 = mean(sem_data(750:fl));
+            mean_stim1 = nanmean(mean_data(300:750));
+            sem_stim1 = nanmean(sem_data(300:750));
+            mean_stim2 = nanmean(mean_data(750:fl));
+            sem_stim2 = nanmean(sem_data(750:fl));
         end 
 
         jt3 = rand(1)/4;
