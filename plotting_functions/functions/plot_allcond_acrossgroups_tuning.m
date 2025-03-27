@@ -62,10 +62,10 @@ for gp = gps2plot
     
             if ~isempty(rep1_data) % check that the row is not empty.
 
-                if d_fv 
-                    rep1_data_fv = rep1_data.fv_data;
-                    rep2_data_fv = data(idx).(rep2_str).fv_data;
-                end 
+                rep1_data_fv = rep1_data.fv_data;
+                rep2_data_fv = data(idx).(rep2_str).fv_data;
+                rep1_data_dcent = rep1_data.dist_data;
+                rep2_data_dcent = data(idx).(rep2_str).dist_data;
 
                 % Extract the relevant data
                 rep1_data = rep1_data.(data_type);
@@ -87,27 +87,16 @@ for gp = gps2plot
                 rep1_data = rep1_data(:, 1:nf);
                 rep2_data = rep2_data(:, 1:nf);
 
-                if d_fv 
-                    rep1_data_fv = rep1_data_fv(:, 1:nf);
-                    rep2_data_fv = rep2_data_fv(:, 1:nf);
-                    rep_data_fv = zeros(size(rep1_data_fv));
-                end 
+                rep1_data_fv = rep1_data_fv(:, 1:nf);
+                rep2_data_fv = rep2_data_fv(:, 1:nf);
 
                 nf_comb = size(cond_data, 2);
     
                 if idx == 1 || nf_comb == 0
-
-                        % Initialise empty array:
-                        rep_data = zeros(size(rep1_data));
-
-                        for rr = 1:size(rep1_data, 1)
-                            rep_data(rr, :) = mean(vertcat(rep1_data(rr, :), rep2_data(rr, :)));
-                        end 
+                        [rep_data, rep_data_fv] = check_and_average_across_reps(rep1_data, rep2_data, rep1_data_fv, rep2_data_fv, rep1_data_dcent, rep2_data_dcent);
                         cond_data = vertcat(cond_data, rep_data);
+
                     if d_fv
-                        for rr = 1:size(rep1_data_fv, 1)
-                            rep_data_fv(rr, :) = mean(vertcat(rep1_data_fv(rr, :), rep2_data_fv(rr, :)));
-                        end 
                         cond_data_fv = vertcat(cond_data_fv, rep_data_fv);
                     end 
                 else
@@ -132,20 +121,12 @@ for gp = gps2plot
                         end 
                     end 
 
-                    % Initialise empty array:
-                    rep_data = zeros(size(rep1_data));
-
-                    % reps - not one row per rep. 
-                    for rr = 1:size(rep1_data, 1)
-                            rep_data(rr, :) = nanmean(vertcat(rep1_data(rr, :), rep2_data(rr, :)));
-                    end 
+                    [rep_data, rep_data_fv] = check_and_average_across_reps(rep1_data, rep2_data, rep1_data_fv, rep2_data_fv, rep1_data_dcent, rep2_data_dcent);
                     cond_data = vertcat(cond_data, rep_data);
-                    if d_fv
-                        for rr = 1:size(rep1_data_fv, 1)
-                            rep_data_fv(rr, :) = nanmean(vertcat(rep1_data_fv(rr, :), rep2_data_fv(rr, :)));
-                        end
-                        cond_data_fv = vertcat(cond_data_fv, rep_data_fv);
-                    end 
+
+                        if d_fv
+                            cond_data_fv = vertcat(cond_data_fv, rep_data_fv);
+                        end 
                 end
 
                 fl_start = data(idx).(rep1_str).start_flicker_f;
@@ -191,10 +172,10 @@ for gp = gps2plot
                 rng = [-15 5];
                 ylb = 'Distance from centre / fv-data - delta (s)';
             elseif delta == 1
-                rng = [-60 30];
+                rng = [-40 20];
                 ylb = 'Distance from centre - delta (mm)';
             else
-                rng = [0 90];
+                rng = [20 90];
                 ylb = 'Distance from centre (mm)';
             end 
             lw = 1.5;

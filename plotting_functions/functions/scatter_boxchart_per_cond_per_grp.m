@@ -76,10 +76,10 @@ for idx2 = min_val:1:max_val
         
                 if ~isempty(rep1_data) % check that the row is not empty.
     
-                    if d_fv 
-                        rep1_data_fv = rep1_data.fv_data;
-                        rep2_data_fv = data(idx).(rep2_str).fv_data;
-                    end 
+                    rep1_data_fv = rep1_data.fv_data;
+                    rep2_data_fv = data(idx).(rep2_str).fv_data;
+                    rep1_data_dcent = rep1_data.dist_data;
+                    rep2_data_dcent = data(idx).(rep2_str).dist_data;
     
                     % Extract the relevant data
                     rep1_data = rep1_data.(data_type);
@@ -100,28 +100,17 @@ for idx2 = min_val:1:max_val
                     % Trim data to same length
                     rep1_data = rep1_data(:, 1:nf);
                     rep2_data = rep2_data(:, 1:nf);
-
-                    % Initialise empty array:
-                    rep_data = zeros(size(rep1_data));
-    
-                    if d_fv 
-                        rep1_data_fv = rep1_data_fv(:, 1:nf);
-                        rep2_data_fv = rep2_data_fv(:, 1:nf);
-                        rep_data_fv = zeros(size(rep1_data_fv));
-                    end 
+   
+                    rep1_data_fv = rep1_data_fv(:, 1:nf);
+                    rep2_data_fv = rep2_data_fv(:, 1:nf);
 
                     nf_comb = size(cond_data, 2);
         
                     if idx == 1 || nf_comb == 0 % 
 
-                        for rr = 1:size(rep1_data, 1)
-                            rep_data(rr, :) = mean(vertcat(rep1_data(rr, :), rep2_data(rr, :)));
-                        end 
+                        [rep_data, rep_data_fv] = check_and_average_across_reps(rep1_data, rep2_data, rep1_data_fv, rep2_data_fv, rep1_data_dcent, rep2_data_dcent);
                         cond_data = vertcat(cond_data, rep_data);
                         if d_fv
-                            for rr = 1:size(rep1_data_fv, 1)
-                                rep_data_fv(rr, :) = mean(vertcat(rep1_data_fv(rr, :), rep2_data_fv(rr, :)));
-                            end 
                             cond_data_fv = vertcat(cond_data_fv, rep_data_fv);
                         end 
 
@@ -148,11 +137,10 @@ for idx2 = min_val:1:max_val
                         
                         % For 'cond_data' have one row per fly - mean of 2
                         % reps - not one row per rep. 
-                        rep_data = mean(vertcat(rep1_data, rep2_data));
+                        [rep_data, rep_data_fv] = check_and_average_across_reps(rep1_data, rep2_data, rep1_data_fv, rep2_data_fv, rep1_data_dcent, rep2_data_dcent);
                         cond_data = vertcat(cond_data, rep_data);
 
                         if d_fv
-                            rep_data_fv = mean(vertcat(rep1_data_fv, rep2_data_fv));
                             cond_data_fv = vertcat(cond_data_fv, rep_data_fv);
                         end 
                     end
