@@ -6,7 +6,7 @@ function process_freely_walking_data()
     clc
     
     %% Enter date to be analysed here:
-    date_to_analyse = '2025_03_13';
+    date_to_analyse = '2025_03_25';
 
     %% If data recorded after 24/09/2024 - - - new logging / saving system that saves in subfolders. 
     PROJECT_ROOT = '/Users/burnettl/Documents/Projects/oaky_cokey/'; %% Update for your computer. 

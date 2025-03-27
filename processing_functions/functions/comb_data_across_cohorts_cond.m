@@ -132,13 +132,14 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         % Load 'combined_data', 'LOG', 'feat' and 'trx'
         load(fullfile(f_folder, fname));
 
-        if protocol == "protocol_24"
+        if protocol == "protocol_24" || protocol == "protocol_27"
             cond_array = LOG.meta.cond_array;
         end 
 
         % Get key information about strain and sex:
         strain = LOG.meta.fly_strain;
         strain = check_strain_typos(strain);
+        strain = strrep(strain, '-', '_');
 
         sex = LOG.meta.fly_sex;
     
@@ -251,7 +252,7 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
             DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).y_data = comb_data.y_data(:, start_f:stop_f);
             DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).view_dist = comb_data.view_dist(:, start_f:stop_f);
             DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).IFD_data = comb_data.IFD_data(:, start_f:stop_f);
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).IFA_data = comb_data.IFA_Data(:, start_f:stop_f);
+            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).IFA_data = comb_data.IFA_data(:, start_f:stop_f);
 
         end 
     
