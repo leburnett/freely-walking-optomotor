@@ -3,9 +3,13 @@
 % Burnett
 function tracking_log = batch_track_ufmf(date_folder)
     
-    % date_folder = 'C:\MatlabRoot\FreeWalkOptomotor\data\2024_09_30\Protocol_v11_OFF_no_flicker';
+    % date_folder = 'C:\Users\burnettl\Documents\oakey-cokey\DATA\00_unprocessed\1111_11_11\protocol_25\jfrc100_es_shibire_kir\F\15_44_35';
     
     cd(date_folder)
+    folder_parts = strsplit(date_folder, '/');
+    disp(folder_parts);
+    disp(length(folder_parts));
+    date_str = folder_parts{end-4};
 
     % Find all ufmf video files within the date folder. 
     ufmf_files = dir(fullfile(date_folder, '**', '*.ufmf'));
@@ -46,6 +50,7 @@ function tracking_log = batch_track_ufmf(date_folder)
     end
 
     tracking_log = table(video_names, t2track);
-    log_fname = fullfile('C:\Users\burnettl\Documents\oakey-cokey\tracking_log', strcat('Tracked_', date_folder(end-9:end), '.mat'));
+
+    log_fname = fullfile('C:\Users\burnettl\Documents\oakey-cokey\tracking_log', strcat('Tracked_', date_str, '.mat'));
     save(log_fname, 'tracking_log')
 end 
