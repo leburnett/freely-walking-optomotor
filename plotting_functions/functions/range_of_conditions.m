@@ -1,4 +1,4 @@
-function [min_val, max_val] = range_of_conditions(data)
+function [min_val, max_val, n_cond] = range_of_conditions(data)
 
  % Get all field names of the struct
 fieldNames = fieldnames(data);
@@ -23,7 +23,9 @@ end
 % Calculate the range of numbers
 min_val = min(numbers);
 max_val = max(numbers);
+n_cond = numel(numbers);
 
 % Display the results
-fprintf('Range of conditions: %d to %d\n', min_val, max_val);
+fprintf('%d conditions in total - range of conditions: %d to %d\n', n_cond, min_val, max_val);
 
+end

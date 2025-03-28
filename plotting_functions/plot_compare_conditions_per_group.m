@@ -14,16 +14,16 @@ end
 
 % % % % % Screen strains:
 gp_data = {
-    'csw1118', 'attP2', 'F', [0.7 0.7 0.7], 1; %[0.85 0.4 0.7]
-    'jfrc100_es_shibire_kir', 'attP2', 'F', [0.7 0.7 0.7], 2; %[0.85 0.4 0.7] [0.7 0.7 0.7]
-    'ss324_t4t5_shibire_kir', 'none', 'F', [0.6 0.8 0.6], 3;
-    'l1l4_jfrc100_shibire_kir', 'none', 'F', [0.4 0.8 1], 4;
-    'ss26283_H1_shibire_kir', 'none', 'F', [0.8, 0 , 0], 5;
-    'ss01027_H2_shibire_kir', 'none', 'F', [0.8, 0.4, 0], 6;
-    'ss1209_DCH_VCH_shibire_kir', 'none', 'F', [0.52, 0.12, 0.57], 7; % purple
-    'ss34318_Am1_shibire_kir', 'none', 'F', [1, 0.85, 0], 8; % gold
-    't4t5_RNAi_control', 'none', 'F', [0.7, 0.7, 0.7], 9; %[0.9, 0.5, 0]
-    'test', 'none', 'F', [0.2 0.2 0.2], 10; % Test flies 
+    'csw1118', 'F', [0.7 0.7 0.7], 1; %[0.85 0.4 0.7]
+    'jfrc100_es_shibire_kir', 'F', [0.7 0.7 0.7], 2; %[0.85 0.4 0.7] [0.7 0.7 0.7]
+    'ss324_t4t5_shibire_kir', 'F', [0.6 0.8 0.6], 3;
+    'l1l4_jfrc100_shibire_kir', 'F', [0.4 0.8 1], 4;
+    'ss26283_H1_shibire_kir', 'F', [0.8, 0 , 0], 5;
+    'ss01027_H2_shibire_kir', 'F', [0.8, 0.4, 0], 6;
+    'ss1209_DCH_VCH_shibire_kir', 'F', [0.52, 0.12, 0.57], 7; % purple
+    'ss34318_Am1_shibire_kir', 'F', [1, 0.85, 0], 8; % gold
+    't4t5_RNAi_control', 'F', [0.7, 0.7, 0.7], 9; %[0.9, 0.5, 0]
+    'test', 'F', [0.2 0.2 0.2], 10; % Test flies 
     };
 
 % gp_data = {

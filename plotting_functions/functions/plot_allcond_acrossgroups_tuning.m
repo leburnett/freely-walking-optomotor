@@ -23,21 +23,28 @@ function f = plot_allcond_acrossgroups_tuning(DATA, gp_data, params, data_type, 
     n_cond = length(params);
     t = tiledlayout(ceil(n_cond/2),6);
     t.TileSpacing = 'compact';
+    n_groups = numel(gps2plot);
+
+    % FIX ME - at the moment this is hardcoded to 12 but might change.
+    max_y_vals = zeros(12, n_groups);
+    min_y_vals = zeros(12, n_groups);
 
 %% For each experimental group (strain-sex):
-for gp = gps2plot
+for grpId = 1:n_groups
+    
+    gp = gps2plot(grpId);
 
     % % Eventually have this as the input to the function 
     strain = gp_data{gp, 1};
-    sex = gp_data{gp, 3}; 
-    col = gp_data{gp, 4};
+    sex = gp_data{gp, 2}; 
+    col = gp_data{gp, 3};
 
     data = DATA.(strain).(sex); 
 
     n_exp = length(data);
 
     % Find out which conditions exist:
-    [min_val, max_val] = range_of_conditions(data);
+    [min_val, max_val, n_cond] = range_of_conditions(data);
 
     % Run through the different conditions: 
     for idx2 = min_val:1:max_val 
@@ -136,7 +143,6 @@ for gp = gps2plot
         end 
 
         % "cond_data" is used from now on:
-
    
         % Mean +/- SEM
         mean_data = nanmean(cond_data);
@@ -167,56 +173,39 @@ for gp = gps2plot
         %% Plot subplot for condition
         subplot(ceil(n_cond/2), 6, (3*idx2-2):(3*idx2-1))
 
+        % Set the ylim rng
+        max_y_vals(idx2, grpId) = max(y1);
+        min_y_vals(idx2, grpId) = min(y2);
+
         if data_type == "dist_data"
             if d_fv == 1
-                rng = [-15 5];
                 ylb = 'Distance from centre / fv-data - delta (s)';
             elseif delta == 1
-                rng = [-40 20];
                 ylb = 'Distance from centre - delta (mm)';
             else
-                rng = [20 90];
                 ylb = 'Distance from centre (mm)';
             end 
             lw = 1.5;
         elseif data_type == "dist_trav"
-            rng = [0 1];
             ylb = 'Distance travelled (mm)';
             lw = 1; 
         elseif data_type == "av_data"
-            if idx2 == 11
-                rng = [-190 190]; 
-            elseif idx2 <3 
-                rng = [-310 310];
-            elseif idx2 >2 && idx2 <5
-                rng = [-190 190];
-            elseif idx2 ==7 || idx2 == 8 
-                rng = [-200 100];
-            elseif idx2 > 4
-                rng = [-100 100];    
-            end 
             % rng = [-110 110];
             ylb = "Angular velocity (deg s-1)";
             lw = 1;
         elseif data_type == "heading_data"
-            rng = [0 3000];
             ylb = "Heading (deg)";
             lw = 1;
         elseif data_type == "vel_data"
-            rng = [0 30];
             ylb = "Velocity (mm s-1)";
             lw = 1;
         elseif data_type == "fv_data"
-            rng = [0 25];
             ylb = "Forward velocity (mm s-1)";
             lw = 1;
         elseif data_type == "curv_data"
-            rng = [-200 200];
-            % rng = [-50 50];
             ylb = "Turning rate (deg mm-1)";
             lw = 1;
         elseif data_type == "IFD_data"
-            rng = [0 40];
             ylb = "Distance to nearest fly (mm)";
             lw = 1;
         end
@@ -233,6 +222,13 @@ for gp = gps2plot
         % When flicker stimulus started:
         fl = int16(mean(fl_start_f));
         if gp == gps2plot(end)
+
+            rng = [];
+            rng(2) = max(max_y_vals(idx2, :))*1.1;
+            rng(1) = min(min_y_vals(idx2, :))*1.1;
+
+            ylim(rng)
+
             plot([fl/dwn_factor fl/dwn_factor], rng, 'k', 'LineWidth', 0.5)
             plot([300/dwn_factor 300/dwn_factor], rng, 'k', 'LineWidth', 0.5) % beginning of stim
             plot([750/dwn_factor 740/dwn_factor], rng, 'Color', [0.6 0.6 0.6], 'LineWidth', 0.3) % change of direction   
@@ -243,7 +239,7 @@ for gp = gps2plot
             end 
         end 
         xlim([0 nf_comb])
-        ylim(rng)
+        
         box off
         ax = gca; ax.XAxis.Visible = 'off'; ax.TickDir = 'out'; ax.TickLength = [0.015 0.015]; ax.LineWidth = 1; ax.FontSize = 12;
 
@@ -251,62 +247,14 @@ for gp = gps2plot
 
         % where to position text annotation
         xpos = nf_comb-(450/dwn_factor);
-        if rng(1)==0 && data_type~="fv_data"
-            if gp == gps2plot(1)
-                pos_data = [xpos, rng(2)*0.1]; 
-            elseif gp == gps2plot(2)
-                pos_data = [xpos, rng(2)*0.2];
-            elseif gp == gps2plot(3)
-                pos_data = [xpos, rng(2)*0.3];
-            elseif gp == gps2plot(4)
-                pos_data = [xpos, rng(2)*0.4];
-            elseif gp == gps2plot(5)
-                pos_data = [xpos, rng(2)*0.5];
-            end 
-        elseif data_type == "fv_data"
-            if gp == gps2plot(1)
-                pos_data = [xpos, rng(2)*0.9]; 
-            elseif gp == gps2plot(2)
-                pos_data = [xpos, rng(2)*0.8];
-            elseif gp == gps2plot(3)
-                pos_data = [xpos, rng(2)*0.7];
-            elseif gp == gps2plot(4)
-                pos_data = [xpos, rng(2)*0.6];
-            elseif gp == gps2plot(5)
-                pos_data = [xpos, rng(2)*0.5];
-            end 
-        elseif data_type == "dist_data" && delta == 1
-            if gp == gps2plot(1)
-                pos_data = [xpos, rng(1)*0.9]; 
-            elseif gp == gps2plot(2)
-                pos_data = [xpos, rng(1)*0.7];
-            elseif gp == gps2plot(3)
-                pos_data = [xpos, rng(1)*0.5];
-            elseif gp == gps2plot(4)
-                pos_data = [xpos, rng(1)*0.3];
-            elseif gp == gps2plot(5)
-                pos_data = [xpos, rng(1)*0.1];
-            end 
-        else
-            if gp == gps2plot(1)
-                pos_data = [xpos, rng(2)*0.9]; 
-            elseif gp == gps2plot(2)
-                pos_data = [xpos, rng(2)*0.7];
-            elseif gp == gps2plot(3)
-                pos_data = [xpos, rng(2)*0.5];
-            elseif gp == gps2plot(4)
-                pos_data = [xpos, rng(2)*0.3];
-            elseif gp == gps2plot(5)
-                pos_data = [xpos, rng(2)*0.1];
-            end 
-        end 
-
+        rng_pos = [min_y_vals(idx2, grpId), max_y_vals(idx2, grpId)];
+        pos_data = get_pos_data_nflies(xpos, rng_pos, data_type, delta, gp, gps2plot);
         text(pos_data(1), pos_data(2), strcat("N = ", num2str(n_flies_in_cond)), 'Color', col);
 
         %% Add Errorbar tuning curve plot
          subplot(ceil(n_cond/2), 6, 3*idx2)
 
-         if data_type == "dist_data"
+        if data_type == "dist_data"
             buffer_t = 30*7;
         else
             buffer_t = 1;
@@ -376,8 +324,10 @@ for gp = gps2plot
         if data_type == "av_data" ||  data_type == "curv_data" 
             rng(1) = -5;
         end 
-        ylim(rng)
-        % ylim([-1 22])
+
+        if gp == gps2plot(end)
+            ylim(rng)
+        end 
         ax = gca; 
         % ax.YAxis.Visible = 'off';
         ax.TickDir = 'out';
@@ -387,7 +337,7 @@ for gp = gps2plot
 
         xticks([1,2,3,4])
         xticklabels({''})
-        xticklabels({'Acc', 'Dir1', 'Dir2','Int'})
+        xticklabels({'Int', 'Dir1', 'Dir2','Int'})
         % xtickangle(90)
 
         end 
@@ -398,6 +348,6 @@ end
 
     f = gcf;
     f.Position = [1   161   751   886]; % new smaller size.
-    sgtitle(ylb, 'FontSize', 16)
+    sgtitle(strcat(strrep(strain, '_', '-'), " - ", ylb), 'FontSize', 16)
 
 end 
