@@ -14,14 +14,16 @@ end
 
 % % % % % Screen strains:
 gp_data = {
-    'csw1118', 'attP2', 'F', [0.7 0.7 0.7], 1; %[0.85 0.4 0.7]
-    'jfrc100_es_shibire_kir', 'attP2', 'F', [0.7 0.7 0.7], 2; %[0.85 0.4 0.7] [0.7 0.7 0.7]
-    'ss324_t4t5_shibire_kir', 'none', 'F', [0.6 0.8 0.6], 3;
-    'l1l4_jfrc100_shibire_kir', 'none', 'F', [0.4 0.8 1], 4;
-    'ss26283_H1_shibire_kir', 'none', 'F', [0.8, 0 , 0], 5;
-    'ss01027_H2_shibire_kir', 'none', 'F', [0.9, 0.5, 0], 6;
-    't4t5_RNAi_control', 'none', 'F', [0.7, 0.7, 0.7], 7; %[0.9, 0.5, 0]
-    'test', 'none', 'F', [0.2 0.2 0.2], 8; % Test flies 
+    'csw1118', 'F', [0.7 0.7 0.7], 1; %[0.85 0.4 0.7]
+    'jfrc100_es_shibire_kir', 'F', [0.7 0.7 0.7], 2; %[0.85 0.4 0.7] [0.7 0.7 0.7]
+    'ss324_t4t5_shibire_kir', 'F', [0.6 0.8 0.6], 3;
+    'l1l4_jfrc100_shibire_kir', 'F', [0.4 0.8 1], 4;
+    'ss26283_H1_shibire_kir', 'F', [0.8, 0 , 0], 5;
+    'ss01027_H2_shibire_kir', 'F', [0.8, 0.4, 0], 6;
+    'ss1209_DCH_VCH_shibire_kir', 'F', [0.52, 0.12, 0.57], 7; % purple
+    'ss34318_Am1_shibire_kir', 'F', [1, 0.85, 0], 8; % gold
+    't4t5_RNAi_control', 'F', [0.7, 0.7, 0.7], 9; %[0.9, 0.5, 0]
+    'test', 'F', [0.2 0.2 0.2], 10; % Test flies 
     };
 
 % gp_data = {
@@ -53,7 +55,8 @@ close all
 
 % gps2plot = 1:6;
 % gps2plot = [1,3,5];
-gps2plot = [3,6];
+% gps2plot = [2,3,6];
+gps2plot = [2,3,4];
 
 grp_title = "ES_CS";
 
@@ -140,7 +143,7 @@ writecell(gp_data, fullfile(Xgrp_save_folder,'group_data.txt'), 'Delimiter', ';'
 %     % , "32px-bar-OFF"...
 %     };
 
-% P 27
+% P 27 / 29
 cond_titles = {"60deg-gratings-4Hz"...
     , "60deg-gratings-8Hz"...
     , "narrow-ON-bars-4Hz"...
@@ -155,15 +158,24 @@ cond_titles = {"60deg-gratings-4Hz"...
     , "32px-ON-single-bar"...
     };
 
+% P28 
+% cond_titles = {"rev-phi-8pxbar-4pxstep-0-3-8"...
+%     , "rev-phi-8pxbar-4pxstep-0-3-7"...
+%     , "rev-phi-16pxbar-4pxstep-0-3-7"...
+%     , "rev-phi-8pxbar-8pxstep-0-3-7"...
+%     , "rev-phi-8pxbar-8pxstep-0-2-7"...
+%     };
+
 %Save the groups that were used for the plots
 writecell(cond_titles, fullfile(Xgrp_save_folder,'cond_titles.txt'), 'Delimiter', ';')
 
-plot_sem = 0;
+plot_sem = 1;
 
-data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_data_delta', 'dist_data_fv', 'dist_trav', 'heading_data', 'vel_data'};
+% data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_data_delta', 'dist_data_fv', 'dist_trav', 'heading_data', 'vel_data'};
+data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_data_delta'};
 
 % For protocol 19 - ON / OFF
-for typ = 1:6
+for typ = 1:5
     data_type = data_types{typ};
     % Data in time series are downsampled by 10.
     f_xgrp = plot_allcond_acrossgroups_tuning(DATA, gp_data, cond_titles, data_type, gps2plot, plot_sem);

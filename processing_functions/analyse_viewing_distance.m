@@ -145,6 +145,7 @@ for frame_id = 1:1800
     end 
 
     axis equal;
+    axis off;
     xlim([x_c-R-20, x_c+R+20]);
     ylim([y_c-R-20, y_c+R+20]);
 
@@ -161,7 +162,29 @@ close(v);
 
 
 
+for frame_id = 1:1800
 
+    x_f = x(frame_id);
+    y_f = y(frame_id);
+    theta = heading(frame_id); 
+    theta_rad = deg2rad(theta);
+    
+    % Compute quadratic coefficients
+    A = 1; % Since cos^2 + sin^2 = 1
+    B = 2 * ((x_f - x_c) * cos(theta_rad) + (y_f - y_c) * sin(theta_rad));
+    C = (x_f - x_c)^2 + (y_f - y_c)^2 - R^2;
+    
+     % Solve quadratic equation for intersection
+    D = B^2 - 4*A*C;
+    if D < 0
+        d_view = NaN; % No valid intersection
+    else
+        t1 = (-B + sqrt(D)) / (2*A);
+        t2 = (-B - sqrt(D)) / (2*A);
+        d_view = max(t1, t2); % Forward distance
+    end
+
+end 
 
 
 

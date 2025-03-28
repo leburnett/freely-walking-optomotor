@@ -110,13 +110,12 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
 
     % Find all processed data for one protocol. 
     filelist = dir(fullfile(protocol_dir, '**/*.mat'));
+    % Remove the DATA file if it already exits:
+    idxToRemove = contains({filelist.name}, "DATA");
+    filelist(idxToRemove) = [];
 
     str_spl = split(protocol_dir, '/');
     protocol_name = str_spl{end};
-
-    % Remove the DATA file. 
-    dnames = {filelist.name};
-    filelist = filelist(~ismember(dnames, strcat(protocol_name, '_DATA*')));
 
     n_files = length(filelist);
     
@@ -132,13 +131,14 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         % Load 'combined_data', 'LOG', 'feat' and 'trx'
         load(fullfile(f_folder, fname));
 
-        if protocol == "protocol_24"
+        if protocol == "protocol_24" || protocol == "protocol_27"
             cond_array = LOG.meta.cond_array;
         end 
 
         % Get key information about strain and sex:
         strain = LOG.meta.fly_strain;
         strain = check_strain_typos(strain);
+        strain = strrep(strain, '-', '_');
 
         sex = LOG.meta.fly_sex;
     
@@ -183,6 +183,8 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         DATA.(strain).(sex)(sz).acclim_off1.x_data = comb_data.x_data(:, start_f:stop_f);
         DATA.(strain).(sex)(sz).acclim_off1.y_data = comb_data.y_data(:, start_f:stop_f);
         DATA.(strain).(sex)(sz).acclim_off1.view_dist = comb_data.view_dist(:, start_f:stop_f);
+        DATA.(strain).(sex)(sz).acclim_off1.IFD_data = comb_data.IFD_data(:, start_f:stop_f);
+        DATA.(strain).(sex)(sz).acclim_off1.IFA_data = comb_data.IFA_data(:, start_f:stop_f);
     
         %% Add data from acclim_patt
         Log = LOG.acclim_patt;
@@ -199,6 +201,8 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         DATA.(strain).(sex)(sz).acclim_patt.x_data = comb_data.x_data(:, start_f:stop_f);
         DATA.(strain).(sex)(sz).acclim_patt.y_data = comb_data.y_data(:, start_f:stop_f);
         DATA.(strain).(sex)(sz).acclim_patt.view_dist = comb_data.view_dist(:, start_f:stop_f);
+        DATA.(strain).(sex)(sz).acclim_patt.IFD_data = comb_data.IFD_data(:, start_f:stop_f);
+        DATA.(strain).(sex)(sz).acclim_patt.IFA_data = comb_data.IFA_data(:, start_f:stop_f);
 
         % Find out how many unique conditions there are:
         fields = fieldnames(LOG);
@@ -246,6 +250,8 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
             DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).x_data = comb_data.x_data(:, start_f:stop_f);
             DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).y_data = comb_data.y_data(:, start_f:stop_f);
             DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).view_dist = comb_data.view_dist(:, start_f:stop_f);
+            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).IFD_data = comb_data.IFD_data(:, start_f:stop_f);
+            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).IFA_data = comb_data.IFA_data(:, start_f:stop_f);
 
         end 
     
@@ -264,6 +270,8 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         DATA.(strain).(sex)(sz).acclim_off2.x_data = comb_data.x_data(:, start_f:end);
         DATA.(strain).(sex)(sz).acclim_off2.y_data = comb_data.y_data(:, start_f:end);
         DATA.(strain).(sex)(sz).acclim_off2.view_dist = comb_data.view_dist(:, start_f:end);
+        DATA.(strain).(sex)(sz).acclim_off2.IFD_data = comb_data.IFD_data(:, start_f:end);
+        DATA.(strain).(sex)(sz).acclim_off2.IFA_data = comb_data.IFA_data(:, start_f:end);
     
     end 
 

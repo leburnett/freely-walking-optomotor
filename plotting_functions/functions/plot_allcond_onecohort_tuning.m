@@ -35,6 +35,7 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
     figure;
 
     landing = 'none';
+    strain = strrep(strain, '-', '_');
     data = DATA.(strain).(landing).(sex); 
     n_exp = length(data);
     data_fields = fieldnames(data);
