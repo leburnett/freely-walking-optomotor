@@ -10,13 +10,14 @@ function plot_timeseries_ES_T4T5()
 
 % Plot "curv_data" - turning rate. 
 % Timeseries  / errorbar plot (tuning).
+    data_type = "curv_data";
 
     gp_data_fast = {'jfrc49_es_kir', 'F', [0.7 0.7 0.7]; 
         'ss324_t4t5_kir', 'F', [0.6 0.8 0.6];
         };
     
     gp_data_slow = {'jfrc49_es_kir', 'F', [0.3 0.3 0.3]; 
-        'ss324_t4t5_kir', 'F', [0.3 0.4 0.3];
+        'ss324_t4t5_kir', 'F', [0.4 0.5 0.4];
         };
     
     rng = [-50 50];
@@ -109,7 +110,9 @@ function plot_timeseries_ES_T4T5()
                     end 
                  end 
     
-                mean_data = nanmean(cond_data);
+                fl = int16(mean(fl_start_f))+10;
+
+                mean_data = nanmean(cond_data(:, 1:fl+300));
                 n_datapoints = size(mean_data, 2);
                 % mean_data = movmean(mean_data, 15);
                 % mean_data(2:end-1) = conv(mean_data,smooth_kernel,'valid');
@@ -134,6 +137,7 @@ function plot_timeseries_ES_T4T5()
                 % sem_data = nanstd(cond_data)/sqrt(size(cond_data,1));
                 % sem_data_dwn = downsample(sem_data, 10);
     
+                figure
                 y1 = mean_data_dwn+sem_data_dwn;
                 y2 = mean_data_dwn-sem_data_dwn;
                 nf_comb = size(mean_data_dwn, 2);
@@ -145,30 +149,38 @@ function plot_timeseries_ES_T4T5()
                 plot(x, y2, 'w', 'LineWidth', 1)
                 patch([x fliplr(x)], [y1 fliplr(y2)], 'k', 'FaceAlpha', 0.1, 'EdgeColor', 'none')
                 plot(mean_data_dwn, 'Color', col, 'LineWidth', lw);
-                fl = int16(mean(fl_start_f))+10;
     
-                plot([fl/step_size fl/step_size], rng, 'k', 'LineWidth', 0.5)
-                plot([300/step_size 300/step_size], rng, 'k', 'LineWidth', 0.5) % beginning of stim
-                plot([760/step_size 760/step_size], rng, 'Color', 'k', 'LineWidth', 0.3) % change of direction   
+                plot([(fl/step_size)-5 (fl/step_size)-5], rng, 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5)
+                plot([(300/step_size)-2.5 (300/step_size)-2.5], rng, 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5) % beginning of stim
+                plot([(760/step_size)-4 (760/step_size)-4], rng, 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5) % change of direction   
                 
                 plot([0 nf_comb], [0 0], 'k:', 'LineWidth', 0.5)
+                % plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
                 xlim([0 nf_comb])
                 ylim(rng)
     
                 box off
-                ax = gca; ax.XAxis.Visible = 'off'; ax.TickDir = 'out'; ax.TickLength = [0.015 0.015]; ax.LineWidth = 1; ax.FontSize = 12;
+                ax = gca; 
+                ax.XAxis.Visible = 'off'; 
+                ax.TickDir = 'out'; 
+                ax.TickLength = [0.015 0.015]; 
+                ax.LineWidth = 1; 
+                ax.FontSize = 16;
             end 
     
         end 
     end 
     
     title(ttl)
-    ylabel("Turning rate (deg mm^-^1)")
+    % ylabel("Turning rate (deg mm^-^1)")
     f = gcf;
-    f.Position = [620   701   550   266];
+    % f.Position = [620   701   550   266];
+    ylabel("Angular velocity (deg s^-^1)")
+    % ylabel("Distance to center (mm)")
+    % f.Position = [405   691   906   243];
+    f.Position = [314 714  1083  252];
     
-    
-    fig_save_folder = "/Users/burnettl/Documents/Projects/oaky_cokey/figures/examples/p10_T4T5_ES_Kir";
+    fig_save_folder = "/Users/burnettl/Documents/Projects/oaky_cokey/figures/examples/2025_02_28_mmd_p19_11_37";
     fname = fullfile(fig_save_folder, strcat("Timeseries_", save_ttl, ".png"));
     exportgraphics(f, fname); 
     
