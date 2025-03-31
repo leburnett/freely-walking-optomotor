@@ -9,6 +9,7 @@ function plot_errorbar_ES_T4T5()
 % cond 10 = 15 deg - 8Hz
 
 % Plot "curv_data" - turning rate. 
+    data_type = "curv_data";
 
     gp_data = {
         'jfrc49_es_kir', 'F'; 
@@ -24,7 +25,7 @@ function plot_errorbar_ES_T4T5()
         elseif temp_freq == "slow"
             save_ttl = "T4T5_4Hz";
             cond_to_plot = [11,7,3];
-            col = [0.3 0.3 0.3; 0.5 0.6 0.5];
+            col = [0.3 0.3 0.3; 0.4 0.5 0.4];
         end 
     
         % Set the groups to plot and the conditions to plot. 
@@ -34,6 +35,7 @@ function plot_errorbar_ES_T4T5()
         
         ebar_data = zeros(n_groups, n_cond);
         sem_bar_data = zeros(n_groups, n_cond);
+        nflies_data = zeros(n_groups, n_cond);
         
         for grpId = 1:n_groups
         
@@ -47,7 +49,7 @@ function plot_errorbar_ES_T4T5()
             for condId = 1:n_cond
         
                 idx2 = cond_to_plot(condId); % condition 
-                disp(strcat("Cond - ", string(idx2), " - Group ", string(gp)))
+                % disp(strcat("Cond - ", string(idx2), " - Group ", string(gp)))
     
                 rep1_str = strcat('R1_condition_', string(idx2));   
                 rep2_str = strcat('R2_condition_', string(idx2));  
@@ -94,7 +96,7 @@ function plot_errorbar_ES_T4T5()
                             nf_comb = size(cond_data, 2);
                 
                             if idx == 1 || nf_comb == 0
-                                    [rep_data, rep_data_fv] = check_and_average_across_reps(rep1_data, rep2_data, rep1_data_fv, rep2_data_fv, rep1_data_dcent, rep2_data_dcent);
+                                    [rep_data, ~] = check_and_average_across_reps(rep1_data, rep2_data, rep1_data_fv, rep2_data_fv, rep1_data_dcent, rep2_data_dcent);
                                     cond_data = vertcat(cond_data, rep_data);
                             else
                                 if nf>nf_comb % trim incoming data
@@ -107,7 +109,7 @@ function plot_errorbar_ES_T4T5()
                                     rep2_data(:, nf:nf_comb) = NaN(n_flies, diff_f);
                                 end 
             
-                                [rep_data, rep_data_fv] = check_and_average_across_reps(rep1_data, rep2_data, rep1_data_fv, rep2_data_fv, rep1_data_dcent, rep2_data_dcent);
+                                [rep_data, ~] = check_and_average_across_reps(rep1_data, rep2_data, rep1_data_fv, rep2_data_fv, rep1_data_dcent, rep2_data_dcent);
                                 cond_data = vertcat(cond_data, rep_data);
                             end
             
@@ -123,7 +125,7 @@ function plot_errorbar_ES_T4T5()
         
                     n_datapoints = size(mean_data, 2);
                     n_flies_in_cond = size(cond_data, 1);
-                    disp(strcat("N flies - ", string(n_flies_in_cond)))
+                    % disp(strcat("N flies - ", string(n_flies_in_cond)))
                     window_size = 15;
                     step_size = 5;
                     n_bins = floor((n_datapoints - 1 - window_size) / step_size) + 1;
@@ -148,12 +150,12 @@ function plot_errorbar_ES_T4T5()
                     % Mean and SEM across groups and conditions
                     ebar_data(grpId, condId) = mean_stim;
                     sem_bar_data(grpId, condId) = sem_stim;
+                    nflies_data(grpId, condId) = n_flies_in_cond;
                 end 
             end 
         end 
         
-        
-        % figure
+        figure
     
         errorbar(1:n_cond, ebar_data(1, :), sem_bar_data(1, :), 'Color', col(1, :), 'LineWidth', 1.2)
         hold on
@@ -176,6 +178,8 @@ function plot_errorbar_ES_T4T5()
         xlabel("Spatial freq. (deg)")
         f = gcf;
         f.Position = [620   650   236   317];
+
+        disp(nflies_data)
         
         fig_save_folder = "/Users/burnettl/Documents/Projects/oaky_cokey/figures/examples/p10_T4T5_ES_Kir";
         fname = fullfile(fig_save_folder, strcat("Errorbar_", save_ttl, ".png"));
@@ -187,7 +191,7 @@ function plot_errorbar_ES_T4T5()
                         , 'BackgroundColor', 'none' ...
                         ); 
     end 
-    
+
 end 
 
 
