@@ -223,10 +223,25 @@ for grpId = 1:n_groups
         fl = int16(mean(fl_start_f));
         if gp == gps2plot(end)
 
-            rng = [];
-            rng(2) = max(max_y_vals(idx2, :))*1.1;
-            rng(1) = min(min_y_vals(idx2, :))*1.1;
-
+            if data_type == "dist_data"
+                rng = [20 120];
+            elseif data_type == "dist_data_delta"
+                rng = [-40 20];
+            else
+                rng = [];
+                maxx_y = max(max_y_vals(idx2, :));
+                if maxx_y < 0
+                    rng(2) = maxx_y*1.1;
+                elseif maxx_y >=0 
+                    rng(2) = maxx_y*0.9;
+                end
+                minn_y = min(min_y_vals(idx2, :));
+                if minn_y < 0
+                    rng(1) = minn_y*1.1;
+                elseif minn_y >=0 
+                    rng(1) = minn_y*0.9;
+                end 
+            end 
             ylim(rng)
 
             plot([fl/dwn_factor fl/dwn_factor], rng, 'k', 'LineWidth', 0.5)
@@ -238,6 +253,7 @@ for grpId = 1:n_groups
                 plot([0 nf_comb], [0 0], 'k:', 'LineWidth', 0.5)
             end 
         end 
+
         xlim([0 nf_comb])
         
         box off

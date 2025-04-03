@@ -17,20 +17,6 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
         d_fv = 0;
     end 
 
-    % params = {"60deg gratings - 4Hz"...
-    % , "60deg gratings - 8Hz"...
-    % , "ON curtain - 4Hz"...
-    % , "ON curtain - 8Hz"...
-    % , "OFF curtain - 4Hz"...
-    % , "OFF curtain - 8Hz"...
-    % , "2pix ON bar - 4Hz"...
-    % , "2pix ON bar - 8Hz"...
-    % , "2pix OFF bar - 4Hz"...
-    % , "2pix OFF bar - 8Hz"...
-    % , "15deg gratings - 4Hz"...
-    % , "15deg gratings - 8Hz"...
-    % };
-
     % Generate new figure
     figure;
 
@@ -50,7 +36,7 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
     col = [0.2 0.2 0.2]; % dark grey
 
     % Find out which conditions exist:
-    [min_val, max_val] = range_of_conditions(data);
+    [min_val, max_val, n_cond] = range_of_conditions(data);
 
     % Run through the different conditions: 
     for idx2 = min_val:1:max_val 
@@ -172,46 +158,44 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
         y2 = mean_data_dwn-sem_data_dwn;
         nf_comb = size(mean_data_dwn, 2);
         x = 1:1:nf_comb;
-    
+
+        % Set the ylim rng
+        if data_type == "dist_data"
+            rng = [20 120];
+        elseif data_type == "dist_data_delta"
+            rng = [-40 20];
+        else
+            rng = [min(y2)*1.1, max(y1)*1.1];
+        end
+
         %% Plot subplot for condition
         subplot(ceil(n_cond/2), 6, (3*idx2-2):(3*idx2-1))
 
         if data_type == "dist_data"
             if d_fv == 1
-                rng = [-7 2];
                 ylb = 'Distance from centre / fv-data - delta (s)';
             elseif delta == 1
-                rng = [-40 15];
                 ylb = 'Distance from centre - delta (mm)';
             else
-                rng = [0 120];
                 ylb = 'Distance from centre (mm)';
             end 
             lw = 1.5;
         elseif data_type == "dist_trav"
-            rng = [0 1];
             ylb = 'Distance travelled (mm)';
             lw = 1; 
         elseif data_type == "av_data"
-            rng = [-170 170];
-            % rng = [-50 50];
             ylb = "Angular velocity (deg s-1)";
             lw = 1;
         elseif data_type == "heading_data"
-            rng = [0 3000];
             ylb = "Heading (deg)";
             lw = 1;
         elseif data_type == "vel_data"
-            rng = [0 30];
             ylb = "Velocity (mm s-1)";
             lw = 1;
         elseif data_type == "fv_data"
-            rng = [0 23];
             ylb = "Forward velocity (mm s-1)";
             lw = 1;
         elseif data_type == "curv_data"
-            rng = [-150 150];
-            % rng = [-50 50];
             ylb = "Turning rate (deg mm-1)";
             lw = 1;
         end
@@ -224,6 +208,8 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
         end
         plot(mean_data_dwn, 'Color', col, 'LineWidth', lw);
         hold on
+
+        ylim(rng)
     
         % When flicker stimulus started:
         fl = int16(mean(fl_start_f));
@@ -237,7 +223,6 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
         end 
 
         xlim([0 nf_comb])
-        ylim(rng)
         box off
         ax = gca; ax.XAxis.Visible = 'off'; ax.TickDir = 'out'; ax.TickLength = [0.015 0.015]; ax.LineWidth = 1; ax.FontSize = 12;
 
@@ -328,11 +313,7 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
 
         xlim([0.5 4.5])
         box off
-        if data_type == "av_data" ||  data_type == "curv_data" 
-            rng(1) = -5;
-        end 
         ylim(rng)
-        % ylim([-1 22])
         ax = gca; 
         % ax.YAxis.Visible = 'off';
         ax.TickDir = 'out';
@@ -351,6 +332,6 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
 
     f = gcf;
     f.Position = [1   161   751   886]; % new smaller size.
-    sgtitle(ylb, 'FontSize', 16)
+    sgtitle(strcat(strrep(strain, '_', '-'), " - ", ylb), 'FontSize', 16)
 
 end 

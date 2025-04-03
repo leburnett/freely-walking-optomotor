@@ -1,10 +1,11 @@
-function process_screen_p27_data(ROOT_DIR)
+function process_screen_p27_data()
 
+    ROOT_DIR = '\Users\burnettl\Documents\oakey-cokey\';
     % Move to the directory to where the results per experiment are saved:
     protocol_dir = fullfile(ROOT_DIR, 'results', 'protocol_27');
     cd(protocol_dir);
     
-    strs = split(protocol_dir, '/');
+    strs = split(protocol_dir, '\');
     protocol = strs(end);
     
     % Get all of the strain folders that are inside the protocol folder.
@@ -71,7 +72,8 @@ function process_screen_p27_data(ROOT_DIR)
     
     for strain = 2:n_strains
     
-        disp(strcat("Plotting the data for " , gp_data{strain, 1}))
+        grp_title = gp_data{strain, 1};
+        disp(strcat("Plotting the data for " , grp_title))
     
         for typ = 1:5
     

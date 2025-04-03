@@ -1,4 +1,4 @@
-function process_data_features(path_to_folder, save_folder, date_str)
+function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_str)
     % Processes optomotor freely-walking data from FlyTracker and saves the
     % mean/ med values per 'condition' within the experiment in arrays. it
     % also saves all of the variables with the full data across the entrie
@@ -15,7 +15,7 @@ function process_data_features(path_to_folder, save_folder, date_str)
     %          Path to save the processed data.        
    
     % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-    PROJECT_ROOT = '\Users\burnettl\Documents\oakey-cokey\';
+    % PROJECT_ROOT = '\Users\burnettl\Documents\oakey-cokey\';
 
     cd(path_to_folder)
 

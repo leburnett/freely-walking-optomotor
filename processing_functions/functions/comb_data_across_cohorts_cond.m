@@ -275,7 +275,7 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
     
     end 
 
-    todaysdate =  string(datetime('now', 'Format','yyyy-MM-dd'));
-    save(string(fullfile(protocol_dir, strcat(protocol, '_DATA_', todaysdate, '.mat'))), 'DATA');
+    % todaysdate =  string(datetime('now', 'Format','yyyy-MM-dd'));
+    % save(string(fullfile(protocol_dir, strcat(protocol, '_DATA_', todaysdate, '.mat'))), 'DATA');
 
 end 
