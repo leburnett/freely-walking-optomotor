@@ -3,7 +3,12 @@
 protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_27';
 cd(protocol_dir);
 
-strs = split(protocol_dir, '/');
+if contains(protocol_dir, '/') % Mac
+    strs = split(protocol_dir, '/');
+elseif contains(protocol_dir, '\') % Windows
+    strs = split(protocol_dir, '\');
+end 
+
 protocol = strs(end);
 
 if protocol == "protocol_14"

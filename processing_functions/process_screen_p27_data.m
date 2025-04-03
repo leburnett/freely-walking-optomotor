@@ -5,7 +5,11 @@ function process_screen_p27_data()
     protocol_dir = fullfile(ROOT_DIR, 'results', 'protocol_27');
     cd(protocol_dir);
     
-    strs = split(protocol_dir, '\');
+    if contains(protocol_dir, '/') % Mac
+        strs = split(protocol_dir, '/');
+    elseif contains(protocol_dir, '\') % Windows
+        strs = split(protocol_dir, '\');
+    end 
     protocol = strs(end);
     
     % Get all of the strain folders that are inside the protocol folder.
