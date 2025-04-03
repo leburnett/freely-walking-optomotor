@@ -1,6 +1,6 @@
-function process_screen_p27_data()
+function process_screen_p27_data(ROOT_DIR)
 
-    ROOT_DIR = '\Users\burnettl\Documents\oakey-cokey\';
+    % ROOT_DIR = '\Users\burnettl\Documents\oakey-cokey\';
     % Move to the directory to where the results per experiment are saved:
     protocol_dir = fullfile(ROOT_DIR, 'results', 'protocol_27');
     cd(protocol_dir);
