@@ -160,11 +160,15 @@ for grpId = 1:n_groups
             mean_data = movmean(mean_data, 5);
         end 
 
-        dwn_factor = 10;
-        mean_data_dwn = downsample(mean_data, dwn_factor);
-
         sem_data = nanstd(cond_data)/sqrt(size(cond_data,1));
-        sem_data_dwn = downsample(sem_data, 10);
+
+        % % % % % Bin the data
+        window_size = 15;
+        step_size = 5;
+        n_datapoints = size(mean_data, 2);
+        mean_data_dwn = bin_data(mean_data, window_size, step_size, 1, n_datapoints); 
+        sem_data_dwn = bin_data(sem_data, window_size, step_size, 1, n_datapoints); 
+
         y1 = mean_data_dwn+sem_data_dwn;
         y2 = mean_data_dwn-sem_data_dwn;
         nf_comb = size(mean_data_dwn, 2);
@@ -224,16 +228,18 @@ for grpId = 1:n_groups
         if gp == gps2plot(end)
 
             if data_type == "dist_data"
-                rng = [20 120];
-            elseif data_type == "dist_data_delta"
-                rng = [-40 20];
+                if delta == 1
+                    rng = [-40 20]; 
+                else
+                    rng = [20 100];
+                end 
             else
                 rng = [];
                 maxx_y = max(max_y_vals(idx2, :));
                 if maxx_y < 0
-                    rng(2) = maxx_y*1.1;
-                elseif maxx_y >=0 
                     rng(2) = maxx_y*0.9;
+                elseif maxx_y >=0 
+                    rng(2) = maxx_y*1.1;
                 end
                 minn_y = min(min_y_vals(idx2, :));
                 if minn_y < 0
@@ -244,9 +250,9 @@ for grpId = 1:n_groups
             end 
             ylim(rng)
 
-            plot([fl/dwn_factor fl/dwn_factor], rng, 'k', 'LineWidth', 0.5)
-            plot([300/dwn_factor 300/dwn_factor], rng, 'k', 'LineWidth', 0.5) % beginning of stim
-            plot([750/dwn_factor 740/dwn_factor], rng, 'Color', [0.6 0.6 0.6], 'LineWidth', 0.3) % change of direction   
+            plot([fl/step_size fl/step_size], rng, 'k', 'LineWidth', 0.5)
+            plot([300/step_size 300/step_size], rng, 'k', 'LineWidth', 0.5) % beginning of stim
+            plot([750/step_size 740/step_size], rng, 'Color', [0.6 0.6 0.6], 'LineWidth', 0.3) % change of direction   
             if data_type == "dist_data"
                 plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
             elseif data_type == "av_data"
@@ -262,7 +268,7 @@ for grpId = 1:n_groups
         title(p, 'FontSize', 9)
 
         % where to position text annotation
-        xpos = nf_comb-(450/dwn_factor);
+        xpos = nf_comb-(450/step_size);
         rng_pos = [min_y_vals(idx2, grpId), max_y_vals(idx2, grpId)];
         pos_data = get_pos_data_nflies(xpos, rng_pos, data_type, delta, gp, gps2plot);
         text(pos_data(1), pos_data(2), strcat("N = ", num2str(n_flies_in_cond)), 'Color', col);
@@ -343,7 +349,8 @@ for grpId = 1:n_groups
 
         if gp == gps2plot(end)
             ylim(rng)
-        end 
+        end
+
         ax = gca; 
         % ax.YAxis.Visible = 'off';
         ax.TickDir = 'out';

@@ -77,26 +77,32 @@ function process_screen_p27_data()
     for strain = 2:n_strains
     
         grp_title = gp_data{strain, 1};
-        disp(strcat("Plotting the data for " , grp_title))
-    
-        for typ = 1:5
-    
-            % Data type to plot
-            data_type = data_types{typ};
-    
-            % Plot the chosen strain against the ES controls.
-            gps2plot = [1, strain];
-    
-            % Data in time series are downsampled by 10.
-            f_xgrp = plot_allcond_acrossgroups_tuning(DATA, gp_data, cond_titles, data_type, gps2plot, plot_sem);
+
+        if isfield(DATA, grp_title) % Check if there is data for the strain in DATA
+            disp(strcat("Plotting the data for " , grp_title))
         
-            fname = fullfile(save_folder, strcat(grp_title, '_', data_type, ".pdf"));
-            exportgraphics(f_xgrp ...
-                , fname ...
-                , 'ContentType', 'vector' ...
-                , 'BackgroundColor', 'none' ...
-                ); 
-        end
+            for typ = 1:5
+        
+                % Data type to plot
+                data_type = data_types{typ};
+        
+                % Plot the chosen strain against the ES controls.
+                gps2plot = [1, strain];
+        
+                % Data in time series are downsampled by 10.
+                f_xgrp = plot_allcond_acrossgroups_tuning(DATA, gp_data, cond_titles, data_type, gps2plot, plot_sem);
+            
+                fname = fullfile(save_folder, strcat(grp_title, '_', data_type, ".pdf"));
+                exportgraphics(f_xgrp ...
+                    , fname ...
+                    , 'ContentType', 'vector' ...
+                    , 'BackgroundColor', 'none' ...
+                    ); 
+                close
+            end
+        else 
+            disp(strcat("No data for ", grp_title))
+        end 
     
     end 
 
