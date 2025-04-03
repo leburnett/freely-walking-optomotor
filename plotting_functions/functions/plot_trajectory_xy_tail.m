@@ -27,30 +27,28 @@ function plot_trajectory_xy_tail(trx, frame_id, save_ttl, tail_length)
     y_circ = rad * sin(theta) + cent_arena(2);
     fill(x_circ, y_circ, 'w');
 
+    cmap = autumn(15); % or jet(15)
+
     for f = 1:n_flies
 
         x = trx(f).x_mm;
         y = trx(f).y_mm;
 
-        rr = rand(1);
-        if rr > 0.93
-            rr = 0.9;
-        end 
-        col = repmat(rr, [1,3]);
+        col = cmap(f, :);
       
         if length(x) ~= length(y)
             error('x and y must be the same length');
         end
     
-        plot(x(rng), -y(rng), '-', 'Color', col, 'LineWidth', 1.4); % Plot trajectory   
+        plot(x(rng), -y(rng), '-', 'Color', col, 'LineWidth', 2); % Plot trajectory   
         
         % Mark start and end points
-        scatter(x(frame_id), -y(frame_id), 60, col, 'filled', 'MarkerEdgeColor', 'k', 'LineWidth', 0.4); 
+        scatter(x(frame_id), -y(frame_id), 60, col, 'filled', 'MarkerEdgeColor', 'k', 'LineWidth', 0.7); 
 
     end 
         
     % Add circle outline on top. 
-    viscircles(cent_arena, rad, 'Color', [0.3 0.3 0.3], 'LineWidth', 0.5)
+    viscircles(cent_arena, rad, 'Color', [0.3 0.3 0.3], 'LineWidth', 1.5)
 
     % Formatting
     % xlim([0 250])
