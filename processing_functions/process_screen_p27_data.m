@@ -105,7 +105,4 @@ function process_screen_p27_data()
     
     end 
 
-% FIX ME - ADD PLOTS OF THE 'baseline' LOCOMOTION / TURNING during the
-% ACCLIM period before.... 
-
 end 
