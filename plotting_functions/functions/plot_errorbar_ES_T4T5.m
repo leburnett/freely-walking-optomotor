@@ -19,11 +19,11 @@ function plot_errorbar_ES_T4T5()
     for temp_freq = ["slow", "fast"]
     
         if temp_freq == "fast"
-            save_ttl = "T4T5_8Hz";
+            save_ttl = strcat("T4T5_8Hz_", data_type);
             cond_to_plot = [10,6,2];
             col = [0.7 0.7 0.7; 0.6 0.8 0.6];
         elseif temp_freq == "slow"
-            save_ttl = "T4T5_4Hz";
+            save_ttl = strcat("T4T5_4Hz_", data_type);
             cond_to_plot = [11,7,3];
             col = [0.3 0.3 0.3; 0.4 0.5 0.4];
         end 
@@ -118,7 +118,13 @@ function plot_errorbar_ES_T4T5()
               
                         end 
                      end 
-        
+                        
+                     if data_type == "dist_data"
+                         for id = 1:height(cond_data)
+                            cond_data(id, :) = cond_data(id, :) - cond_data(id, 300);
+                         end 
+                     end 
+
                     % Mean and SEM of the data
                     mean_data = nanmean(cond_data);
                     sem_data = nanstd(cond_data)/sqrt(size(cond_data,1));
@@ -144,8 +150,12 @@ function plot_errorbar_ES_T4T5()
                     % Frame for the beginning of the interval after condition.
                     fl = int16(mean(fl_start_f))+10;
         
-                    mean_stim = nanmean(abs(mean_data(300/step_size:fl/step_size)));
-                    sem_stim = nanmean(abs(sem_data(300/step_size:fl/step_size)));
+                    if data_type == "dist_data"
+                        mean_stim = min((mean_data_dwn(300/step_size:fl/step_size)));
+                    elseif data_type == "curv_data"
+                        mean_stim = nanmean(abs(mean_data_dwn(300/step_size:fl/step_size)));
+                    end 
+                    sem_stim = nanmean(abs(sem_data_dwn(300/step_size:fl/step_size)));
         
                     % Mean and SEM across groups and conditions
                     ebar_data(grpId, condId) = mean_stim;
@@ -163,7 +173,13 @@ function plot_errorbar_ES_T4T5()
         errorbar(1:n_cond, ebar_data(2, :), sem_bar_data(2, :), 'Color', col(2, :), 'LineWidth', 1.2)
         scatter(1:n_cond, ebar_data(2, :), 120, col(2, :), 'Marker', 'o', 'LineWidth', 2)
         
-        ylim([-3 25])
+        if data_type == "curv_data"
+            ylim([-3 160])
+            ylabel("Turning rate (deg mm^-^1)")
+        elseif data_type == "dist_data"
+            ylim([-40 0])
+            ylabel("Distance to centre - rel (mm)")
+        end 
         xlim([0.5 3.5])
         box off
         ax = gca; 
@@ -173,8 +189,7 @@ function plot_errorbar_ES_T4T5()
         ax.TickLength = [0.015 0.015]; 
         ax.LineWidth = 1; 
         ax.FontSize = 16;
-            
-        ylabel("Turning rate (deg mm^-^1)")
+
         xlabel("Spatial freq. (deg)")
         f = gcf;
         f.Position = [620   650   236   317];
@@ -184,7 +199,7 @@ function plot_errorbar_ES_T4T5()
         fig_save_folder = "/Users/burnettl/Documents/Projects/oaky_cokey/figures/examples/p10_T4T5_ES_Kir";
         fname = fullfile(fig_save_folder, strcat("Errorbar_", save_ttl, ".png"));
         exportgraphics(f, fname); 
-        
+
         fname_pdf = fullfile(fig_save_folder, strcat("Errorbar_", save_ttl, ".pdf"));
         exportgraphics(f, fname_pdf ...
                         , 'ContentType', 'vector' ...

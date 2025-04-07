@@ -9,8 +9,8 @@ function plot_example_timeseries_one_cohort_one_cond(DATA, data_type, strain, se
     
 figure
 
-data = DATA.(strain).(sex); 
-n_exp = length(data);
+data = DATA.(strain).(sex).F; 
+% n_exp = length(data);
 
 col = 'k';
    
