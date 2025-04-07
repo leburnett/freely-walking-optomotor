@@ -5,8 +5,8 @@ function process_freely_walking_data(date_to_analyse)
    
     %% If data recorded after 24/09/2024 - - - new logging / saving system that saves in subfolders. 
 
-    PROJECT_ROOT = '\Users\burnettl\Documents\oakey-cokey\'; %% Update for your computer. 
-    data_path = fullfile(PROJECT_ROOT, 'DATA\01_tracked');
+    PROJECT_ROOT = '/Users/burnettl/Documents/Projects/oaky_cokey'; %% Update for your computer. 
+    data_path = fullfile(PROJECT_ROOT, 'data');
     results_path = fullfile(PROJECT_ROOT, 'results');
 
     date_folder = fullfile(data_path, date_to_analyse);

@@ -134,7 +134,7 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
         % 2 - features - with individual traces per fly across entire
         % experiment.
         f_feat = plot_all_features_filt(LOG, comb_data, protocol, save_str);
-        f_acclim = plot_all_features_acclim(LOG, comb_data, title_str);
+        f_acclim = plot_all_features_acclim(LOG, comb_data, save_str);
 
         feat_save_folder = fullfile(PROJECT_ROOT, 'figures/overview_figs/feat_overview');
         % feat_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/feat_overview';
