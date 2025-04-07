@@ -43,12 +43,12 @@ all_conditions = [
     24, 47, 127, 1, 15, t_interval, 4; % 2:14 OFF bars - 4Hz
     51, 47, 127, 1, 15, t_interval, 5; % ON curtains - 8Hz - 32 px
     52, 47, 127, 1, 15, t_interval, 6; % OFF curtains - 8Hz - 32 px
-    32, 47, 16, 1, 15, t_interval, 7;  % Reverse Phi - 4px step - 4Hz
-    32, 47, 32, 1, 15, t_interval, 8;  % Reverse Phi - 4px step - 8Hz
+    60, 47, 32, 1, 15, t_interval, 7;  % Reverse Phi - 16px bar - 8px step
+    60, 47, 64, 1, 15, t_interval, 8;  % Reverse Phi - 16px bar - 8px step
     10, 47, 8, 1, 15, t_interval, 9;  % Flicker - 4Hz
     10, 47, 0, 1, 15, t_interval, 10; % static grating - 60deg
     21, 47, 127, 1, 15, t_interval, 11; % shifted centre of rotation - 60deg - 0.8
-    57, 47, 1, 1, 60, t_interval, 12; % bar fixation - 32px ON - single bar
+    57, 47, 1, 1, 45, t_interval, 12; % bar fixation - 32px ON - single bar
 ];  
 
 num_conditions = height(all_conditions); 

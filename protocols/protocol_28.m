@@ -16,9 +16,9 @@ vidobj.disconnect();
 d = initialize_temp_recording();
 
 % Protocol parameters: 
-t_acclim_start = 15; % 5 minutes of recording in darkness 
+t_acclim_start = 30; % 5 minutes of recording in darkness 
 t_flash = 5;
-t_acclim_end = 15; 
+t_acclim_end = 30; 
 t_interval = 15;
 t_pause = 0.01;
 
@@ -37,7 +37,7 @@ all_conditions = [
     32, 47, 32, 1, 15, t_interval, 1;  
     58, 47, 32, 1, 15, t_interval, 2;
     59, 47, 32, 1, 15, t_interval, 3;
-    60, 47, 32, 1, 15, t_interval, 4;
+    60, 47, 32, 1, 15, t_interval, 4;%%% this was the best. 
     61, 47, 32, 1, 15, t_interval, 5;
     % 62, 47, 32, 1, 15, t_interval, 6;
 ];
