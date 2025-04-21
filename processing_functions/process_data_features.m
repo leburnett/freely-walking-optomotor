@@ -154,6 +154,7 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
                 mkdir(fig_save_folder);
             end
             % fig_save_folder = strcat('/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/', data_type);
+            strain = check_strain_typos(strain);
             f_cond = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_sem);
             fname = fullfile(fig_save_folder, strcat(save_str, '_', data_type, '.pdf'));
             exportgraphics(f_cond ...
