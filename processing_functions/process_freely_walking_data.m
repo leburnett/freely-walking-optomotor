@@ -51,5 +51,7 @@ function process_freely_walking_data(date_to_analyse)
 
             end
         end 
-    end 
+    end
+    
+    disp(strcat("Finished processing ", date_to_analyse))
 end 

@@ -122,6 +122,7 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
         f_overview = make_overview(comb_data, strain, sex, protocol);
 
         hist_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/loco_histograms';
+        hist_save_folder = strrep(hist_save_folder, '/', '\'); % windows
         if ~isfolder(hist_save_folder)
             mkdir(hist_save_folder);
         end
@@ -130,6 +131,7 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
         % 2 - features - with individual traces per fly across entire
         % experiment.
         f_feat = plot_all_features_filt(LOG, comb_data, protocol, save_str);
+        f_acclim = plot_all_features_acclim(LOG, comb_data, save_str);
 
         feat_save_folder = fullfile(PROJECT_ROOT, 'figures\overview_figs\feat_overview');
         % feat_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/feat_overview';
@@ -137,6 +139,7 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
             mkdir(feat_save_folder);
         end
         saveas(f_feat, fullfile(feat_save_folder, strcat(save_str, '_feat.png')), 'png')
+        saveas(f_acclim, fullfile(feat_save_folder, strcat(save_str, '_feat_acclim.png')), 'png')
 
         % 3 - Make plot with data per condition for only the one cohort
         DATA = comb_data_one_cohort_cond(LOG, comb_data, protocol);

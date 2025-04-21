@@ -151,8 +151,8 @@ function f = plot_all_features_acclim(LOG, comb_data, title_str)
 
     % Boxplot & scatter - one datapoint per fly.
     mean_per_fly = nanmean(dist_data, 2);
-    max_y_per_fly = max(mean_per_fly)*1.1;
-    min_y_per_fly = min(mean_per_fly)*1.1;
+    max_y_per_fly = max(mean_per_fly);
+    min_y_per_fly = min(mean_per_fly);
 
     subplot(5, 5, 20)
     boxchart(mean_per_fly)
@@ -206,6 +206,6 @@ function f = plot_all_features_acclim(LOG, comb_data, title_str)
     title_str = strrep(title_str, '_', '-');
     sgtitle(strcat(title_str, ' - N=', string(n_flies)))
     f = gcf; 
-    f.Position = [487    76   568   971]; 
+    f.Position = [1661 87 764 1177]; 
 
 end 
