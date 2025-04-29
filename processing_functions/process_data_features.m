@@ -116,7 +116,11 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
         end
 
         %% Generate quick overview plots:
+        n_flies_in_arena = length(trx);
         [comb_data, feat, trx] = combine_data_one_cohort(feat, trx);
+        n_flies_tracked = length(trx);
+        n_flies_removed = n_flies_in_arena - n_flies_tracked;
+        n_fly_data = [n_flies_in_arena, n_flies_tracked, n_flies_removed];
 
         % 1 - histograms of locomotor parameters
         f_overview = make_overview(comb_data, strain, sex, protocol);
@@ -175,6 +179,7 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
             , 'feat' ...
             , 'trx' ...
             , 'comb_data' ...
+            , 'n_fly_data'...
             );
     end
 
