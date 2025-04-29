@@ -7,6 +7,7 @@ function process_freely_walking_data(date_to_analyse)
 
     PROJECT_ROOT = '\Users\burnettl\Documents\oakey-cokey\'; %% Update for your computer. 
     data_path = fullfile(PROJECT_ROOT, 'DATA\01_tracked');
+    % data_path = fullfile(PROJECT_ROOT, 'DATA\02_processed');
     results_path = fullfile(PROJECT_ROOT, 'results');
 
     date_folder = fullfile(data_path, date_to_analyse);

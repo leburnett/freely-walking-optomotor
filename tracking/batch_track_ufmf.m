@@ -1,4 +1,4 @@
-% Batch process with simle_noninteractive_flytracker.m
+% Batch process with simple_noninteractive_flytracker.m
 % 01/10/24
 % Burnett
 function tracking_log = batch_track_ufmf(date_folder)

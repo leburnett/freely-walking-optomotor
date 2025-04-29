@@ -128,7 +128,7 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
         disp(fname)
         f_folder = filelist(idx).folder; 
     
-        % Load 'combined_data', 'LOG', 'feat' and 'trx'
+        % Load 'combined_data', 'LOG', 'feat', 'trx' and 'n_fly_data'
         load(fullfile(f_folder, fname));
 
         if protocol == "protocol_24" || protocol == "protocol_27"
@@ -157,7 +157,9 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
 
         %% Start filling in the struct.
         DATA.(strain).(sex)(sz).meta = LOG.meta;
-        DATA.(strain).(sex)(sz).meta.n_flies = length(trx);
+        DATA.(strain).(sex)(sz).meta.n_flies_arena = n_fly_data(1);
+        DATA.(strain).(sex)(sz).meta.n_flies = n_fly_data(2);
+        DATA.(strain).(sex)(sz).meta.n_flies_rm = n_fly_data(3);
     
         %% Add data from acclim_off1
         Log = LOG.acclim_off1;
