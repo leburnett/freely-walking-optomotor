@@ -5,7 +5,7 @@ REM Path to Python interpreter
 set PYTHON_EXE=C:\Users\burnettl\AppData\Local\Programs\Python\Python313\python.exe
 
 REM Path to your Python script
-set SCRIPT_PATH=C:\Users\burnettl\Documents\GitHub\daily_processing\daily_processing.py
+set SCRIPT_PATH=C:\Users\burnettl\Documents\GitHub\freely-walking-optomotor\daily_processing\daily_processing.py
 
 REM Set today's date for filename (YYYY-MM-DD format)
 for /f %%a in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd"') do set DATE=%%a
