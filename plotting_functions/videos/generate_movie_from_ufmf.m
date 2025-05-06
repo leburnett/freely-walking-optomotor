@@ -21,6 +21,13 @@ else
     load(log_files(1).name, 'LOG');
 end 
 
+trx_files = dir('**/trx.mat');
+if isempty(trx_files)
+    disp('No trx file found in this folder.')
+else
+    load(fullfile(trx_files(1).folder, trx_files(1).name), 'trx');
+end
+
 pr = LOG.meta.func_name;
 if contains(pr, "10")
     cond_idxs = [2, 3];
@@ -31,6 +38,10 @@ elseif contains(pr, "27")
 end 
 
 [readframe,~,fid,~] = get_readframe_fcn(filename);
+
+cmap = hsv(15);
+% cmap = muted_rainbow(15);
+tail_length = 90;
     
 %% Find within 'LOG' when condition 1 was:
 % Run through the fields starting with 'log_' and check which has the field
@@ -76,7 +87,7 @@ for condition_n = cond_idxs
         frame_rng = start_f:fr_int:stop_f;
         
         %% Open emty avi file. 
-        aviname = strcat(filename(1:end-5), '_condition', string(condition_n), '_rep', string(rep), '.avi');
+        aviname = strcat(filename(1:end-5), '_condition', string(condition_n), '_rep', string(rep), '_tracks.avi');
         fps = 30;
         
         aviobj = VideoWriter(aviname);
@@ -135,11 +146,32 @@ for condition_n = cond_idxs
                 % Insert into image
                 im(y1:y2, x1:x2) = grating_crop;
             end
+
+            % PLOT TAIL
+            rng = f-tail_length:1:f;
+            n_flies = length(trx);
+
+            im2 = cat(3, im, im, im);
+            imshow(im2);
+            hold on
+    
+            for fly = 1:n_flies
         
-            fr = im;
+                x = trx(fly).x;
+                y = trx(fly).y;
+                col = cmap(fly, :);
+              
+                if length(x) ~= length(y)
+                    error('x and y must be the same length');
+                end
+            
+                plot(x(rng), y(rng), '-', 'Color', col, 'LineWidth', 1); % Plot trajectory   
+            end 
+            hold off
             drawnow;
-        
-            writeVideo(aviobj,fr);
+            
+            frame = getframe(gcf);  % capture frame from axes
+            writeVideo(aviobj, frame);
         end
         
         close(aviobj);
