@@ -225,8 +225,11 @@ for grpId = 1:n_groups
 
             if data_type == "dist_data"
                 rng = [20 120];
-            elseif data_type == "dist_data_delta"
-                rng = [-40 20];
+                if delta 
+                    rng = [-40 20];
+                end 
+            elseif data_type == "fv_data"
+                rng = [0 20];
             else
                 rng = [];
                 maxx_y = max(max_y_vals(idx2, :));
@@ -247,9 +250,9 @@ for grpId = 1:n_groups
             plot([fl/dwn_factor fl/dwn_factor], rng, 'k', 'LineWidth', 0.5)
             plot([300/dwn_factor 300/dwn_factor], rng, 'k', 'LineWidth', 0.5) % beginning of stim
             plot([750/dwn_factor 740/dwn_factor], rng, 'Color', [0.6 0.6 0.6], 'LineWidth', 0.3) % change of direction   
-            if data_type == "dist_data"
+            if data_type == "dist_data" && delta == 0
                 plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
-            elseif data_type == "av_data"
+            elseif data_type == "av_data" || delta == 1
                 plot([0 nf_comb], [0 0], 'k:', 'LineWidth', 0.5)
             end 
         end 
@@ -262,10 +265,10 @@ for grpId = 1:n_groups
         title(p, 'FontSize', 9)
 
         % where to position text annotation
-        xpos = nf_comb-(450/dwn_factor);
-        rng_pos = [min_y_vals(idx2, grpId), max_y_vals(idx2, grpId)];
-        pos_data = get_pos_data_nflies(xpos, rng_pos, data_type, delta, gp, gps2plot);
-        text(pos_data(1), pos_data(2), strcat("N = ", num2str(n_flies_in_cond)), 'Color', col);
+        % xpos = nf_comb-(450/dwn_factor);
+        % rng_pos = [min_y_vals(idx2, grpId), max_y_vals(idx2, grpId)];
+        % pos_data = get_pos_data_nflies(xpos, rng_pos, data_type, delta, gp, gps2plot);
+        % text(pos_data(1), pos_data(2), strcat("N = ", num2str(n_flies_in_cond)), 'Color', col);
 
         %% Add Errorbar tuning curve plot
          subplot(ceil(n_cond/2), 6, 3*idx2)
@@ -329,9 +332,9 @@ for grpId = 1:n_groups
 
         plot([0.875+jt3, 1.875+jt1, 2.875+jt4, 3.875+jt2], [mean_pre, mean_stim1, mean_stim2, mean_flicker], '-', 'LineWidth', 1.2, 'Color', col)
             
-        if data_type == "dist_data"
+        if data_type == "dist_data" && delta == 0
             plot([0 nf_comb], [60 60], 'k:', 'LineWidth', 0.5)
-        elseif data_type == "av_data" || data_type == "curv_data"
+        elseif data_type == "av_data" || data_type == "curv_data" || delta ==1
             plot([0 nf_comb], [0 0], 'k:', 'LineWidth', 0.5)
         end 
 
