@@ -1,4 +1,8 @@
-function plot_example_timeseries_one_cohort_one_cond(DATA, data_type, strain, sex, cond_n, cohort_n, save_fig)
+function plot_example_timeseries_one_cohort_one_cond(DATA, data_type, strain, sex, cond_n, cohort_n, new_fig, save_fig)
+% This function can be used to plot a time series plot of the data of
+% "data_type" for a single cohort (experimental vial, run of the protocol)
+% for a single condition. Currently, this does not include the
+% acclimatisation periods. 
 
 % cond 3 = 60 deg - 4Hz
 % cond 2 = 60 deg - 8 Hz
@@ -6,11 +10,8 @@ function plot_example_timeseries_one_cohort_one_cond(DATA, data_type, strain, se
 % cond 6 = 30 deg - 8Hz
 % cond 11 = 15 deg - 4Hz
 % cond 10 = 15 deg - 8Hz
-    
-figure
 
-data = DATA.(strain).(sex).F; 
-% n_exp = length(data);
+data = DATA.(strain).(sex); 
 
 col = 'k';
    
@@ -107,7 +108,10 @@ end
 
 % % % % % % % Plot the data 
 
-figure
+if new_fig
+    figure
+end 
+
 y1 = mean_data_dwn+sem_data_dwn;
 y2 = mean_data_dwn-sem_data_dwn;
 nf_comb = size(mean_data_dwn, 2);
@@ -119,6 +123,29 @@ hold on
 plot(x, y2, 'w', 'LineWidth', 1)
 patch([x fliplr(x)], [y1 fliplr(y2)], 'k', 'FaceAlpha', 0.1, 'EdgeColor', 'none')
 plot(mean_data_dwn, 'Color', col, 'LineWidth', lw);
+
+if data_type == "dist_data"
+    rng = [20 120];
+    if delta 
+        rng = [-40 20];
+    end 
+elseif data_type == "fv_data"
+    rng = [0 20];
+else
+    rng = [];
+    maxx_y = max(max_y_vals(idx2, :));
+    if maxx_y < 0
+        rng(2) = maxx_y*1.1;
+    elseif maxx_y >=0 
+        rng(2) = maxx_y*0.9;
+    end
+    minn_y = min(min_y_vals(idx2, :));
+    if minn_y < 0
+        rng(1) = minn_y*1.1;
+    elseif minn_y >=0 
+        rng(1) = minn_y*0.9;
+    end 
+end 
 
 plot([(fl/step_size)-5 (fl/step_size)-5], rng, 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5)
 plot([(300/step_size)-2.5 (300/step_size)-2.5], rng, 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5) % beginning of stim
@@ -141,12 +168,43 @@ ax.TickLength = [0.015 0.015];
 ax.LineWidth = 1; 
 ax.FontSize = 16;
 
+switch data_type
+    case "dist_data"
+        if d_fv == 1
+            ylb = 'Distance from centre / fv-data - delta (s)';
+        elseif delta == 1
+            ylb = 'Distance from centre - delta (mm)';
+        else
+            ylb = 'Distance from centre (mm)';
+        end
 
-% ylabel("Turning rate (deg mm^-^1)")
+    case "dist_trav"
+        ylb = 'Distance travelled (mm)';
+
+    case "av_data"
+        ylb = "Angular velocity (deg s-1)";
+
+    case "heading_data"
+        ylb = "Heading (deg)";
+
+    case "vel_data"
+        ylb = "Velocity (mm s-1)";
+
+    case "fv_data"
+        ylb = "Forward velocity (mm s-1)";
+
+    case "curv_data"
+        ylb = "Turning rate (deg mm-1)";
+
+    case "IFD_data"
+        ylb = "Distance to nearest fly (mm)";
+
+    otherwise
+        error("Unknown data_type: %s", data_type);
+end
+
 f = gcf;
-% f.Position = [620   701   550   266];
-ylabel("Angular velocity (deg s^-^1)")
-% ylabel("Distance to center (mm)")
+ylabel(ylb)
 f.Position = [314 714  1083  252];
 
 if save_fig 
