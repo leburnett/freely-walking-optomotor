@@ -14,10 +14,14 @@ logging.basicConfig(
 
 # Paths
 GROUP_DRIVE_PATH = r"\\prfs.hhmi.org\reiserlab\oaky-cokey\data\0_unprocessed"
-TRACKED_PATH = r"\\prfs.hhmi.org\reiserlab\oaky-cokey\data\1_tracked"
-PROCESSED_PATH = r"\\prfs.hhmi.org\reiserlab\oaky-cokey\data\2_processed"
-MATLAB_FUNCTION = "batch_track_ufmf"
 LOCAL_PATH = r"C:\Users\burnettl\Documents\oakey-cokey\DATA\00_unprocessed"
+
+TRACKED_PATH = r"\\prfs.hhmi.org\reiserlab\oaky-cokey\data\1_tracked"
+TRACKED_LOCAL_PATH = r"C:\Users\burnettl\Documents\oakey-cokey\DATA\01_tracked"
+PROCESSED_PATH = r"\\prfs.hhmi.org\reiserlab\oaky-cokey\data\2_processed"
+
+MATLAB_FUNCTION = "batch_track_ufmf"
+
 
 # Config
 REQUIRED_EXTENSIONS = {".mat", ".ufmf"}
@@ -79,7 +83,8 @@ def tracking_successful(folder_path):
 def move_to_tracked(local_folder):
     rel_path = os.path.relpath(local_folder, LOCAL_PATH)
     final_dest = os.path.join(TRACKED_PATH, rel_path)
-    local_archive_dest = os.path.join(r"C:\Users\burnettl\Documents\oakey-cokey\DATA\01_tracked", rel_path)
+    local_archive_dest = os.path.join(TRACKED_LOCAL_PATH, rel_path)
+    group_unprocessed_folder = os.path.join(GROUP_DRIVE_PATH, rel_path)
 
     # Step 1: Copy to local archive
     try:
@@ -94,7 +99,7 @@ def move_to_tracked(local_folder):
         os.makedirs(os.path.dirname(final_dest), exist_ok=True)
         shutil.move(local_folder, final_dest)
         logging.info(f"Moved to tracked: {final_dest}")
-        
+
         # Step 3: Clean up empty intermediate folders in LOCAL_PATH
         cleanup_path = os.path.dirname(local_folder)
         while cleanup_path != LOCAL_PATH and os.path.isdir(cleanup_path):
@@ -103,10 +108,17 @@ def move_to_tracked(local_folder):
                 logging.info(f"Removed empty folder: {cleanup_path}")
                 cleanup_path = os.path.dirname(cleanup_path)
             except OSError:
-                # Directory not empty
                 break
     except Exception as e:
         logging.error(f"Failed to move to tracked: {e}")
+
+    # Step 4: Delete original folder from group drive
+    try:
+        if os.path.exists(group_unprocessed_folder):
+            shutil.rmtree(group_unprocessed_folder)
+            logging.info(f"Deleted original untracked folder: {group_unprocessed_folder}")
+    except Exception as e:
+        logging.error(f"Failed to delete group drive folder: {group_unprocessed_folder}: {e}")
 
 def process_all_untracked_folders():
     logging.info("Scanning for untracked folders...")
@@ -125,13 +137,17 @@ def process_all_untracked_folders():
 
 if __name__ == "__main__":
     logging.info("Starting automated tracker with timer loop...")
+    scan_count = 0
     try:
-        while True:
+        while scan_count < 10:
             process_all_untracked_folders()
-            logging.info(f"Sleeping for {SCAN_INTERVAL} seconds...")
+            scan_count += 1
+            logging.info(f"Sleeping for {SCAN_INTERVAL} seconds... (Scan {scan_count}/10)")
             time.sleep(SCAN_INTERVAL)
+        logging.info("Reached maximum scan limit. Exiting.")
     except KeyboardInterrupt:
         logging.info("Script interrupted by user. Exiting.")
+
 
 
 #################################################################################################
