@@ -1,9 +1,11 @@
-function generate_movie_from_ufmf()
+function generate_movie_from_ufmf(add_tracks)
 %% Generate movie from ufmf file. 
 % Works within the folder that it is called. 
 
 % Requires JAABA code from kristenBranson. 
 % 'get_readframe_fcn' is from this repo. 
+
+% WITHOUT TRACKS. 
 
 % Get video file name.  
 video_files = dir('*.ufmf');
@@ -38,10 +40,6 @@ elseif contains(pr, "27")
 end 
 
 [readframe,~,fid,~] = get_readframe_fcn(filename);
-
-cmap = hsv(15);
-% cmap = muted_rainbow(15);
-tail_length = 90;
     
 %% Find within 'LOG' when condition 1 was:
 % Run through the fields starting with 'log_' and check which has the field
@@ -148,29 +146,35 @@ for condition_n = cond_idxs
                 % Insert into image
                 im(y1:y2, x1:x2) = grating_crop;
             end
-
-            % PLOT TAIL
-            rng = f-tail_length:1:f;
-            n_flies = length(trx);
-
+      
             im2 = cat(3, im, im, im);
             imshow(im2);
-            hold on
-    
-            for fly = 1:n_flies
-        
-                x = trx(fly).x;
-                y = trx(fly).y;
-                col = cmap(fly, :);
-              
-                if length(x) ~= length(y)
-                    error('x and y must be the same length');
-                end
-            
-                plot(x(rng), y(rng), '-', 'Color', col, 'LineWidth', 1); % Plot trajectory   
+
+            if add_tracks
+
+                cmap = hsv(15);
+                tail_length = 90;
+
+                % PLOT TAIL
+                rng = f-tail_length:1:f;
+                n_flies = length(trx);
+                hold on
+
+                for fly = 1:n_flies
+
+                    x = trx(fly).x;
+                    y = trx(fly).y;
+                    col = cmap(fly, :);
+
+                    if length(x) ~= length(y)
+                        error('x and y must be the same length');
+                    end
+
+                    plot(x(rng), y(rng), '-', 'Color', col, 'LineWidth', 1); % Plot trajectory   
+                end 
+                hold off
+                drawnow;
             end 
-            hold off
-            drawnow;
             
             frame = getframe(gcf);  % capture frame from axes
             writeVideo(aviobj, frame);
