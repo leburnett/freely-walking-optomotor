@@ -34,7 +34,7 @@ if contains(pr, "10")
 elseif contains(pr, "19")
     cond_idxs = [2, 7]; %[1,2];
 elseif contains(pr, "27")
-    cond_idxs = [3, 4]; %[1,2];
+    cond_idxs = [4,11]; %[1,2];
 end 
 
 [readframe,~,fid,~] = get_readframe_fcn(filename);
@@ -48,6 +48,8 @@ tail_length = 90;
 % 'which_condition' == 1. 
 
 for condition_n = cond_idxs
+
+    disp(strcat("Video for condition ", string(condition_n)))
     fields = fieldnames(LOG);
     log_fields = fields(startsWith(fields, 'log_'));
     
