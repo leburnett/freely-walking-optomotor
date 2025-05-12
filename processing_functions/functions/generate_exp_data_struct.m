@@ -1,4 +1,4 @@
-function generate_exp_data_struct(DATA)
+function exp_data = generate_exp_data_struct(DATA)
     
     exp_data = struct();
     
