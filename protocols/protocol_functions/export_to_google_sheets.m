@@ -2,7 +2,7 @@ function export_to_google_sheets(params)
     % Google Form Response URL (Make sure it ends with /formResponse)
     googleFormURL = 'https://docs.google.com/forms/d/e/1FAIpQLSf_0TxSucXgELS500JUtflsUPLQ8AvML_yo5QP1wIaVlfy7JQ/formResponse';
     % Use weboptions to set character encoding
-    options = weboptions('MediaType', 'application/x-www-form-urlencoded');
+    options = weboptions('MediaType', 'application/x-www-form-urlencoded', 'Timeout', 30);
     % Submit data using name-value pairs instead of struct
     webwrite(googleFormURL, ...
         'entry.975081033', params.Date, ...
