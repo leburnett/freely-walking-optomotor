@@ -70,6 +70,7 @@ else
     LOG.meta.fly_sex = params.Sex;
     LOG.meta.light_cycle = params.LightCycle;
     LOG.meta.experimenter = params.Experimenter;
+    LOG.meta.nflies = params.nFlies;
 end 
 
 % Export meta data to Google Form:
