@@ -26,7 +26,7 @@ class VideoFolderHandler(FileSystemEventHandler):
     def on_created(self, event):
         if event.is_directory:
             pending_folders.add(event.src_path)
-            logging.info(f"New folder detected: {event.src_path}")
+            # logging.info(f"New folder detected: {event.src_path}")
 
     def check_pending_folders(self):
         """Checks if pending folders now contain all required files and copies them."""
