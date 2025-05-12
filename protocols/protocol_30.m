@@ -21,7 +21,7 @@ d = initialize_temp_recording();
 t_acclim_start = 300; % 5 minutes of recording in darkness 
 t_flash = 5;
 t_acclim_end = 30; 
-t_interval = 20;
+t_interval = 20; 
 t_pause = 0.01;
 
 % [pattern_id, interval_id, speed_patt, speed_int, trial_dur, int_dur, condition_n]
