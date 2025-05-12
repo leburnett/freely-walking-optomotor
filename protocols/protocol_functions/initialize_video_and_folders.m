@@ -61,6 +61,7 @@ if func_name == "protocol_v5"
     LOG.fly_sex = params.Sex;
     LOG.light_cycle = params.LightCycle;
     LOG.experimenter = params.Experimenter;
+    LOG.n_flies = params.nFlies;
 else
     LOG.meta.date = date_str;
     LOG.meta.time = time_str;
@@ -70,7 +71,7 @@ else
     LOG.meta.fly_sex = params.Sex;
     LOG.meta.light_cycle = params.LightCycle;
     LOG.meta.experimenter = params.Experimenter;
-    LOG.meta.nflies = params.nFlies;
+    LOG.meta.n_flies = params.nFlies;
 end 
 
 % Export meta data to Google Form:

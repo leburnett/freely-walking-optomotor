@@ -84,7 +84,7 @@ Log.dir(idx_value) = dir_val;
 
 Panel_com('send_gain_bias', [interval_speed 0 0 0]); 
 pause(t_pause);
-Panel_com('set_position', [1 which_condition]);
+Panel_com('set_position', [1 1]);
 pause(t_pause);
 Panel_com('start'); 
 pause(t_pause);
