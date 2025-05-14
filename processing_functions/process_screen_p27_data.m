@@ -1,4 +1,4 @@
-function process_screen_p27_data(ROOT_DIR)
+function DATA = process_screen_p27_data(ROOT_DIR)
 
     % ROOT_DIR = '\Users\burnettl\Documents\oakey-cokey\';
     % Move to the directory to where the results per experiment are saved:

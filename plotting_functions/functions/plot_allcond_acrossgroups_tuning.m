@@ -282,10 +282,10 @@ for grpId = 1:n_groups
             buffer_t = 1;
         end 
 
-         if data_type == "av_data" || data_type == "curv_data"
-            mean_data = abs(mean_data);
-            sem_data = abs(sem_data);
-        end 
+        %  if data_type == "av_data" || data_type == "curv_data"
+        %     mean_data = abs(mean_data);
+        %     sem_data = abs(sem_data);
+        % end 
 
         mean_pre = nanmean(mean_data(1:300));
         sem_pre = mean(sem_data(1:300));
@@ -343,9 +343,9 @@ for grpId = 1:n_groups
 
         xlim([0.5 4.5])
         box off
-        if data_type == "av_data" ||  data_type == "curv_data" 
-            rng(1) = -5;
-        end 
+        % if data_type == "av_data" ||  data_type == "curv_data" 
+        %     rng(1) = -5;
+        % end 
 
         if gp == gps2plot(end)
             ylim(rng)

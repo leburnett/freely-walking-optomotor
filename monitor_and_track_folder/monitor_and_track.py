@@ -105,7 +105,7 @@ def move_to_tracked(local_folder):
         while cleanup_path != LOCAL_PATH and os.path.isdir(cleanup_path):
             try:
                 os.rmdir(cleanup_path)
-                logging.info(f"Removed empty folder: {cleanup_path}")
+                # logging.info(f"Removed empty folder: {cleanup_path}")
                 cleanup_path = os.path.dirname(cleanup_path)
             except OSError:
                 break
@@ -117,8 +117,21 @@ def move_to_tracked(local_folder):
         if os.path.exists(group_unprocessed_folder):
             shutil.rmtree(group_unprocessed_folder)
             logging.info(f"Deleted original untracked folder: {group_unprocessed_folder}")
+
+            # Step 5: Delete empty parent directories up to GROUP_DRIVE_PATH
+            cleanup_path = os.path.dirname(group_unprocessed_folder)
+            while cleanup_path != GROUP_DRIVE_PATH and os.path.isdir(cleanup_path):
+                try:
+                    os.rmdir(cleanup_path)
+                    logging.info(f"Removed empty parent folder: {cleanup_path}")
+                    cleanup_path = os.path.dirname(cleanup_path)
+                except OSError:
+                    # Stop if directory is not empty
+                    break
+
     except Exception as e:
         logging.error(f"Failed to delete group drive folder: {group_unprocessed_folder}: {e}")
+
 
 def process_all_untracked_folders():
     logging.info("Scanning for untracked folders...")

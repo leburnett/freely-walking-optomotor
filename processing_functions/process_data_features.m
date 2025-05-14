@@ -121,16 +121,18 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
         n_flies_tracked = length(trx);
         n_flies_removed = n_flies_in_arena - n_flies_tracked;
         n_fly_data = [n_flies_in_arena, n_flies_tracked, n_flies_removed];
+        
+        if n_flies_in_arena>1
+            % 1 - histograms of locomotor parameters
+            f_overview = make_overview(comb_data, strain, sex, protocol);
 
-        % 1 - histograms of locomotor parameters
-        f_overview = make_overview(comb_data, strain, sex, protocol);
-
-        hist_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/loco_histograms';
-        hist_save_folder = strrep(hist_save_folder, '/', '\'); % windows
-        if ~isfolder(hist_save_folder)
-            mkdir(hist_save_folder);
+            hist_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/loco_histograms';
+            hist_save_folder = strrep(hist_save_folder, '/', '\'); % windows
+            if ~isfolder(hist_save_folder)
+                mkdir(hist_save_folder);
+            end
+            saveas(f_overview, fullfile(hist_save_folder, strcat(save_str, '_hist.png')), 'png')
         end
-        saveas(f_overview, fullfile(hist_save_folder, strcat(save_str, '_hist.png')), 'png')
 
         % 2 - features - with individual traces per fly across entire
         % experiment.

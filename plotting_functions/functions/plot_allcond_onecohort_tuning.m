@@ -69,6 +69,7 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
                 cond_datafields = fieldnames(rep1_data);  % Get all field names
                 values = struct2cell(rep1_data); % Convert struct to cell array
                 cond_meta = cell2struct(values(1:6), cond_datafields(1:6), 1);
+                cond_meta.condition_id = idx2;
 
                 % Extract the relevant data
                 rep1_data = rep1_data.(data_type);

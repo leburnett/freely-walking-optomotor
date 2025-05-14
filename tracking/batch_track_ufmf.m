@@ -6,7 +6,14 @@ function tracking_log = batch_track_ufmf(date_folder)
     % date_folder = 'C:\Users\burnettl\Documents\oakey-cokey\DATA\00_unprocessed\1111_11_11\protocol_25\jfrc100_es_shibire_kir\F\15_44_35';
     
     cd(date_folder)
-    folder_parts = strsplit(date_folder, '\');
+    % folder_parts = strsplit(date_folder, '\'); % \ if running manually in matlab, / if running automatically through python
+   
+    if contains(date_folder, '/') % Python
+        folder_parts = strsplit(date_folder, '/');
+    elseif contains(date_folder, '\') % MATLAB
+        folder_parts = strsplit(date_folder, '\');
+    end 
+    
     % disp(folder_parts);
     % disp(length(folder_parts));
     date_str = folder_parts{end-4};
@@ -21,18 +28,47 @@ function tracking_log = batch_track_ufmf(date_folder)
     options.max_minutes  = Inf;
     options.save_JAABA   = 1;
     options.save_seg     = 0;
+    options.force_calib  = 1;
+    options.do_recompute_tracking = 1;
     
     % Set path to calibration file.
-    input_calibration_file_name = 'C:\Users\burnettl\Documents\GitHub\freely-walking-optomotor\tracking\calibration.mat';
+    % input_calibration_file_name = 'C:\Users\burnettl\Documents\GitHub\freely-walking-optomotor\tracking\calibration.mat';
+    if ~exist('base_calib', 'var')
+        base_calib = load("C:\Users\burnettl\Documents\GitHub\freely-walking-optomotor\tracking\calibration.mat");
+    end
 
     video_names = cell(n_videos, 1);
     t2track = zeros(n_videos, 1);
 
     for f=1:n_videos
     
-        % output_folder_name  = ufmf_files(f).folder;
+        cd(ufmf_files(f).folder);
+
+        % Load the LOG file to get the number of flies in the experiment.
+        log_files= dir('LOG*');
+        if isempty(log_files)
+            disp("No LOG file found in this folder.")
+        else
+            load(log_files(1).name, 'LOG')
+        end
+
         output_folder_name = fullfile(ufmf_files(f).folder, ufmf_files(f).name(1:end-5));
         input_video_file_name = fullfile(ufmf_files(f).folder, ufmf_files(f).name);
+
+        % set number of flies from LOG
+        calib = base_calib.calib;
+        % Update 'n_flies' in the calibration file for tracking.
+        calib.n_flies = str2double(LOG.meta.n_flies);
+        disp(strcat("Number of flies in calibration file: ", string(calib.n_flies)))
+
+        input_calibration_file_name = fullfile(ufmf_files(f).folder, 'calibration.mat');
+        
+        % save as calibration.mat
+        save(input_calibration_file_name, 'calib')
+
+        if ~isfile(input_calibration_file_name)
+            disp("Calibration file for the video does not exist. Please make the 'calibration.mat' file for this video.")
+        end 
     
         tic
         simple_noninteractive_flytracker( ...
