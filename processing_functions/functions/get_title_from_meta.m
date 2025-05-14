@@ -148,6 +148,10 @@ function title_str = get_title_from_meta(cond_meta)
         case 61
             pattern_str = "rev-phi-16pxbar-8pxstep-0-2-7";
 
+        case 63 
+            pattern_str = "15deg-grating";
+            optomotor_speed = optomotor_speed*2; % double as fast because pattern moves 2 pixels every frame not 1. 
+
 
     end    
 
