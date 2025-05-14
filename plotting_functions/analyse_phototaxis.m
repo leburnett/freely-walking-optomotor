@@ -320,7 +320,7 @@ for flyID = 1:15
     end 
     
     
-    %% Generate a plot of the dsitributions:
+    %% Generate a plot of the distributions:
     
     figure;
     
