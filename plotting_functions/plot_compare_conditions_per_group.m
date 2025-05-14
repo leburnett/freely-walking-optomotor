@@ -1,6 +1,6 @@
 % Generate plots for protocol_10-type protocols: 
 
-protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_27';
+protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_30';
 cd(protocol_dir);
 
 if contains(protocol_dir, '/') % Mac
