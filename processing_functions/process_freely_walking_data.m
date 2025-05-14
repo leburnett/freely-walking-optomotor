@@ -16,7 +16,7 @@ function process_freely_walking_data(date_to_analyse)
     protocol_folders = dir('*rotocol_*');
     n_protocols = height(protocol_folders);
     
-    for proto_idx = n_protocols
+    for proto_idx = 1:n_protocols
     
         protocol_to_analyse = protocol_folders(proto_idx).name;
         cd(fullfile(protocol_folders(proto_idx).folder, protocol_folders(proto_idx).name))
