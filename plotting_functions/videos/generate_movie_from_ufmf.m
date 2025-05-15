@@ -37,6 +37,8 @@ elseif contains(pr, "19")
     cond_idxs = [2, 7]; %[1,2];
 elseif contains(pr, "27")
     cond_idxs = [4,11]; %[1,2];
+elseif contains(pr, "31")
+    cond_idxs = [1,2,3,4,6,7,8,9]; 
 end 
 
 [readframe,~,fid,~] = get_readframe_fcn(filename);
