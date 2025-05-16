@@ -10,11 +10,11 @@ function make_spatial_prob_heatmap(DATA, strain, exp, condition)
 % around the flies in different time bins over the course of the stimulus. 
 
 % strain = "jfrc100_es_shibire_kir";
-% sex = "F";
+sex = "F";
 
 % Fixed parameters
 im_size = 250;
-bin_size = 18;
+bin_size = 22;
 num_bins = ceil(im_size / bin_size);
 
 %% Check if "acclim" or "condition"
@@ -46,11 +46,15 @@ for subpl = 1:3
         rng = 1:300;
         sub_tit = "OFF";
     elseif subpl ==2 
-        rng = 301:1200;
+        rng = 1050:1200;
         sub_tit = "GRATINGS";
+        % rng = 301:750; %1650;
+        % sub_tit = "BAR";
     elseif subpl == 3
         rng = 1201:1800;
         sub_tit = "OFF";
+        % rng = 1650:2250;
+        % sub_tit = "OFF";
     end 
 
     for i = 1:n_files
@@ -127,6 +131,14 @@ for subpl = 1:3
                         % Calculate the bin index for the x and y position
                         x_bin = abs(floor(x(f) / bin_size)) + 1;
                         y_bin = abs(floor(y(f) / bin_size)) + 1;
+
+                        if x_bin > num_bins
+                            x_bin = num_bins;
+                        end
+
+                        if y_bin > num_bins
+                            y_bin = num_bins;
+                        end
         
                         if ~isnan(x_bin) && ~isnan(y_bin)
                             pos_data(x_bin, y_bin) = pos_data(x_bin, y_bin) +1; 
