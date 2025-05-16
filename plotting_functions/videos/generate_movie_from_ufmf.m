@@ -36,7 +36,7 @@ if contains(pr, "10")
 elseif contains(pr, "19")
     cond_idxs = [2, 7]; %[1,2];
 elseif contains(pr, "27")
-    cond_idxs = [4,11]; %[1,2];
+    cond_idxs = [12]; %[1,2];
 elseif contains(pr, "31")
     cond_idxs = [1,2,3,4,6,7,8,9]; 
 end 
@@ -77,13 +77,22 @@ for condition_n = cond_idxs
     
     for rep = 1:length(results) % There are normally 2 repetitions of each condition. 
     
-        start_f = results(rep).start_f(1)-300;
-        stop_f = results(rep).start_f(3)+300;
-        
-        % For stimulus presentation. 
-        start_gratings = results(rep).start_f(1);
-        swap_dir = results(rep).start_f(2);
-        start_grey = results(rep).start_f(3);
+        if condition_n == 12  % bar fixation 
+            start_f = results(rep).start_f(1)-300;
+            stop_f = results(rep).start_f(2)+300;
+
+            % For stimulus presentation. 
+            start_stim = results(rep).start_f(1);
+            start_grey = results(rep).start_f(2);
+        else
+            start_f = results(rep).start_f(1)-300;
+            stop_f = results(rep).start_f(3)+300;
+
+            % For stimulus presentation. 
+            start_gratings = results(rep).start_f(1);
+            swap_dir = results(rep).start_f(2);
+            start_grey = results(rep).start_f(3);
+        end
         
         fr_int = 2;
         frame_rng = start_f:fr_int:stop_f;
@@ -117,6 +126,8 @@ for condition_n = cond_idxs
         bar_pattern = repmat([black*ones(1,bar_width), white*ones(1,bar_width)], 1, ceil(num_bars/2));
         bar_pattern = bar_pattern(1:pattern_width);  % crop to exact size
         grating_pattern = repmat(bar_pattern, rect_height, 1);  % replicate for full height
+
+        x1b = 106-24; x2b = 106+24;
         
         %% Generate the movie:
         
@@ -125,29 +136,40 @@ for condition_n = cond_idxs
         for f = frame_rng
             
             im = readframe(f);
-            % im = imadjust(im);
         
-            if f < start_gratings || f >= start_grey
+            if condition_n ==12 % bar fixation
+
                 % Static grey rectangle
                 im(y1:y2, x1:x2) = gray_value;
-        
+                if f > start_stim && f < start_grey
+                    im(y1:y2, x1b:x2b) = white;
+                end 
+
             else
-                % Determine direction
-                if f < swap_dir
-                    phase = phase + 3;  % move right
+
+                if f < start_gratings || f >= start_grey
+                    % Static grey rectangle
+                    im(y1:y2, x1:x2) = gray_value;
+            
                 else
-                    phase = phase - 3;  % move left
+                    % Determine direction
+                    if f < swap_dir
+                        phase = phase + 3;  % move right
+                    else
+                        phase = phase - 3;  % move left
+                    end
+            
+                    % Wrap phase to stay within bounds
+                    phase_mod = mod(phase, pattern_width - rect_width + 1);
+            
+                    % Extract shifting section of the grating
+                    grating_crop = grating_pattern(:, phase_mod + (1:rect_width));
+            
+                    % Insert into image
+                    im(y1:y2, x1:x2) = grating_crop;
                 end
-        
-                % Wrap phase to stay within bounds
-                phase_mod = mod(phase, pattern_width - rect_width + 1);
-        
-                % Extract shifting section of the grating
-                grating_crop = grating_pattern(:, phase_mod + (1:rect_width));
-        
-                % Insert into image
-                im(y1:y2, x1:x2) = grating_crop;
-            end
+
+            end 
       
             im2 = cat(3, im, im, im);
             imshow(im2);
