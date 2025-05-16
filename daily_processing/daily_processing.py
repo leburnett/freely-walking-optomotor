@@ -16,7 +16,7 @@ LOCAL_TRACKED = r"C:\Users\burnettl\Documents\oakey-cokey\DATA\01_tracked"
 LOCAL_PROCESSED = r"C:\Users\burnettl\Documents\oakey-cokey\DATA\02_processed"
 NETWORK_TRACKED = r"\\prfs.hhmi.org\reiserlab\oaky-cokey\data\1_tracked"
 NETWORK_PROCESSED = r"\\prfs.hhmi.org\reiserlab\oaky-cokey\data\2_processed"
-RESULTS_PATH = r"C:\Users\burnettl\Documents\oakey-cokey\results\protocol_27"
+RESULTS_PATH = r"C:\Users\burnettl\Documents\oakey-cokey\results"
 
 LOCAL_RESULTS_ROOT = r"C:\Users\burnettl\Documents\oakey-cokey\results"
 NETWORK_RESULTS_ROOT = r"\\prfs\reiserlab\oaky-cokey\exp_results"
@@ -132,7 +132,7 @@ def main():
                 copied_count = copy_results_to_network(LOCAL_RESULTS_ROOT, NETWORK_RESULTS_ROOT, dash_date)
                 logging.info(f"Copied {copied_count} .mat files for {dash_date} to exp_results")
 
-                # Copy results to exp_results
+                # Copy figs to exp_figures
                 dash_date = date_str.replace("_", "-")
                 copied_count = copy_figs_to_network(LOCAL_FIGS_ROOT, NETWORK_FIGS_ROOT, dash_date)
                 logging.info(f"Copied {copied_count} .PDF or .PNG files for {dash_date} to exp_figures")

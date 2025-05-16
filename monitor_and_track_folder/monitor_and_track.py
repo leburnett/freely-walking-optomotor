@@ -123,7 +123,7 @@ def move_to_tracked(local_folder):
             while cleanup_path != GROUP_DRIVE_PATH and os.path.isdir(cleanup_path):
                 try:
                     os.rmdir(cleanup_path)
-                    logging.info(f"Removed empty parent folder: {cleanup_path}")
+                    # logging.info(f"Removed empty parent folder: {cleanup_path}")
                     cleanup_path = os.path.dirname(cleanup_path)
                 except OSError:
                     # Stop if directory is not empty
