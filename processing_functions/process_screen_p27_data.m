@@ -1,6 +1,6 @@
-function DATA = process_screen_p27_data(ROOT_DIR)
+function DATA = process_screen_p27_data()
 
-    % ROOT_DIR = '\Users\burnettl\Documents\oakey-cokey\';
+    ROOT_DIR = 'C:\Users\burnettl\Documents\oakey-cokey';
     % Move to the directory to where the results per experiment are saved:
     protocol_dir = fullfile(ROOT_DIR, 'results', 'protocol_27');
     cd(protocol_dir);
@@ -47,6 +47,11 @@ function DATA = process_screen_p27_data(ROOT_DIR)
     if ~isfolder(save_folder)
         mkdir(save_folder);
     end
+    
+    % Save a text file with the number of flies and vials for each strain
+    % that has been run so far: 
+    exp_data = generate_exp_data_struct(DATA);
+    export_num_flies_summary(exp_data, save_folder)
     
     cond_titles = {"60deg-gratings-4Hz"...
         , "60deg-gratings-8Hz"...
