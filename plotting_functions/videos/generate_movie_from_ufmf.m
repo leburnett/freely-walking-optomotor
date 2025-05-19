@@ -36,9 +36,24 @@ if contains(pr, "10")
 elseif contains(pr, "19")
     cond_idxs = [2, 7]; %[1,2];
 elseif contains(pr, "27")
-    cond_idxs = [12]; %[1,2];
+    cond_idxs = 1:12;
+    cond_titles = {"60deg-gratings-4Hz"...
+    , "60deg-gratings-8Hz"...
+    , "narrow-ON-bars-4Hz"...
+    , "narrow-OFF-bars-4Hz"...
+    , "ON-curtains-8Hz"...
+    , "OFF-curtains-8Hz"...
+    , "reverse-phi-2Hz"...
+    , "reverse-phi-4Hz"...
+    , "60deg-flicker-4Hz"...
+    , "60deg-gratings-static"...
+    , "60deg-gratings-0-8-offset"...
+    , "32px-ON-single-bar"...
+    };
 elseif contains(pr, "31")
     cond_idxs = [1,2,3,4,6,7,8,9]; 
+else 
+    cond_idxs = []; % Don't make any videos.
 end 
 
 [readframe,~,fid,~] = get_readframe_fcn(filename);
@@ -98,13 +113,17 @@ for condition_n = cond_idxs
         frame_rng = start_f:fr_int:stop_f;
         
         %% Open emty avi file. 
-        aviname = strcat(filename(1:end-5), '_condition', string(condition_n), '_rep', string(rep), '_tracks.avi');
+        if contains(pr, "27") 
+            movie_name = strcat(filename(17:end-10), '_condition', string(condition_n),'_', cond_titles{condition_n}, '_rep', string(rep), '.mp4');
+        else
+            movie_name = strcat(filename(1:end-5), '_condition', string(condition_n), '_rep', string(rep), '.mp4');
+        end 
         fps = 30;
         
-        aviobj = VideoWriter(aviname);
-        set(aviobj,'FrameRate',fps);
-        set(aviobj,'Quality',100);
-        open(aviobj);
+        movie_obj = VideoWriter(movie_name, 'MPEG-4');
+        set(movie_obj,'FrameRate',fps);
+        set(movie_obj,'Quality', 100);
+        open(movie_obj);
         
         %% Position of the stimulus video:
         x1 = 12; x2 = 200;
@@ -152,12 +171,15 @@ for condition_n = cond_idxs
                     im(y1:y2, x1:x2) = gray_value;
             
                 else
-                    % Determine direction
-                    if f < swap_dir
-                        phase = phase + 3;  % move right
-                    else
-                        phase = phase - 3;  % move left
-                    end
+                    if ~ismember(condition_n, [9, 10]) % %For flicker and static don't move the gratings.
+
+                        % Determine direction
+                        if f < swap_dir
+                            phase = phase + 3;  % move right
+                        else
+                            phase = phase - 3;  % move left
+                        end
+                    end 
             
                     % Wrap phase to stay within bounds
                     phase_mod = mod(phase, pattern_width - rect_width + 1);
@@ -173,6 +195,7 @@ for condition_n = cond_idxs
       
             im2 = cat(3, im, im, im);
             imshow(im2);
+            set(gcf,"Units","centimeters","Position",[5,5,11,10], 'Resize', 'off')
 
             if add_tracks
 
@@ -201,10 +224,10 @@ for condition_n = cond_idxs
             end 
             
             frame = getframe(gcf);  % capture frame from axes
-            writeVideo(aviobj, frame);
+            writeVideo(movie_obj, frame);
         end
         
-        close(aviobj);
+        close(movie_obj);
     end 
 end 
 fclose(fid);

@@ -168,7 +168,39 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
                 , 'ContentType', 'vector' ...
                 , 'BackgroundColor', 'none' ...
                 ); 
+
+            if protocol == "protocol_30" % different contrasts
+                f_contrasts = plot_errorbar_tuning_curve_diff_contrasts(DATA, strain, [0.8 0.8 0.8], data_type);
+                con_save_folder = fullfile(PROJECT_ROOT, 'figures/overview_figs/contrast_tuning');
+                if ~isfolder(con_save_folder)
+                    mkdir(con_save_folder);
+                end
+                fname_con = fullfile(con_save_folder, strcat(save_str, '_', data_type, 'contrast_tuning.pdf'));
+                exportgraphics(f_contrasts ...
+                , fname_con ...
+                , 'ContentType', 'vector' ...
+                , 'BackgroundColor', 'none' ...
+                );
+
+            elseif protocol == "protocol_31" % different speeds
+                f_ebar = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type);
+                sp_save_folder = fullfile(PROJECT_ROOT, 'figures/overview_figs/speed_tuning');
+                if ~isfolder(sp_save_folder)
+                    mkdir(sp_save_folder);
+                end
+                fname_ebar = fullfile(sp_save_folder, strcat(save_str, '_', data_type, 'speed_tuning.pdf'));
+                exportgraphics(f_ebar ...
+                , fname_ebar ...
+                , 'ContentType', 'vector' ...
+                , 'BackgroundColor', 'none' ...
+                );
+            end 
+
         end 
+
+        % Generate videos of each condition
+        add_tracks = 0;
+        generate_movie_from_ufmf(add_tracks)
 
         %% SAVE
         if ~isfolder(save_folder)
