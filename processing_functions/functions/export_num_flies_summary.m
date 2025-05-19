@@ -1,7 +1,7 @@
 function export_num_flies_summary(exp_data, save_folder)
 
     % Define the output file name
-    output_filename = strcat(save_folder, 'exp_strain_num_flies_summary.txt');
+    output_filename = fullfile(save_folder, 'exp_strain_num_flies_summary.txt');
     
     % Open the file for writing (will overwrite if it already exists)
     fid = fopen(output_filename, 'w');

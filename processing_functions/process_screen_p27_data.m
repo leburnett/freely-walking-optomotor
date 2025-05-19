@@ -52,6 +52,7 @@ function DATA = process_screen_p27_data()
     % that has been run so far: 
     exp_data = generate_exp_data_struct(DATA);
     export_num_flies_summary(exp_data, save_folder)
+    generate_fly_n_bar_charts(exp_data, save_folder)
     
     cond_titles = {"60deg-gratings-4Hz"...
         , "60deg-gratings-8Hz"...
