@@ -135,6 +135,8 @@ def move_to_tracked(local_folder):
 
 def process_all_untracked_folders():
     logging.info("Scanning for untracked folders...")
+    processed_folders = False
+
     for root, dirs, _ in os.walk(GROUP_DRIVE_PATH):
         for d in dirs:
             full_path = os.path.join(root, d)
@@ -145,18 +147,24 @@ def process_all_untracked_folders():
                     success = run_matlab_tracking(local_copy)
                     if success and tracking_successful(local_copy):
                         move_to_tracked(local_copy)
+                        processed_folders = True
                     else:
                         logging.warning(f"Tracking failed or incomplete: {local_copy}")
+
+    return processed_folders
 
 if __name__ == "__main__":
     logging.info("Starting automated tracker with timer loop...")
     scan_count = 0
     try:
         while scan_count < 10:
-            process_all_untracked_folders()
-            scan_count += 1
+            did_process = process_all_untracked_folders()
+            if did_process:
+                scan_count = 0
+            else:
+                scan_count += 1
             logging.info(f"Sleeping for {SCAN_INTERVAL} seconds... (Scan {scan_count}/10)")
             time.sleep(SCAN_INTERVAL)
-        logging.info("Reached maximum scan limit. Exiting.")
+        logging.info("Reached maximum scan limit with no new data. Exiting.")
     except KeyboardInterrupt:
         logging.info("Script interrupted by user. Exiting.")
