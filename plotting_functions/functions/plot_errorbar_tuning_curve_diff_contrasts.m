@@ -18,7 +18,8 @@ function f = plot_errorbar_tuning_curve_diff_contrasts(DATA, strain, col, data_t
 
     % % Eventually have this as the input to the function 
     sex = 'F';
-    data = DATA.(strain).(sex); 
+    landing = 'none';
+    data = DATA.(strain).(landing).(sex); 
     n_exp = length(data);
 
     val_stim = zeros(1, 7);
