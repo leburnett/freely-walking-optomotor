@@ -48,6 +48,7 @@ function exp_data = generate_exp_data_struct(DATA)
         exp_data.(strain).n_arena = n_arena;
         exp_data.(strain).n_rm = n_rm;
         exp_data.(strain).n_flies = n_flies;
+        exp_data.(strain).n_flies_total = sum(n_flies);
         exp_data.(strain).fly_age = fly_age;
         exp_data.(strain).temp_start = temp_start;
         exp_data.(strain).temp_end = temp_end;

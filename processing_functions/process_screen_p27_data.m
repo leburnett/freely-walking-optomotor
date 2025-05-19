@@ -49,6 +49,11 @@ function process_screen_p27_data(ROOT_DIR)
     if ~isfolder(save_folder)
         mkdir(save_folder);
     end
+
+    % Save a text file with the number of flies and vials for each strain
+    % that has been run so far: 
+    exp_data = generate_exp_data_struct(DATA);
+    export_num_flies_summary(exp_data, save_folder)
     
     %Save the groups that were used for the plots
     writecell(gp_data, fullfile(save_folder,'group_data.txt'), 'Delimiter', ';')
@@ -99,8 +104,5 @@ function process_screen_p27_data(ROOT_DIR)
         end
     
     end 
-
-% FIX ME - ADD PLOTS OF THE 'baseline' LOCOMOTION / TURNING during the
-% ACCLIM period before.... 
 
 end 

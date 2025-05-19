@@ -19,8 +19,8 @@ function f = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type)
     % % Eventually have this as the input to the function 
     sex = 'F';
     data = DATA.(strain).(sex); 
-    if strain == "jfrc100_es_shibire_kir"
-        col = [0, 0.5, 1];
+    if strain == "jfrc100_es_shibire_kir" % grey
+        col = [0.8, 0.8, 0.8];
     else
         col = [1, 0.5, 0];
     end 
