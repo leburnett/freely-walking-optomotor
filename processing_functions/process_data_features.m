@@ -197,6 +197,10 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
             end 
         end 
 
+        % Generate videos of each condition
+        add_tracks = 0;
+        generate_movie_from_ufmf(add_tracks)
+        
         %% SAVE
         if ~isfolder(save_folder)
             mkdir(save_folder);
