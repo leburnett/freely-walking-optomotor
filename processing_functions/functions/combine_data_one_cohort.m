@@ -108,7 +108,8 @@ function [comb_data, feat, trx] = combine_data_one_cohort(feat, trx)
         vals_fv_zero = abs(fv_data(idx, :))<0.1;
         c_data(abs(c_data)==Inf)=NaN;
         c_data(vals_fv_zero) = NaN;
-        c_data = fillmissing(c_data', 'previous')';
+        % c_data = fillmissing(c_data', 'previous')'; % Do not fill missing
+        % for frames where turning rate is undefined / unreliable. 
         curv_data(idx, :) = c_data;
 
         % viewing distance - distance from fly centre to edge of arena in
