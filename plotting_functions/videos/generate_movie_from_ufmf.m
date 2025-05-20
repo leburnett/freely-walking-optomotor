@@ -195,7 +195,8 @@ for condition_n = cond_idxs
       
             im2 = cat(3, im, im, im);
             imshow(im2);
-            set(gcf,"Units","centimeters","Position",[5,5,11,10], 'Resize', 'off')
+            % set(gcf,"Units","centimeters","Position",[5,5,11,10], 'Resize', 'off')
+            set(gcf, 'Resize', 'off')
 
             if add_tracks
 
