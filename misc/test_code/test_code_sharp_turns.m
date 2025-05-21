@@ -1,16 +1,21 @@
+
+strain = "ss00297_Dm4_shibire_kir";
+exp = 3;
+fly_id = 5;
+
 % 1 - BIN DATA PER FLY FIRST THEN AVERAGE ACROSS FLIES
 
-data = DATA.jfrc100_es_shibire_kir.F(12).R1_condition_2.vel_data;
-d_fly = data(8, :);
+data = DATA.(strain).F(exp).R1_condition_2.vel_data;
+d_fly = data(fly_id, :);
 
-data2 = DATA.jfrc100_es_shibire_kir.F(12).R1_condition_2.fv_data;
-d_fly2 = data2(8, :);
+data2 = DATA.(strain).F(exp).R1_condition_2.fv_data;
+d_fly2 = data2(fly_id, :);
 
-data_av = DATA.jfrc100_es_shibire_kir.F(12).R1_condition_2.av_data;
-ang_vel =data_av(8, :);
+data_av = DATA.(strain).F(exp).R1_condition_2.av_data;
+ang_vel =data_av(fly_id, :);
 
-data3 = DATA.jfrc100_es_shibire_kir.F(12).R1_condition_2.curv_data;
-d_fly3 = data3(8, :);
+data3 = DATA.(strain).F(exp).R1_condition_2.curv_data;
+d_fly3 = data3(fly_id, :);
 
 %% 
 xvals = 28341:1:28341+900;
@@ -111,6 +116,18 @@ figure; histogram(abs(fv_all));
 mean(mean(abs(fv_all))) % % % 54.5 deg s-1
 
 
+%% Straightness of path - entire stimulus time
+
+sum(sm_1) % sum vel
+sum(sm_4) % turning 
+
+sum(sm_4)/sum(sm_1) % total turning / total displacement. 
+
+%% Straightness of path - over 0.5s time bins. 
+
+
+
+
 %%
 
 % Assume:
@@ -141,7 +158,7 @@ turning_rate_vel = turning_rate_vel(1:end-1);
 
 % Correlation or plotting
 corrcoef(curvature_path, turning_rate_vel)
-plot(curvature_path); hold on; plot(turning_rate_vel); legend('Curvature from heading', 'Turning rate from velocity');
+figure; plot(curvature_path); hold on; plot(turning_rate_vel); legend('Curvature from heading', 'Turning rate from velocity');
 
 turning_rate_mag = abs(turning_rate);
 curvature_mag = abs(curvature_path);
