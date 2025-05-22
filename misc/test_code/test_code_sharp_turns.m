@@ -178,3 +178,27 @@ for i = 1:(length(heading) - window_size)
     curvature_windowed(i + floor(window_size/2)) = delta_heading / (delta_s + 1e-6);  % rad/mm
 end
 
+%% Plot time series of straightness index:
+
+rng = [1,1800];
+    win_size = 15; % 0.5s
+
+    edges = rng(1):win_size:rng(2);
+    num_bins = numel(edges);
+
+    str_timeseries = zeros([num_bins-1,1]);
+
+    for ii = 1:num_bins-1
+
+        rrng = edges(ii):edges(ii+1);
+        [~, ~, straightness] = computeTwoPointDisplacement(x_data(i, :), y_data(i, :), rrng);
+        str_timeseries(ii, 1) = straightness;
+
+    end 
+
+    figure; plot(str_timeseries);
+    title('1s time window')
+
+
+
+    
