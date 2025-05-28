@@ -22,7 +22,7 @@ function f = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type)
     if strain == "jfrc100_es_shibire_kir" % grey
         col = [0.8, 0.8, 0.8];
     else
-        col = [1, 0.5, 0];
+        col = [0.9, 0.5, 0.9];
     end 
     n_exp = length(data);
 

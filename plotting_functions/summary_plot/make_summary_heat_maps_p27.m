@@ -116,17 +116,6 @@ function make_summary_heat_maps_p27()
 
             imagesc(c_array);
             hold on
-            % text(1,1,'<= 0.00001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-            % text(1,2,'< 0.0001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-            % text(1,3,'< 0.001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-            % text(1,4,'< 0.01', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-            % text(1,5,'< 0.05', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-            % text(1,6,'NS', 'HorizontalAlignment', 'center', 'Color', 'k', 'FontWeight','bold')
-            % text(1,7,'< 0.05', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-            % text(1,8,'< 0.01', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-            % text(1,9,'< 0.001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-            % text(1,10,'< 0.0001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-            % text(1,11,'<= 0.00001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
             text(1,1,'<= 0.00001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
             text(2,1,'< 0.0001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
             text(3,1,'< 0.001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')

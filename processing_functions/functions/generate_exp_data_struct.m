@@ -53,6 +53,8 @@ function exp_data = generate_exp_data_struct(DATA)
         exp_data.(strain).temp_start = temp_start;
         exp_data.(strain).temp_end = temp_end;
         exp_data.(strain).time_start = time_start;
+
+        disp(strcat(strain,": ", string(sum(n_flies))))
     end 
    
 end 

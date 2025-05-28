@@ -195,17 +195,21 @@ for condition_n = cond_idxs
       
             im2 = cat(3, im, im, im);
             imshow(im2);
-            % set(gcf,"Units","centimeters","Position",[5,5,11,10], 'Resize', 'off')
-            set(gcf, 'Resize', 'off')
+           
+            if add_tracks 
+                set(gcf,"Units","centimeters","Position",[5,5,11,10], 'Resize', 'off')
+            else
+                set(gcf, 'Resize', 'off')
+            end 
 
             if add_tracks
 
-                cmap = hsv(15);
-                tail_length = 90;
+                tail_length = 90; % 3s
 
                 % PLOT TAIL
                 rng = f-tail_length:1:f;
                 n_flies = length(trx);
+                cmap = hsv(n_flies);
                 hold on
 
                 for fly = 1:n_flies

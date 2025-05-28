@@ -9,17 +9,33 @@ protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_3
 cd(protocol_dir);
 
 DATA = comb_data_across_cohorts_cond(protocol_dir);
+exp_data = generate_exp_data_struct(DATA);
 
 %% Plot both strains on top of each other.
 close
-data_type = "curv_data";
-strains = {"jfrc100_es_shibire_kir", "ss00297_Dm4_shibire_kir"};
+
+data_type = "dist_data_delta";
+% strains = {"jfrc100_es_shibire_kir", "ss00297_Dm4_shibire_kir"};
+% strains = {"jfrc100_es_shibire_kir", "ss00297_Dm4_shibire_kir"};
+strains = {"jfrc100_es_shibire_kir", "ss00326_Pm2ab_shibire_kir"};
+% strains = {"jfrc100_es_shibire_kir", "ss324_t4t5_shibire_kir"};
 
 for st = [1,2]
 
     strain = strains{st};
     f3 = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type);
 end 
+
+
+% For AV plot
+hold on
+plot([1, 2,3,4,5], [0, 60, 120, 240, 480], '--', 'Color', [0.2 0.2 0.2], 'LineWidth', 1.2)
+plot(2, 60, 'k.', 'MarkerSize', 18)
+plot(3, 120, 'k.', 'MarkerSize', 18)
+plot(4, 240, 'k.', 'MarkerSize', 18)
+
+% plot(5, 480, 'k.', 'MarkerSize', 18)
+
 
 %% timeseries for different speed experiments
 
