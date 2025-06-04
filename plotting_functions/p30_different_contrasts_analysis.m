@@ -30,10 +30,11 @@ end
 
 %% Plot both strains over each other. 
 close
-data_type = "fv_data";
+data_type = "curv_data";
 
 % strains = {"jfrc100_es_shibire_kir", "ss00297_Dm4_shibire_kir"};
-strains = {"jfrc100_es_shibire_kir", "ss00326_Pm2ab_shibire_kir"};
+strains = {"jfrc100_es_shibire_kir", "l1l4_jfrc100_shibire_kir"};
+% strains = {"jfrc100_es_shibire_kir", "ss00326_Pm2ab_shibire_kir"};
 % strains = {"jfrc100_es_shibire_kir", "ss324_t4t5_shibire_kir"};
 
 for st = [1,2]

@@ -233,6 +233,8 @@ elseif data_type == "curv_data"
     ylb = "Turning rate (deg mm-1)";
 elseif data_type == "IFD_data"
     ylb = "Distance to nearest fly (mm)";
+elseif data_type == "view_dist"
+    ylb = "Viewing distance (mm)";
 end
 
 f = gcf;

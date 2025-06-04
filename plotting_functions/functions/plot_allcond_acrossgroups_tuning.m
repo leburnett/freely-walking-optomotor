@@ -208,6 +208,9 @@ for grpId = 1:n_groups
         elseif data_type == "IFD_data"
             ylb = "Distance to nearest fly (mm)";
             lw = 1;
+        elseif data_type == "view_dist"
+            ylb = "Viewing distance (mm)";
+            lw = 1;
         end
 
         if plot_sem
@@ -236,7 +239,7 @@ for grpId = 1:n_groups
                 if maxx_y < 0
                     rng(2) = maxx_y*1.1;
                 elseif maxx_y >=0 
-                    rng(2) = maxx_y*0.9;
+                    rng(2) = maxx_y*1.1;
                 end
                 minn_y = min(min_y_vals(idx2, :));
                 if minn_y < 0

@@ -52,7 +52,7 @@
     % that has been run so far: 
     exp_data = generate_exp_data_struct(DATA);
     export_num_flies_summary(exp_data, save_folder)
-    generate_fly_n_bar_charts(exp_data, save_folder)
+    % generate_fly_n_bar_charts(exp_data, save_folder)
     
     cond_titles = {"60deg-gratings-4Hz"...
         , "60deg-gratings-8Hz"...
@@ -73,7 +73,7 @@
     %% Plot the timeseries responses of different strains versus ES for different data metrics.
 
     plot_sem = 1;
-    data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_data_delta'};
+    data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_data_delta', 'view_dist', 'IFD_data'};
     
     for strain = 1:n_strains
     
@@ -86,7 +86,7 @@
         if isfield(DATA, grp_title) % Check if there is data for the strain in DATA
             disp(strcat("Plotting the data for " , grp_title))
         
-            for typ = 1:5
+            for typ = 1:numel(data_types)
         
                 % Data type to plot
                 data_type = data_types{typ};
@@ -95,9 +95,10 @@
                 gps2plot = [1, 2];
         
                 % Data in time series are downsampled by 10.
-                f_xgrp = plot_allcond_acrossgroups_tuning(DATA, gp_data, cond_titles, data_type, gps2plot, plot_sem);
+                % f_xgrp = plot_allcond_acrossgroups_tuning(DATA, gp_data, cond_titles, data_type, gps2plot, plot_sem);
+                f_xgrp = plot_allcond_acrossgroups_tuning_raw(DATA, gp_data, cond_titles, data_type, gps2plot, plot_sem);
             
-                fname = fullfile(save_folder, strcat(grp_title, '_', data_type, ".pdf"));
+                fname = fullfile(save_folder, strcat(grp_title, '_', data_type, "_raw.pdf"));
                 exportgraphics(f_xgrp ...
                     , fname ...
                     , 'ContentType', 'vector' ...
