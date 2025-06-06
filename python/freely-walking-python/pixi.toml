@@ -1,0 +1,17 @@
+[project]
+authors = ["leburnett <leburnett3@gmail.com>"]
+channels = ["conda-forge"]
+description = "Add a short description here"
+name = "freely-walking-python"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+numpy = ">=2.2.6,<3"
+pandas = ">=2.2.3,<3"
+plotly = ">=6.1.2,<7"
+python = ">=3.13.3,<3.14"
+notebook = ">=7.4.3,<8"
+scipy = ">=1.15.2,<2"
