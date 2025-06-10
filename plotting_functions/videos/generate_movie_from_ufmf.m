@@ -171,14 +171,16 @@ for condition_n = cond_idxs
                     im(y1:y2, x1:x2) = gray_value;
             
                 else
-                    if ~ismember(condition_n, [9, 10]) % %For flicker and static don't move the gratings.
-
-                        % Determine direction
-                        if f < swap_dir
-                            phase = phase + 3;  % move right
-                        else
-                            phase = phase - 3;  % move left
-                        end
+                    if contains(pr, "27")
+                        if ~ismember(condition_n, [9, 10]) % %For flicker and static don't move the gratings.
+    
+                            % Determine direction
+                            if f < swap_dir
+                                phase = phase + 3;  % move right
+                            else
+                                phase = phase - 3;  % move left
+                            end
+                        end 
                     end 
             
                     % Wrap phase to stay within bounds
@@ -195,7 +197,8 @@ for condition_n = cond_idxs
       
             im2 = cat(3, im, im, im);
             imshow(im2);
-            set(gcf,"Units","centimeters","Position",[5,5,11,10], 'Resize', 'off')
+            % set(gcf,"Units","centimeters","Position",[5,5,11,10], 'Resize', 'off')
+            set(gcf,'Resize', 'off')
 
             if add_tracks
 

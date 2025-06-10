@@ -173,9 +173,12 @@ function title_str = get_title_from_meta(cond_meta)
 
         case 14
             interval_str = "4ON12OFF-flicker";
+        
+        case 25
+            interval_str = "greyscale3";
 
         case 29 
-            interval_str = "greyscale";
+            interval_str = "greyscale1";
 
         case 47
             interval_str = "dark";
