@@ -358,7 +358,7 @@ legend(arrayfun(@(b) sprintf('%d-%d', bin_edges(b), bin_edges(b+1)), 1:n_bins, '
 condition_n = 1;
 
 bin_size = 15; % 0.5s
-
+bin_edges = 0:5:120;
 n_bins = length(bin_edges)-1;
 
 frame_rng = 300:1200;
@@ -389,7 +389,7 @@ end
 
 
 figure; 
-histogram(dist_w_max_centring, 'BinEdges', 0:5:120, 'FaceColor', 'r', 'FaceAlpha',0.1)
+histogram(dist_w_max_centring, 'BinEdges', bin_edges, 'FaceColor', 'r', 'FaceAlpha',0.1)
 format_figure
 f = gcf; 
 f.Position = [620   741   486   226];
@@ -449,7 +449,7 @@ title('Distance of the fly with max angular velocity - 0.5s bins')
 mean(dist_w_max_turning)
 
 
-%%
+%% Subplot figure with scatter plots and trajectory plots. 
 
 control_strain = "jfrc100_es_shibire_kir";
 data_control = DATA.(control_strain).(sex);
@@ -518,6 +518,7 @@ title('Final position of each fly - cmap - instantaneous turning rate')
 
 data_type = "dist_data"; 
 cond_data_dist = combine_timeseries_across_exp(data_control, condition_n, data_type);
+cond_data_dist_delta = cond_data_dist - cond_data_dist(:, 300);
 
 data_type = "fv_data"; 
 cond_data_fv = combine_timeseries_across_exp(data_control, condition_n, data_type);
@@ -528,10 +529,11 @@ fv_window = cond_data_fv(:, 300:1200);
 dist_window = cond_data_dist(:, 1:1800);
 
 % Compute mean fv values per fly in the time window
-mean_fv = mean(fv_window, 2);
+% mean_fv = mean(fv_window, 2);
+mean_fv = cond_data_fv(:, 300);
 
 % Define bin edges (you can adjust these as needed)
-bin_edges = [-inf, 1, 5, 10, 15, 20, inf]; % e.g. <2, 2–5, 5–8, >8
+bin_edges = [-inf, 1, 5, 10, 15, 20, 25, inf]; % e.g. <2, 2–5, 5–8, >8
 n_bins = length(bin_edges) - 1;
 
 col = [0.8 0.8 0.8];
@@ -736,6 +738,34 @@ ax = gca;
 ax.XAxis.Visible = 'off';
 
 
+% PLOT TUNING CURVE OF THIS DATA:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 %% Ethogram - collisions - when fly < 1mm IFD. 
 
@@ -758,8 +788,6 @@ ifd2(ifd2<2) = 1;
 ifd2(ifd2>=2) = 0;
 
 figure; imagesc(ifd2)
-
-
 
 figure; plot(mean(cond_data_ifd)) % at 1200 - ~ 20 mm distance between flies. 
 figure; plot(cond_data_ifd(4, :))

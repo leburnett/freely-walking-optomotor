@@ -26,42 +26,42 @@ function make_summary_heat_maps_p27()
 
     %% Perform FDR adjustment to p-values.
     [h_01, crit_p_all, adj_p_all]=fdr_bh(pvals_all_cond, 0.01, 'dep', 'yes');
-
+    % adj_p_all is of the size [n_strains*n_conditions, n_metrics]
 
     %% Plot the heat maps for each condition with the adjusted p values.
 
-        cond_titles = {"60deg-gratings-4Hz"...
-        , "60deg-gratings-8Hz"...
-        , "narrow-ON-bars-4Hz"...
-        , "narrow-OFF-bars-4Hz"...
-        , "ON-curtains-8Hz"...
-        , "OFF-curtains-8Hz"...
-        , "reverse-phi-2Hz"...
-        , "reverse-phi-4Hz"...
-        , "60deg-flicker-4Hz"...
-        , "60deg-gratings-static"...
-        , "60deg-gratings-0-8-offset"...
-        , "32px-ON-single-bar"...
-        };
+        % cond_titles = {"60deg-gratings-4Hz"...
+        % , "60deg-gratings-8Hz"...
+        % , "narrow-ON-bars-4Hz"...
+        % , "narrow-OFF-bars-4Hz"...
+        % , "ON-curtains-8Hz"...
+        % , "OFF-curtains-8Hz"...
+        % , "reverse-phi-2Hz"...
+        % , "reverse-phi-4Hz"...
+        % , "60deg-flicker-4Hz"...
+        % , "60deg-gratings-static"...
+        % , "60deg-gratings-0-8-offset"...
+        % , "32px-ON-single-bar"...
+        % };
 
-        f = tiledlayout(12, 1);
-        f.Padding = "tight";
-
-        for condition_n = 1:12
-            % close
-            % condition_n = condition_n+1;
-            nexttile
-
-            range_start = (condition_n - 1) * 11 + 1;
-            range_end = condition_n * 11;
-    
-            adj_p = adj_p_all(range_start:range_end, :);
-            t_all = target_all(range_start:range_end, :);
-            c_all = control_all(range_start:range_end, :);
-    
-            plot_pval_heatmap(adj_p, t_all, c_all, strain_names, condition_n);
-            title(cond_titles{condition_n})
-        end 
+        % f = tiledlayout(12, 1);
+        % f.Padding = "tight";
+        % 
+        % for condition_n = 1:12
+        %     % close
+        %     % condition_n = condition_n+1;
+        %     nexttile
+        % 
+        %     range_start = (condition_n - 1) * 11 + 1;
+        %     range_end = condition_n * 11;
+        % 
+        %     adj_p = adj_p_all(range_start:range_end, :);
+        %     t_all = target_all(range_start:range_end, :);
+        %     c_all = control_all(range_start:range_end, :);
+        % 
+        %     plot_pval_heatmap(adj_p, t_all, c_all, strain_names, condition_n);
+        %     title(cond_titles{condition_n})
+        % end 
 
 
     %% Plot the heatmap divided up by STRAIN 
@@ -77,7 +77,7 @@ function make_summary_heat_maps_p27()
     
             nexttile
 
-            rng = strain_n:11:h_all;
+            rng = strain_n:n_strains:h_all;
     
             adj_p = adj_p_all(rng, :);
             t_all = target_all(rng, :);
@@ -97,7 +97,7 @@ function make_summary_heat_maps_p27()
         f = gcf;
         f.Position = [564    73   362   974];
 
-        if multi 
+        if multi % Generate separate figure of the colour bar - p values.
 
             figure;
             c_array(1, : , :) = [...

@@ -42,12 +42,12 @@ function [pvals, target_mean, control_mean] = curv_metric_tests(cond_data, cond_
 
 %% 2 - Average turning rate 5s before stimulus
 
-    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_b4_5);
-
-    % ADD VALUES
-    pvals = [pvals, p];
-    target_mean = [target_mean, mean_per_strain];
-    control_mean = [control_mean, mean_per_strain_control];
+    % [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_b4_5);
+    % 
+    % % ADD VALUES
+    % pvals = [pvals, p];
+    % target_mean = [target_mean, mean_per_strain];
+    % control_mean = [control_mean, mean_per_strain_control];
 
 %% 3 - Average turning rate 5s after stimulus - during interval
 
@@ -70,12 +70,12 @@ function [pvals, target_mean, control_mean] = curv_metric_tests(cond_data, cond_
 
 %% 5 - Average number of sharp turns before the stimulus 
 
-    [p_npeaks, mean_peaks_per_strain, mean_peaks_per_strain_control, p_pp, mean_pp_per_strain, mean_pp_per_strain_control] = welch_ttest_for_rng_npeaks(movmean(cond_data, f_window), movmean(cond_data_control, f_window), rng_b4);
-
-    % ADD VALUES
-    pvals = [pvals, p_npeaks, p_pp];
-    target_mean = [target_mean, mean_peaks_per_strain, mean_pp_per_strain];
-    control_mean = [control_mean, mean_peaks_per_strain_control, mean_pp_per_strain_control];
+    % [p_npeaks, mean_peaks_per_strain, mean_peaks_per_strain_control, p_pp, mean_pp_per_strain, mean_pp_per_strain_control] = welch_ttest_for_rng_npeaks(movmean(cond_data, f_window), movmean(cond_data_control, f_window), rng_b4);
+    % 
+    % % ADD VALUES
+    % pvals = [pvals, p_npeaks, p_pp];
+    % target_mean = [target_mean, mean_peaks_per_strain, mean_pp_per_strain];
+    % control_mean = [control_mean, mean_peaks_per_strain_control, mean_pp_per_strain_control];
 
 %% 6 - Average number of sharp turns during the interval 
 

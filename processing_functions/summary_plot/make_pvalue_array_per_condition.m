@@ -5,6 +5,9 @@ function [pvals, target_mean, control_mean] = make_pvalue_array_per_condition(DA
 % "protocol_dir" contains the results files per experiment after
 % processing. 
 
+% Returned arrays are of the size [1 x n_metrics]. Since this is run for
+% each condition. These arrays are then concatenated vertically in the
+% function that calls this function: 'make_pvalue_heatmap_across_strains'.
 
 % Extract 'data' from the relevant strain / condition.
 sex = 'F';
@@ -35,6 +38,7 @@ n_data_types = numel(data_types);
             end 
             
             % For the different data_types calculate different metrics. 
+            % Values for each metric are concatenated horizontally.
             if data_type == "fv_data"
                 [pvals_fv, target_mean_fv, control_mean_fv] = fv_metric_tests(cond_data, cond_data_control); % 17 metrics
                 

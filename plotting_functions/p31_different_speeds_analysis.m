@@ -13,14 +13,14 @@ exp_data = generate_exp_data_struct(DATA);
 
 %% Plot both strains on top of each other.
 
-% strains = {"jfrc100_es_shibire_kir", "ss00297_Dm4_shibire_kir"};
-% strains = {"jfrc100_es_shibire_kir", "ss00326_Pm2ab_shibire_kir"};
+% strains = {"jfrc100_es_shibire_kir", "ss02360_Dm4_shibire_kir"};
+strains = {"jfrc100_es_shibire_kir", "ss00326_Pm2ab_shibire_kir"};
 % strains = {"jfrc100_es_shibire_kir", "ss324_t4t5_shibire_kir"};
-strains = {"jfrc100_es_shibire_kir", "l1l4_jfrc100_shibire_kir"};
-data_types = {'view_dist', 'IFD_data'};
+% strains = {"jfrc100_es_shibire_kir", "l1l4_jfrc100_shibire_kir"};
+data_types = {'av_data', 'dist_data_delta'};
 
 close all
-for dt = [1,2]
+for dt = 1:numel(data_types)
     data_type = data_types{dt};
     figure
     for st = [1,2]
@@ -31,11 +31,11 @@ end
 
 
 % For AV plot
-hold on
-plot([1, 2,3,4,5], [0, 60, 120, 240, 480], '--', 'Color', [0.2 0.2 0.2], 'LineWidth', 1.2)
-plot(2, 60, 'k.', 'MarkerSize', 18)
-plot(3, 120, 'k.', 'MarkerSize', 18)
-plot(4, 240, 'k.', 'MarkerSize', 18)
+% hold on
+% plot([1, 2,3,4,5], [0, 60, 120, 240, 480], '--', 'Color', [0.2 0.2 0.2], 'LineWidth', 1.2)
+% plot(2, 60, 'k.', 'MarkerSize', 18)
+% plot(3, 120, 'k.', 'MarkerSize', 18)
+% plot(4, 240, 'k.', 'MarkerSize', 18)
 
 % plot(5, 480, 'k.', 'MarkerSize', 18)
 
