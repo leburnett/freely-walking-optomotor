@@ -1,4 +1,4 @@
-function plot_traj_subplot(DATA, strain, condition_n)
+function plot_traj_subplot(DATA, strain, condition_n, save_folder)
 
     % Plot trajectories of the different strains and different conditions
     data = DATA.(strain).F;
@@ -16,16 +16,16 @@ function plot_traj_subplot(DATA, strain, condition_n)
     frame_rng_stim = 300:1200;
     
     total_n_flies = height(cond_data_x);
+    n_plots_per_fig = 35;
     
-    n_plots = ceil(total_n_flies/35);
+    n_plots = ceil(total_n_flies/n_plots_per_fig);
 
     for p = 1:n_plots
 
-        flies_to_plot = (p*35)-34:1:(p*35); 
+        flies_to_plot = (p*n_plots_per_fig)-(n_plots_per_fig-1):1:(p*n_plots_per_fig); 
         if p == n_plots 
-            flies_to_plot = (p*35)-34:1:total_n_flies;
+            flies_to_plot = (p*n_plots_per_fig)-(n_plots_per_fig-1):1:total_n_flies;
         end 
-        % n_fplot = numel(flies_to_plot);
         
         figure; 
         tiledlayout('flow', 'TileSpacing', 'compact')
@@ -53,8 +53,18 @@ function plot_traj_subplot(DATA, strain, condition_n)
         f = gcf;
         f.Position = [2577        -150        1218        1112];
 
+        % Save the figure:
+        f_name = fullfile(save_folder, strcat("Traj_fig", string(p),"_", strain, "_Condition", string(condition_n), ".pdf"));
+        
+        exportgraphics(f ...
+                , f_name ...
+                , 'BackgroundColor', 'none' ...
+                , 'Resolution', 90 ...
+                );
+        %                % , 'ContentType', 'vector' ... % Use if you want
+        %                to generate high quality figures.
+        close
     end 
-
 end 
 
 

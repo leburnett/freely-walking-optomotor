@@ -3,14 +3,15 @@ function plot_trajectory_simple(x, y, cx, cy)
 % like to plot the trajectory for. Arena centre is [cx, cy].
 
     rectangle('Position',[1, 1, 245, 245], 'Curvature', [1,1], 'FaceColor', [0.95 0.95 0.95], 'EdgeColor', 'none')
-    viscircles([cx, cy], 110, 'Color', [0.8 0.8 0.8], 'LineStyle', '--', 'LineWidth',1)
-    viscircles([cx, cy], 63, 'Color', [0.8 0.8 0.8], 'LineStyle', '--', 'LineWidth',1)
+    viscircles([cx, cy], 121, 'Color', [0.8 0.8 0.8], 'LineStyle', '-', 'LineWidth', 0.8) % Edge
+    viscircles([cx, cy], 110, 'Color', [0.8 0.8 0.8], 'LineStyle', '--', 'LineWidth',1) % 10mm from edge
+    viscircles([cx, cy], 63, 'Color', [0.8 0.8 0.8], 'LineStyle', '--', 'LineWidth',1) % Half way
     hold on;
     plot(x, y, 'k-', 'LineWidth', 1.5, 'DisplayName', 'Path'); % black line for trajectory
     
     % Mark the start and end points
-    plot(x(1), y(1), 'go', 'MarkerFaceColor', 'w', 'MarkerEdgeColor', 'k', 'DisplayName', 'Start'); % green start
-    plot(x(end), y(end), 'ro', 'MarkerFaceColor', 'r', 'DisplayName', 'End'); % red end
+    plot(x(1), y(1), 'o', 'MarkerFaceColor', 'w', 'MarkerEdgeColor', 'k', 'DisplayName', 'Start'); % green start
+    plot(x(end), y(end), 'o', 'MarkerFaceColor', [0.8 0.8 0.8], 'MarkerEdgeColor', 'k', 'DisplayName', 'End'); % red end
     
     % Mark the center of the arena
     plot(cx, cy, 'r+', 'MarkerSize', 18, 'LineWidth', 1.5, 'DisplayName', 'Centre');
