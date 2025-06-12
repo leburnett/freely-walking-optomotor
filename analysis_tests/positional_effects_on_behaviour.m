@@ -525,7 +525,7 @@ cond_data_fv = combine_timeseries_across_exp(data_control, condition_n, data_typ
 
 
 % Extract time window
-fv_window = cond_data_fv(:, 300:1200);
+fv_window = cond_data_fv(:, 1:300);
 dist_window = cond_data_dist(:, 1:1800);
 
 % Compute mean fv values per fly in the time window
@@ -562,12 +562,14 @@ for i = 1:n_bins
     col = col - 0.12;
 end
 
-ylim([-60 20])
-ylabel('Distance');
+y_rng = [-60 20];
+% y_rng = [20 110];
+ylim(y_rng)
+ylabel('Distance from centre (mm)');
 format_figure()
 
-plot([300 300], [-60 40], 'k-', 'LineWidth', 0.7);
-plot([1200 1200], [-60 40], 'k-', 'LineWidth', 0.7);
+plot([300 300], y_rng, 'k-', 'LineWidth', 0.7);
+plot([1200 1200], y_rng, 'k-', 'LineWidth', 0.7);
 plot([0 1800], [0 0], 'r-', 'LineWidth', 0.7);
 xlim([0 1800])
 ax = gca;
@@ -613,14 +615,16 @@ for i = 1:n_bins
     col = col - 0.12;
 end
 
-ylim([-60 40])
+% y_rng = [-60 40];
+y_rng = [0 120];
+ylim(y_rng)
 xlabel('Timepoint');
 ylabel('Distance');
 format_figure()
 
-plot([300 300], [-60 40], 'k-', 'LineWidth', 0.7);
-plot([1200 1200], [-60 40], 'k-', 'LineWidth', 0.7);
-plot([0 1800], [0 0], 'r-', 'LineWidth', 0.7);
+plot([300 300], y_rng, 'k-', 'LineWidth', 0.7);
+plot([1200 1200], y_rng, 'k-', 'LineWidth', 0.7);
+% plot([0 1800], [0 0], 'r-', 'LineWidth', 0.7);
 xlim([0 1800])
 ax = gca;
 ax.XAxis.Visible = 'off';
@@ -671,13 +675,14 @@ for i = 1:n_bins
     col = col - 0.12;
 end
 
-ylim([-60 20])
+y_rng = [0 120];
+ylim(y_rng)
 ylabel('Distance');
 format_figure()
 
-plot([300 300], [-60 40], 'k-', 'LineWidth', 0.7);
-plot([1200 1200], [-60 40], 'k-', 'LineWidth', 0.7);
-plot([0 1800], [0 0], 'r-', 'LineWidth', 0.7);
+plot([300 300], y_rng, 'k-', 'LineWidth', 0.7);
+plot([1200 1200], y_rng, 'k-', 'LineWidth', 0.7);
+% plot([0 1800], [0 0], 'r-', 'LineWidth', 0.7);
 xlim([0 1800])
 ax = gca;
 ax.XAxis.Visible = 'off';

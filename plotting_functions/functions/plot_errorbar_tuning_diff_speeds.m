@@ -4,13 +4,21 @@ function f = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type)
         data_type = "dist_data";
         delta = 1;
         d_fv = 0 ;
+        gain = 0;
     elseif data_type == "dist_data_fv"
         data_type = "dist_data";
         delta = 1;
         d_fv = 1;
+        gain = 0;
+    elseif data_type == "gain"
+        data_type = "av_data";
+        gain = 1;
+        d_fv = 0;
+        delta = 0;
     else 
         delta = 0;
         d_fv = 0;
+        gain = 0;
     end 
 
     % Generate new figure
@@ -120,6 +128,23 @@ function f = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type)
     
             % Mean +/- SEM
             mean_data = nanmean(cond_data);
+
+            % GAIN: Angular velocity in dps / speed of stimulus in dps.
+            if gain == 1
+                if ismember(cond_n, [1,6])
+                    stim_fps = 60;
+                elseif ismember(cond_n, [2, 7])
+                    stim_fps = 120;
+                elseif ismember(cond_n, [3, 8])
+                    stim_fps = 240;
+                elseif ismember(cond_n, [4, 9])
+                    stim_fps = 480;
+                else
+                    stim_fps = 60;
+                end 
+                mean_data = mean_data/stim_fps;
+            end 
+            
             if delta == 1
                 mean_data = mean_data - mean_data(300);
                 if d_fv
@@ -133,7 +158,11 @@ function f = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type)
                 mean_data = movmean(mean_data, 5);
             end 
     
-            sem_data = nanstd(cond_data)/sqrt(size(cond_data,1));
+            if gain == 1
+                sem_data = nanstd(cond_data./stim_fps)/sqrt(size(cond_data,1));
+            else
+                sem_data = nanstd(cond_data)/sqrt(size(cond_data,1));
+            end 
     
             if data_type == "dist_data"
                 buffer_t = 30*7;
@@ -173,8 +202,13 @@ for idx = 1:n_exp
     acclim1_comb_data = vertcat(acclim1_comb_data, acclim1_data);                   
 end 
    
-mean_acclim1 = nanmean(acclim1_comb_data);
-sem_acclim1 = nanstd(acclim1_comb_data)/sqrt(size(acclim1_comb_data,1));
+if gain == 1 
+    mean_acclim1 = nanmean(acclim1_comb_data/stim_fps);
+    sem_acclim1 = nanstd(acclim1_comb_data/stim_fps)/sqrt(size(acclim1_comb_data,1));
+else
+    mean_acclim1 = nanmean(acclim1_comb_data);
+    sem_acclim1 = nanstd(acclim1_comb_data)/sqrt(size(acclim1_comb_data,1));
+end 
 
 if delta == 1
     val_acclim1 = 0;
@@ -222,7 +256,11 @@ elseif data_type == "dist_trav"
     ylb = 'Distance travelled (mm)';
 elseif data_type == "av_data"
     % rng = [-110 110];
-    ylb = "Angular velocity (deg s-1)";
+    if gain == 1
+        ylb = "Gain";
+    else
+        ylb = "Angular velocity (deg s-1)";
+    end 
 elseif data_type == "heading_data"
     ylb = "Heading (deg)";
 elseif data_type == "vel_data"

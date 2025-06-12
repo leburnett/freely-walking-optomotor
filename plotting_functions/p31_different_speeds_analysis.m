@@ -13,9 +13,10 @@ exp_data = generate_exp_data_struct(DATA);
 
 %% Plot both strains on top of each other.
 
+% strains = {"jfrc100_es_shibire_kir", "ss00297_Dm4_shibire_kir"};
 % strains = {"jfrc100_es_shibire_kir", "ss02360_Dm4_shibire_kir"};
-strains = {"jfrc100_es_shibire_kir", "ss00326_Pm2ab_shibire_kir"};
-% strains = {"jfrc100_es_shibire_kir", "ss324_t4t5_shibire_kir"};
+% strains = {"jfrc100_es_shibire_kir", "ss00326_Pm2ab_shibire_kir"};
+strains = {"jfrc100_es_shibire_kir", "ss324_t4t5_shibire_kir"};
 % strains = {"jfrc100_es_shibire_kir", "l1l4_jfrc100_shibire_kir"};
 data_types = {'av_data', 'dist_data_delta'};
 
@@ -26,6 +27,9 @@ for dt = 1:numel(data_types)
     for st = [1,2]
         strain = strains{st};
         f3 = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type);
+    end 
+    if data_type == "gain"
+        ylim([-0.2 1])
     end 
 end 
 
