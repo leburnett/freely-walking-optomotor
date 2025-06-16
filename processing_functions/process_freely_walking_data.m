@@ -52,6 +52,15 @@ function process_freely_walking_data(date_to_analyse)
 
             end
         end 
+
+        % Display the number of flies / number of vials for this protocol
+        disp(protocol_to_analyse)
+        % Save txt file with the number of vials.
+        protocol_dir = fullfile(results_path, protocol_to_analyse);
+        DATA = comb_data_across_cohorts_cond(protocol_dir);
+        exp_data = generate_exp_data_struct(DATA);
+        export_num_flies_summary(exp_data, protocol_dir);
+
     end
     
     disp(strcat("Finished processing ", date_to_analyse))

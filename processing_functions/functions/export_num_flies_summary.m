@@ -20,6 +20,8 @@ function export_num_flies_summary(exp_data, save_folder)
         
         % Write to file: strain name, n_vials, n_flies_total
         fprintf(fid, '%s\t%d\t%d\n', strain, n_vials, n_flies);
+        % Print the numbers to the command window
+        fprintf('%s\t%d\t%d\n', strain, n_vials, n_flies)
     end
     
     % Close the file
