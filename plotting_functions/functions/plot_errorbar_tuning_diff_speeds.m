@@ -170,7 +170,7 @@ for idx = 1:n_exp
 
     % Extract the relevant data
     acclim1_data = acclim1_data.(data_type);
-    acclim1_data = acclim1_data(:, 1:8000);
+    acclim1_data = acclim1_data(:, 1:900); %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% CHECK THIS
     acclim1_comb_data = vertcat(acclim1_comb_data, acclim1_data);                   
 end 
    
