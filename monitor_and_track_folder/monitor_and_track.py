@@ -157,13 +157,13 @@ if __name__ == "__main__":
     logging.info("Starting automated tracker with timer loop...")
     scan_count = 0
     try:
-        while scan_count < 10:
+        while scan_count < 15:
             did_process = process_all_untracked_folders()
             if did_process:
                 scan_count = 0
             else:
                 scan_count += 1
-            logging.info(f"Sleeping for {SCAN_INTERVAL} seconds... (Scan {scan_count}/10)")
+            logging.info(f"Sleeping for {SCAN_INTERVAL} seconds... (Scan {scan_count}/15)")
             time.sleep(SCAN_INTERVAL)
         logging.info("Reached maximum scan limit with no new data. Exiting.")
     except KeyboardInterrupt:

@@ -45,6 +45,7 @@ def count_results_for_date(date_str):
     dash_date = date_str.replace("_", "-")
     count = 0
     for root, _, files in os.walk(RESULTS_PATH):
+        # logging.info(f"counting results for date")
         count += sum(1 for f in files if f.startswith(dash_date))
     return count
 
