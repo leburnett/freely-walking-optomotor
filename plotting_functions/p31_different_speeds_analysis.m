@@ -16,8 +16,8 @@ exp_data = generate_exp_data_struct(DATA);
 % strains = {"jfrc100_es_shibire_kir", "ss00297_Dm4_shibire_kir"};
 % strains = {"jfrc100_es_shibire_kir", "ss02360_Dm4_shibire_kir"};
 % strains = {"jfrc100_es_shibire_kir", "ss00326_Pm2ab_shibire_kir"};
-strains = {"jfrc100_es_shibire_kir", "ss324_t4t5_shibire_kir"};
-% strains = {"jfrc100_es_shibire_kir", "l1l4_jfrc100_shibire_kir"};
+% strains = {"jfrc100_es_shibire_kir", "ss324_t4t5_shibire_kir"};
+strains = {"jfrc100_es_shibire_kir", "l1l4_jfrc100_shibire_kir"};
 data_types = {'av_data', 'dist_data_delta'};
 
 close all
