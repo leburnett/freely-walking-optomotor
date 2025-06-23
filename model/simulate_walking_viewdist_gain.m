@@ -1,12 +1,11 @@
-function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walking_viewdist_gain(k)
+function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walking_viewdist_gain(k, base_bias)
     % Simulates agent walking in circular arena with Brownian motion
     % and turning modulated by viewing distance.
 
     % Inputs:
-    % T - total time
-    % dt - timestep
-    % arena_radius - radius of the arena
     % k - gain for turning based on viewing distance
+    % base_bias - base turning bias of the agent. This would correspond to
+    % the speed of the grating stimulus.
 
     T = 100;
     arena_radius = 12.5;
@@ -51,7 +50,7 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
         end
 
         % --- Update heading based on Brownian motion and viewing distance ---
-        base_bias = 0.05;
+        % base_bias = 0.05;
         bias_term = k * base_bias * dt;
         brownian_turn = randn()/2 * sqrt(dt);  % Brownian noise
  
