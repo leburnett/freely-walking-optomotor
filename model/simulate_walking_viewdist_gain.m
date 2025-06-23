@@ -1,4 +1,4 @@
-function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walking_viewdist_gain(k, base_bias)
+function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walking_viewdist_gain(k, base_bias, disp_params)
     % Simulates agent walking in circular arena with Brownian motion
     % and turning modulated by viewing distance.
 
@@ -7,7 +7,7 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
     % base_bias - base turning bias of the agent. This would correspond to
     % the speed of the grating stimulus.
 
-    T = 100;
+    T = 30;
     arena_radius = 12.5;
     dt = 1/30;
     time_steps = 0:dt:T;
@@ -22,7 +22,7 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
     vd_traj = zeros(1, n_steps);
 
     % Start at center with random heading
-    x = randi([-5 5], 1);
+    x = -9; %randi([-5 5], 1);
     y = randi([-5 5], 1);
     theta = rand() * 2 * pi;
 
@@ -52,10 +52,11 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
         % --- Update heading based on Brownian motion and viewing distance ---
         % base_bias = 0.05;
         bias_term = k * base_bias * dt;
-        brownian_turn = randn()/2 * sqrt(dt);  % Brownian noise
+        brwn_val = 1.5; % decrease for increased randomness.
+        brownian_turn = randn()/brwn_val * sqrt(dt);  % Brownian noise
  
         d0 = 12;
-        b = 0.1;
+        b = 0.5;
         view_factor = 1 / (1 + exp(b * (viewing_dist - d0)));  % ranges from 0 to 1
         gain_turn = k * view_factor * dt;
 
@@ -66,7 +67,7 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
 
         % --- Inverse relationship: speed drops as turning increases ---
         alpha = 10;          % sensitivity of speed to turning (tune as needed)
-        v_max = 5;         % max possible speed (when not turning)
+        v_max = 4;         % max possible speed (when not turning)
         v_inst = v_max / (1 + alpha * abs(dtheta));
 
         % --- Move forward ---
@@ -91,7 +92,7 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
         v_traj(i) = v_inst;
         g_traj(i) = gain_turn;
         vd_traj(i) = viewing_dist;
-
+   
     end
 
     x_traj = x_traj(2:end);
@@ -100,4 +101,18 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
     v_traj = v_traj(2:end);
     g_traj = g_traj(2:end);
     vd_traj = vd_traj(2:end);
+
+    if disp_params
+        % display the parameters used
+        disp(strcat("T = ", string(T)))
+        disp(strcat("x = ", string(x)))
+        disp(strcat("y = ", string(y)))
+        disp(strcat("k = ", string(k)))
+        disp(strcat("base_bias = ", string(base_bias)))
+        disp(strcat("d0 = ", string(d0)))
+        disp(strcat("b = ", string(b)))
+        disp(strcat("alpha = ", string(alpha)))
+        disp(strcat("v_max = ", string(v_max)))
+        disp(strcat("brwn_val = ", string(brwn_val)))
+    end 
 end
