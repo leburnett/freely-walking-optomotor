@@ -2,7 +2,8 @@
 figure
 tiledlayout(1,5,"TileSpacing","compact");
 base_bias = 0.1;
-k_vals = [0.1, 0.5, 1, 5, 10];
+% k_vals = [0.1, 0.5, 1, 5, 10];
+k_vals = [1, 1.5, 2, 2.5, 3];
 
 for k_id = 1:5
 
@@ -44,9 +45,9 @@ xlabel('Viewing distance')
 ylabel('Turning gain')
 
 
-%% 
+%% Plot gain functions only for different values of 'k'
 
-k_vals = [0.1, 0.5, 1, 5, 10];
+k_vals = [1,1.5,2,2.5,3];
 
 for k_id = 1:5
     k = k_vals(k_id);
@@ -60,6 +61,28 @@ for k_id = 1:5
     ax = gca;
     ax.FontSize = 12;
 end 
+
+
+
+%% Plot random movement - brownian motion
+
+close all
+figure
+k = 0; 
+base_bias = 3;
+
+[x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walking_viewdist_gain(k, base_bias, disp_params);
+
+plot(x_traj, y_traj, 'k', 'LineWidth', 1.2);
+hold on;
+plot(x_traj(1), y_traj(1), 'o', 'MarkerFaceColor', 'w', 'MarkerEdgeColor', 'k', 'DisplayName', 'Start'); % green start
+plot(x_traj(end), y_traj(end), 'o', 'MarkerFaceColor', [0.8 0.8 0.8], 'MarkerEdgeColor', 'k', 'DisplayName', 'End'); % red end
+viscircles([0 0], arena_radius, 'LineStyle', '--', 'Color', [0.5 0.5 0.5]);
+plot(0, 0, 'r+', 'LineWidth', 1.2);
+axis square
+axis off;
+% title(strcat("k = ", string(k)))
+
 
 
 % 

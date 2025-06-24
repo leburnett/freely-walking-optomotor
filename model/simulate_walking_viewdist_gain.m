@@ -69,8 +69,9 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
         end
 
         % --- Update heading based on Brownian motion and viewing distance ---
-        bias_term = k * base_bias * dt;
-        brwn_val = 1.5; % decrease for increased randomness.
+        % bias_term = k * base_bias * dt;
+        bias_term = base_bias * dt;
+        brwn_val = 2.5; % decrease for increased randomness.
         brownian_turn = randn()/brwn_val * sqrt(dt);  % Brownian noise
  
         d0 = 12;
@@ -83,7 +84,7 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
         theta = theta + dtheta;
 
         % --- Inverse relationship: speed drops as turning increases ---
-        alpha = 10;          % sensitivity of speed to turning (tune as needed)
+        alpha = 0;          % sensitivity of speed to turning (tune as needed)
         v_max = 2.5;         % max possible speed (when not turning)
         v_inst = v_max / (1 + alpha * abs(dtheta));
 
@@ -100,9 +101,11 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
             y_new = y;
         end
 
-        % Save state
+        % Update x and y position
         x = x_new;
         y = y_new;
+
+        % Save state
         x_traj(i) = x;
         y_traj(i) = y;
         theta_traj(i) = mod(theta + pi, 2*pi) - pi;  % wrap to [-pi, pi]
@@ -112,6 +115,7 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
    
     end
 
+    % Remove first value
     x_traj = x_traj(2:end);
     y_traj = y_traj(2:end);
     theta_traj = theta_traj(2:end);
