@@ -2,14 +2,18 @@
 figure
 tiledlayout(1,5,"TileSpacing","compact");
 base_bias = 0.1;
+k_vals = [0.1, 0.5, 1, 5, 10];
 
-for k = 1:5
+for k_id = 1:5
 
-    if k>4 
+
+    if k_id>4 
         disp_params=1;
     else
         disp_params=0;
     end 
+
+    k = k_vals(k_id);
 
     [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walking_viewdist_gain(k, base_bias, disp_params);
     
@@ -29,12 +33,33 @@ end
 f = gcf;
 f.Position = [5         562        1795         336];
 
-
+%% Relationship between viewing distance and turning gain
+% Hypothesis - increased turning (higher gain, since there is always low level turning due to gratings)
+% with a smaller viewing distance (closer to the edge). Decreased as
+% viewing distance increases.
 
 figure; 
 plot(vd_traj, g_traj, 'ko')
 xlabel('Viewing distance')
 ylabel('Turning gain')
+
+
+%% 
+
+k_vals = [0.1, 0.5, 1, 5, 10];
+
+for k_id = 1:5
+    k = k_vals(k_id);
+    [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walking_viewdist_gain(k, base_bias, disp_params);
+
+    figure; 
+    plot(vd_traj, g_traj, 'ko')
+    xlabel('Viewing distance')
+    ylabel('Turning gain')
+    title(string(k))
+    ax = gca;
+    ax.FontSize = 12;
+end 
 
 
 % 
