@@ -3,9 +3,28 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
     % and turning modulated by viewing distance.
 
     % Inputs:
-    % k - gain for turning based on viewing distance
-    % base_bias - base turning bias of the agent. This would correspond to
+    % ------
+    % k (float) - gain for turning based on viewing distance.
+
+    % base_bias (float) - base turning bias of the agent. This would correspond to
     % the speed of the grating stimulus.
+
+    % disp_params (bool) - if True then print parameter values.
+
+    % Returns
+    % -------
+
+    % x_traj (array) - x position for 1:n_timepoints.
+
+    % y_traj (array) - y position for 1:n_timepoints.
+
+    % theta_traj (array) - heading for 1:n_timepoints.
+
+    % v_traj (array) - speed for 1:n_timepoints.
+
+    % g_traj (array) - gain value for 1:n_timepoints.
+
+    % vd_traj (array) - viewing distance for 1:n_timepoints.
 
     T = 30;
     arena_radius = 12.5;
@@ -50,24 +69,22 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
         end
 
         % --- Update heading based on Brownian motion and viewing distance ---
-        % base_bias = 0.05;
         bias_term = k * base_bias * dt;
         brwn_val = 1.5; % decrease for increased randomness.
         brownian_turn = randn()/brwn_val * sqrt(dt);  % Brownian noise
  
         d0 = 12;
-        b = 0.5;
+        b = 0.6;
         view_factor = 1 / (1 + exp(b * (viewing_dist - d0)));  % ranges from 0 to 1
         gain_turn = k * view_factor * dt;
 
         % dtheta = brownian_turn + gain_turn * (2*rand()-1);  % random direction for gain
         dtheta = bias_term + brownian_turn + gain_turn;
-
         theta = theta + dtheta;
 
         % --- Inverse relationship: speed drops as turning increases ---
         alpha = 10;          % sensitivity of speed to turning (tune as needed)
-        v_max = 4;         % max possible speed (when not turning)
+        v_max = 2.5;         % max possible speed (when not turning)
         v_inst = v_max / (1 + alpha * abs(dtheta));
 
         % --- Move forward ---
