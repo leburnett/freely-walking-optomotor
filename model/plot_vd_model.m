@@ -1,12 +1,15 @@
 
+%% Plot simulated trajectories after running the model with different values
+% of the parameter 'k':
+
 figure
-tiledlayout(1,5,"TileSpacing","compact");
+tiledlayout(2,5,"TileSpacing","compact", "TileIndexing", "columnmajor");
 base_bias = 0.1;
 % k_vals = [0.1, 0.5, 1, 5, 10];
-k_vals = [1, 1.5, 2, 2.5, 3];
+k_vals = [0.5, 1.5, 2.5, 3.5, 4.5];
+arena_radius = 12.5;
 
 for k_id = 1:5
-
 
     if k_id>4 
         disp_params=1;
@@ -29,10 +32,18 @@ for k_id = 1:5
     axis off;
     title(strcat("k = ", string(k)))
 
+    nexttile 
+    plot(vd_traj, g_traj, 'ko')
+    xlabel('Viewing distance')
+    ylabel('Turning gain')
+    ax = gca;
+    ax.FontSize = 12;
+
 end
 
 f = gcf;
-f.Position = [5         562        1795         336];
+% f.Position = [5         562        1795         336];
+f.Position = [3  327  1798  687];
 
 %% Relationship between viewing distance and turning gain
 % Hypothesis - increased turning (higher gain, since there is always low level turning due to gratings)
@@ -44,16 +55,17 @@ plot(vd_traj, g_traj, 'ko')
 xlabel('Viewing distance')
 ylabel('Turning gain')
 
-
 %% Plot gain functions only for different values of 'k'
 
 k_vals = [1,1.5,2,2.5,3];
+figure
+tiledlayout(1,5,"TileSpacing","compact");
 
 for k_id = 1:5
     k = k_vals(k_id);
     [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walking_viewdist_gain(k, base_bias, disp_params);
 
-    figure; 
+    nexttile 
     plot(vd_traj, g_traj, 'ko')
     xlabel('Viewing distance')
     ylabel('Turning gain')
@@ -62,7 +74,8 @@ for k_id = 1:5
     ax.FontSize = 12;
 end 
 
-
+f = gcf;
+f.Position = [5         562        1795         336];
 
 %% Plot random movement - brownian motion
 
@@ -84,7 +97,104 @@ axis off;
 % title(strcat("k = ", string(k)))
 
 
+%% Plot angular velocity 
 
+%  x - vd_traj - viewing distance
+% y - theta_traj - ang
+
+figure; scatter(vd_traj, abs(rad2deg(theta_traj)), 5, 'k');
+xlabel('Viewing distance (mm)')
+ylabel('Angular velocity (deg/ frame)')
+ax = gca;
+ax.TickDir = 'out';
+ax.LineWidth = 1;
+
+
+
+
+
+
+%% 
+
+% Run model
+k = 4;
+base_bias = 0.3;
+disp_params = 1;
+[x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walking_viewdist_gain(k, base_bias, disp_params);
+
+
+figure
+% plot(vd_traj, g_traj, 'ko')
+
+tiledlayout(2,1,"TileSpacing","compact", "TileIndexing", "columnmajor");
+nexttile
+plot(x_traj, y_traj, 'k', 'LineWidth', 1.2);
+hold on;
+plot(x_traj(1), y_traj(1), 'o', 'MarkerFaceColor', 'w', 'MarkerEdgeColor', 'k', 'DisplayName', 'Start'); % green start
+plot(x_traj(end), y_traj(end), 'o', 'MarkerFaceColor', [0.8 0.8 0.8], 'MarkerEdgeColor', 'k', 'DisplayName', 'End'); % red end
+viscircles([0 0], 121, 'LineStyle', '--', 'Color', [0.5 0.5 0.5]);
+plot(0, 0, 'r+', 'LineWidth', 1.2);
+% axis equal;
+axis off;
+title(strcat("k = ", string(k)))
+
+nexttile 
+plot(vd_traj, g_traj, 'ko')
+xlabel('Viewing distance')
+ylabel('Turning gain')
+ax = gca;
+ax.FontSize = 12;
+
+f = gcf;
+f.Position = [620   174   466   793];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+close
+% rng = 1:numel(x_traj);
+rng = 1:numel(x_traj)/2;
+fly_id = 1; % For model - fly_id is always 1. 
+vd_data = vd_traj;
+av_data = theta_traj*30;
+x_data = x_traj;
+y_data = y_traj;
+cx = 0;
+cy = 0;
+
+plot_traj_vd_av(fly_id, rng, vd_data, av_data, x_data, y_data, cx, cy)
+
+
+%%
+
+% bin_size = 5; % degrees per second
+% n_bins = floor(length(theta_traj(1, :))/bin_size);
+% data_reshaped = reshape(theta_traj, size(theta_traj,1), bin_size, n_bins);
+% binned_data_theta = squeeze(mean(data_reshaped, 2));
+% 
+% data_reshaped = reshape(vd_traj, size(vd_traj,1), bin_size, n_bins);
+% binned_data_vd = squeeze(mean(data_reshaped, 2));
+% 
+% 
+% figure; scatter(binned_data_vd, abs(rad2deg(binned_data_theta)), 15, 'k');
+% xlabel('Viewing distance (mm)')
+% ylabel('Angular velocity (deg/s)')
+% ax = gca;
+% ax.TickDir = 'out';
+% ax.LineWidth = 1;
 % 
 % figure
 % [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walking_viewdist_gain(k*2, base_bias);

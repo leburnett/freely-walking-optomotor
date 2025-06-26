@@ -10,16 +10,24 @@ condition_n = 1;
 
 data = DATA.(strain).(sex);
 
-% frame range
-rng = 350:600;
-
-%% Plot the trajectory of the fly over a given frame range
-
 data_type = "x_data"; 
 cond_data_x = combine_timeseries_across_exp(data, condition_n, data_type);
 
 data_type = "y_data"; 
 cond_data_y = combine_timeseries_across_exp(data, condition_n, data_type);
+
+data_type = "view_dist"; 
+cond_data_vd = combine_timeseries_across_exp(data, condition_n, data_type);
+
+data_type = "av_data"; 
+cond_data_av = combine_timeseries_across_exp(data, condition_n, data_type);
+
+%% Set frame range
+
+rng = 350:600;
+% rng = 300:1200;
+
+%% Plot the trajectory of the fly over a given frame range
 
 % Define the center of the arena
 cx = 122.8079; %calib.centroids(1)/calib.PPM; 
@@ -38,29 +46,28 @@ end
 
 %% PLOT: Trajectory and viewing distance versus angular velocity - both coloured by time.  
 
-data_type = "view_dist"; 
-cond_data_vd = combine_timeseries_across_exp(data, condition_n, data_type);
-
-data_type = "av_data"; 
-cond_data_av = combine_timeseries_across_exp(data, condition_n, data_type);
-
 % % % % Set marker size proportional to the forward speed of the animal. 
 % data_type = "fv_data"; 
 % cond_data_vel = combine_timeseries_across_exp(data, condition_n, data_type);
 % sz = cond_data_vel(id, rng)*5; 
+id = 178;
 
 % % % % Constant marker size:
 sz = 40; 
 
 figure
-tiledlayout(1,2,"TileSpacing", "compact")
+tiledlayout(1,2,"TileSpacing", "tight", "Padding","loose")
 
 nexttile
 scatter(cond_data_vd(id, rng), abs(cond_data_av(id, rng)), sz, rng, 'filled');
+ax = gca;
+ylims = ax.YLim;
+hold on 
+plot([120 120], [0 max(ylims)], "Color", [0.8 0.8 0.8], "LineWidth", 1)
 xlabel('Viewing distance (mm)')
 ylabel('Angular velocity (deg/s)')
 xlim([0 240])
-ax = gca;
+
 ax.TickDir = 'out';
 ax.LineWidth = 1;
 ax.FontSize = 12;
@@ -76,12 +83,22 @@ hold on
 plot(cx, cy, 'r+', 'MarkerSize', 18, 'LineWidth', 1.5, 'DisplayName', 'Centre');
 xlabel('x')
 ylabel('y')
-axis equal
+% axis equal
 axis off
+title(id)
 
 f = gcf;
-f.Position = [240   601   878   379];
+f.Position = [ 240   592   829   388];
 
+%% From behavioural data (DATA):
+
+fly_id = 178;
+vd_data = cond_data_vd;
+av_data = cond_data_av;
+x_data = cond_data_x;
+y_data = cond_data_y;
+
+plot_traj_vd_av(fly_id, rng, vd_data, av_data, x_data, y_data, cx, cy)
 
 %% Extract data only during the stimulus:
 
