@@ -117,8 +117,9 @@ ax.LineWidth = 1;
 %% 
 
 % Run model
-k = 4;
-base_bias = 0.3;
+close
+k = 6;
+base_bias = 0.2;
 disp_params = 1;
 [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walking_viewdist_gain(k, base_bias, disp_params);
 
@@ -166,7 +167,7 @@ f.Position = [620   174   466   793];
 
 close
 % rng = 1:numel(x_traj);
-rng = 1:numel(x_traj)/2;
+rng = 1:numel(x_traj);
 fly_id = 1; % For model - fly_id is always 1. 
 vd_data = vd_traj;
 av_data = theta_traj*30;

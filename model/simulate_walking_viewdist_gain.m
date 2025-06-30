@@ -26,7 +26,7 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
 
     % vd_traj (array) - viewing distance for 1:n_timepoints.
 
-    T = 60; % 30 s
+    T = 30; % 30 s
     arena_radius = 120.5;
     dt = 1/30; % 30 fps equivalent.
     time_steps = 0:dt:T;
@@ -77,11 +77,11 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
             bb = base_bias;
         end 
         bias_term = k * bb * dt; % gain * base turning bias * time step.
-        brwn_val = 1.25; % decrease for increased randomness.
+        brwn_val = 1.2; % decrease for increased randomness.
         brownian_turn = randn()/brwn_val * sqrt(dt);  % Brownian noise
  
-        d0 = 100; % distance at which turning is half maximal
-        b = 0.07; % slope of sigmoid - steepness of transition with distance.
+        d0 = 90; % distance at which turning is half maximal
+        b = 0.02; % slope of sigmoid - steepness of transition with distance.
         view_factor = 1 / (1 + exp(b * (viewing_dist - d0)));  % ranges from 0 to 1
         gain_turn = k * view_factor * dt;
 
@@ -94,7 +94,7 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
         theta = theta + dtheta;
 
         % --- Inverse relationship: speed drops as turning increases ---
-        alpha = 5;          % sensitivity of speed to turning (tune as needed)
+        alpha = 7;          % sensitivity of speed to turning (tune as needed)
         v_max = 20;         % max possible speed (when not turning)
         v_inst = v_max / (1 + alpha * abs(dtheta));
 
