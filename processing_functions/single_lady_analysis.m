@@ -17,7 +17,7 @@ if ~isfolder(fig_date_folder)
     mkdir(fig_date_folder);
 end
 
-save_fig = 0; 
+save_fig = 1; 
 
 %% Method 1 - bootstrapping from p27 ES-Shibire-Kir flies.
 
@@ -154,7 +154,7 @@ load("/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_25/DATA_sin
 
 %% Create time series plots after bootstrapping the "grouped" ES data to have the same number of samples as the single ladies. 
 strain = 'jfrc100_es_shibire_kir';
-cond_idx = 3;
+cond_idx = 1;
 
 data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_data_delta'};
 
@@ -245,9 +245,11 @@ for d = 1:numel(data_types)
         if delta 
             data_type = "dist_data_delta";
         end
-        fname = fullfile(fig_date_folder, strcat("p25_", string(n_samples), "_Cond", string(cond_idx),"_", cond_titles{cond_idx},"_", data_type, ".png"));
+        fname = fullfile(fig_date_folder, strcat("p25_Cond", string(cond_idx),"_", cond_titles{cond_idx},"_", data_type, ".png"));
         exportgraphics(f, fname); 
     end 
+
+    close
 
 end 
 
