@@ -115,6 +115,27 @@ def move_folder(source_root, dest_root, folder_name):
     else:
         logging.warning(f"Source folder not found: {src}")
 
+def copy_mp4s_to_network(local_date_root, network_date_root, date_folder):
+    """Copy all .mp4 files from local date folder to network date folder, preserving structure."""
+    local_root = os.path.join(local_date_root, date_folder)
+    network_root = os.path.join(network_date_root, date_folder)
+    copied = 0
+
+    for dirpath, _, filenames in os.walk(local_root):
+        for file in filenames:
+            if file.lower().endswith(".mp4"):
+                src_file = os.path.join(dirpath, file)
+                rel_path = os.path.relpath(src_file, local_root)
+                dst_file = os.path.join(network_root, rel_path)
+
+                os.makedirs(os.path.dirname(dst_file), exist_ok=True)
+                shutil.copy2(src_file, dst_file)
+                copied += 1
+
+    logging.info(f"Copied {copied} .mp4 files for {date_folder} to network 2_processed")
+    return copied
+
+
 def main():
     tracked_dates = list_date_folders(LOCAL_TRACKED)
     processed_dates = set(list_date_folders(LOCAL_PROCESSED))
@@ -143,6 +164,10 @@ def main():
 
                 # Move network folder
                 move_folder(NETWORK_TRACKED, NETWORK_PROCESSED, date_str)
+
+                # Copy MP4 videos from local to network, nested time folder structure
+                copy_mp4s_to_network(LOCAL_PROCESSED, NETWORK_PROCESSED, date_str)
+                
             else:
                 logging.warning(f"No results found for {date_str}, skipping move.")
 
