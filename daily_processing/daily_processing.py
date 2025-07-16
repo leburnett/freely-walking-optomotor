@@ -1,3 +1,25 @@
+""" Daily Processing Script
+
+This script runs every morning at 6am and runs a matlab processing script on the date folders
+found in 01_tracked (local). There is a copied version of the date folder found in 1_tracked (network). 
+
+This script runs MATLAB function:
+    *'process_freely_walking_data()' -- which creates results files, figure
+        files, and movies for each condition
+
+The results files (created and saved locally by 'process_freely_walking_data') are copied onto 
+the group drive at the indicated NETWORK_RESULTS_ROOT
+
+The figure files (created and saved locally by 'process_freely_walking_data') are copied onto 
+the group drive at the indicated NETWORK_FIGS_ROOT
+
+The date folders are then moved locally (01_tracked to 02_processed) and moved on the network drive
+(1_tracked to 2_processed)
+
+The movies are then copied (preserving the nested folder structure) from the local location to the network drive.
+
+"""
+
 import os
 import shutil
 import subprocess
@@ -27,13 +49,31 @@ NETWORK_FIGS_ROOT = r"\\prfs.hhmi.org\reiserlab\oaky-cokey\exp_figures\overview_
 MATLAB_FUNCTION = "process_freely_walking_data"
 
 def list_date_folders(path):
+    """
+    Creates list of all date folders in specified folder
+    
+    Arguments:
+        path {string} - full path for folder that contains date_folders
+    
+    Return:
+        [] {list} - list of date folders at specified path
+    """
     return [
         name for name in os.listdir(path)
         if os.path.isdir(os.path.join(path, name)) and name.count('_') == 2 and name.startswith("2025_")
     ]
 
 def has_results_for_date(date_folder_name):
-    """Check if any result files exist that start with the given date (converted to dash format)."""
+    """
+    Check if any result files exist that start with the given date (converted to dash format).
+    
+    Arguments:
+        date_folder_name {string} - individual date folder correlated with experiments
+    
+    Return:
+        {bool} - whether the results files exist for that date (whether the date has already been processed)
+    """
+    
     dash_date = date_folder_name.replace("_", "-")
     for root, _, files in os.walk(RESULTS_PATH):
         for file in files:
@@ -42,6 +82,15 @@ def has_results_for_date(date_folder_name):
     return False
 
 def count_results_for_date(date_str):
+    """
+    Counts how many results files exist for given experiment date
+    
+    Arguments: 
+        date_str {string} - experiment, date folder name
+    
+    Return:
+        count {int} - number of results files with the date string in name (results files all start with the date string) 
+    """
     dash_date = date_str.replace("_", "-")
     count = 0
     for root, _, files in os.walk(RESULTS_PATH):
@@ -50,7 +99,17 @@ def count_results_for_date(date_str):
     return count
 
 def copy_results_to_network(local_results_root, network_results_root, date_string_with_dashes):
-    """Copy .mat files generated for a given date while preserving folder structure."""
+    """
+    Copy .mat files generated for a given date while preserving folder structure. Files copied to network drive location. 
+    
+    Arguments:
+        local_results_root {string} - origin; full file path location for results files (on local drive)
+        network_results_root {string} - destination; full file path location for results files (on network drive)
+        date_string_with_dashes {string} - experiment, date folder name
+        
+    Return:
+        copied_files {int} - count of figure files copied to destination
+    """
     copied_files = 0
     for dirpath, _, filenames in os.walk(local_results_root):
         for file in filenames:
@@ -71,7 +130,17 @@ def copy_results_to_network(local_results_root, network_results_root, date_strin
     return copied_files
 
 def copy_figs_to_network(local_figs_root, network_figs_root, date_string_with_dashes):
-    """Copy figure (pdf or png) files generated for a given date while preserving folder structure."""
+    """
+    Copy figure (pdf or png) files generated for a given date while preserving folder structure.
+    
+    Arguments:
+        local_figs_root {string} - origin; full file path location for figure files (on local drive)
+        network_figs_root {string} - destination; full file path location for figure files (on network drive)
+        date_string_with_dashes {string} - experiment, date folder name
+    
+    Return:
+        copied_files {int} - count of figure files copied to destination   
+    """
     copied_files = 0
     for dirpath, _, filenames in os.walk(local_figs_root):
         for file in filenames:
@@ -92,6 +161,15 @@ def copy_figs_to_network(local_figs_root, network_figs_root, date_string_with_da
     return copied_files
 
 def run_matlab_function(date_str):
+    """
+    Runs specified matlab function using command line function. 
+    
+    Arguments:
+        date_str {string} - name of date folder that is passed as an argument to the matlab function
+        
+    Return:
+        {bool} - TRUE if matlab function runs successfully, FALSE if matlab error
+    """
     try:
         cmd = f'matlab -batch "{MATLAB_FUNCTION}(\'{date_str}\')"'
         logging.info(f"Running MATLAB command: {cmd}")
@@ -103,6 +181,17 @@ def run_matlab_function(date_str):
         return False
 
 def move_folder(source_root, dest_root, folder_name):
+    """
+    Moves entire folder, preserving the folder structure, from one location to another.
+    
+    Arguments:
+        source_root {string} - origin, file path location
+        dest_root {string} - destination, file path location
+        folder_name {string} - name of folder to move
+
+    * WARNING: if the date folder already exists in the destination folder, this function will create a nested 
+    structure and place the moved date folder within the existing date folder. *
+    """
     src = os.path.join(source_root, folder_name)
     dst = os.path.join(dest_root, folder_name)
     if os.path.exists(src):
@@ -116,7 +205,15 @@ def move_folder(source_root, dest_root, folder_name):
         logging.warning(f"Source folder not found: {src}")
 
 def copy_mp4s_to_network(local_date_root, network_date_root, date_folder):
-    """Copy all .mp4 files from local date folder to network date folder, preserving structure."""
+    """
+    Copy all .mp4 files from local date folder to network date folder, preserving structure.
+    Mp4s are in a nested folder structure within experiment folders (organized per time folder)
+    
+    Arguments:
+        local_date_root {string} - origin, file path location
+        network_date_root {string} - 
+        date_folder {string} - 
+    """
     local_root = os.path.join(local_date_root, date_folder)
     network_root = os.path.join(network_date_root, date_folder)
     copied = 0
