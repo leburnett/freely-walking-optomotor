@@ -1,4 +1,4 @@
-function make_summary_heat_maps_p27()
+function DATA = make_summary_heat_maps_p27()
 
     ROOT_DIR = '/Users/burnettl/Documents/Projects/oaky_cokey';
     
@@ -95,7 +95,7 @@ function make_summary_heat_maps_p27()
         end 
 
         f = gcf;
-        f.Position = [564    73   362   974];
+        f.Position = [2612  -522  373  1588]; %[564    73   362   974];
 
         if multi % Generate separate figure of the colour bar - p values.
 

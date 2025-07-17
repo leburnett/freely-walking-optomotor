@@ -2,12 +2,14 @@ function [pvals_all, target_mean_all, control_mean_all, strain_names] = make_pva
 % The returned arrays are all of the size [n_strains, n_metrics]
 
     % List all of the strains
-    strain_names = fieldnames(DATA);
-    
-    % Remove the control strain from the list
-    control_strain = "jfrc100_es_shibire_kir";
-    strain_names(strcmp(strain_names, control_strain)) = [];
-    
+    % strain_names = fieldnames(DATA);
+    % 
+    % % Remove the control strain from the list
+    % control_strain = "jfrc100_es_shibire_kir";
+    % strain_names(strcmp(strain_names, control_strain)) = [];
+
+    strain_names = load('/Users/burnettl/Documents/Projects/oaky_cokey/results/strain_names.mat');
+    strain_names = strain_names.strain_names;
     n_strains = height(strain_names);
     n_metrics = 27; % This might change and need to be updated.
     
