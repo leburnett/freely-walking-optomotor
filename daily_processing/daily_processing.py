@@ -18,6 +18,21 @@ The date folders are then moved locally (01_tracked to 02_processed) and moved o
 
 The movies are then copied (preserving the nested folder structure) from the local location to the network drive.
 
+Global Variables:
+    LOCAL_TRACKED = r"C:\Users\burnettl\Documents\oakey-cokey\DATA\01_tracked"
+    LOCAL_PROCESSED = r"C:\Users\burnettl\Documents\oakey-cokey\DATA\02_processed"
+    NETWORK_TRACKED = r"\\prfs.hhmi.org\reiserlab\oaky-cokey\data\1_tracked"
+    NETWORK_PROCESSED = r"\\prfs.hhmi.org\reiserlab\oaky-cokey\data\2_processed"
+    RESULTS_PATH = r"C:\Users\burnettl\Documents\oakey-cokey\results"
+
+    LOCAL_RESULTS_ROOT = r"C:\Users\burnettl\Documents\oakey-cokey\results"
+    NETWORK_RESULTS_ROOT = r"\\prfs\reiserlab\oaky-cokey\exp_results"
+
+    LOCAL_FIGS_ROOT = r"C:\Users\burnettl\Documents\oakey-cokey\figures\overview_figs"
+    NETWORK_FIGS_ROOT = r"\\prfs.hhmi.org\reiserlab\oaky-cokey\exp_figures\overview_figs"
+
+    MATLAB_FUNCTION = "process_freely_walking_data"
+
 """
 
 import os

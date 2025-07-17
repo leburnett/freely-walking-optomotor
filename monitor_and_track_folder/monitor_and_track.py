@@ -30,6 +30,14 @@ TRACKING_OUTPUT = "trx.mat"
 SCAN_INTERVAL = 300  # seconds (5 minutes)
 
 def is_folder_complete(folder_path):
+    """Checks if the folder contains all necessary components for tracking. 
+    
+    Arguments:
+        folder_path {string} - full path for folder that contains date_folders
+    
+    Return:
+        {bool} - whether the folder is complete
+    """
     try:
         files = os.listdir(folder_path)
         return (
@@ -42,12 +50,28 @@ def is_folder_complete(folder_path):
         return False
 
 def has_been_processed(folder_path):
+    """ Check if the folder has already been processed. 
+    
+    Arugments:
+        folder_path {string} - full file path location for date folder
+    
+    Return:
+        {bool} - whether the folder already exists in the processed folder
+    """
     rel_path = os.path.relpath(folder_path, GROUP_DRIVE_PATH)
     tracked_path = os.path.join(TRACKED_PATH, rel_path)
     processed_path = os.path.join(PROCESSED_PATH, rel_path)
     return os.path.exists(tracked_path) or os.path.exists(processed_path)
 
 def copy_to_local(folder_path):
+    """ Copy folder from network path to local path. 
+    
+    Arguments:
+        folder_path {string} - full file path location for the date folder 
+    
+    Return:
+        local_path {string} - full file path to the location of the newly copied folder
+    """
     rel_path = os.path.relpath(folder_path, GROUP_DRIVE_PATH)
     local_path = os.path.join(LOCAL_PATH, rel_path)
     os.makedirs(os.path.dirname(local_path), exist_ok=True)
@@ -64,6 +88,15 @@ def copy_to_local(folder_path):
         return local_path
 
 def run_matlab_tracking(folder_path):
+    """ Runs specified matlab function ('batch_track_ufmf()') using command line function 
+    
+    Arguments:
+        folder_path {string} - full file path for the experiment folder (time folder) that is passed as an 
+        arguement to the matlab function
+    
+    Return:
+        {bool} - TRUE if matlab function runs successfully, FALSE if matlab error
+    """
     try:
         folder_path_matlab = folder_path.replace("\\", "/")
         cmd = f'matlab -batch "cd(\'{folder_path_matlab}\'); {MATLAB_FUNCTION}(\'{folder_path_matlab}\')"'
@@ -75,12 +108,26 @@ def run_matlab_tracking(folder_path):
         return False
 
 def tracking_successful(folder_path):
+    """Confirm that tracking was successful (checks for TRACKING_OUTPUT - defined as global variable)
+
+    Argument:
+        folder_path {string} - full file path for experiment folder (time folder)
+    
+    Return:
+        {bool} - TRUE if tracking successful, FALSE if tracking failed
+    """
     for root, _, files in os.walk(folder_path):
         if TRACKING_OUTPUT in files:
             return True
     return False
 
 def move_to_tracked(local_folder):
+    """ Moves local folder from unprocessed local location (00_unprocessed) to tracked local location (01_tracked) while 
+    preserving folder structure.
+    
+    Arguement:
+        local_folder {string} - full file path location for the experiment folder (time folder)
+    """
     rel_path = os.path.relpath(local_folder, LOCAL_PATH)
     final_dest = os.path.join(TRACKED_PATH, rel_path)
     local_archive_dest = os.path.join(TRACKED_LOCAL_PATH, rel_path)
@@ -134,6 +181,7 @@ def move_to_tracked(local_folder):
 
 
 def process_all_untracked_folders():
+    """Processes all untracked folders found in the GROUP_DRIVE_PATH """
     logging.info("Scanning for untracked folders...")
     processed_folders = False
 
