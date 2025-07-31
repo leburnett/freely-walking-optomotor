@@ -1,0 +1,67 @@
+% Batch process with simle_noninteractive_flytracker.m
+% 01/10/24
+% Burnett
+function tracking_log = batch_track_ufmf_p27(date_folder)
+    
+    % date_folder = 'C:\MatlabRoot\FreeWalkOptomotor\data\2024_09_30\Protocol_v11_OFF_no_flicker';
+    
+    cd(date_folder)
+
+    if isfolder("protocol_27\")
+
+        cd("protocol_27\")
+    
+        % Find all ufmf video files within the date folder. 
+        ufmf_files = dir(fullfile(date_folder, 'protocol_27\', '**', '*.ufmf'));
+        n_videos = height(ufmf_files);
+        
+        % set options (omit any or all to use default options)
+        options.num_chunks   = 16;       % set either granularity or num_chunks
+        options.num_cores    = 8;
+        options.max_minutes  = Inf;
+        options.save_JAABA   = 1;
+        options.save_seg     = 0;
+        options.do_recompute_tracking = 1;
+        
+        % Set path to calibration file.
+        base_calib = 'C:\MatlabRoot\FreeWalkOptomotor\data\calibration.mat';
+    
+        video_names = cell(n_videos, 1);
+        t2track = zeros(n_videos, 1);
+    
+        for f=1:n_videos
+        
+            % output_folder_name  = ufmf_files(f).folder;
+            output_folder_name = fullfile(ufmf_files(f).folder, ufmf_files(f).name(1:end-5));
+            input_video_file_name = fullfile(ufmf_files(f).folder, ufmf_files(f).name);
+    
+            % set input_calibration file as the calibration.mat within the time
+            % folder
+            if exist('calibration.mat', 'var')
+                input_calibration_file_name = fullfile(ufmf_files(f).folder, 'calibration.mat');
+            else
+                input_calibration_file_name = base_calib;
+            end
+        
+            tic
+            simple_noninteractive_flytracker( ...
+                output_folder_name ...
+                , input_video_file_name ...
+                , input_calibration_file_name ...
+                , options ...
+                )
+            t2t = toc;
+            disp(t2t)
+    
+            % For logging
+            video_names{f, 1} = ufmf_files(f).folder;
+            t2track(f, 1) = t2t;
+        end
+    else
+        disp("No folder 'protocol_27'")
+    end 
+    % tracking_log = table(video_names, t2track);
+    % log_fname = fullfile('C:\MatlabRoot\FreeWalkOptomotor\tracking_log', strcat('Tracked_', date_folder(end-9:end), '.mat'));
+    % save(log_fname, 'tracking_log')
+    tracking_log = 1;
+end 

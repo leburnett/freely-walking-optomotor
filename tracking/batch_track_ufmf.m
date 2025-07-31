@@ -17,9 +17,10 @@ function tracking_log = batch_track_ufmf(date_folder)
     options.max_minutes  = Inf;
     options.save_JAABA   = 1;
     options.save_seg     = 0;
+    options.do_recompute_tracking = 1;
     
     % Set path to calibration file.
-    input_calibration_file_name = 'C:\MatlabRoot\FreeWalkOptomotor\data\calibration.mat';
+    base_calib = 'C:\MatlabRoot\FreeWalkOptomotor\data\calibration.mat';
 
     video_names = cell(n_videos, 1);
     t2track = zeros(n_videos, 1);
@@ -29,6 +30,14 @@ function tracking_log = batch_track_ufmf(date_folder)
         % output_folder_name  = ufmf_files(f).folder;
         output_folder_name = fullfile(ufmf_files(f).folder, ufmf_files(f).name(1:end-5));
         input_video_file_name = fullfile(ufmf_files(f).folder, ufmf_files(f).name);
+
+        % set input_calibration file as the calibration.mat within the time
+        % folder
+        if exist('calibration.mat', 'var')
+            input_calibration_file_name = fullfile(ufmf_files(f).folder, 'calibration.mat');
+        else
+            input_calibration_file_name = base_calib;
+        end
     
         tic
         simple_noninteractive_flytracker( ...
