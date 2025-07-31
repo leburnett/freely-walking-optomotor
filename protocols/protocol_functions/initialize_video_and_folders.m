@@ -74,8 +74,6 @@ else
     LOG.meta.n_flies = params.nFlies;
 end 
 
-% Export meta data to Google Form:
-
 %  Add date and time str to params:
 params.Date = string(date_str);
 params.Time = strrep(string(time_str), ':', '-');
