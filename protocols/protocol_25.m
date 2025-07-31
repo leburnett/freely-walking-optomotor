@@ -22,7 +22,7 @@ d = initialize_temp_recording();
 
 % Protocol parameters: 
 t_acclim_start = 300; %00; %300; % 5 minutes of recording behaviour in the dark before the experiment begins.
-t_flash = 10; % 10s of full field flashing 
+t_flash = 5; % 5s of full field flashing 
 t_acclim_end = 30; %30;
 t_interval = 20; % 30s interval between stimuli
 t_pause = 0.01;

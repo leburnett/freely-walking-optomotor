@@ -1,20 +1,13 @@
-% Protocol_27.m  - Screen protocol 2 - updated 10th March 2025
-% Based on protocol 24
+% Protocol_32.m  - 60deg and 15 deg gratings - very long trial durations
+% Based on protocol 31
 
 % Includes:
 % - off background interval - pattern 47
-% - 60 deg gratings - 2 speeds
-% - thin non50:50 bars - 2 speeds
-% - curtains - fast  - on / off - 32px not 16 px
-% - reverse phi - 2 speeds
-% - flicker - 1 speed
-% - stationary grating pattern - 60 deg
-% - stationary bar - on - phototaxis - 32px
-% - shifted centre of rotation - 60 deg - 0.8
-
-% 20s interval
-% 30s trial duration - 2x trials
-% stationary bars = 60s only one position
+% - greyscale (4-bit - 3 val) background for interval - pattern 25
+% 60 deg gratings and 15 deg gratings - 2 minute trials - one direction
+% only.
+% Flicker as well.
+% Both at 4Hz and 127 fps. 
 
 clear 
 
@@ -37,18 +30,11 @@ t_pause = 0.01;
 
 % [pattern_id, interval_id, speed_patt, speed_int, trial_dur, int_dur, condition_n]
 all_conditions = [ 
-    9, 47, 127, 1, 15, t_interval, 1; %  60 deg gratings - 4Hz - 1 px step pattern
-    27, 47, 127, 1, 15, t_interval, 2; % 60 deg gratings - 8Hz - 2px step pattern
-    17, 47, 127, 1, 15, t_interval, 3; % 2:14 ON bars - 4Hz
-    24, 47, 127, 1, 15, t_interval, 4; % 2:14 OFF bars - 4Hz
-    51, 47, 127, 1, 15, t_interval, 5; % ON curtains - 8Hz - 32 px
-    52, 47, 127, 1, 15, t_interval, 6; % OFF curtains - 8Hz - 32 px
-    60, 47, 32, 1, 15, t_interval, 7;  % Reverse Phi - 16px bar - 8px step
-    60, 47, 64, 1, 15, t_interval, 8;  % Reverse Phi - 16px bar - 8px step
-    10, 47, 8, 1, 15, t_interval, 9;  % Flicker - 4Hz
-    10, 47, 0, 1, 15, t_interval, 10; % static grating - 60deg
-    21, 47, 127, 1, 15, t_interval, 11; % shifted centre of rotation - 60deg - 0.8
-    57, 47, 1, 1, 45, t_interval, 12; % bar fixation - 32px ON - single bar
+    9, 25, 127, 1, 120, t_interval, 1; %  60 deg gratings - 4Hz - 1 px step pattern
+    10, 25, 8, 1, 120, t_interval, 2;  % 60 deg gratings - Flicker - 4Hz
+    4, 25, 32, 1, 120, t_interval, 3; %  15 deg gratings - 4Hz - 1 px step pattern
+    4, 25, 127, 1, 120, t_interval, 4; %  15 deg gratings - 16Hz - 1 px step pattern
+    5, 25, 8, 1, 120, t_interval, 5;  % 15 deg gratings - Flicker - 4Hz
 ];  
 
 num_conditions = height(all_conditions); 
@@ -146,20 +132,9 @@ for j = [1,2]
          % Display the number of the current condition
         disp (current_condition);
     
-        if current_condition > 11 % Bar fixation stimuli
-            Log = present_fixation_stimulus(current_condition, all_conditions, vidobj, d);
-            fieldName = sprintf('log_%d', log_n);
-            LOG.(fieldName) = Log;
-        elseif current_condition == 5 || current_condition == 6
-            Log = present_optomotor_stimulus_curtain(current_condition, all_conditions, vidobj, d);
-            fieldName = sprintf('log_%d', log_n);
-            LOG.(fieldName) = Log;
-        else
-            Log = present_optomotor_stimulus(current_condition, all_conditions, vidobj, d);
-            % Add the 'Log' from each condition to the overall log 'LOG'.
-            fieldName = sprintf('log_%d', log_n);
-            LOG.(fieldName) = Log;
-        end
+        Log = present_optomotor_stimulus_one_direction(current_condition, all_conditions, vidobj, d);
+        fieldName = sprintf('log_%d', log_n);
+        LOG.(fieldName) = Log;
 
         log_n = log_n+1;
      end
@@ -198,6 +173,9 @@ disp('Log saved')
 prompt = "Notes at end: ";
 notes_str_end = input(prompt, 's');
 params.NotesEnd = notes_str_end;
+
+% % Export to the google sheet log:
+% export_to_google_sheets(params)
 
 if params.Strain == "test"
     disp("Data not sent to google sheet since this is a test.")

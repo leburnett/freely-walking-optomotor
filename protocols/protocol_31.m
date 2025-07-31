@@ -33,10 +33,10 @@ all_conditions = [
     9, 47, 127, 1, 15, t_interval, 3; %  60 deg gratings - 4Hz - 1 px step pattern
     27, 47, 127, 1, 15, t_interval, 4; % 60 deg gratings - 8Hz - 2px step pattern
     10, 47, 8, 1, 15, t_interval, 5;  % 60 deg gratings - Flicker - 4Hz
-    4, 47, 32, 1, 15, t_interval, 6; %  15 deg gratings - 1Hz - 1 px step pattern
-    4, 47, 64, 1, 15, t_interval, 7; %  15 deg gratings - 2Hz - 1 px step pattern
-    4, 47, 127, 1, 15, t_interval, 8; %  15 deg gratings - 4Hz - 1 px step pattern
-    63, 47, 127, 1, 15, t_interval, 9; % 15 deg gratings - 8Hz - 2px step pattern
+    4, 47, 32, 1, 15, t_interval, 6; %  15 deg gratings - 4Hz - 1 px step pattern
+    4, 47, 64, 1, 15, t_interval, 7; %  15 deg gratings - 8Hz - 1 px step pattern
+    4, 47, 127, 1, 15, t_interval, 8; %  15 deg gratings - 16Hz - 1 px step pattern
+    63, 47, 127, 1, 15, t_interval, 9; % 15 deg gratings - 32Hz - 2px step pattern
     5, 47, 8, 1, 15, t_interval, 10;  % 15 deg gratings - Flicker - 4Hz
 ];  
 
