@@ -39,11 +39,11 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
         cd(fullfile(time_folders(exp).folder, time_folders(exp).name))
 
         data_path = cd;
-        % Check if windows / mac
-        % MAC
-        % subfolders = split(data_path, '/');
-        % WINDOWS
-        subfolders = split(data_path, '\');
+        if contains(data_path, '/') % Mac
+            subfolders = split(data_path, '/');
+        elseif contains(data_path, '\') % Windows
+            subfolders = split(data_path, '\');
+        end 
 
         if height(subfolders)>12 % landing site included.
             sex = subfolders{end-1};

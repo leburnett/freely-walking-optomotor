@@ -181,7 +181,11 @@ def move_to_tracked(local_folder):
 
 
 def process_all_untracked_folders():
-    """Processes all untracked folders found in the GROUP_DRIVE_PATH """
+    """Processes all untracked folders found in the GROUP_DRIVE_PATH 
+    
+    This is the function to be called in 'main' and it automatically tracks all folders in the GROUP_DRIVE_PATH. 
+    
+    """
     logging.info("Scanning for untracked folders...")
     processed_folders = False
 
@@ -202,6 +206,9 @@ def process_all_untracked_folders():
     return processed_folders
 
 if __name__ == "__main__":
+    """ Processes all untracked folders found in the group drive path. 
+    Sleeps for 5 minutes and checks folder 15 times before shutting down.
+    """
     logging.info("Starting automated tracker with timer loop...")
     scan_count = 0
     try:
