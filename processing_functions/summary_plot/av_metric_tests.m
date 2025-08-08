@@ -23,6 +23,8 @@ function [pvals, target_mean, control_mean] = av_metric_tests(cond_data, cond_da
 
     cond_data2 = cond_data;
     cond_data_control2 = cond_data_control;
+    % Flip sign of second half of stimulus so that all angular velocities
+    % are +ve 
     cond_data2(:, 762:1210) = cond_data2(:, 762:1210)*-1;
     cond_data_control2(:, 762:1210) = cond_data_control2(:, 762:1210)*-1;
 

@@ -118,25 +118,26 @@ plot(mean_data_dwn, 'Color', col, 'LineWidth', lw);
 
 if data_type == "dist_data"
     rng = [20 120];
-    if delta 
-        rng = [-40 20];
-    end 
+    % if delta 
+    %     rng = [-40 20];
+    % end 
 elseif data_type == "fv_data"
     rng = [0 20];
 else
-    rng = [];
-    maxx_y = max(max_y_vals(idx2, :));
-    if maxx_y < 0
-        rng(2) = maxx_y*1.1;
-    elseif maxx_y >=0 
-        rng(2) = maxx_y*0.9;
-    end
-    minn_y = min(min_y_vals(idx2, :));
-    if minn_y < 0
-        rng(1) = minn_y*1.1;
-    elseif minn_y >=0 
-        rng(1) = minn_y*0.9;
-    end 
+    rng = [-220 220];
+    % rng = [];
+    % maxx_y = max(max_y_vals(idx2, :));
+    % if maxx_y < 0
+    %     rng(2) = maxx_y*1.1;
+    % elseif maxx_y >=0 
+    %     rng(2) = maxx_y*0.9;
+    % end
+    % minn_y = min(min_y_vals(idx2, :));
+    % if minn_y < 0
+    %     rng(1) = minn_y*1.1;
+    % elseif minn_y >=0 
+    %     rng(1) = minn_y*0.9;
+    % end 
 end 
 
 plot([(fl/step_size)-5 (fl/step_size)-5], rng, 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5)
@@ -162,13 +163,13 @@ ax.FontSize = 16;
 
 switch data_type
     case "dist_data"
-        if d_fv == 1
-            ylb = 'Distance from centre / fv-data - delta (s)';
-        elseif delta == 1
-            ylb = 'Distance from centre - delta (mm)';
-        else
+        % if d_fv == 1
+        %     ylb = 'Distance from centre / fv-data - delta (s)';
+        % elseif delta == 1
+        %     ylb = 'Distance from centre - delta (mm)';
+        % else
             ylb = 'Distance from centre (mm)';
-        end
+        % end
 
     case "dist_trav"
         ylb = 'Distance travelled (mm)';

@@ -25,7 +25,7 @@ function DATA = make_summary_heat_maps_p27()
     end 
 
     %% Perform FDR adjustment to p-values.
-    [h_01, crit_p_all, adj_p_all]=fdr_bh(pvals_all_cond, 0.01, 'dep', 'yes');
+    [h_01, crit_p_all, adj_p_all]=fdr_bh(pvals_all_cond, 0.001, 'dep', 'yes');
     % adj_p_all is of the size [n_strains*n_conditions, n_metrics]
 
     %% Plot the heat maps for each condition with the adjusted p values.
@@ -91,6 +91,16 @@ function DATA = make_summary_heat_maps_p27()
 
             plot_pval_heatmap_strains(adj_p, t_all, c_all, plot_x, multi)
 
+            grid on
+            ax = gca;
+            xt = ax.XTick;
+            ax.XTick = xt + 0.5; 
+            yt = ax.YTick;
+            ax.YTick = yt + 0.5;
+
+            ax.XAxis.TickLength = [0 0];
+            ax.YAxis.TickLength = [0 0]; 
+
             title(strrep(strain_names{strain_n}, '_', '-'))
         end 
 
@@ -114,7 +124,7 @@ function DATA = make_summary_heat_maps_p27()
             0 0 1;...
             ];
 
-            imagesc(c_array);
+            imagesc(flip(c_array)); % Flip to go from blue to red
             hold on
             text(1,1,'<= 0.00001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
             text(2,1,'< 0.0001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')

@@ -6,6 +6,12 @@ function plot_pval_heatmap_strains(pvals_all, target_mean_all, control_mean_all,
     diff_array2(diff_array2>0) = 1;
     diff_array2(diff_array2<=0) = -1;
 
+    % Add here if changing the sign for reverse phi and centring:
+    % Rows 7&8 = reverse phi, cols 8:17
+    % Cols 18-23 = centring. 
+    diff_array2(:,18:23) = diff_array2(:, 18:23)*-1;
+    diff_array2(7:8,8:17) = diff_array2(7:8, 8:17)*-1;    
+
     % Initialize RGB image
     [m, n] = size(pvals_all);
     heatmap_rgb = ones(m, n, 3); % Start with white background
@@ -64,6 +70,7 @@ function plot_pval_heatmap_strains(pvals_all, target_mean_all, control_mean_all,
     plot([7.5 7.5], [0 13], 'k-', 'LineWidth', 1.2);
     plot([11.5 11.5], [0 13], 'k-', 'LineWidth', 1.2);
     plot([17.5 17.5], [0 13], 'k-', 'LineWidth', 1.2);
+    plot([20.5 20.5], [0 13], 'k-', 'LineWidth', 1.2);
     plot([23.5 23.5], [0 13], 'k-', 'LineWidth', 1.2);
 
     if plot_x
@@ -98,6 +105,7 @@ function plot_pval_heatmap_strains(pvals_all, target_mean_all, control_mean_all,
             'str-end-stim-5', ...
             'str-int-start-5', ...
             })
+        % xtickangle(90)
     else
         xticks(1:27)
         xticklabels({''})
