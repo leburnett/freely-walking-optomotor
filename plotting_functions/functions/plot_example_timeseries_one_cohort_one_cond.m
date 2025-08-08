@@ -87,24 +87,16 @@ end
 
 fl = int16(mean(fl_start_f))+10; % Find frame for end of stimulus and beginning of interval. 
 mean_data = nanmean(cond_data(:, 1:fl+300)); % 10s before and 10s after. 
-
-% % % % % Bin the data
-n_datapoints = size(mean_data, 2);
-n_flies_in_cond = size(cond_data, 1);
-window_size = 15;
-step_size = 5;
-n_bins = floor((n_datapoints - 1 - window_size) / step_size) + 1;
 sem_data = nanstd(cond_data)/sqrt(size(cond_data,1));
 
-mean_data_dwn = nan(1, n_bins);
-sem_data_dwn = nan(1, n_bins);
+% % % % % Bin the data
+window_size = 15;
+step_size = 5;
+n_datapoints = size(mean_data, 2);
+% n_flies_in_cond = size(cond_data, 1);
 
-for b = 1:n_bins
-    start_idx = (b-1) * step_size+1;  % Start of the window
-    end_idx = start_idx + window_size - 1;        % End of the window
-    mean_data_dwn(1, b) = nanmean(mean_data(1, start_idx:end_idx), 2);
-    sem_data_dwn(1, b) = nanmean(sem_data(1, start_idx:end_idx), 2);
-end 
+mean_data_dwn = bin_data(mean_data, window_size, step_size, 1, n_datapoints); 
+sem_data_dwn = bin_data(sem_data, window_size, step_size, 1, n_datapoints); 
 
 % % % % % % % Plot the data 
 

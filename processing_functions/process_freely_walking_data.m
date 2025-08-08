@@ -5,8 +5,9 @@ function process_freely_walking_data(date_to_analyse)
    
     %% If data recorded after 24/09/2024 - - - new logging / saving system that saves in subfolders. 
 
-    PROJECT_ROOT = '/Users/burnettl/Documents/Projects/oaky_cokey'; %% Update for your computer. 
-    data_path = fullfile(PROJECT_ROOT, 'data');
+    PROJECT_ROOT = '\Users\burnettl\Documents\oakey-cokey\'; %% Update for your computer. 
+    data_path = fullfile(PROJECT_ROOT, 'DATA\01_tracked');
+    % data_path = fullfile(PROJECT_ROOT, 'DATA\02_processed');
     results_path = fullfile(PROJECT_ROOT, 'results');
 
     date_folder = fullfile(data_path, date_to_analyse);
@@ -51,5 +52,16 @@ function process_freely_walking_data(date_to_analyse)
 
             end
         end 
-    end 
+
+        % Display the number of flies / number of vials for this protocol
+        disp(protocol_to_analyse)
+        % Save txt file with the number of vials.
+        protocol_dir = fullfile(results_path, protocol_to_analyse);
+        DATA = comb_data_across_cohorts_cond(protocol_dir);
+        exp_data = generate_exp_data_struct(DATA);
+        export_num_flies_summary(exp_data, protocol_dir);
+
+    end
+    
+    disp(strcat("Finished processing ", date_to_analyse))
 end 

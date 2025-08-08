@@ -10,16 +10,12 @@ function title_str = get_title_from_meta(cond_meta)
     condition_id = cond_meta.condition_id;
 
     switch optomotor_pattern
-
         case 1
             pattern_str = strcat("30deg-gratings-contrast-", string(condition_id));
-
         case 4
             pattern_str = "15deg-gratings";
-
         case 5
             pattern_str = "15deg-flicker";
-
         case 6 
             pattern_str = "30deg-gratings";
 
@@ -177,9 +173,12 @@ function title_str = get_title_from_meta(cond_meta)
 
         case 14
             interval_str = "4ON12OFF-flicker";
+        
+        case 25
+            interval_str = "greyscale3";
 
         case 29 
-            interval_str = "greyscale";
+            interval_str = "greyscale1";
 
         case 47
             interval_str = "dark";

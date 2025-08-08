@@ -39,12 +39,10 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
         cd(fullfile(time_folders(exp).folder, time_folders(exp).name))
 
         data_path = cd;
-        if contains(data_path, '/')
-            delim = '/';
-            subfolders = split(data_path, delim); % mac
-        else
-            delim = '\'; % windows
-            subfolders = split(data_path, delim);
+        if contains(data_path, '/') % Mac
+            subfolders = split(data_path, '/');
+        elseif contains(data_path, '\') % Windows
+            subfolders = split(data_path, '\');
         end 
 
         if height(subfolders)>12 % landing site included.
@@ -125,15 +123,18 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
         n_flies_tracked = length(trx);
         n_flies_removed = n_flies_in_arena - n_flies_tracked;
         n_fly_data = [n_flies_in_arena, n_flies_tracked, n_flies_removed];
+        
+        if n_flies_in_arena>1
+            % 1 - histograms of locomotor parameters
+            f_overview = make_overview(comb_data, strain, sex, protocol);
 
-        % 1 - histograms of locomotor parameters
-        f_overview = make_overview(comb_data, strain, sex, protocol);
-
-        hist_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/loco_histograms';
-        if ~isfolder(hist_save_folder)
-            mkdir(hist_save_folder);
+            hist_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/loco_histograms';
+            hist_save_folder = strrep(hist_save_folder, '/', '\'); % windows
+            if ~isfolder(hist_save_folder)
+                mkdir(hist_save_folder);
+            end
+            saveas(f_overview, fullfile(hist_save_folder, strcat(save_str, '_hist.png')), 'png')
         end
-        saveas(f_overview, fullfile(hist_save_folder, strcat(save_str, '_hist.png')), 'png')
 
         % 2 - features - with individual traces per fly across entire
         % experiment.
@@ -161,6 +162,7 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
                 mkdir(fig_save_folder);
             end
             % fig_save_folder = strcat('/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/', data_type);
+            strain = check_strain_typos(strain);
             f_cond = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_sem);
             fname = fullfile(fig_save_folder, strcat(save_str, '_', data_type, '.pdf'));
             exportgraphics(f_cond ...
@@ -171,7 +173,7 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
 
             if protocol == "protocol_30" % different contrasts
                 f_contrasts = plot_errorbar_tuning_curve_diff_contrasts(DATA, strain, [0.8 0.8 0.8], data_type);
-                con_save_folder = fullfile(PROJECT_ROOT, 'figures/overview_figs/contrast_tuning');
+                con_save_folder = fullfile(PROJECT_ROOT, 'figures\overview_figs\contrast_tuning');
                 if ~isfolder(con_save_folder)
                     mkdir(con_save_folder);
                 end
@@ -184,7 +186,7 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
 
             elseif protocol == "protocol_31" % different speeds
                 f_ebar = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type);
-                sp_save_folder = fullfile(PROJECT_ROOT, 'figures/overview_figs/speed_tuning');
+                sp_save_folder = fullfile(PROJECT_ROOT, 'figures\overview_figs\speed_tuning');
                 if ~isfolder(sp_save_folder)
                     mkdir(sp_save_folder);
                 end
@@ -197,6 +199,14 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
             end 
 
         end 
+        
+        % close open figures and move into the time directory with ufmf file.
+        close all
+        cd("../")
+
+        % Generate videos of each condition
+        add_tracks = 0;
+        generate_movie_from_ufmf(add_tracks)
 
         % Generate videos of each condition
         add_tracks = 0;

@@ -151,8 +151,8 @@ function f = plot_all_features_acclim(LOG, comb_data, title_str)
 
     % Boxplot & scatter - one datapoint per fly.
     mean_per_fly = nanmean(dist_data, 2);
-    max_y_per_fly = max(mean_per_fly)*1.1;
-    min_y_per_fly = min(mean_per_fly)*1.1;
+    max_y_per_fly = max(mean_per_fly);
+    min_y_per_fly = min(mean_per_fly);
 
     subplot(5, 5, 20)
     boxchart(mean_per_fly)
@@ -191,21 +191,33 @@ function f = plot_all_features_acclim(LOG, comb_data, title_str)
 
     % Boxplot & scatter - one datapoint per fly.
     mean_per_fly = nanmean(dist_data_d, 2);
-    max_y_per_fly = max(mean_per_fly)*1.1;
-    min_y_per_fly = min(mean_per_fly)*1.1;
+    if n_flies > 1
+        max_y_per_fly = max(mean_per_fly)*1.1;
+        min_y_per_fly = min(mean_per_fly)*1.1;
+    else
+        if mean_per_fly>0
+            max_y_per_fly = mean_per_fly*1.1;
+            min_y_per_fly = mean_per_fly*0.9;
+        else
+            max_y_per_fly = mean_per_fly*0.9;
+            min_y_per_fly = mean_per_fly*1.1;
+        end 
+    end
 
     subplot(5, 5, 25)
     boxchart(mean_per_fly)
     hold on
     scatter(ones(1, n_flies), mean_per_fly, 40, 'o', 'MarkerEdgeColor', [0.2 0.2 0.2], 'LineWidth', 1.5)
     ylim([floor(min_y_per_fly) ceil(max_y_per_fly)])
-    yticks([floor(min_y_per_fly), 0, ceil(max_y_per_fly)])
+    if max_y_per_fly > 0  && min_y_per_fly < 0
+        yticks([floor(min_y_per_fly), 0, ceil(max_y_per_fly)])
+    end 
     ax = gca; ax.TickDir = 'out'; ax.LineWidth = 1.2; ax.FontSize = 12; box off; ax.XAxis.Visible = 'off'; 
     title(sprintf('%0.2f', mean(mean_per_fly)))
 
     title_str = strrep(title_str, '_', '-');
     sgtitle(strcat(title_str, ' - N=', string(n_flies)))
     f = gcf; 
-    f.Position = [487    76   568   971]; 
+    f.Position = [1661 87 764 1177]; 
 
 end 
