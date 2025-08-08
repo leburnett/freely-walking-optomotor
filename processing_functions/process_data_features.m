@@ -90,7 +90,7 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
         %% Load 'feat'
 
         if contains(mfolder, 'movie') % movie folder configuration
-            feat_file_path = strcat('movie', delim, 'movie-feat.mat');
+            feat_file_path = 'movie/movie-feat.mat';
         else
             feat_file_path = strcat(rec_folder(1).name, '-feat.mat');
         end
@@ -104,11 +104,9 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
         %% Load 'trx'
 
         if contains(mfolder, 'movie') % movie folder configuration
-            trx_file_path = strcat('movie', delim, 'movie_JAABA', delim, 'trx.mat');
-            % trx_file_path = 'movie/movie_JAABA/trx.mat';
-
+            trx_file_path = 'movie/movie_JAABA/trx.mat';
         else
-            trx_file_path = strcat(mfolder, delim, 'trx.mat');
+            trx_file_path = strcat(mfolder, '/', 'trx.mat');
         end
 
         if ~isfile(trx_file_path)
@@ -141,7 +139,7 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
         f_feat = plot_all_features_filt(LOG, comb_data, protocol, save_str);
         f_acclim = plot_all_features_acclim(LOG, comb_data, save_str);
 
-        feat_save_folder = fullfile(PROJECT_ROOT, 'figures/overview_figs/feat_overview');
+        feat_save_folder = fullfile(PROJECT_ROOT, 'figures\overview_figs\feat_overview');
         % feat_save_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/overview_figs/feat_overview';
         if ~isfolder(feat_save_folder)
             mkdir(feat_save_folder);
@@ -157,7 +155,7 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
 
         for typ = 1:numel(data_types)
             data_type = data_types{typ};
-            fig_save_folder = fullfile(PROJECT_ROOT, 'figures/overview_figs/', data_type);
+            fig_save_folder = fullfile(PROJECT_ROOT, 'figures\overview_figs\', data_type);
             if ~isfolder(fig_save_folder)
                 mkdir(fig_save_folder);
             end
