@@ -5,11 +5,11 @@
 % filename: name of output video file (e.g., 'pattern.mp4')
 % fps: frames per second for video output
 
-A = repmat(pattern.Pats, 100, 1);
+A = repmat(pattern.Pats, 300, 1);
 
 filename = "test";
 fps =30;
-bg_val = 0.9;
+bg_val = 0;
 
 % pattern_video_cylindrical
 % Visualises a flat cylindrical LED arena pattern as viewed from above
@@ -20,7 +20,7 @@ bg_val = 0.9;
     [H, W, T] = size(A);
 
     % Output resolution
-    out_size = 1000; % pixels (square output)
+    out_size = 1900; % pixels (square output)
     [X, Y] = meshgrid(linspace(-1,1,out_size), linspace(-1.1,1.1,out_size));
     R = sqrt(X.^2 + Y.^2);
     Theta = atan2(Y, X); % -pi to pi
