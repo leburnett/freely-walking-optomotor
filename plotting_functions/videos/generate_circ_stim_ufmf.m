@@ -79,8 +79,7 @@ for condition_n = cond_to_plot
         end 
 
         % Create the videos. 
-        add_tracks = 1;
-        create_stim_video_loop(log, trx, video_filename, rep, add_tracks)
+        create_stim_video_loop(log, trx, video_filename, rep)
 
     end
 end
