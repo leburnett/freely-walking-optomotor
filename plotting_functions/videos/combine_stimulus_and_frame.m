@@ -35,11 +35,10 @@ function canvas = combine_stimulus_and_frame(frame, im, f, trx)
     % Valid ring mask
     valid_mask = (R >= inner_r) & (R <= outer_r);
     
-    
     % Interpolate; give an extrapolation value to avoid NaNs
     bg_val = 1;  % in [0,1]
     warped = interp2(1:Ws, (1:Hs)', frame, col_idx, row_idx, 'nearest', bg_val);
-    
+
     % Fill outside the ring
     warped(~valid_mask) = bg_val;
 
@@ -56,6 +55,34 @@ function canvas = combine_stimulus_and_frame(frame, im, f, trx)
     
     % Convert to RGB intensity (NOT ind2rgb: this is not indexed)
     canvas = repmat(mat2gray(warped), 1, 1, 3);  % double, [0,1]
+
+    % %  Recolor white parts of stimulus to be green.
+        % Define "white" with a tolerance (adjust if needed)
+        white_tol = 0.999;
+        
+        % Only recolor white pixels that are inside the valid ring and not in the outline
+        green_mask = valid_mask & ~ring_mask & (warped >= white_tol);
+        
+        % Make those pixels pure green
+        r = canvas(:,:,1);
+        r(green_mask) = 0; 
+        canvas(:, :, 1) = r;
+    
+        g = canvas(:,:,2);
+        g(green_mask) = 0.75;   
+        canvas(:,:,2) = g;
+    
+        b = canvas(:,:,3);
+        b(green_mask) = 0;
+        canvas(:,:,3) = b;
+        
+        % Ensure outside the ring stays exactly bg_val on all channels
+        for ch = 1:3
+            tmp = canvas(:,:,ch);
+            tmp(~valid_mask) = bg_val;
+            canvas(:,:,ch) = tmp;
+        end
+
     [Hc, Wc, ~] = size(canvas);
 
     %% Add behavioural video frame in the centre
@@ -105,7 +132,7 @@ function canvas = combine_stimulus_and_frame(frame, im, f, trx)
         end
     end
         
-    r0 = floor((Hc - Hi)/2) + 1;
+    r0 = floor((Hc - Hi)/2) -10;
     c0 = floor((Wc - Wi)/2) + 1;
     
     % Paste only masked pixels

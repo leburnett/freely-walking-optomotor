@@ -78,7 +78,7 @@ function create_stim_video_loop(log, trx, video_filename, rep)
 
             max_stim_frames = curr_pattern.x_num;
 
-            if f == curr_rng(1)
+            if f == curr_rng(1) && section ~=3
                 t = 1; % start on the first frame.
             end 
 
@@ -98,8 +98,11 @@ function create_stim_video_loop(log, trx, video_filename, rep)
             % If it's not an interval or static section...
             if ~ismember(section , [1, n_sections+1]) && optomotor_speed>1
 
-                % ... then move the stimulus. Move every 10th frame.
-                if ismember(f, curr_rng(1):10:curr_rng(end)) 
+                % ... then move the stimulus. 
+                sp_int = 8; % Move every 10th frame.
+
+                if ismember(f, curr_rng(sp_int):sp_int:curr_rng(end)) 
+
                     if stim_dir > 0 % clockwise
                         t = t+1;
                     else
@@ -115,6 +118,7 @@ function create_stim_video_loop(log, trx, video_filename, rep)
                     if t > max_stim_frames
                         t = 1;
                     end 
+
                 end 
             end 
 

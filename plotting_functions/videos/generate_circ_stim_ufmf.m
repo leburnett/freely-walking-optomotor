@@ -14,9 +14,6 @@ function generate_circ_stim_ufmf(varargin)
 %           videos should be made. If empty, then the function defaults to
 %           making videos for all conditions. 
 
-test_data_path = "/Users/burnettl/Documents/Projects/oaky_cokey/data/2025_07_07/protocol_27/ss26283_H1_shibire_kir/F/14_01_24";
-cd(test_data_path);
-
 %%  Initialise paths 
 
 % Add JAABA folder to the path
