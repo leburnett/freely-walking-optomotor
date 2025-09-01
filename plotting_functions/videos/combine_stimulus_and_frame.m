@@ -132,8 +132,8 @@ function canvas = combine_stimulus_and_frame(frame, im, f, trx)
         end
     end
         
-    r0 = floor((Hc - Hi)/2) -10;
-    c0 = floor((Wc - Wi)/2) + 1;
+    r0 = floor((Hc - Hi)/2) - 5;
+    c0 = floor((Wc - Wi)/2) - 10;
     
     % Paste only masked pixels
     sub = canvas(r0:r0+Hi-1, c0:c0+Wi-1, :);

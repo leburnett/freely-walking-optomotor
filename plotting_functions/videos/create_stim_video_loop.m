@@ -5,7 +5,7 @@ function create_stim_video_loop(log, trx, video_filename, rep)
     
     % lowercase log is LOG.log_X. 
     optomotor_pattern = log.optomotor_pattern;
-    interval_pattern = log.interval_pattern;
+    interval_pattern = 47; %log.interval_pattern;
     optomotor_speed = log.optomotor_speed;
     % interval_speed = log.interval_speed;
     condition_n = log.which_condition;
