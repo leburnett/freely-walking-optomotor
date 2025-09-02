@@ -14,6 +14,10 @@ function generate_circ_stim_ufmf(varargin)
 %           videos should be made. If empty, then the function defaults to
 %           making videos for all conditions. 
 
+% Be aware - the path to the patterns, the JAABA directory and the output saving folder are
+% HARD-CODED within "create_stim_video_loop". Please update these paths for
+% your own system.
+
 %%  Initialise paths 
 
 % Add JAABA folder to the path

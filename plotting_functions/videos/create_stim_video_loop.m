@@ -4,7 +4,7 @@ function create_stim_video_loop(log, trx, video_filename, rep)
     [readframe,~,fid,~] = get_readframe_fcn(video_filename);
     
     % lowercase log is LOG.log_X. 
-    optomotor_pattern = log.optomotor_pattern;
+    optomotor_pattern = 9; %log.optomotor_pattern;
     interval_pattern = 47; %log.interval_pattern;
     optomotor_speed = log.optomotor_speed;
     % interval_speed = log.interval_speed;
@@ -28,12 +28,18 @@ function create_stim_video_loop(log, trx, video_filename, rep)
     load(fullfile(pattern_folder, pattern_file), 'pattern');
     int_pattern = pattern;
 
-    %% Open empty avi file. 
+    %% Initialise output movie
+
+    fps = 30; % frames per second. 
+
+    video_output_path = "/Users/burnettl/Documents/Projects/oaky_cokey/condition_videos";
     movie_name = strcat(video_filename(17:end-10), '_condition', string(condition_n),'_pattern', string(optomotor_pattern), '_rep', string(rep), '.mp4');
-    fps = 30;
-    movie_obj = VideoWriter(movie_name, 'MPEG-4');
+    
+    movie_obj = VideoWriter(fullfile(video_output_path, movie_name), 'MPEG-4');
     set(movie_obj,'FrameRate',fps);
     set(movie_obj,'Quality', 100);
+
+    % Open the movie object
     open(movie_obj);
 
     % Show the behaviour before the stimulus as well. 
@@ -71,7 +77,8 @@ function create_stim_video_loop(log, trx, video_filename, rep)
                 curr_rng = log.stop_f(2):frame_rng(end);
         end 
 
-        % Generate video with every other frame to save space:
+        % Generate video with every other frame to save space.
+        % Video will be 2x faster than real time.
         curr_rng = curr_rng(1):2:curr_rng(end);
 
         for f = curr_rng
