@@ -1,10 +1,15 @@
 function canvas = combine_stimulus_and_frame(frame, im, f, trx)
-    % Function to take in pattern and frame and combine them together
+    % Function to take in pattern and frame and combine them together.
 
-    % frame = stimulus frame [3 x 192] - individual frame
-    % im = behavioural video frame
-    % f = frame number of behavioural video. 
-    % trx - contains tracking data
+    % Inputs
+    %   frame = stimulus frame [3 x 192] - individual frame.
+    %   im = behavioural video frame.
+    %   f = frame number. Index of "im" within the behavioural video.
+    %   trx = tracking data.
+
+    % Adds 2s trajectories onto the behavioural video frame. 
+
+    %% Initial variables 
 
     % Output size of the video (pixels)
     output_size = 1500; % (square output)
@@ -99,11 +104,11 @@ function canvas = combine_stimulus_and_frame(frame, im, f, trx)
     
     % Overwrite the pixel values in "im" with the trajectories.
     if add_tracks
-        tail_length = 2*fps;                % 3s
+        tail_length = 2*fps;                % 2s
         rng = max(1, f-tail_length):f;      % safe indices
         n_flies = numel(trx);
         cmap = hsv(n_flies);                % colors in [0,1]
-        line_radius = 2;                    % thickness control (pixels)
+        line_radius = 1;                    % thickness control (pixels)
         SE = strel('disk', line_radius);    % change radius for thicker/thinner
     
         % For each fly, build a mask of its path, dilate once, then paint

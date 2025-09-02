@@ -1,7 +1,8 @@
-
 % Make a subset of the tracking data. 
 % x and y from trx only over "frame_rng"
 
+% Was created to be used with "generate_circ_stim_ufmf". Michael asked for
+% tracking data during the example video.
 
 % Extract only the x and y fields into a new struct
 tracking_data = rmfield(trx, setdiff(fieldnames(trx), {'x','y'}));
@@ -22,7 +23,8 @@ end
 save('tracking_data_2025_04_18_15_58_c3_r1.mat', 'tracking_data');
 
 
-% Check tracking 
+% % % % Check tracking 
+
 % figure
 % for j = 1
 %     for k = 1:15

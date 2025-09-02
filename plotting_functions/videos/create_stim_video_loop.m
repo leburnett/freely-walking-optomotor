@@ -1,10 +1,19 @@
-function create_stim_video_loop(log, trx, video_filename, rep)
-    
+function create_stim_video_loop(log, trx, video_filename, rep, fly_strain)
+% Generates individual "condition-stimulus" videos per condition. This function is called by "generate_circ_stim_ufmf".
+
+% Inputs 
+%       log - struct -  individual 'log_X' field from 'LOG' for the condition. 
+%       trx - table - the tracking data from the entire experiment. Output of
+%       FlyTracker.
+%       video_filename - string - name of the .ufmf video of the entire recording. 
+%       rep - int - 1 or 2, which repetition.
+%       fly_strain - string - genetic strain from LOG.meta.
+
     % JAABA function determines the readframe function to use:
     [readframe,~,fid,~] = get_readframe_fcn(video_filename);
     
     % lowercase log is LOG.log_X. 
-    optomotor_pattern = 9; %log.optomotor_pattern;
+    optomotor_pattern = log.optomotor_pattern;
     interval_pattern = 47; %log.interval_pattern;
     optomotor_speed = log.optomotor_speed;
     % interval_speed = log.interval_speed;
@@ -33,7 +42,7 @@ function create_stim_video_loop(log, trx, video_filename, rep)
     fps = 30; % frames per second. 
 
     video_output_path = "/Users/burnettl/Documents/Projects/oaky_cokey/condition_videos";
-    movie_name = strcat(video_filename(17:end-10), '_condition', string(condition_n),'_pattern', string(optomotor_pattern), '_rep', string(rep), '.mp4');
+    movie_name = strcat(fly_strain, '_', video_filename(17:end-10), '_condition', string(condition_n),'_pattern', string(optomotor_pattern), '_rep', string(rep), '.mp4');
     
     movie_obj = VideoWriter(fullfile(video_output_path, movie_name), 'MPEG-4');
     set(movie_obj,'FrameRate',fps);
@@ -94,6 +103,8 @@ function create_stim_video_loop(log, trx, video_filename, rep)
     
             % Load the the behavioural video frame:
             im = readframe(f);
+            % Create the individual frame. 
+            % Behavioural video, tracks and stimulus combined. 
             canvas = combine_stimulus_and_frame(stim_frame, im, f, trx);
 
             imshow(canvas);

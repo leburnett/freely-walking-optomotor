@@ -14,7 +14,7 @@ function generate_circ_stim_ufmf(varargin)
 %           videos should be made. If empty, then the function defaults to
 %           making videos for all conditions. 
 
-% Be aware - the path to the patterns, the JAABA directory and the output saving folder are
+% NOTE: the path to the patterns, the JAABA directory and the output saving folder are
 % HARD-CODED within "create_stim_video_loop". Please update these paths for
 % your own system.
 
@@ -40,6 +40,7 @@ if isempty(log_files)
 else
     load(log_files(1).name, 'LOG');
 end 
+fly_strain = LOG.meta.fly_strain;
 
 trx_files = dir('**/trx.mat');
 if isempty(trx_files)
@@ -80,7 +81,7 @@ for condition_n = cond_to_plot
         end 
 
         % Create the videos. 
-        create_stim_video_loop(log, trx, video_filename, rep)
+        create_stim_video_loop(log, trx, video_filename, rep, fly_strain)
 
     end
 end
