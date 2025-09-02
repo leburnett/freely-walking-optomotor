@@ -1,4 +1,4 @@
-function generate_circ_stim_ufmf(varargin)
+function generate_circ_stim_ufmf()
   
 % Make videos per condition with the stimulus around the outside of the 
 % behavioural video in a loop.
@@ -56,33 +56,24 @@ fields = fieldnames(LOG);
 log_fields = fields(startsWith(fields, 'log_'));
 n_cond = numel(log_fields)/2;
 
-% If the condition IDs are not given as an input to the function, default
-% to all conditions. 
-if numel(varargin) >= 1
-    cond_to_plot = varargin{1};
-else
-    cond_to_plot = 1:1:n_cond;
-end 
+for i = 1:length(log_fields)
 
-% Run through each condition 
-for condition_n = cond_to_plot
+    disp(strcat("Video for condition ", string(i)))
 
-    disp(strcat("Video for condition ", string(condition_n)))
-    
-    for i = 1:length(log_fields)
+    log_field = log_fields{i};
+    log = LOG.(log_field);
 
-        log_field = log_fields{i};
-        log = LOG.(log_field);
-    
-        if i > n_cond
-            rep = 2;
-        else
-            rep = 1;
-        end 
+    if i > n_cond
+        rep = 2;
+    else
+        rep = 1;
+    end 
 
-        % Create the videos. 
-        create_stim_video_loop(log, trx, video_filename, rep, fly_strain)
+    % Create the videos. 
+    create_stim_video_loop(log, trx, video_filename, rep, fly_strain)
 
-    end
+end
+
+
 end
        
