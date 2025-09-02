@@ -88,7 +88,8 @@ function canvas = combine_stimulus_and_frame(frame, im, f, trx)
     %% Add behavioural video frame in the centre
     
     % Find the pixels to show:
-    mask1 = im>uint8(255/2); % Find bright pixels. 
+    threshold_val = 100; %255/2; 
+    mask1 = im>uint8(threshold_val); % Find bright pixels. 
     mask = imfill(mask1, 'holes');
     m3   = repmat(mask, 1, 1, 3);
 
@@ -98,7 +99,7 @@ function canvas = combine_stimulus_and_frame(frame, im, f, trx)
     
     % Overwrite the pixel values in "im" with the trajectories.
     if add_tracks
-        tail_length = 3*fps;                % 3s
+        tail_length = 2*fps;                % 3s
         rng = max(1, f-tail_length):f;      % safe indices
         n_flies = numel(trx);
         cmap = hsv(n_flies);                % colors in [0,1]
