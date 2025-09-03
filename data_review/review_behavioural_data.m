@@ -2,7 +2,7 @@ function review_behavioural_data()
 % Script to help streamline the process of reviewing the behavioural videos
 % and saving observations in an ordered and efficient way.
 % Run within experiment folder that contains the pre-made '.mp4' files. 
-% Sends observartions to google form -> google sheet.
+% Sends observations to google form -> google sheet.
 
     % 0 - Find all of the MP4 files within the folder:
     mp4_files = dir('*.mp4');
