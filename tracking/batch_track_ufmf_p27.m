@@ -24,7 +24,8 @@ function tracking_log = batch_track_ufmf_p27(date_folder)
         options.do_recompute_tracking = 1;
         
         % Set path to calibration file.
-        base_calib = 'C:\Users\burnettl\Documents\GitHub\freely-walking-optomotor\tracking\calibration.mat';
+
+        base_calib = 'C:\MatlabRoot\FreeWalkOptomotor\data\calibration.mat';
     
         video_names = cell(n_videos, 1);
         t2track = zeros(n_videos, 1);

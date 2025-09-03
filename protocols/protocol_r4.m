@@ -22,7 +22,7 @@ num_acclim = 3;
 
 % Pattern settings
 optomotor_pattern = 1;
-flicker_pattern = 2;
+flicker_pattern = 7;
 optomotor_speed = 64; % in frames per second
 flicker_speed = 8;
 

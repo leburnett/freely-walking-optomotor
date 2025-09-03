@@ -1,4 +1,4 @@
-function Log = present_optomotor_stimulus(current_condition, all_conditions, vidobj, d)
+function Log = present_optomotor_stimulus_w_interval(current_condition, all_conditions, vidobj, d)
 
 % Get temp at the start:
 [t_outside_start, t_ring_start] = get_temp_rec(d);
@@ -10,25 +10,23 @@ function Log = present_optomotor_stimulus(current_condition, all_conditions, vid
  interval_speed = all_conditions(current_condition, 4);
  trial_len = all_conditions(current_condition, 5);
  interval_dur = all_conditions(current_condition, 6);
- which_condition = all_conditions(current_condition, 7);
+ num_trials = all_conditions(current_condition, 7);
+ which_condition = current_condition;
 
-t_stim = trial_len*2; %30;
 t_pause = 0.01;
-
-num_trials = t_stim/trial_len; 
 
 idx_value = 1;
 
-Panel_com('set_pattern_id', optomotor_pattern); pause(t_pause)
-
-% Start stimulus 
-dir_val = -1;
-
 for tr_ind = 1:num_trials
-
+   
     disp(['trial number = ' num2str(tr_ind)])
+    Panel_com('set_pattern_id', optomotor_pattern); pause(t_pause)
 
-    dir_val = dir_val*-1;
+    if tr_ind == 1
+        dir_val = 1;
+    else
+        dir_val = -1;
+    end 
 
     % Log
     Log.trial(idx_value) = idx_value;
@@ -54,7 +52,37 @@ for tr_ind = 1:num_trials
     Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
     Log.stop_f(idx_value) = vidobj.getFrameCount().value;
 
-    % Protocol parameters:
+    idx_value = idx_value+1;
+
+    % INTERVAL 
+    disp('Interval')
+    Panel_com('set_pattern_id', interval_pattern);
+    
+    % Log
+    Log.trial(idx_value) = idx_value;
+    Log.dir(idx_value) = 0;
+    
+    Panel_com('send_gain_bias', [interval_speed 0 0 0]); 
+    pause(t_pause);
+    Panel_com('set_position', [1 1]);
+    pause(t_pause);
+    Panel_com('start'); 
+    pause(t_pause);
+    
+    % get frame and log it
+    Log.start_t(idx_value) = vidobj.getTimeStamp().value;
+    Log.start_f(idx_value) = vidobj.getFrameCount().value;
+    
+    pause(interval_dur); 
+    Panel_com('stop'); 
+    
+    % % get frame and log it 
+    Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
+    Log.stop_f(idx_value) = vidobj.getFrameCount().value;
+
+    idx_value = idx_value+1;
+
+     % Protocol parameters:
     Log.trial_len=trial_len;
     Log.interval_dur=interval_dur;
     Log.num_trials=num_trials;
@@ -63,39 +91,7 @@ for tr_ind = 1:num_trials
     Log.optomotor_speed = optomotor_speed;
     Log.interval_speed = interval_speed;
     Log.which_condition = which_condition;
-
-    idx_value = idx_value+1;
-
 end
-
-%% Flicker pattern 
-disp('Interval')
-Panel_com('set_pattern_id', interval_pattern);
-
-% set dir_val as positive (1)
-dir_val = 0;
-
-% Log
-Log.trial(idx_value) = idx_value;
-Log.dir(idx_value) = dir_val;
-
-Panel_com('send_gain_bias', [interval_speed 0 0 0]); 
-pause(t_pause);
-Panel_com('set_position', [1 1]);
-pause(t_pause);
-Panel_com('start'); 
-pause(t_pause);
-
-% get frame and log it
-Log.start_t(idx_value) = vidobj.getTimeStamp().value;
-Log.start_f(idx_value) = vidobj.getFrameCount().value;
-
-pause(interval_dur); 
-Panel_com('stop'); 
-
-% % get frame and log it 
-Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
-Log.stop_f(idx_value) = vidobj.getFrameCount().value;
 
 % Get the temp at the end
 [t_outside_end, t_ring_end] = get_temp_rec(d);

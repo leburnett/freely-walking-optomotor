@@ -2,7 +2,7 @@
 clear
 %% Input parameters:
 
-hz_val = 1;
+hz_val = 8;
 
 if hz_val == 1
     optomotor_speed = 16; % 64 = baseline % in frames per second

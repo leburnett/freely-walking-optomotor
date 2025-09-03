@@ -15,8 +15,9 @@ t_acclim = 10;
 
 trial_len = 10; % x 2 directions - 20s gratings total
 t_flicker = 20; % 20s interval
+t_pause = 0.015; 
 
-num_trials_per_block = 4;
+num_trials_per_block = 8;
 num_directions = 2; 
 num_reps = 2;
 num_flickers = 2; 
@@ -43,11 +44,9 @@ project_data_folder = 'C:\MatlabRoot\FreeWalkOptomotor\data';
 [LOG, vidobj, exp_folder, date_str, t_str, params] = initialize_video_and_folders(project_data_folder, func_name);
 
 controller_mode = [0 0]; % double open loop
-
 idx_value = 1;
-con_val = 7; 
 
-sz = [((num_trials_per_block*num_directions)*num_reps)+num_flickers+num_acclim, 7];
+sz = [27, 7];
 varTypes = {'double', 'double','double','double','double','double','double'};
 varNames = {'trial', 'contrast', 'dir', 'start_t', 'start_f', 'stop_t', 'stop_f'};
 Log = table('Size',sz,'VariableTypes',varTypes,'VariableNames',varNames);
@@ -81,9 +80,9 @@ disp('Pattern ON')
 Log.start_t(idx_value) = vidobj.getTimeStamp().value;
 Log.start_f(idx_value) = vidobj.getFrameCount().value;
 
-Panel_com('set_mode', controller_mode); pause(0.01)
-Panel_com('set_pattern_id', optomotor_pattern); pause(0.01)
-Panel_com('set_position', [1 con_val]); pause(0.01) 
+Panel_com('set_mode', controller_mode); pause(t_pause)
+Panel_com('set_pattern_id', optomotor_pattern); pause(t_pause)
+Panel_com('set_position', [1 1]); pause(t_pause) 
 pause(t_acclim);
 
 % get frame and log it 
@@ -96,6 +95,10 @@ disp('Acclim ended')
 for tr_ind = 1:num_trials_per_block
 
     disp('clockwise')
+
+    Panel_com('set_mode',controller_mode); pause(t_pause)
+    Panel_com('set_pattern_id', optomotor_pattern); pause(t_pause)
+    Panel_com('set_position', [1 1]); pause(t_pause)
 
     % If not the first trial then add one to idx_value
     if idx_value > 1
@@ -110,20 +113,19 @@ for tr_ind = 1:num_trials_per_block
     Log.dir(idx_value) = dir_val;
 
     Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]);
-    pause(0.01);
-    Panel_com('set_position', [1 con_val]);
-    pause(0.01);
+    pause(t_pause)
+    Panel_com('set_position', [1 1]);
+    pause(t_pause)
     Panel_com('start'); 
-    pause(0.01);
+    pause(t_pause)
 
     % get frame and log it
     Log.start_t(idx_value) = vidobj.getTimeStamp().value;
     Log.start_f(idx_value) = vidobj.getFrameCount().value;
 
     pause(trial_len); % The pattern will run for this ‘Time’
-    pause(0.01); 
     Panel_com('stop'); 
-    pause(0.01);
+    pause(t_pause)
 
     % get frame and log it 
     Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
@@ -141,20 +143,19 @@ for tr_ind = 1:num_trials_per_block
     Log.dir(idx_value) = dir_val;
 
     Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
-    pause(0.01);
-    Panel_com('set_position', [1 con_val]);  
-    pause(0.01);
+    pause(t_pause)
+    Panel_com('set_position', [1 1]);  
+    pause(t_pause)
     Panel_com('start'); 
-    pause(0.01);
+    pause(t_pause)
 
      % get frame and log it 
     Log.start_t(idx_value) = vidobj.getTimeStamp().value;
     Log.start_f(idx_value) = vidobj.getFrameCount().value;
 
     pause(trial_len); 
-    pause(0.01); % The pattern will run for this ‘Time’
     Panel_com('stop'); 
-    pause(0.01);
+    pause(t_pause)
 
     % get frame and log it 
     Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
@@ -162,9 +163,7 @@ for tr_ind = 1:num_trials_per_block
 
     %% INTERVAL - Flicker, static, all ON, all OFF
 
-    disp('interval')
-
-    if tr_ind == 1 % flicker
+    if tr_ind == 1 || tr_ind == 5 % flicker
         disp('flicker')
         Panel_com('set_pattern_id', flicker_pattern);
         idx_value = idx_value+1;
@@ -175,24 +174,23 @@ for tr_ind = 1:num_trials_per_block
         Log.dir(idx_value) = 0;
         
         Panel_com('send_gain_bias', [flicker_speed 0 0 0]); 
-        pause(0.01);
+        pause(t_pause)
         Panel_com('set_position', [1 1]);
-        pause(0.01);
+        pause(t_pause)
         Panel_com('start'); 
-        pause(0.01);
+        pause(t_pause)
         
         Log.start_t(idx_value) = vidobj.getTimeStamp().value;
         Log.start_f(idx_value) = vidobj.getFrameCount().value;
         
         pause(t_flicker);  
-        pause(0.01);
         Panel_com('stop'); 
-        pause(0.01);
+        pause(t_pause)
 
         Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
         Log.stop_f(idx_value) = vidobj.getFrameCount().value;
 
-    elseif tr_ind == 2 % static stripes
+    elseif tr_ind == 2 || tr_ind == 6 % static stripes
         disp('static grating')
         Panel_com('set_pattern_id', flicker_pattern);
         idx_value = idx_value+1;
@@ -203,26 +201,25 @@ for tr_ind = 1:num_trials_per_block
         Log.dir(idx_value) = 0;
         
         Panel_com('send_gain_bias', [0 0 0 0]); % % % % % % speed = 0
-        pause(0.01);
+        pause(t_pause)
         Panel_com('set_position', [1 1]);
-        pause(0.01);
+        pause(t_pause)
         Panel_com('start'); 
-        pause(0.01);
+        pause(t_pause)
         
         % get frame and log it
         Log.start_t(idx_value) = vidobj.getTimeStamp().value;
         Log.start_f(idx_value) = vidobj.getFrameCount().value;
         
         pause(t_flicker);  
-        pause(0.01); 
         Panel_com('stop'); 
-        pause(0.01);
+        pause(t_pause)
         
         % get frame and log it 
         Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
         Log.stop_f(idx_value) = vidobj.getFrameCount().value;
 
-    elseif tr_ind == 3 % all ON
+    elseif tr_ind == 3 || tr_ind == 7 % all ON
         disp('all on')
         Panel_com('all_on');
         idx_value = idx_value+1;
@@ -236,13 +233,12 @@ for tr_ind = 1:num_trials_per_block
         Log.start_f(idx_value) = vidobj.getFrameCount().value;
         
         pause(t_flicker);  
-        pause(0.01); 
 
         % get frame and log it 
         Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
         Log.stop_f(idx_value) = vidobj.getFrameCount().value;
 
-    elseif tr_ind == 4 % all OFF
+    elseif tr_ind == 4 || tr_ind == 8 % all OFF
         disp('all off')
         Panel_com('all_off');
         idx_value = idx_value+1;
@@ -256,184 +252,10 @@ for tr_ind = 1:num_trials_per_block
         Log.start_f(idx_value) = vidobj.getFrameCount().value;
         
         pause(t_flicker);  
-        pause(0.01); 
 
         Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
         Log.stop_f(idx_value) = vidobj.getFrameCount().value;
     end 
-end
-
-
-%% sweeping down contrast block
-
-Panel_com('set_mode',controller_mode);
-Panel_com('set_pattern_id', optomotor_pattern);
-
-for tr_ind = 1:num_trials_per_block
-
-    disp(['trial number = ' num2str(tr_ind)])
-
-    idx_value = idx_value+1;
-    % set dir_val as positive (1)
-    dir_val = 1;
-
-    % Log
-    Log.trial(idx_value) = idx_value;
-    Log.contrast(idx_value) = 1;
-    Log.dir(idx_value) = dir_val;
-
-    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
-    pause(0.01);
-    Panel_com('set_position', [1 con_val]);  
-    pause(0.01);
-    Panel_com('start'); 
-    pause(0.01);
-
-    % get frame and log it
-    Log.start_t(idx_value) = vidobj.getTimeStamp().value;
-    Log.start_f(idx_value) = vidobj.getFrameCount().value;
-
-    pause(trial_len); 
-    pause(0.01); % The pattern will run for this ‘Time’
-    Panel_com('stop'); 
-    pause(0.01);
-
-    % get frame and log it 
-    Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
-    Log.stop_f(idx_value) = vidobj.getFrameCount().value;
-
-    % Add one to idx_value 
-    idx_value = idx_value+1;
-    % set dir_val as opposite (-1)
-    dir_val = -1;
-    
-    % Log
-    Log.trial(idx_value) = idx_value;
-    Log.contrast(idx_value) = 1;
-    Log.dir(idx_value) = dir_val;
-
-    Panel_com('send_gain_bias', [optomotor_speed*dir_val 0 0 0]); 
-    pause(0.01);
-    Panel_com('set_position', [1 con_val]); 
-    pause(0.01);
-    Panel_com('start'); 
-    pause(0.01);
-
-    % get frame and log it 
-    Log.start_t(idx_value) = vidobj.getTimeStamp().value;
-    Log.start_f(idx_value) = vidobj.getFrameCount().value;
-
-    pause(trial_len); 
-    pause(0.01); % The pattern will run for this ‘Time’
-    Panel_com('stop'); 
-    pause(0.01);
-
-    % get frame and log it
-    Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
-    Log.stop_f(idx_value) = vidobj.getFrameCount().value;
-
-    %% INTERVAL - Flicker, static, all ON, all OFF
-
-    disp('interval')
-
-    if tr_ind == 1 % flicker
-        disp('flicker')
-        Panel_com('set_pattern_id', flicker_pattern);
-        idx_value = idx_value+1;
-        
-        % Log
-        Log.trial(idx_value) = idx_value;
-        Log.contrast(idx_value) = 1.2;
-        Log.dir(idx_value) = 0;
-        
-        Panel_com('send_gain_bias', [flicker_speed 0 0 0]); 
-        pause(0.01);
-        Panel_com('set_position', [1 1]);
-        pause(0.01);
-        Panel_com('start'); 
-        pause(0.01);
-        
-        Log.start_t(idx_value) = vidobj.getTimeStamp().value;
-        Log.start_f(idx_value) = vidobj.getFrameCount().value;
-        
-        pause(t_flicker);  
-        pause(0.01);
-        Panel_com('stop'); 
-        pause(0.01);
-
-        Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
-        Log.stop_f(idx_value) = vidobj.getFrameCount().value;
-
-    elseif tr_ind == 2 % static stripes
-        disp('static grating')
-        Panel_com('set_pattern_id', flicker_pattern);
-        idx_value = idx_value+1;
-        
-        % Log
-        Log.trial(idx_value) = idx_value;
-        Log.contrast(idx_value) = 1.3; % % % % % % % 1.3 
-        Log.dir(idx_value) = 0;
-        
-        Panel_com('send_gain_bias', [0 0 0 0]); % % % % % % speed = 0
-        pause(0.01);
-        Panel_com('set_position', [1 1]);
-        pause(0.01);
-        Panel_com('start'); 
-        pause(0.01);
-        
-        % get frame and log it
-        Log.start_t(idx_value) = vidobj.getTimeStamp().value;
-        Log.start_f(idx_value) = vidobj.getFrameCount().value;
-        
-        pause(t_flicker);  
-        pause(0.01); 
-        Panel_com('stop'); 
-        pause(0.01);
-        
-        % get frame and log it 
-        Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
-        Log.stop_f(idx_value) = vidobj.getFrameCount().value;
-
-    elseif tr_ind == 3 % all ON
-        disp('all on')
-        Panel_com('all_on');
-        idx_value = idx_value+1;
-        
-        % Log
-        Log.trial(idx_value) = idx_value;
-        Log.contrast(idx_value) = 1.4; % % % % % % % 
-        Log.dir(idx_value) = 0;
-
-        Log.start_t(idx_value) = vidobj.getTimeStamp().value;
-        Log.start_f(idx_value) = vidobj.getFrameCount().value;
-        
-        pause(t_flicker);  
-        pause(0.01); 
-
-        % get frame and log it 
-        Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
-        Log.stop_f(idx_value) = vidobj.getFrameCount().value;
-
-    elseif tr_ind == 4 % all OFF
-        disp('all off')
-        Panel_com('all_off');
-        idx_value = idx_value+1;
-        
-        % Log
-        Log.trial(idx_value) = idx_value;
-        Log.contrast(idx_value) = 1.5; % % % % % % % 
-        Log.dir(idx_value) = 0;
-
-        Log.start_t(idx_value) = vidobj.getTimeStamp().value;
-        Log.start_f(idx_value) = vidobj.getFrameCount().value;
-        
-        pause(t_flicker);  
-        pause(0.01); 
-
-        Log.stop_t(idx_value) = vidobj.getTimeStamp().value;
-        Log.stop_f(idx_value) = vidobj.getFrameCount().value;
-    end
-
 end
 
 %% Acclim at the end 
@@ -449,6 +271,7 @@ Log.dir(idx_value) = 0;
 Log.start_t(idx_value) = vidobj.getTimeStamp().value;
 Log.start_f(idx_value) = vidobj.getFrameCount().value;
 Panel_com('all_off'); 
+pause(t_pause)
 disp('Acclim OFF')
 
 pause(t_acclim); 

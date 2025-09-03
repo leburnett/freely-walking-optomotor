@@ -1,7 +1,7 @@
 
 % Protocol_v6_shiftcentre.m
 % Optomotor stimulus with shifted centre of rotation. 
-
+clear
 %% Input parameters:
 
 % CHANGE THIS TO CHANGE THE POSITION OF THE CENTRE
@@ -13,25 +13,25 @@ con_val = 3;
 
 % These parameters will be saved in the log file. 
 fly_strain = 'csw1118';
-fly_age = 2; % days
+fly_age = 4; % days
 fly_sex = 'F';
 lights_ON = datetime('20:00', 'Format', 'HH:mm');
 lights_OFF = datetime('12:00', 'Format', 'HH:mm');
-arena_temp = 24.5;
+arena_temp = 23.5;
 
 % Protocol parameters:
 trial_len = 10; 
-t_acclim = 60;
+t_acclim = 10;
 t_flicker = 30;
-num_trials_per_block = 7;
+num_trials_per_block = 7; 
 num_directions = 2; 
 num_reps = 2;
 num_flickers = 2; 
 num_acclim = 3; 
 
 % Pattern settings
-shift_pattern = 4;
-flicker_pattern = 2;
+shift_pattern = 3;
+flicker_pattern = 7;
 optomotor_speed = 64; % in frames per second
 flicker_speed = 8;
 
@@ -42,7 +42,7 @@ func_name = string(mfilename());
 load('C:\MatlabRoot\Patterns\patterns_oaky\SD_copy.mat', 'SD');
 patterns = SD.pattern.pattNames;
 % cell array with the name of the patterns used.
-pattern_names = patterns(optomotor_pattern: flicker_pattern);
+pattern_names = patterns(shift_pattern: flicker_pattern);
 
 %% block of initializations
 
@@ -403,7 +403,7 @@ LOG.num_flickers=num_flickers;
 LOG.num_acclim=num_acclim; 
 
 % Pattern settings
-LOG.optomotor_pattern=optomotor_pattern;
+LOG.optomotor_pattern=shift_pattern;
 LOG.flicker_pattern=flicker_pattern;
 LOG.optomotor_speed=optomotor_speed; % in frames per second
 LOG.flicker_speed = flicker_speed;

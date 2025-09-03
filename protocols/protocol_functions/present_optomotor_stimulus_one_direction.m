@@ -1,4 +1,4 @@
-function Log = present_optomotor_stimulus(current_condition, all_conditions, vidobj, d)
+function Log = present_optomotor_stimulus_one_direction(current_condition, all_conditions, vidobj, d)
 
 % Get temp at the start:
 [t_outside_start, t_ring_start] = get_temp_rec(d);
@@ -12,10 +12,9 @@ function Log = present_optomotor_stimulus(current_condition, all_conditions, vid
  interval_dur = all_conditions(current_condition, 6);
  which_condition = all_conditions(current_condition, 7);
 
-t_stim = trial_len*2; %30;
 t_pause = 0.01;
 
-num_trials = t_stim/trial_len; 
+num_trials = 1; 
 
 idx_value = 1;
 

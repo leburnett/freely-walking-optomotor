@@ -1,5 +1,5 @@
 
-pattern.x_num = 192; % There are 192 pixel around the display (24x8) 
+pattern.x_num = 192; % There are 192 positions - move 1 pixel per frame.
 pattern.y_num = 1; % frames of Y, at different contrast levels
 pattern.num_panels = 72; % This is the number of unique Panel IDs required.
 pattern.gs_val = 1; % This pattern will use 8 intensity levels
@@ -10,7 +10,7 @@ Pats = zeros(3, 192, pattern.x_num, pattern.y_num);
 
 % Initialise the first frame. Here it is an 8 pixel by 8 pixel stripe
 % pattern. 
-Pats(:, :, 1) = repmat([1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0], 3, 6); 
+Pats(:, :, 1) = repmat([0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1], 3, 6); 
 
 % Update the pattern for each frame
 for j = 2:192 			%use ShiftMatrixPats to rotate stripe image
@@ -23,7 +23,7 @@ pattern.Panel_map = fliplr(flipud(reshape(A, 3, 24)));
 pattern.BitMapIndex = process_panel_map(pattern);
 pattern.data = make_pattern_vector(pattern);
 directory_name = 'C:\MatlabRoot\Patterns\patterns_oaky';
-str = [directory_name '\Pattern_17_optomotor_skinny_2ON_14OFF_binary.mat']; 	% name must begin with ‘Pattern_’
+str = [directory_name '\Pattern_24_optomotor_skinny_2OFF_14ON_binary.mat']; 	% name must begin with ‘Pattern_’
 save(str, 'pattern');
 
 
