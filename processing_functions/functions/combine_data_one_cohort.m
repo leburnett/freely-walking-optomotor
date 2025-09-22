@@ -6,54 +6,61 @@ function [comb_data, feat, trx] = combine_data_one_cohort(feat, trx)
     % data for all flies, across all strains and experiments for a single
     % protocol.
 
-    % Check tracking and ignore flies that have not been well tracked.
+    % The data extracted directly from the FlyTracker output are:
+    % - distance from the edge of the arena.
+    % - heading 
+    % - x position 
+    % - y position
+
+    % Data calculated from this data:
+    % - angular velocity
+    % - forward velocity (two point, in direction of heading)
+    % - three point velocity in any direction
+    % - turning rate (angular velocity / forward velocity)
+    % - viewing distance 
+    % - inter fly distance 
+    % - inter fly angle
+
+    % Check tracking and ignore flies that have incomplete tracking.
     flies2ignore = check_tracking_FlyTrk(trx);
     trx(flies2ignore) = [];
     feat.data(flies2ignore, :, :) = [];
 
-    FPS = 30; % videos acquired at 30 FPS
+    % Video acquisition rate:
+    FPS = 30; % frames per second
     
-    % velocity % % % % % % % % % % % 
-    vel_data = feat.data(:, :, 1);
+    % Data extracted directly from FlyTracker output:
     d_wall_data = feat.data(:, :, 9);
     heading_data = cell2mat(arrayfun(@(x) x.theta, trx, 'UniformOutput', false))';
     x_data = cell2mat(arrayfun(@(x) x.x_mm, trx, 'UniformOutput', false))'; % x position in mm. 
     y_data = cell2mat(arrayfun(@(x) x.y_mm, trx, 'UniformOutput', false))'; % y position in mm.
 
-    for k = 1:height(vel_data)
-        dv = diff(vel_data(k, :));
-        acc_data(k, :) = [dv(1), dv]; 
+    % Velocity data from FlyTracker only used to coarsely filter when the
+    % tracking has gone wrong. 
+    vel_data = feat.data(:, :, 1);
 
-        %Cut off based on acceleration
-        % vals_to_rm = abs(acc_data(k, :))>50;
+    for k = 1:height(d_wall_data)
+        
+        % Use very high velocities as indicators of incorrect tracking.
         vals_to_rm = abs(vel_data(k, :))>50;
 
-        % Fill with NaNs
-        acc_data(k, vals_to_rm) = NaN;
-        % vel_data(k, vals_to_rm) = NaN;
+        % Fill removed datapoints with NaNs
         d_wall_data(k, vals_to_rm) = NaN;
         heading_data(k, vals_to_rm) = NaN;
         x_data(k, vals_to_rm) = NaN;
         y_data(k, vals_to_rm) = NaN;
 
-        % Fill NaNs with spline. 
-        acc_data(k, :) = fillmissing(acc_data(k, :)', 'spline')';
-        % vel_data(k, :) = fillmissing(vel_data(k, :)', 'spline');
+        % Fill NaNs
         d_wall_data(k, :) = fillmissing(d_wall_data(k, :)', 'spline');
         heading_data(k, :) = fillmissing(heading_data(k, :)', 'previous');
         x_data(k, :) = fillmissing(x_data(k, :)', 'spline');
         y_data(k, :) = fillmissing(y_data(k, :)', 'spline');
     end 
 
-    dist_trav = vel_data/FPS;
-
     % distance from centre % % % % % % % % % % % 
-
     dist_data  = 120 - d_wall_data; % raw data is distance from wall. Must subtract from 120. 
 
-    % angular velocity % heading% % % % % % % % % % % 
-
-    % Fixed paramters: 
+    % Fixed parameters for finding angular velocity from heading:
     n_flies = length(trx);
     samp_rate = 1/FPS; 
     method = 'line_fit';
@@ -84,23 +91,33 @@ function [comb_data, feat, trx] = combine_data_one_cohort(feat, trx)
         % forward velocity - speed in the direction of heading
         x = x_data(idx, :); % x position in mm.
         y = y_data(idx, :); % y position in mm. 
+
         x = gaussian_conv(x);
         y = gaussian_conv(y);
+
         x_data(idx, :) = x;
         y_data(idx, :) = y;
+
         dx = diff(x);
         dy = diff(y);
+
         vx = dx / samp_rate;
         vy = dy / samp_rate;
+
         fv = (vx .* cos(D(1:end-1)) + vy .* sin(D(1:end-1))); % mm /s 
         fv(fv<0)=NaN; % remove negative forward velocity.
         fv(fv>50)=NaN; % remove forward velocity > 50mm/s - too high.
         fv = fillmissing(fv', 'linear')';
+
         fv_data(idx, :) = [fv(1), fv];
 
-        % three point velocity in any direction
+        % Three point velocity in any direction
         v = calculate_three_point_velocity(x,y);
         v_data(idx, :) = v;
+
+        % Acceleration based on three point velocity.
+        % dv = diff(v_data(idx, :));
+        % acc_data(idx, :) = [dv(1), dv]; 
 
         % turning rate
         c_data = [];
@@ -113,7 +130,7 @@ function [comb_data, feat, trx] = combine_data_one_cohort(feat, trx)
         curv_data(idx, :) = c_data;
 
         % viewing distance - distance from fly centre to edge of arena in
-        % direction of heading. 
+        % the direction of heading. 
         view_dist = calculate_viewing_distance(x_data, y_data, heading_data);
 
     end
@@ -125,7 +142,6 @@ function [comb_data, feat, trx] = combine_data_one_cohort(feat, trx)
     % Combine the matrices into an overall struct
     comb_data.vel_data = v_data; 
     comb_data.dist_data = dist_data;
-    comb_data.dist_trav = dist_trav;
     comb_data.av_data = av_data;
     comb_data.fv_data = fv_data;
     comb_data.curv_data = curv_data;

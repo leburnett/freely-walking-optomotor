@@ -1,26 +1,34 @@
 function f = plot_all_features_filt(LOG, comb_data, protocol, title_str)
-
-    % Generate a figure composed of n_flies x 1 subplots showing each fly's
-    % heading angle over the course of the freely-walking, increasing
-    % contrast optomotor experiment. 
+% Generates figure with 4 timeseries subplots (velocity, angular velocity,
+% turning rate and distance from the centre) over the entire course of the
+% experiment. The data from each fly is plotted in light grey and the mean
+% across all flies is in black. 
+% 
+% Rectangles are plotted behind the data to show the different conditions. 
+% Dark grey rectangles represent acclim periods, white rectangles for
+% intervals between conditions, pink rectangles for clockwise stimuli and
+% blue rectangles for counter-clockwise stimuli.
 
     % Inputs
     % ______
 
-    % Log : struct
+    % LOG : struct
     %       Struct of size [n_conditions x n_flies] with details about the
     %       contrast, direction, start and stop times and start and stop
     %       frames for each condition. 
 
     % comb_data : struct
 
+    % protocol : string 
+    %       String in the format "protocol_X" where X is an integer.
+
     % title_str : str
     %       title to use in the plot.
     
-    % Fixed paramters: 
     figure
 
     % % % % % % % % Subplot 1 = VELOCITY % % % % % % % % %
+    
     velocity_data = comb_data.fv_data;
     [n_flies, xmax] = size(velocity_data);
 
@@ -40,6 +48,7 @@ function f = plot_all_features_filt(LOG, comb_data, protocol, title_str)
     ylabel('Forward velocity (mm s-1)')
     ylim([-2 30])
     xlim([0 xmax])
+
     % % % % % % % % Subplot 2 = ANG VEL % % % % % % % % %
 
     subplot(4, 1, 2)

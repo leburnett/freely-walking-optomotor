@@ -1,9 +1,7 @@
 function f = make_overview(combined_data, strain, sex, protocol)
-% Combined plot with subplots about the locomotion of flies during the
-% optomotor freely walking behaviour experiments. 
-% Uses the combined data from all flies across experiments. 
-
-% Analysis of metrics across the entire experiment. 
+% Histograms of behavioural data across all flies in cohort, across the
+% entire experiment. Data from all correctly tracked flies across the
+% entire experiment, not parsed by condition.
 
 data = combined_data.fv_data;
 n_flies = height(data);

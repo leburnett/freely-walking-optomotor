@@ -195,7 +195,7 @@ function DATA = comb_data_one_cohort_cond(LOG, comb_data, protocol)
     logfields = fields(startsWith(fields, 'log_'));
     n_cond = height(logfields);
 
-    %% Then run through the next 16 logs. 
+    %% Then run through the logs for the conditions. 
     for log_n = 1:n_cond
 
         Log = LOG.(logfields{log_n});

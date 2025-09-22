@@ -1,4 +1,8 @@
 function idxes = check_tracking_FlyTrk(trx)
+% Check the data that is returned from FlyTracker and return the rows that
+% do not have the mode number of data points. Assumption is that something
+% has gone wrong with the tracking and one fly has been split into two, or
+% a non-fly object has been tracked accidentally.
 
 % Extract the number of frames for all flies:
 d = [trx.nframes];

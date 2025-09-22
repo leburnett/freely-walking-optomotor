@@ -1,5 +1,19 @@
-function process_freely_walking_data(date_to_analyse)
-% process the oaky-cokey freely-walking optomotor behaviour data 
+function process_freely_walking_data(date_to_analyse, generate_stim_videos)
+% Process data from freely-walking optomotor experiments within the date
+% folder "date_to_analyse". This script determines the protocols and
+% strains that have been tested within this day and then runs the function
+% `process_data_features` on that data.
+
+% Inputs
+% ______
+
+% date_to_analyse : string
+%           String of the date folder that contains the data to be analysed. 
+%           'date_to_analyse' should be in the format "YYYY_MM_DD".
+
+    if nargin < 2 || isempty(generate_stim_videos)
+        generate_stim_videos = false;
+    end
 
     close all
    
@@ -48,18 +62,18 @@ function process_freely_walking_data(date_to_analyse)
                 save_folder = fullfile(results_path, protocol_to_analyse, genotype_to_analyse, sex_to_analyse);
 
                 % Process the data and save the processed data:
-                process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_to_analyse)
+                process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_to_analyse, generate_stim_videos)
 
             end
         end 
 
         % Display the number of flies / number of vials for this protocol
-        disp(protocol_to_analyse)
-        % Save txt file with the number of vials.
-        protocol_dir = fullfile(results_path, protocol_to_analyse);
-        DATA = comb_data_across_cohorts_cond(protocol_dir);
-        exp_data = generate_exp_data_struct(DATA);
-        export_num_flies_summary(exp_data, protocol_dir);
+        % disp(protocol_to_analyse)
+        % % Save txt file with the number of vials.
+        % protocol_dir = fullfile(results_path, protocol_to_analyse);
+        % DATA = comb_data_across_cohorts_cond(protocol_dir);
+        % exp_data = generate_exp_data_struct(DATA);
+        % export_num_flies_summary(exp_data, protocol_dir);
 
     end
     
