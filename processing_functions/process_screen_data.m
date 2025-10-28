@@ -84,6 +84,10 @@ function DATA = process_screen_data(protocol)
             , "15deg-gratings-16Hz"... %same fps as 60deg 4hz
             , "15deg-flicker-4Hz"...
             };
+    elseif protocol == "protocol_34"
+        cond_titles = {"60deg-gratings-4Hz-lowlum"...
+            , "60deg-flicker-4Hz-lowlum"...
+            };
     end 
     
     writecell(cond_titles, fullfile(save_folder,'cond_titles.txt'), 'Delimiter', ';')
@@ -92,7 +96,14 @@ function DATA = process_screen_data(protocol)
 
     plot_sem = 1;
     data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_data_delta'};
-    
+
+    % Convert names - dashes to underscore.
+    for i = 1:numel(strain_folders)
+        if isfield(strain_folders(i), 'name') && ischar(strain_folders(i).name) || isstring(strain_folders(i).name)
+            strain_folders(i).name = strrep(strain_folders(i).name, '-', '_');
+        end
+    end
+
     for strain = 1:n_strains
     
         grp_title = strain_folders(strain).name; 
@@ -114,6 +125,9 @@ function DATA = process_screen_data(protocol)
         
                 % Data in time series are downsampled by 10.
                 f_xgrp = plot_allcond_acrossgroups_tuning(DATA, gp_data, cond_titles, data_type, gps2plot, plot_sem);
+                if protocol == "protocol_34"
+                    f_xgrp.Position = [26   731   862   273];
+                end
             
                 fname = fullfile(save_folder, strcat(grp_title, '_', data_type, ".pdf"));
                 exportgraphics(f_xgrp ...
