@@ -13,7 +13,23 @@ function review_behavioural_data()
     strain = folder_strs{9};
     disp(strain)
     
-    for m = 1:n_videos
+    if which_videos == "all_videos"
+        rangee = 1:n_videos;
+    elseif which_videos == "gratings"
+        rangee = [7,8,9,10];
+    elseif which_videos == "flicker"
+        rangee = [23, 24];
+    elseif which_videos == "offset"
+        rangee = [3,4];
+    elseif which_videos == "static"
+        rangee = [1, 2];
+    elseif which_videos == "phototaxis"
+        rangee = [5,6];
+    elseif which_videos == "reversephi"
+        rangee = [19, 20, 21, 22];
+    end 
+
+    for m = rangee
         
         % 1 - open the video
         fname = mp4_files(m).name;
