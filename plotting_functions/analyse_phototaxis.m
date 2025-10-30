@@ -1,4 +1,6 @@
 
+%% THIS IS OLD CODE. Look at "phototaxis_test_code.m" for newer analysis.
+
 % Plot phototaxis trajectories. 
 
 % x_all = DATA.jfrc100_es_shibire_kir.attP2.F(1).R1_condition_7.x_data;
