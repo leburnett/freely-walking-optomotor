@@ -1,4 +1,7 @@
-function review_behavioural_data()
+function review_behavioural_data(which_videos)
+
+% "/Volumes/reiserlab/oaky-cokey/data/2_processed/2025_03_17/protocol_27/jfrc100_es_shibire_kir"
+
 % Script to help streamline the process of reviewing the behavioural videos
 % and saving observations in an ordered and efficient way.
 % Run within experiment folder that contains the pre-made '.mp4' files. 
