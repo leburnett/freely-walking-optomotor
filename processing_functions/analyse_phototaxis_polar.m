@@ -1,25 +1,193 @@
 %% Make polarplots - phototaxis conditions. 
 % Requires DATA. 
+% "/Users/burnettl/Documents/Projects/oaky_cokey/results/2025_10_30_DATA_phototaxis_with_angles.mat"
+
+%% PLOT ALL FLIES - ALL COHORTS - BOTH REPS
+% Just one subplot with the pre versus post polar plots plotted on top.
+
+%% ---- Settings ----
+
+framesA = 135:285;    % 5s pre-stimulus - up to 0.5s before stimulus onset.
+% framesA = 1700:1850;    % 5s post-stimulus
+framesB = 315:465;    % 5s stimulus - 0.5s after stimulus onset. 
+numBins  = 24;             % 15° bins
+normMode = 'probability';  % 'count' or 'probability'
+ref_mm   = [29.7426, 52.5293];
+condNames = {'R1_condition_12','R2_condition_12'};  % both reps
+
+%% ---- Collect angles across ALL entries, ALL flies, BOTH reps ----
+angA_cells = {};   % will store column vectors (deg) per entry/rep
+angB_cells = {};
+
+for entryIdx = 1:numel(DATA)
+    for c = 1:numel(condNames)
+        if ~isfield(DATA(entryIdx), condNames{c}), continue; end
+        S = DATA(entryIdx).(condNames{c});
+
+        % Ensure heading_rel_ref exists (deg, [-180, 180])
+        if ~isfield(S,'heading_rel_ref') || isempty(S.heading_rel_ref)
+            dx = ref_mm(1) - S.x_data;
+            dy = ref_mm(2) - S.y_data;
+            bearing_to_ref = atan2d(dy, dx);            % 0°=east, +90°=south
+            hw = S.heading_wrap;                         % same convention
+            S.heading_rel_ref = mod(bearing_to_ref - hw + 180, 360) - 180;
+        end
+
+        nFrames = size(S.heading_rel_ref, 2);
+        if nFrames == 0, continue; end
+
+        % Clamp the requested frames to valid range for THIS entry
+        idxA = framesA(framesA >= 1 & framesA <= nFrames);
+        idxB = framesB(framesB >= 1 & framesB <= nFrames);
+
+        if ~isempty(idxA)
+            angA_cells{end+1} = reshape(S.heading_rel_ref(:, idxA), [], 1); 
+        end
+        if ~isempty(idxB)
+            angB_cells{end+1} = reshape(S.heading_rel_ref(:, idxB), [], 1);
+        end
+    end
+end
+
+% Concatenate and convert to radians on [0, 2π)
+angA_deg = vertcat(angA_cells{:});
+angB_deg = vertcat(angB_cells{:});
+angA = deg2rad(mod(angA_deg(~isnan(angA_deg)), 360));
+angB = deg2rad(mod(angB_deg(~isnan(angB_deg)), 360));
+
+%% ---- Single figure with ONE polar subplot (overlaid histograms) ----
+fig = figure('Name','All entries + both reps — Polar histogram','Color','w');
+t = tiledlayout(1,1,'TileSpacing','compact','Padding','compact');
+sgtitle(t, 'Heading relative to reference (0°=N, CW)');
+
+ax = polaraxes(t);
+ax.Layout.Tile = 1;
+ax.ThetaZeroLocation = 'top';     % 0° = North
+ax.ThetaDir = 'clockwise';        % compass style
+ax.ThetaTick = 0:30:330;
+
+binEdges = linspace(0, 2*pi, numBins+1);
+hold(ax, 'on');
+
+% Frames A (int): light gray
+polarhistogram(ax, angA, binEdges, 'Normalization', normMode, 'FaceColor',[0.7 0.7 0.7], 'FaceAlpha',0.5, 'EdgeColor',[0.7 0.7 0.7]);
+
+% Frames B (stim): magenta
+polarhistogram(ax, angB, binEdges, 'Normalization', normMode, 'FaceColor',[1 0.6 1], 'FaceAlpha',0.4, 'EdgeColor',[1 0.6 1]);
+
+legend(ax, {sprintf('%d–%d', framesA(1), framesA(end)), sprintf('%d–%d', framesB(1), framesB(end))}, 'Location','southoutside');
+title(ax, 'All flies • All cohorts • Both reps');
 
 
-%% Plot the figure - subplots with polar plots for each individual fly - 2 reps. 
-
-% for entryIdx = [28,29,30]
-%     plot_polar_hist_subplot_one_cohort(DATA, entryIdx);
-% end 
 
 
-%% Plot one polar plot per rep across all flies of the cohort:
+
+
+
+
+%% Statistical testing - data from all flies - all cohorts - both reps
+% COMPUTE PER FLY MEANS FIRST THEN DO STATISTICS.
+
+% Configuration % % % % %
+
+% Stimulus starts at fram 300.
+framesA = 135:285;    % 5s pre-stimulus - up to 0.5s before stimulus onset.
+% framesA = 1700:1850;    % 5s post-stimulus
+framesB = 315:465;    % 5s stimulus - 0.5s after stimulus onset.
+ref_mm = [29.7426, 52.5293];
+condNames = {'R1_condition_12','R2_condition_12'};  % optional
+
+%% Collect per-fly summary stats - - - this is very useful.
+
+perFly = [];
+
+for entryIdx = 1:numel(DATA)
+    for c = 1:numel(condNames)
+        if ~isfield(DATA(entryIdx), condNames{c}), continue; end
+        S = DATA(entryIdx).(condNames{c});
+
+        % Compute heading_rel_ref if missing
+        if ~isfield(S,'heading_rel_ref') || isempty(S.heading_rel_ref)
+            dx = ref_mm(1) - S.x_data;
+            dy = ref_mm(2) - S.y_data;
+            bearing_to_ref = atan2d(dy, dx);
+            hw = S.heading_wrap;
+            S.heading_rel_ref = mod(bearing_to_ref - hw + 180, 360) - 180;
+        end
+
+        nFlies = size(S.heading_rel_ref,1);
+        nFrames = size(S.heading_rel_ref,2);
+
+        idxA = framesA(framesA>=1 & framesA<=nFrames);
+        idxB = framesB(framesB>=1 & framesB<=nFrames);
+
+        for f = 1:nFlies
+            angA = deg2rad(S.heading_rel_ref(f, idxA));
+            angB = deg2rad(S.heading_rel_ref(f, idxB));
+            angA = angA(~isnan(angA)); angB = angB(~isnan(angB));
+            if isempty(angA) || isempty(angB), continue; end
+
+            % Per-fly circular means
+            muA = atan2(mean(sin(angA)), mean(cos(angA)));
+            muB = atan2(mean(sin(angB)), mean(cos(angB)));
+
+            % Resultant lengths (measure of concentration)
+            rA = abs(mean(exp(1i*angA)));
+            rB = abs(mean(exp(1i*angB)));
+
+            % Store
+            perFly = [perFly; table(entryIdx, c, f, muA, muB, rA, rB)];
+        end
+    end
+end
+
+%% Test across flies
+muAs = perFly.muA;
+muBs = perFly.muB;
+diffs = atan2(sin(muBs - muAs), cos(muBs - muAs)); % circular paired difference
+
+% --- Test 1: Are post-stim angles clustered around 0 (V-test)?
+[pV_B, ~] = circ_vtest(muBs, 0);
+
+% --- Test 2: Paired circular test (Watson–Williams or permutation)
+pWW = circ_wwtest(muAs, muBs);
+
+fprintf('V-test toward landmark (post-stim means): p = %.3g\n', pV_B);
+fprintf('Watson–Williams (paired across flies): p = %.3g\n', pWW);
+
+% Compute and display per-fly Δmean
+fprintf('Mean change (post - pre): %.1f°\n', rad2deg(mean(diffs)));
+
+% Total number of flies:
+n_flies_total = size(perFly, 1);
+
+
+
+
+
+
+
+%% Detailed analysis - look per cohort / per fly:
+
+%% A - individual flies: 
+% Plot the figure - subplots with polar plots for each individual fly - 2 reps. 
+% Size = [n_reps, n_flies]
+
+for entryIdx = [28,29,30]
+    plot_polar_hist_subplot_one_cohort(DATA, entryIdx);
+end 
+
+
+%% B - one cohort:
+% Plot one polar plot per rep across all flies of the cohort:
+% Size = [1, n_reps]
 
 close
 
-% Parameters
-% entryIdx = 8;                    % which DATA entry to use
-
-for entryIdx = 8:1:30
-    condNames = {'R1_condition_12','R2_condition_12'};
-    framesA  = 1:300;
-    framesB  = 300:2200;
+for entryIdx = 1
+    condNames = {'acclim_off1','R2_condition_12'};
+    framesA = 135:285;    % 5s pre-stimulus - up to 0.5s before stimulus onset.
+    framesB = 315:465;    % 5s stimulus - 0.5s after stimulus onset.
     numBins  = 24;                   % 15° bins
     normMode = 'probability';              % or 'probability'
     
@@ -43,148 +211,228 @@ for entryIdx = 8:1:30
     ax1 = polaraxes(t);         % parent the polar axes to the tiledlayout
     ax1.Layout.Tile = 1;
     polar_hist_all_flies(ax1, S1, framesA, framesB, struct( ...
-        'numBins', numBins, 'Normalization', normMode, 'titleStr', 'R1 — All flies'));
+        'numBins', numBins, 'Normalization', normMode, 'titleStr', strrep(condNames{1}, '_', '-')));
     
     %% Right: R2 (all flies)
     ax2 = polaraxes(t);
     ax2.Layout.Tile = 2;
     polar_hist_all_flies(ax2, S2, framesA, framesB, struct( ...
-        'numBins', numBins, 'Normalization', normMode, 'titleStr', 'R2 — All flies'));
+        'numBins', numBins, 'Normalization', normMode, 'titleStr', strrep(condNames{2}, '_', '-')));
     
-    % Optional legend (place once, e.g., under the second axes)
-    legend(ax2, {'1-300','300-2200'}, 'Location','southoutside');
+    legend(ax2, {sprintf('%d–%d', framesA(1), framesA(end)),sprintf('%d–%d', framesB(1), framesB(end))}, 'Location','southoutside');
 end 
 
 
-%% 
 
-% --- Configuration ---
-entryIdx = 2;
-condName = 'R1_condition_12';    % or 'R2_condition_12'
-S = DATA(entryIdx).(condName);
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 
-winSize = 90;   % sliding window width (frames)
-stepSize = 10;   % step between windows
-stimFrame = 300; % stimulus onset
-ref_mm = [29.7426, 52.5293];
+% Option 1
+% framesA = 135:285;
+% framesB = 315:465;
 
-% Compute heading_rel_ref if not present
-if ~isfield(S,'heading_rel_ref') || isempty(S.heading_rel_ref)
-    dx = ref_mm(1) - S.x_data;
-    dy = ref_mm(2) - S.y_data;
-    bearing = atan2d(dy, dx);
-    hw = S.heading_wrap;
-    S.heading_rel_ref = mod(bearing - hw + 180, 360) - 180;
-end
+% Option 2
+framesA = 1650:2200;
+framesB = 300:850;
 
-% Parameters
-nFrames = size(S.heading_rel_ref,2);
-winStarts = 1:stepSize:(nFrames - winSize + 1);
-winCenters = winStarts + winSize/2;
-meanResultantLength = zeros(size(winStarts));
-meanAngle = zeros(size(winStarts));
+velThresh = 15;
 
-% --- Sliding window analysis ---
-for k = 1:numel(winStarts)
-    idx = winStarts(k):(winStarts(k)+winSize-1);
-    ang = S.heading_rel_ref(:, idx);
-    ang = ang(:);   % all flies together
-    ang_rad = deg2rad(ang);
-
-    % Compute circular statistics
-    R = mean(exp(1i * ang_rad));    % mean resultant vector
-    meanResultantLength(k) = abs(R);
-    meanAngle(k) = rad2deg(angle(R));  % mean direction in degrees
-end
-
-% --- Plot: concentration over time ---
-figure;
-subplot(2,1,1);
-plot(winCenters, meanResultantLength, 'k-', 'LineWidth', 1.5);
-xlabel('Frame');
-ylabel('Mean resultant length (R)');
-title(sprintf('%s — Orientation strength toward landmark', strrep(condName, '_', '-')));
-xline(stimFrame, 'r--', 'Stimulus on');
-grid on;
-
-% --- Plot: mean heading over time ---
-subplot(2,1,2);
-plot(winCenters, meanAngle, 'b-', 'LineWidth', 1.5);
-xlabel('Frame');
-ylabel('Mean heading (° rel. to landmark)');
-xline(stimFrame, 'r--', 'Stimulus on');
-ylim([-180 180]);
-grid on;
+plot_polar_all_speedfiltered_bothreps(DATA, framesA, framesB, velThresh);
 
 
 
 
-%% Across all flies:
 
-figure
-for idx = 1:415
-    plot(all_heading_rel(idx, :), 'Color', [0.7 0.7 0.7]); 
-    hold on
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+
+%% Plot the distance to the bar - one cohort - single REP
+
+condName = "R1_condition_12";
+for entryIdx = 1:30
+    plot_distance_to_bar_from_DATA(DATA, entryIdx, condName)
 end 
 
-figure; plot(mean(all_heading_rel), 'Color', 'k', 'LineWidth', 1.5)
-hold on
-plot([300 300], [-15 20], 'r')
-plot([0 2253], [0 0], 'r')
+%% Plot the distance to the bar - one cohort - both REPS
+
+for entryIdx = 1:30
+    plot_distance_to_bar_both_reps_from_DATA(DATA, entryIdx)
+end 
+
+
+%% Plot the distance to the bar - all cohort - both REPS
+
+plot_distance_to_bar_allcohorts_mean(DATA)
+ylim([0 240])
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+
+%% Assessing whether the distance from the bar affects the orienting behaviour towards the bright bar. 
+
+% Extract data:
+condNames = {'R1_condition_12','R2_condition_12'};
+entryIdx = 1; 
+c = 1; 
+S = DATA(entryIdx).(condNames{c});
+
+% --- Inputs per condition struct S (one cohort/rep):
+
+% Choose windows:
+pre = 135:285; post = 315:465;        % adapt as needed
+
+edges = [0:10:250, inf];                % distance bins (mm)
+centers = (edges(1:end-1)+edges(2:end))/2;
+
+% Gather across flies:
+theta_pre = S.heading_rel_ref(:, pre);  d_pre = S.d2bar(:, pre);
+theta_post= S.heading_rel_ref(:, post); d_post= S.d2bar(:, post);
+
+tow_pre  = cosd(theta_pre(:));  dist_pre  = d_pre(:);
+tow_post = cosd(theta_post(:)); dist_post = d_post(:);
+
+% Bin means
+[~,~,bin_pre]  = histcounts(dist_pre,  edges);
+[~,~,bin_post] = histcounts(dist_post, edges);
+
+m_pre  = accumarray(bin_pre(bin_pre>0),  tow_pre(bin_pre>0),  [numel(edges)-1 1], @mean, NaN);
+m_post = accumarray(bin_post(bin_post>0),tow_post(bin_post>0),[numel(edges)-1 1], @mean, NaN);
+
+figure('Color','w'); hold on;
+plot(centers, m_pre,  '-', 'LineWidth',1.5, 'Color',[0.6 0.6 0.6]);
+plot(centers, m_post, '-', 'LineWidth',1.8, 'Color',[1 0 1]);
+yline(0,'k:'); xlabel('Distance to bar (mm)'); ylabel('<cos θ>');
+legend({'Pre','Post'},'Location','best'); grid on; title('Towardness vs distance');
 
 
 
-%%
 
-% Collect across all entries/flies; NaN-pad to maxFrames as you did before
-ALL = all_heading_rel;                 % [nTraces x nFrames], may contain NaN
-A = cosd(ALL);                         % towardness in [-1,1]
-Amean = mean(A,1,'omitnan');
+%% Do flies orient towards the bar more when they are within the half of the arena closer to the bright bar?
 
-% Smooth (choose window to taste, e.g., 21 frames)
-Amean_sm = movmean(Amean, 21, 'omitnan');
+arenaCentre = [528, 516];
+arenaCenter_mm = arenaCentre / 4.1691;           % <<— supply your arena center in mm
+bar_mm        = [29.7426, 52.5293];  % your bar position
 
-% Bootstrap CI (e.g., 1000 resamples)
-B = 1000; n = size(A,1);
-Aboot = zeros(B, size(A,2));
-for b=1:B
-    idx = randi(n, n, 1);
-    Aboot(b,:) = mean(A(idx,:),1,'omitnan');
+% Analyze all cohorts & both reps:
+analyze_orient_vs_halfarena(DATA, arenaCenter_mm, bar_mm, 'ConeDeg', 30, 'UseAllEntries', true);
+
+
+
+%% PLOT - Assess orienting behaviour across all cohorts wrt distance from the bar. 
+
+% Test different windows
+% 1 - 
+% pre  = 135:285;                                      % pre window (frames)
+% post = 315:465;  % post window (frames)
+% 2 - 
+pre  = 1:300;                                      % pre window (frames)
+post = 300:600; 
+
+%% Settings
+condNames = {'R1_condition_12','R2_condition_12'};   % both reps
+
+edges = [0:15:250, inf];                             % distance bins (mm)
+centers = (edges(1:end-1) + edges(2:end))/2;
+
+% Bar position (mm) for computing heading_rel_ref if needed
+bar_mm = [29.7426, 52.5293];
+
+%% Collect pooled data from ALL entries + BOTH reps
+tow_pre_all  = [];  dist_pre_all  = [];
+tow_post_all = [];  dist_post_all = [];
+
+for entryIdx = 1:numel(DATA)
+    for c = 1:numel(condNames)
+        if ~isfield(DATA(entryIdx), condNames{c}), continue; end
+        S = DATA(entryIdx).(condNames{c});
+        if ~isfield(S,'d2bar') || isempty(S.d2bar), continue; end
+
+        % Ensure heading_rel_ref exists (deg in [-180, 180])
+        if ~isfield(S,'heading_rel_ref') || isempty(S.heading_rel_ref)
+            if ~isfield(S,'x_data') || ~isfield(S,'y_data') || ~isfield(S,'heading_wrap')
+                % Cannot compute; skip this cohort/rep
+                warning('Missing x/y/heading_wrap for entry %d %s. Skipping.', entryIdx, condNames{c});
+                continue;
+            end
+            dx = bar_mm(1) - S.x_data;
+            dy = bar_mm(2) - S.y_data;
+            bearing_to_ref = atan2d(dy, dx);                 % 0°=east, +90°=south
+            S.heading_rel_ref = mod(bearing_to_ref - S.heading_wrap + 180, 360) - 180;
+        end
+
+        % Clamp windows to available frames for this cohort/rep
+        nF = size(S.d2bar, 2);
+        idx_pre  = pre(pre >= 1 & pre <= nF);
+        idx_post = post(post >= 1 & post <= nF);
+        if isempty(idx_pre) && isempty(idx_post), continue; end
+
+        % Extract and append (vectorized)
+        if ~isempty(idx_pre)
+            theta_pre = S.heading_rel_ref(:, idx_pre); 
+            d_pre     = S.d2bar(:,          idx_pre);
+            tow_pre_all  = [tow_pre_all;  cosd(theta_pre(:))]; %#ok<AGROW>
+            dist_pre_all = [dist_pre_all;  d_pre(:)];          %#ok<AGROW>
+        end
+        if ~isempty(idx_post)
+            theta_post = S.heading_rel_ref(:, idx_post);
+            d_post     = S.d2bar(:,          idx_post);
+            tow_post_all  = [tow_post_all;  cosd(theta_post(:))]; %#ok<AGROW>
+            dist_post_all = [dist_post_all; d_post(:)];           %#ok<AGROW>
+        end
+    end
 end
-CIlo = prctile(Aboot, 2.5, 1); CIhi = prctile(Aboot, 97.5, 1);
 
-% Plot
-figure('Color','w'); 
-plot(Amean_sm,'k','LineWidth',1.5); hold on;
-plot(CIlo,'--','Color',[.6 .6 .6]); plot(CIhi,'--','Color',[.6 .6 .6]);
-xline(300,'r--','Stim on');
-ylabel('Towardness 〈cos θ〉'); xlabel('Frame'); grid on;
-title('Time-resolved towardness with bootstrap 95% CI');
+%% Bin means (and SEM) across all pooled samples
+% Use discretize so NaNs in distance produce NaN bins (easy to mask)
+bin_pre  = discretize(dist_pre_all,  edges);
+bin_post = discretize(dist_post_all, edges);
+
+% Means
+m_pre  = accumarray(bin_pre(~isnan(bin_pre)),  tow_pre_all(~isnan(bin_pre)), ...
+                    [numel(edges)-1 1], @(x) mean(x,'omitnan'), NaN);
+m_post = accumarray(bin_post(~isnan(bin_post)), tow_post_all(~isnan(bin_post)), ...
+                    [numel(edges)-1 1], @(x) mean(x,'omitnan'), NaN);
+
+% SEMs
+sem_pre  = accumarray(bin_pre(~isnan(bin_pre)),  tow_pre_all(~isnan(bin_pre)), ...
+                      [numel(edges)-1 1], @(x) std(x,0,'omitnan')/sqrt(numel(x)), NaN);
+sem_post = accumarray(bin_post(~isnan(bin_post)), tow_post_all(~isnan(bin_post)), ...
+                      [numel(edges)-1 1], @(x) std(x,0,'omitnan')/sqrt(numel(x)), NaN);
+
+figure('Color','w'); hold on;
+
+% Mean lines
+plot(centers, m_pre,  '-', 'LineWidth', 1.8, 'Color', [0.35 0.35 0.35]);
+plot(centers, m_post, '-', 'LineWidth', 2.0, 'Color', [1 0 1]);
+
+yline(0,'k:', 'LineWidth',2);
+xlabel('Distance to bar (mm)'); 
+ylabel('<cos \theta> (towardness)');
+ax = gca;
+legend(ax, {sprintf('%d–%d', pre(1), pre(end)), sprintf('%d–%d', post(1), post(end))}, 'Location','best');
+box off
+title('Towardness vs distance — pooled across all cohorts & reps');
+f = gcf;
+f.Position = [620   607   727   360];
 
 
-%% 
-
-
-win = 100; step = 10;
-[nTraces, nFrames] = size(ALL);
-starts = 1:step:max(1, nFrames-win+1);
-Rlen = nan(size(starts)); P = nan(size(starts));
-
-for k=1:numel(starts)
-    idx = starts(k):(starts(k)+win-1);
-    ang = deg2rad(ALL(:,idx)); ang = ang(:);
-    ang = ang(~isnan(ang));
-    if isempty(ang), continue; end
-    R = abs(mean(exp(1i*ang)));
-    Rlen(k) = R;
-    n = numel(ang);
-    z = n * R^2;
-    % Rayleigh p-value (large-sample approximation)
-    P(k) = exp(sqrt(1+4*n+4*(n^2 - z^2)) - (1 + 2*n)); % alt: use exp(-z)*(1 + (2*z - z^2)/(4*n) - ...)
-end
-
-figure('Color','w');
-subplot(2,1,1); plot(starts+win/2, Rlen,'k','LineWidth',1.5); grid on;
-xline(300,'r--'); ylabel('R (mean resultant length)'); title('Sliding Rayleigh (strength)');
-subplot(2,1,2); semilogy(starts+win/2, P,'b','LineWidth',1.5); grid on;
-xline(300,'r--'); ylabel('p (Rayleigh)'); xlabel('Frame');
