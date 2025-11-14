@@ -20,9 +20,10 @@ function f = plot_allcond_onecohort_tuning(DATA, sex, strain, data_type, plot_se
     % Generate new figure
     figure;
 
-    landing = 'none';
+    % landing = 'none';
     strain = strrep(strain, '-', '_');
-    data = DATA.(strain).(landing).(sex); 
+    % data = DATA.(strain).(landing).(sex); 
+    data = DATA.(strain).(sex); 
     n_exp = length(data);
     data_fields = fieldnames(data);
     cond_fields = data_fields(cellfun(@(x) ~isempty(regexp(x, 'condition', 'ONCE')), data_fields));
