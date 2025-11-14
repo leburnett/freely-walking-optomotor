@@ -126,7 +126,5 @@ hFig.Position = [27  622  1774  425];
 
 
 
-
-
-
+%% Use fv_data (not vel_data) to filter the flies that are included in the analysis.
 

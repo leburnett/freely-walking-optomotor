@@ -196,59 +196,168 @@ for i = 1:numel(condList)
     axis(ax,'off'); box(ax,'off'); hold(ax,'off');
 end
 
-end % main
-
-
 % ======================= Helper: fetch_xy_all =======================
-function [x_all, y_all] = fetch_xy_all(DATA, rigPrefix, condName, frameRange)
-% Concatenate x/y across ALL entries in DATA for one rig+condition.
-x_all = []; y_all = [];
-for k = 1:numel(DATA)
-    [xk, yk] = fetch_xy_one(DATA, k, rigPrefix, condName, frameRange);
-    if ~isempty(xk)
-        x_all = [x_all; xk];
-        y_all = [y_all; yk];
+function [x_all, y_all, flyCountSummary] = fetch_xy_all(DATA, rigPrefix, condName, frameRange)
+    % Concatenate x/y across ALL entries in DATA for one rig+condition.
+    % Also returns a summary struct of flies kept/removed per entry.
+    
+    x_all = []; 
+    y_all = [];
+    flyCountSummary = struct('entry', {}, 'rig', {}, 'nFliesTotal', {}, 'nFliesUsed', {});
+    
+    for k = 1:numel(DATA)
+        [xk, yk, nTot, nUsed] = fetch_xy_one(DATA, k, rigPrefix, condName, frameRange);
+        if ~isempty(xk)
+            x_all = [x_all; xk];
+            y_all = [y_all; yk];
+        end
+        flyCountSummary(end+1) = struct('entry', k, 'rig', rigPrefix, ...
+            'nFliesTotal', nTot, 'nFliesUsed', nUsed); %#ok<AGROW>
+    end
+    
+    % Print summary to command window
+    if ~isempty(flyCountSummary)
+        nTotAll  = sum([flyCountSummary.nFliesTotal]);
+        nUsedAll = sum([flyCountSummary.nFliesUsed]);
+        fprintf('[%s] Flies kept: %d / %d (%.1f%%)\n', rigPrefix, ...
+            nUsedAll, nTotAll, 100*nUsedAll/max(1,nTotAll));
     end
 end
-end
-
 
 % ======================= Helper: fetch_xy_one =======================
-function [x,y] = fetch_xy_one(DATA, entryIdx, rigPrefix, condName, frameRange)
-% Get x/y vectors for one entry and one rig/condition; filters to [0,250].
-fieldName = sprintf('%s_%s', rigPrefix, condName);
-if ~isfield(DATA(entryIdx), fieldName)
-    x = []; y = []; return;
+function [x,y,nTot,nUsed] = fetch_xy_one(DATA, entryIdx, rigPrefix, condName, frameRange)
+    % Get x/y vectors for one entry and one rig/condition; filters to [0,250].
+    % Returns number of flies total and number passing the fv_data filter.
+    
+    nTot = 0; 
+    nUsed = 0;
+    
+    fieldName = sprintf('%s_%s', rigPrefix, condName);
+    if ~isfield(DATA(entryIdx), fieldName)
+        x = []; y = []; return;
+    end
+    
+    S = DATA(entryIdx).(fieldName);
+    if ~isfield(S, 'x_data') || ~isfield(S, 'y_data')
+        x = []; y = []; return;
+    end
+    
+    x_raw = S.x_data;  
+    y_raw = S.y_data;
+    if ~isnumeric(x_raw) || ~isnumeric(y_raw)
+        x = []; y = []; return;
+    end
+    
+    % Make time-by-N
+    if isvector(x_raw), x_raw = x_raw(:); end
+    if isvector(y_raw), y_raw = y_raw(:); end
+    [~, xTimeDim] = max(size(x_raw));
+    [~, yTimeDim] = max(size(y_raw));
+    if xTimeDim==2, x_raw = x_raw.'; end
+    if yTimeDim==2, y_raw = y_raw.'; end
+    nTot = size(x_raw,2);  % total number of flies in this recording
+    
+    % Clip frame range
+    T = min(size(x_raw,1), size(y_raw,1));
+    fr = frameRange(frameRange >= 1 & frameRange <= T);
+    if isempty(fr), x = []; y = []; return; end
+    
+    % --- Apply fv_data-based speed mask (same as before) ---
+    mask = get_fv_pass_mask(DATA, entryIdx, rigPrefix, frameRange, 2);
+    if ~islogical(mask) || numel(mask) ~= size(x_raw,2)
+        mask = true(1, size(x_raw,2));
+    end
+    nUsed = sum(mask);
+    
+    % Apply mask
+    x_sel = x_raw(:, mask);
+    y_sel = y_raw(:, mask);
+    
+    % Extract frames and flatten
+    x = x_sel(fr, :);  
+    y = y_sel(fr, :);
+    x = x(:);          
+    y = y(:);
+    
+    % Filter to [0,250]
+    valid = x >= 0 & x <= 250 & y >= 0 & y <= 250;
+    x = x(valid);
+    y = y(valid);
 end
 
-S = DATA(entryIdx).(fieldName);
-if ~isfield(S, 'x_data') || ~isfield(S, 'y_data')
-    x = []; y = []; return;
+
+% ======================= Helper: get_fv_pass_mask =======================
+function mask = get_fv_pass_mask(DATA, entryIdx, rigPrefix, frameRange, threshold)
+    % Returns a 1xN logical vector (per fly) indicating whether each fly's
+    % mean fv_data during <rigPrefix>_condition_11 is >= threshold.
+    % If fv_data is missing or shapes don't match, falls back to all-true.
+    
+    mask = [];
+    cond11 = sprintf('%s_%s', rigPrefix, 'condition_11');
+    
+    if ~isfield(DATA(entryIdx), cond11)
+        % No condition_11 for this rig -> accept all flies by default
+        mask = true(1, infer_nflies_from_any(DATA, entryIdx, rigPrefix));
+        return;
+    end
+    
+    S11 = DATA(entryIdx).(cond11);
+    if ~isfield(S11, 'fv_data')
+        mask = true(1, infer_nflies_from_any(DATA, entryIdx, rigPrefix));
+        return;
+    end
+    
+    fv = S11.fv_data;
+    if ~isnumeric(fv)
+        mask = true(1, infer_nflies_from_any(DATA, entryIdx, rigPrefix));
+        return;
+    end
+    
+    % Make time-by-N
+    if isvector(fv), fv = fv(:); end
+    [~, fvTimeDim] = max(size(fv));
+    if fvTimeDim==2, fv = fv.'; end
+    
+    % Restrict to frames in frameRange safely
+    T11 = size(fv,1);
+    fr11 = frameRange(frameRange >= 1 & frameRange <= T11);
+    if isempty(fr11)
+        % No overlap in frames -> accept all
+        mask = true(1, size(fv,2));
+        return;
+    end
+    
+    fv_sel = fv(fr11, :);
+    m = mean(fv_sel, 1, 'omitnan');   % per-fly mean over time
+    mask = m >= threshold;
+    
+    % In case all NaNs lead to all-false, be permissive
+    if all(~mask) && all(isnan(m))
+        mask = true(1, size(fv,2));
+    end
 end
 
-x_raw = S.x_data;  y_raw = S.y_data;
-if ~isnumeric(x_raw) || ~isnumeric(y_raw)
-    x = []; y = []; return;
+% ======================= Helper: infer_nflies_from_any =======================
+function N = infer_nflies_from_any(DATA, entryIdx, rigPrefix)
+% Try to infer number of flies from any available condition's x_data
+% so that we can return a same-length all-true mask when fv_data is missing.
+N = 1; % fallback
+flds = fieldnames(DATA(entryIdx));
+pat = ['^' rigPrefix '_condition_\d+$'];
+for i = 1:numel(flds)
+    if ~isempty(regexp(flds{i}, pat, 'once')) && isfield(DATA(entryIdx).(flds{i}), 'x_data')
+        X = DATA(entryIdx).(flds{i}).x_data;
+        if ~isempty(X) && isnumeric(X)
+            if isvector(X), X = X(:); end
+            [~, tdim] = max(size(X));
+            if tdim==2, X = X.'; end
+            N = size(X,2);
+            return;
+        end
+    end
 end
 
-% Make time-by-N
-if isvector(x_raw), x_raw = x_raw(:); end
-if isvector(y_raw), y_raw = y_raw(:); end
-[~, xTimeDim] = max(size(x_raw));
-[~, yTimeDim] = max(size(y_raw));
-if xTimeDim==2, x_raw = x_raw.'; end
-if yTimeDim==2, y_raw = y_raw.'; end
+end
 
-% Clip frame range
-T = min(size(x_raw,1), size(y_raw,1));
-fr = frameRange(frameRange >= 1 & frameRange <= T);
-if isempty(fr), x = []; y = []; return; end
 
-x = x_raw(fr, :);  y = y_raw(fr, :);
-x = x(:);          y = y(:);
-
-% Filter to [0,250] on both axes
-valid = x >= 0 & x <= 250 & y >= 0 & y <= 250;
-x = x(valid);
-y = y(valid);
 end
