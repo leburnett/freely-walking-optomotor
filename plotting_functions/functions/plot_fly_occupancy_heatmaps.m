@@ -26,8 +26,8 @@ PPM   = 4.1691;
 Center_px = [528, 516]/PPM;
 Radius_px = 496/PPM;
 
-if nargin < 4 || isempty(frameRange), frameRange = 1100:1200; end
-if nargin < 5 || isempty(nbins),      nbins = 25;            end
+if nargin < 3 || isempty(frameRange), frameRange = 1100:1200; end
+if nargin < 4 || isempty(nbins),      nbins = 15;            end
 
 % Options
 p = inputParser;
@@ -40,7 +40,13 @@ pctCLim  = 99;
 crossLW = 0.75;
 
 % Conditions to plot (R1+R2 per panel)
-condList = {'condition_1','condition_3','condition_5'};
+% condList = {'condition_1','condition_3','condition_5'};
+
+% P 35
+% 30 deg
+% condList = {'condition_2','condition_7','condition_8'};
+% 60 deg
+condList = {'condition_1','condition_9','condition_10'};
 
 % ---------- Gather all data to make consistent bin edges ----------
 allX = []; allY = [];
@@ -122,7 +128,7 @@ for i = 1:numel(condList)
     x = x(good); y = y(good);
 
     % 2D histogram
-    H = histcounts2(x, y, xedges, yedges);
+    H = histcounts2(x, y, xedges, yedges); % , 'Normalization', 'probability'
 
     % Plot heatmap
     ax = nexttile;
@@ -164,9 +170,11 @@ for i = 1:numel(condList)
     % Red cross for centre of the arena
     plot(ax, Center(1), Center(2), '+', 'Color', [0.8 0 0], 'LineWidth', crossLW, 'MarkerSize', 20, 'LineWidth', 2.5);
     % Blue cross for shifted centre of rotation.
-    plot(ax, 141.61, 31.8534, '+', 'Color', [1 0.4 0.8], 'LineWidth', crossLW, 'MarkerSize', 20, 'LineWidth', 2.5);
-
-
+    if cond == "condition_10" || cond == "condition_8" 
+        plot(ax, 113.397, 212.914, '+', 'Color', [1 0.4 0.8], 'LineWidth', crossLW, 'MarkerSize', 20, 'LineWidth', 2.5);
+    elseif cond == "condition_9" || cond == "condition_7"
+        plot(ax, 141.61, 31.8534, '+', 'Color', [1 0.4 0.8], 'LineWidth', crossLW, 'MarkerSize', 20, 'LineWidth', 2.5);
+    end 
     axis(ax,'off');
     box(ax,'off');
 end
