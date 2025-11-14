@@ -12,7 +12,7 @@ function DATA = make_summary_heat_maps_p27()
     target_all = [];
     control_all = [];
 
-    for condition_n = 1:12
+    for condition_n = [1,2,9,10] %1:12
 
         %% Make summary heat map
         [pvals_cond, target_mean_all, control_mean_all, strain_names] = make_pvalue_heatmap_across_strains(DATA, condition_n);
@@ -105,7 +105,9 @@ function DATA = make_summary_heat_maps_p27()
         end 
 
         f = gcf;
-        f.Position = [2612  -522  373  1588]; %[564    73   362   974];
+        % f.Position = [2612  -522  373  1588]; %[564    73   362   974];
+        % 4 conditions only
+        f.Position = [2578  161  238  905];
 
         if multi % Generate separate figure of the colour bar - p values.
 

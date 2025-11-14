@@ -131,37 +131,38 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir)
 
             condition_n = Log.which_condition;
 
-            if LOG.acclim_off1.stop_t(end)<3 && log_n == 1
-                framesb4 = 0;
-            else
-                framesb4 = 300;
-            end
-
-            start_f = Log.start_f(1)-framesb4;
-            stop_f = Log.stop_f(end);
-
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).trial_len = Log.trial_len;
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).interval_dur = Log.interval_dur;
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).optomotor_pattern = Log.optomotor_pattern;
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).optomotor_speed = Log.optomotor_speed;
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).interval_pattern = Log.interval_pattern;
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).interval_speed = Log.interval_speed;
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).start_flicker_f = Log.start_f(end)-start_f;
-
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).vel_data = comb_data.vel_data(:, start_f:stop_f);
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).fv_data = comb_data.fv_data(:, start_f:stop_f);
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).dist_data = comb_data.dist_data(:, start_f:stop_f);
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).dist_trav = comb_data.dist_trav(:, start_f:stop_f);
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).av_data = comb_data.av_data(:, start_f:stop_f);
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).curv_data = comb_data.curv_data(:, start_f:stop_f);
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).heading_data = comb_data.heading_data(:, start_f:stop_f);
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).x_data = comb_data.x_data(:, start_f:stop_f);
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).y_data = comb_data.y_data(:, start_f:stop_f);
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).view_dist = comb_data.view_dist(:, start_f:stop_f);
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).IFD_data = comb_data.IFD_data(:, start_f:stop_f);
-            DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).IFA_data = comb_data.IFA_data(:, start_f:stop_f);
-
+            % if ismember(condition_n, [1,2,9,10])
+                if LOG.acclim_off1.stop_t(end)<3 && log_n == 1
+                    framesb4 = 0;
+                else
+                    framesb4 = 300;
+                end
+    
+                start_f = Log.start_f(1)-framesb4;
+                stop_f = Log.stop_f(end);
+    
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).trial_len = Log.trial_len;
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).interval_dur = Log.interval_dur;
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).optomotor_pattern = Log.optomotor_pattern;
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).optomotor_speed = Log.optomotor_speed;
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).interval_pattern = Log.interval_pattern;
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).interval_speed = Log.interval_speed;
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).start_flicker_f = Log.start_f(end)-start_f;
+    
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).vel_data = comb_data.vel_data(:, start_f:stop_f);
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).fv_data = comb_data.fv_data(:, start_f:stop_f);
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).dist_data = comb_data.dist_data(:, start_f:stop_f);
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).dist_trav = comb_data.dist_trav(:, start_f:stop_f);
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).av_data = comb_data.av_data(:, start_f:stop_f);
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).curv_data = comb_data.curv_data(:, start_f:stop_f);
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).heading_data = comb_data.heading_data(:, start_f:stop_f);
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).x_data = comb_data.x_data(:, start_f:stop_f);
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).y_data = comb_data.y_data(:, start_f:stop_f);
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).view_dist = comb_data.view_dist(:, start_f:stop_f);
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).IFD_data = comb_data.IFD_data(:, start_f:stop_f);
+                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).IFA_data = comb_data.IFA_data(:, start_f:stop_f);
+            % end 
         end 
     
         %% Add data from acclim_off2
