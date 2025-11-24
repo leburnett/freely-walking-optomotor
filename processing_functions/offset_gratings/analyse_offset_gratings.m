@@ -1,8 +1,27 @@
 
 % Shifted Centre of Rotation analysis - condition 11 - protocol 27.
+% ALSO - protocol_35 - variations of shifted CoR stimulus. 
 
-% Create DATA through the code in "process_screen_data".
-DATA2 = DATA.jfrc100_es_shibire_kir.F;
+%% Create DATA
+protocol = "protocol_35";
+ROOT_DIR = '/Users/burnettl/Documents/Projects/oaky_cokey';
+% Move to the directory to where the results per experiment are saved:
+protocol_dir = fullfile(ROOT_DIR, 'results', protocol);
+cd(protocol_dir);
+
+% Get all of the strain folders that are inside the protocol folder.
+strain_folders = dir;
+strain_folders = strain_folders([strain_folders.isdir]); % Keep only directories
+strain_folders = strain_folders(~ismember({strain_folders.name}, {'.', '..'})); % Remove '.' and '..'
+
+% Number of strains without ES.
+n_strains = height(strain_folders);
+
+% Generate the struct 'DATA' that combines data across experiments and
+% separates data into conditions.
+DATA = comb_data_across_cohorts_cond(protocol_dir);
+
+% DATA2 = DATA.jfrc100_es_shibire_kir.F;
 % Extract the data for the flicker (cond 9), normal gratings (cond 1) and shifted gratings (cond 11).
 % Saved in "2025_11_03_DATA_CoR_conds_1-11-9_es_shibire_kir.mat"
 
