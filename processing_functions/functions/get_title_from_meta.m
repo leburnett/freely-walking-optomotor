@@ -159,6 +159,7 @@ function title_str = get_title_from_meta(cond_meta)
             pattern_str = "60deg-grating-gsval3-3-0";
         case 65
             pattern_str = "60deg-flicker-gsval3-3-0";
+<<<<<<< Updated upstream
         case 68
             pattern_str = "60deg-flicker-gsval3-1-0";
         case 69
@@ -171,6 +172,8 @@ function title_str = get_title_from_meta(cond_meta)
             pattern_str = "60deg-gratings-gsval1-1-0-0-75-shift";
         case 73
             pattern_str = "60deg-gratings-gsval1-1-0--0-75-shift";
+=======
+>>>>>>> Stashed changes
 
     end    
 
