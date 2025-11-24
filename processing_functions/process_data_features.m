@@ -205,17 +205,9 @@ function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_s
         cd("../")
 
         % Generate videos of each condition
-<<<<<<< Updated upstream
-
         % add_tracks = 0;
         % generate_circ_stim_ufmf()
         % generate_movie_from_ufmf(add_tracks)
-
-=======
-        % add_tracks = 0;
-        % generate_circ_stim_ufmf()
-        % generate_movie_from_ufmf(add_tracks)
->>>>>>> Stashed changes
 
         %% SAVE
         if ~isfolder(save_folder)
