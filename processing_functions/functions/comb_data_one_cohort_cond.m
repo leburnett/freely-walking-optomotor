@@ -1,104 +1,95 @@
 function DATA = comb_data_one_cohort_cond(LOG, comb_data, protocol)
 
-    if protocol == "protocol_10"
-        cond_array =[9, 10, 64, 8, 2;
-            9, 10, 127, 16, 15;
-            9, 10, 64, 8, 15;
-            9, 10, 127, 16, 2;
-            6, 7, 64, 8, 2;
-            6, 7, 127, 16, 15;
-            6, 7, 64, 8, 15;
-            6, 7, 127, 16, 2;
-            4, 5, 64, 8, 2;
-            4, 5, 127, 16, 15;
-            4, 5, 64, 8, 15;
-            4, 5, 127, 16, 2;
-            ];
-    elseif protocol == "protocol_15"
-        cond_array = [
-            4, 5, 64, 8, 15; % standard 4ON 4OFF
-            13, 14, 64, 8, 15; % 4ON 12OFF
-            16, 14, 64, 8, 15; % 12 ON 4OFF
-            ];
-    elseif protocol == "protocol_18"
-        cond_array = [
-            9, 10, 127, 8, 15, 1; % Normal gratings
-            9, 10, 64, 8, 15, 2;
-            19, 10, 64, 8, 15, 3; % ON curtain
-            19, 10, 127, 8, 15, 4;
-            20, 10, 64, 8, 15, 5; % OFF curtain
-            20, 10, 127, 8, 15, 6;
-        ];
-    % elseif protocol == "protocol_19" % BEFORE JAN 2025
-    %     cond_array =  [
-    %         9, 10, 127, 8, 15, 1; % normal stripes - wide
-    %         9, 10, 64, 8, 15, 2;
-    %         19, 10, 64, 8, 15, 3; % ON curtain
-    %         19, 10, 127, 8, 15, 4;
-    %         20, 10, 64, 8, 15, 5; % OFF curtain
-    %         20, 10, 127, 8, 15, 6;
-    %         17, 18, 64, 8, 15, 7; % 2ON 14OFF grating
-    %         17, 18, 127, 8, 15, 8;
-    %     ];
-    elseif protocol == "protocol_19" % AFTER JAN 2025
-        % cond_array =  [
-        %     9, 10, 64, 8, 15, 1; % normal stripes - wide
-        %     9, 10, 127, 8, 15, 2;
-        %     19, 10, 64, 8, 15, 3; % ON curtain
-        %     19, 10, 127, 8, 15, 4;
-        %     20, 10, 64, 8, 15, 5; % OFF curtain
-        %     20, 10, 127, 8, 15, 6;
-        %     17, 10, 64, 8, 15, 7; % 2ON 14OFF grating
-        %     17, 10, 127, 8, 15, 8;
-        %     24, 10, 64, 8, 15, 9; % 2OFF 14ON grating
-        %     24, 10, 127, 8, 15, 10;
-        % ];
-        cond_array = [  % From 27th Jan onwards - added thin gratings back in. 
-            9, 10, 64, 8, 15, 1; % grating - 60 deg
-            9, 10, 127, 8, 15, 2;
-            19, 10, 64, 8, 15, 3; % ON curtain - - 5
-            19, 10, 127, 8, 15, 4; % - - 6
-            20, 10, 64, 8, 15, 5; % OFF curtain - - 7
-            20, 10, 127, 8, 15, 6; % - - 8
-            17, 10, 64, 8, 15, 7; % 2ON 14OFF grating - - 9
-            17, 10, 127, 8, 15, 8; % - - 10
-            24, 10, 64, 8, 15, 9; % 2OFF 14ON grating - - 11
-            24, 10, 127, 8, 15, 10; %  - - 12
-            4, 10, 64, 8, 15, 11; % grating - 15 deg - - 3
-            4, 10, 127, 8, 15, 12; % - - 4
-            ];
-    elseif protocol == "protocol_21"
-        cond_array = [ 
-                27, 29, 64, 1, 15, 1; % grating - 60 deg
-                27, 29, 127, 1, 15, 2;
-                26, 29, 64, 1, 15, 3; % grating - 30 deg - - 3
-                26, 29, 127, 1, 15, 4; % - - 4
-                19, 29, 16, 1, 15, 5; % ON curtain - - 5
-                19, 29, 32, 1, 15, 6; % - - 6
-                20, 29, 16, 1, 15, 7; % OFF curtain - - 7
-                20, 29, 32, 1, 15, 8; % - - 8
-                10, 29, 4, 1, 15, 9; % Flicker as a stimulus - 60 deg - slow
-                10, 29, 8, 1, 15, 10; % Flicker as a stimulus - 60 deg - fast
-            ]; 
-    elseif protocol == "protocol_22"
-        cond_array = [ 
-            30, 29, 1, 1, 15, 1; % 1 = bar fixation
-            31, 29, 32, 1, 15, 2; % reverse phi - 1px step
-            32, 29, 32, 1, 15, 3; % 4 px step
-            33, 29, 32, 1, 15, 4; % 8 px step
-            34, 29, 32, 1, 15, 5; % FoE - 30deg
-            35, 29, 32, 1, 15, 6; % 15 deg
-            36, 29, 32, 1, 15, 7; % 60 deg
-        ]; 
-    elseif protocol == "protocol_23"
-        cond_array = [ 
-            45, 9, 1, 127, 60, 7; % 1 = bar fixation
-            46, 9, 1, 127, 60, 8; % 2 = bar fixation
-        ]; 
-    elseif protocol == "protocol_24" ||  protocol == "protocol_27"
-        cond_array = LOG.meta.cond_array; % cond_array is now in built. 
-    end 
-
+    % Check if LOG has cond_array in meta
+    if isfield(LOG, "meta") && isfield(LOG.meta, "cond_array")
+        cond_array = LOG.meta.cond_array;
+    
+    else
+        % Check protocol value
+        switch protocol
+            case "protocol_10"
+                cond_array =[9, 10, 64, 8, 2;
+                    9, 10, 127, 16, 15;
+                    9, 10, 64, 8, 15;
+                    9, 10, 127, 16, 2;
+                    6, 7, 64, 8, 2;
+                    6, 7, 127, 16, 15;
+                    6, 7, 64, 8, 15;
+                    6, 7, 127, 16, 2;
+                    4, 5, 64, 8, 2;
+                    4, 5, 127, 16, 15;
+                    4, 5, 64, 8, 15;
+                    4, 5, 127, 16, 2;
+                    ];
+    
+            case "protocol_15"
+                cond_array = [
+                    4, 5, 64, 8, 15; % standard 4ON 4OFF
+                    13, 14, 64, 8, 15; % 4ON 12OFF
+                    16, 14, 64, 8, 15; % 12 ON 4OFF
+                    ];
+    
+            case "protocol_18"
+                cond_array = [
+                    9, 10, 127, 8, 15, 1; % Normal gratings
+                    9, 10, 64, 8, 15, 2;
+                    19, 10, 64, 8, 15, 3; % ON curtain
+                    19, 10, 127, 8, 15, 4;
+                    20, 10, 64, 8, 15, 5; % OFF curtain
+                    20, 10, 127, 8, 15, 6;
+                ];
+    
+            case "protocol_19" % AFTER JAN 2025
+                cond_array = [  % From 27th Jan onwards - added thin gratings back in. 
+                    9, 10, 64, 8, 15, 1; % grating - 60 deg
+                    9, 10, 127, 8, 15, 2;
+                    19, 10, 64, 8, 15, 3; % ON curtain
+                    19, 10, 127, 8, 15, 4;
+                    20, 10, 64, 8, 15, 5; % OFF curtain
+                    20, 10, 127, 8, 15, 6;
+                    17, 10, 64, 8, 15, 7; % 2ON 14OFF grating
+                    17, 10, 127, 8, 15, 8;
+                    24, 10, 64, 8, 15, 9; % 2OFF 14ON grating
+                    24, 10, 127, 8, 15, 10;
+                    4, 10, 64, 8, 15, 11; % grating - 15 deg
+                    4, 10, 127, 8, 15, 12;
+                    ];
+    
+            case "protocol_21"
+                cond_array = [ 
+                    27, 29, 64, 1, 15, 1; % grating - 60 deg
+                    27, 29, 127, 1, 15, 2;
+                    26, 29, 64, 1, 15, 3; % grating - 30 deg
+                    26, 29, 127, 1, 15, 4;
+                    19, 29, 16, 1, 15, 5; % ON curtain
+                    19, 29, 32, 1, 15, 6;
+                    20, 29, 16, 1, 15, 7; % OFF curtain
+                    20, 29, 32, 1, 15, 8;
+                    10, 29, 4, 1, 15, 9; % Flicker - slow
+                    10, 29, 8, 1, 15, 10; % Flicker - fast
+                    ]; 
+    
+            case "protocol_22"
+                cond_array = [ 
+                    30, 29, 1, 1, 15, 1; % bar fixation
+                    31, 29, 32, 1, 15, 2; % reverse phi - 1px
+                    32, 29, 32, 1, 15, 3; % 4 px
+                    33, 29, 32, 1, 15, 4; % 8 px
+                    34, 29, 32, 1, 15, 5; % FoE - 30deg
+                    35, 29, 32, 1, 15, 6; % 15 deg
+                    36, 29, 32, 1, 15, 7; % 60 deg
+                    ]; 
+    
+            case "protocol_23"
+                cond_array = [ 
+                    45, 9, 1, 127, 60, 7; % bar fixation
+                    46, 9, 1, 127, 60, 8;
+                    ]; 
+    
+            otherwise
+                error("Unrecognized protocol '%s' and no LOG.meta.cond_array found.", protocol);
+        end
+    end
 
     % Initialise a struct 'DATA' to store data in. 
     DATA = struct();
