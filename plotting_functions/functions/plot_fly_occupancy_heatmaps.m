@@ -46,7 +46,10 @@ crossLW = 0.75;
 % 30 deg
 % condList = {'condition_2','condition_7','condition_8'};
 % 60 deg
-condList = {'condition_1','condition_9','condition_10'};
+% condList = {'condition_1','condition_9','condition_10'};
+
+%% P 36 
+condList = {'condition_1','condition_2','condition_3'};
 
 % ---------- Gather all data to make consistent bin edges ----------
 allX = []; allY = [];
