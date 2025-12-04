@@ -4,25 +4,20 @@ function [pvals, target_mean, control_mean] = av_metric_tests(cond_data, cond_da
     pvals = [];
     target_mean = [];
     control_mean = [];
-    
-    % Set frame ranges 
-    rng_stim = 300:1200;
-    % rng_b4_5 = 150:300;
-    rng_int_5 = 1200:1350;
-    
-    % rng_b4_1 = 270:300;
-    rng_b4_3 = 210:300;
-    % rng_stim_1 = 300:330;
-    rng_stim_3 = 300:390;
-    % rng_stim_end_1 = 1170:1200;
-    rng_stim_end_3 = 1110:1200;
-    % rng_int_1 = 1200:1230;
-    rng_int_3 = 1200:1290;
+
+% Angular velocity (5)
+% Ranges are in seconds. 
+% - (10:40) - mean av over the entire stimulus
+% - (10.5:15) - mean av during first 5s of CW
+% - (10-25) - av during CW
+% - (25:30) - mean av during first 5s of CCW
+% - (25:40) - av during CCW  
 
 %% Make versions of data with CCW gratings values *-1.
 
     cond_data2 = cond_data;
     cond_data_control2 = cond_data_control;
+
     % Flip sign of second half of stimulus so that all angular velocities
     % are +ve 
     cond_data2(:, 762:1210) = cond_data2(:, 762:1210)*-1;
@@ -30,96 +25,53 @@ function [pvals, target_mean, control_mean] = av_metric_tests(cond_data, cond_da
 
 %% 1 - Average angular velocity during the stimulus.
 
+    rng_stim = 300:1200;
+    
+    % RUN TEST
     [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_stim);
 
     % ADD VALUES
-    pvals = [pvals, p];
-    target_mean = [target_mean, mean_per_strain];
-    control_mean = [control_mean, mean_per_strain_control];
+    [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
 
-%% 2 - Average angular velocity 5s before stimulus
+%% 2 - Average angular velocity during the first 5s of the CW stimulus.
 
-    % [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_b4_5);
-    % 
-    % % ADD VALUES
-    % pvals = [pvals, p];
-    % target_mean = [target_mean, mean_per_strain];
-    % control_mean = [control_mean, mean_per_strain_control];
+    rng_stim_start = 315:450;
 
-%% 3 - Average angular velocity 5s after stimulus - during interval
-
-    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_int_5);
+    % RUN TEST
+    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_stim_start);
 
     % ADD VALUES
-    pvals = [pvals, p];
-    target_mean = [target_mean, mean_per_strain];
-    control_mean = [control_mean, mean_per_strain_control];
+    [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
 
+%% 3 - Average angular velocity during CW stimulus.
 
-%% 4 - Average change in av in the 1s before the stimulus and the 1s after the stimulus started.
+    rng_cw = 315:750;
 
-    % [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(cond_data2, cond_data_control2, rng_b4_1, rng_stim_1, "rel");
-    % 
-    % % ADD VALUES
-    % pvals = [pvals, p];
-    % target_mean = [target_mean, mean_per_strain];
-    % control_mean = [control_mean, mean_per_strain_control];
-
-    % [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(cond_data2, cond_data_control2, rng_b4_1, rng_stim_1, "norm");
-    % 
-    % % ADD VALUES
-    % pvals = [pvals, p];
-    % target_mean = [target_mean, mean_per_strain];
-    % control_mean = [control_mean, mean_per_strain_control];
-
-
-%% 5 - Average change in av in the 3s before the stimulus and the 3s after the stimulus started.
-
-    % [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(cond_data2, cond_data_control2, rng_b4_3, rng_stim_3, "rel");
-    % 
-    % % ADD VALUES
-    % pvals = [pvals, p];
-    % target_mean = [target_mean, mean_per_strain];
-    % control_mean = [control_mean, mean_per_strain_control];
-
-    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(cond_data2, cond_data_control2, rng_b4_3, rng_stim_3, "norm");
+    % RUN TEST
+    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_cw);
 
     % ADD VALUES
-    pvals = [pvals, p];
-    target_mean = [target_mean, mean_per_strain];
-    control_mean = [control_mean, mean_per_strain_control];
+    [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
 
-%% 6 - Average change in av in the 1s before the stimulus stops and the first 1s of the interval.
+%% 4 - Average angular velocity during the first 5s of the CCW stimulus.
 
-    % [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(cond_data2, cond_data_control2, rng_stim_end_1, rng_int_1, "rel");
-    % 
-    % % ADD VALUES
-    % pvals = [pvals, p];
-    % target_mean = [target_mean, mean_per_strain];
-    % control_mean = [control_mean, mean_per_strain_control];
-    % 
-    % [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(cond_data2, cond_data_control2, rng_stim_end_1, rng_int_1, "norm");
-    % 
-    % % ADD VALUES
-    % pvals = [pvals, p];
-    % target_mean = [target_mean, mean_per_strain];
-    % control_mean = [control_mean, mean_per_strain_control];
+    rng_ccw_start = 765:900;
 
-
-%% 7 - Average change in av in the 3s before the stimulus stops and the first 3s of the interval.
-
-    % [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(cond_data2, cond_data_control2, rng_stim_end_3, rng_int_3, "rel");
-    % 
-    % % ADD VALUES
-    % pvals = [pvals, p];
-    % target_mean = [target_mean, mean_per_strain];
-    % control_mean = [control_mean, mean_per_strain_control];
-
-    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(cond_data2, cond_data_control2, rng_stim_end_3, rng_int_3, "norm");
+    % RUN TEST
+    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_ccw_start);
 
     % ADD VALUES
-    pvals = [pvals, p];
-    target_mean = [target_mean, mean_per_strain];
-    control_mean = [control_mean, mean_per_strain_control];
+    [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
+
+%% 5 - Average angular velocity during CCW stimulus.
+
+    rng_ccw = 765:1200;
+
+    % RUN TEST
+    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_ccw);
+
+    % ADD VALUES
+    [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
+
 
 end 

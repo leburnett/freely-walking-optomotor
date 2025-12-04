@@ -4,87 +4,94 @@ function [pvals, target_mean, control_mean] = curv_metric_tests(cond_data, cond_
     pvals = [];
     target_mean = [];
     control_mean = [];
+
+    % Turning rate (5)
+    % Ranges are in seconds. 
+    % - (10:40) - mean tr over the entire stimulus
+    % - (10.5:15) - mean tr during first 5s of CW
+    % - (10-25) - tr during CW
+    % - (25:30) - mean tr during first 5s of CCW
+    % - (25:40) - tr during CCW 
+        
+    %% Make versions of data with CCW gratings values *-1.
+    % Previously, made turning rate absolute but now, doing similar to AV and
+    % just flipping the sign of the CCW responses. Also doing a 0.5s moving
+    % mean over this data. 
     
-    % Set frame ranges 
-    rng_stim = 300:1200;
-    rng_b4 = 1:300;
-    rng_int = 1200:1800;
-
-    rng_b4_5 = 150:300;
-    rng_int_5 = 1200:1350;
-
-%% Update turning rate - make absolute (we don't care about turing direction) and movmean over 0.5s. 
-
+    % A - moving mean 
     cond_data2 = zeros(size(cond_data)); 
     cond_data_control2 = zeros(size(cond_data_control));
-
+    
     n_flies_target = size(cond_data2, 1);
     n_flies_control = size(cond_data_control2, 1);
-
+    
     f_window = 15;
-
+    
     for ff = 1:n_flies_target
-        cond_data2(ff, :) = movmean(abs(cond_data(ff, :)), f_window);
+        cond_data2(ff, :) = movmean(cond_data(ff, :), f_window);
     end 
-
+    
     for ff = 1:n_flies_control
-        cond_data_control2(ff, :) = movmean(abs(cond_data_control(ff, :)), f_window);
+        cond_data_control2(ff, :) = movmean(cond_data_control(ff, :), f_window);
     end 
+    
+    % B - flip CCW
+    
+    % Flip sign of second half of stimulus so that all angular velocities
+    % are +ve 
+    cond_data2(:, 762:1210) = cond_data2(:, 762:1210)*-1;
+    cond_data_control2(:, 762:1210) = cond_data_control2(:, 762:1210)*-1;
+    
+    % CHECK WHAT THIS LOOKS LIKE. 
 
 %% 1 - Average turning rate during the stimulus.
 
+    rng_stim = 300:1200;
+    
+    % RUN TEST
     [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_stim);
 
     % ADD VALUES
-    pvals = [pvals, p];
-    target_mean = [target_mean, mean_per_strain];
-    control_mean = [control_mean, mean_per_strain_control];
+    [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
 
-%% 2 - Average turning rate 5s before stimulus
+%% 2 - Average turning rate during the first 5s of the CW stimulus.
 
-    % [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_b4_5);
-    % 
-    % % ADD VALUES
-    % pvals = [pvals, p];
-    % target_mean = [target_mean, mean_per_strain];
-    % control_mean = [control_mean, mean_per_strain_control];
+    rng_stim_start = 315:450;
 
-%% 3 - Average turning rate 5s after stimulus - during interval
-
-    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_int_5);
+    % RUN TEST
+    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_stim_start);
 
     % ADD VALUES
-    pvals = [pvals, p];
-    target_mean = [target_mean, mean_per_strain];
-    control_mean = [control_mean, mean_per_strain_control];
+    [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
 
+%% 3 - Average turning rate during CW stimulus.
 
-%% 4 - Average number of sharp turns during the stimulus 
+    rng_cw = 315:750;
 
-    [p_npeaks, mean_peaks_per_strain, mean_peaks_per_strain_control, p_pp, mean_pp_per_strain, mean_pp_per_strain_control] = welch_ttest_for_rng_npeaks(cond_data2, cond_data_control2, rng_stim);
-
-    % ADD VALUES
-    pvals = [pvals, p_npeaks, p_pp];
-    target_mean = [target_mean, mean_peaks_per_strain, mean_pp_per_strain];
-    control_mean = [control_mean, mean_peaks_per_strain_control, mean_pp_per_strain_control];
-
-%% 5 - Average number of sharp turns before the stimulus 
-
-    % [p_npeaks, mean_peaks_per_strain, mean_peaks_per_strain_control, p_pp, mean_pp_per_strain, mean_pp_per_strain_control] = welch_ttest_for_rng_npeaks(movmean(cond_data, f_window), movmean(cond_data_control, f_window), rng_b4);
-    % 
-    % % ADD VALUES
-    % pvals = [pvals, p_npeaks, p_pp];
-    % target_mean = [target_mean, mean_peaks_per_strain, mean_pp_per_strain];
-    % control_mean = [control_mean, mean_peaks_per_strain_control, mean_pp_per_strain_control];
-
-%% 6 - Average number of sharp turns during the interval 
-
-    [p_npeaks, mean_peaks_per_strain, mean_peaks_per_strain_control, p_pp, mean_pp_per_strain, mean_pp_per_strain_control] = welch_ttest_for_rng_npeaks(movmean(cond_data, f_window), movmean(cond_data_control, f_window), rng_int);
+    % RUN TEST
+    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_cw);
 
     % ADD VALUES
-    pvals = [pvals, p_npeaks, p_pp];
-    target_mean = [target_mean, mean_peaks_per_strain, mean_pp_per_strain];
-    control_mean = [control_mean, mean_peaks_per_strain_control, mean_pp_per_strain_control];
+    [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
 
+%% 4 - Average turning rate during the first 5s of the CCW stimulus.
 
+    rng_ccw_start = 765:900;
+
+    % RUN TEST
+    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_ccw_start);
+
+    % ADD VALUES
+    [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
+
+%% 5 - Average turning rate during CCW stimulus.
+
+    rng_ccw = 765:1200;
+
+    % RUN TEST
+    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_ccw);
+
+    % ADD VALUES
+    [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
+ 
 end 

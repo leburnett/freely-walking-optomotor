@@ -95,7 +95,7 @@ function DATA = process_screen_data(protocol)
     %% Plot the timeseries responses of different strains versus ES for different data metrics.
 
     plot_sem = 1;
-    data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_data_delta'};
+    data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_data_delta', 'dist_dt'};
 
     % Convert names - dashes to underscore.
     for i = 1:numel(strain_folders)
