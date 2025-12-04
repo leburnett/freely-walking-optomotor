@@ -108,6 +108,8 @@ function plot_xcond_per_strain(protocol, data_type, save_figs, DATA)
         rng = [-40 15];
     elseif data_type == "dist_data"
         rng = [20 100];
+    elseif data_type == "view_dist"
+        rng = [60 140];
     elseif data_type == "av_data" || data_type == "curv_data" 
         rng = [-250 250];
     end 

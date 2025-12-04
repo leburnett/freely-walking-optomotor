@@ -28,6 +28,9 @@ switch data_type
 
     case "IFD_data"
         ylb = "Distance to nearest fly (mm)";
+    
+    case "view_dist"
+        ylb = "Viewing distance (mm)";
 
     otherwise
         error("Unknown data_type: %s", data_type);
