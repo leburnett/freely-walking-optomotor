@@ -11,6 +11,10 @@ function [pvals_all, target_mean_all, control_mean_all, strain_names] = make_pva
     strain_names = load('/Users/burnettl/Documents/Projects/oaky_cokey/results/strain_names.mat');
     strain_names = strain_names.strain_names;
     n_strains = height(strain_names);
+    % Add ES
+    strain_names{n_strains+1} = 'jfrc100_es_shibire_kir';
+    
+    n_strains = height(strain_names);
     n_metrics = 28; % This might change and need to be updated.
     
     % Initialise empty arrays:
