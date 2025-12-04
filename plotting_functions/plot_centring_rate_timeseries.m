@@ -35,12 +35,17 @@ col_12 = [166 206 227; ...
 
 sex = 'F';
 
-data_type = "dist_data";
+data_type = "dist_dt";
 
 strain_id = 1;
 strain = strain_names{strain_id};
 
 data = DATA.(strain).(sex);
+
+% Plot the multi-coloured line plot for the different conditions - one
+% strain per figure. 
+
+plot_xcond_per_strain("protocol_27", data_type, 0, DATA)
 
 
 % 
@@ -145,10 +150,6 @@ xticklabels({'0', '10', '20', '30', '40', '50'})
 % plot([45 80], [0 0], 'k')
 % 
 % set(gcf, 'Position', [163   477  1006  448])
-
-
-
-
 
 
 

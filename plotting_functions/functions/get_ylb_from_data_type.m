@@ -32,6 +32,9 @@ switch data_type
     case "view_dist"
         ylb = "Viewing distance (mm)";
 
+    case "dist_dt"
+        ylb = "Centring rate (mm/s)";
+
     otherwise
         error("Unknown data_type: %s", data_type);
 end
