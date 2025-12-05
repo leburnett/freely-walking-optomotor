@@ -42,10 +42,10 @@ for typ_id = 1:n_data_types
         [pvals_fv, target_mean_fv, control_mean_fv] = fv_metric_tests(cond_data, cond_data_control); % 7 metrics
         
     elseif data_type == "av_data"
-        [pvals_av, target_mean_av, control_mean_av] = av_metric_tests(cond_data, cond_data_control); % 5 metrics
+        [pvals_av, target_mean_av, control_mean_av] = av_metric_tests(cond_data, cond_data_control); % 3 metrics
 
     elseif data_type == "curv_data"
-        [pvals_cv, target_mean_cv, control_mean_cv] = curv_metric_tests(cond_data, cond_data_control); % 5 metrics
+        [pvals_cv, target_mean_cv, control_mean_cv] = curv_metric_tests(cond_data, cond_data_control); % 3 metrics
 
     elseif data_type == "dist_data"
         [pvals_dist, target_mean_dist, control_mean_dist] = dist_metric_tests(cond_data, cond_data_control, 1); % 3 metrics

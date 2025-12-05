@@ -1,7 +1,7 @@
 function plot_pval_heatmap_strains(pvals_all, target_mean_all, control_mean_all, plot_x, multi)
 
     % Determine whether to use a red or blue colormap. 
-    diff_array = target_mean_all - control_mean_all;
+    diff_array = (target_mean_all+30) - (control_mean_all+30);
     diff_array2 = diff_array;
     diff_array2(diff_array2>0) = 1;
     diff_array2(diff_array2<=0) = -1;
@@ -9,7 +9,7 @@ function plot_pval_heatmap_strains(pvals_all, target_mean_all, control_mean_all,
     % Add here if changing the sign for reverse phi and centring:
     % Rows 7&8 = reverse phi, cols 8:17
     % Cols 18-23 = centring. 
-    diff_array2(:,18:23) = diff_array2(:, 18:23)*-1;
+    diff_array2(:,[14:19, 24]) = diff_array2(:, [14:19, 24])*-1;
     % diff_array2(7:8,8:17) = diff_array2(7:8, 8:17)*-1;    
 
     % Initialize RGB image
@@ -74,14 +74,14 @@ function plot_pval_heatmap_strains(pvals_all, target_mean_all, control_mean_all,
     % Boundaries between metric categories.
     hold on; 
     plot([7.5 7.5], [0 n_conditions+1], 'k-', 'LineWidth', 1.2);
-    plot([12.5 12.5], [0 n_conditions+1], 'k-', 'LineWidth', 1.2);
-    plot([17.5 17.5], [0 n_conditions+1], 'k-', 'LineWidth', 1.2);
-    plot([20.5 20.5], [0 n_conditions+1], 'k-', 'LineWidth', 1.2);
-    plot([23.5 23.5], [0 n_conditions+1], 'k-', 'LineWidth', 1.2);
+    plot([10.5 10.5], [0 n_conditions+1], 'k-', 'LineWidth', 1.2);
+    plot([13.5 13.5], [0 n_conditions+1], 'k-', 'LineWidth', 1.2);
+    plot([16.5 16.5], [0 n_conditions+1], 'k-', 'LineWidth', 1.2);
+    plot([19.5 19.5], [0 n_conditions+1], 'k-', 'LineWidth', 1.2);
 
     if plot_x
         % Xlabels for metric names
-        xticks(1:28)
+        xticks(1:24)
         xticklabels({...
             'fv-10s-b4', ...
             'fv-stim', ...
@@ -92,20 +92,16 @@ function plot_pval_heatmap_strains(pvals_all, target_mean_all, control_mean_all,
             'fv-change-3s-stop', ... % 7
             'av-stim', ...
             'av-5s-CW', ...
-            'av-CW', ...
-            'av-5s-CCW', ... 
-            'av-CCW', ... % 12
+            'av-5s-CCW', ... % 10
             'turning-stim', ...
             'turning-5s-CW', ...
-            'turning-CW', ...
-            'turning-5s-CCW', ... 
-            'turning-CCW', ... % 17
+            'turning-5s-CCW', ... % 13
             'dist-abs-start'...
             'dist-abs-end', ...
-            'dist-abs-int', ... %20
+            'dist-abs-int', ... % 16
             'dist-rel-10'...
             'dist-rel-end', ...
-            'dist-rel-int', ... % 23
+            'dist-rel-int', ... % 19
             'centring-stim', ...
             'centring-3s', ...
             'centring-CW', ...
@@ -114,7 +110,7 @@ function plot_pval_heatmap_strains(pvals_all, target_mean_all, control_mean_all,
             })
         % xtickangle(90)
     else
-        xticks(1:28)
+        xticks(1:24)
         xticklabels({''})
     end
 
