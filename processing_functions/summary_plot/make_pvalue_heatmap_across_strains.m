@@ -8,17 +8,17 @@ function [pvals_all, target_mean_all, control_mean_all, strain_names] = make_pva
     % control_strain = "jfrc100_es_shibire_kir";
     % strain_names(strcmp(strain_names, control_strain)) = [];
 
-    strain_names = load('/Users/burnettl/Documents/Projects/oaky_cokey/results/strain_names.mat');
+    strain_names = load('/Users/burnettl/Documents/Projects/oaky_cokey/results/strain_names2.mat');
     strain_names = strain_names.strain_names;
-    n_strains = height(strain_names);
+    % n_strains = height(strain_names);
 
     % Add ES
-    strain_names{n_strains+1} = 'jfrc100_es_shibire_kir';
+    % strain_names{n_strains+1} = 'jfrc100_es_shibire_kir';
     % Add Norp - negative control
     % strain_names{n_strains+2} = 'NorpA_UAS_Norp_plus';
 
     n_strains = height(strain_names);
-    n_metrics = 24; % This might change and need to be updated.
+    n_metrics = 10; % This might change and need to be updated.
     
     % Initialise empty arrays:
     pvals_all = zeros(n_strains, n_metrics);

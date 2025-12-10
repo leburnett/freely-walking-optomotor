@@ -87,6 +87,7 @@ function DATA = add_dist_dt(DATA)
                         % Put into columns 2:end, leaving first column NaN
                         if numel(final_data) == nCols - 1
                             dist_dt(r, 2:end) = final_data;
+
                         else
                             % Fallback in weird edge cases (very short vectors)
                             dist_dt(r, 2:(1+numel(final_data))) = final_data;

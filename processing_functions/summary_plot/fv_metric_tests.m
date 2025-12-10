@@ -35,23 +35,23 @@ function [pvals, target_mean, control_mean] = fv_metric_tests(cond_data, cond_da
     [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
 
 
-%% 3 - Average absolute forward velocity just after the stimulus starts (3s).
-    rng_stim_3 = 300:390;
-
-    % RUN TEST
-    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data, cond_data_control, rng_stim_3);
-
-    % ADD VALUES
-    [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
-
-%% 4 - Average absolute forward velocity just after the stimulus ends (3s).
-    rng_int_3 = 1200:1290;
-
-    % RUN TEST
-    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data, cond_data_control, rng_int_3);
-
-    % ADD VALUES
-    [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
+% %% 3 - Average absolute forward velocity just after the stimulus starts (3s).
+%     rng_stim_3 = 300:390;
+% 
+%     % RUN TEST
+%     [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data, cond_data_control, rng_stim_3);
+% 
+%     % ADD VALUES
+%     [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
+% 
+% %% 4 - Average absolute forward velocity just after the stimulus ends (3s).
+%     rng_int_3 = 1200:1290;
+% 
+%     % RUN TEST
+%     [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data, cond_data_control, rng_int_3);
+% 
+%     % ADD VALUES
+%     [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
 
 %% 5 - Change in average forward velocity (+/- 3s) from when the stimulus starts
 
@@ -66,25 +66,25 @@ function [pvals, target_mean, control_mean] = fv_metric_tests(cond_data, cond_da
 
 %% 6 - Change in average forward velocity (+/- 3s) from when the stimulus changes direction.
 
-    rng_b4_swap_3 = 660:750;
-    rng_after_swap_3 = 750:840;
-
-    % RUN TEST
-    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(cond_data, cond_data_control, rng_b4_swap_3, rng_after_swap_3, "norm");
-
-    % ADD VALUES
-    [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
-
-%% 7 - Change in average forward velocity (+/- 3s) from when the stimulus stops.
-
-    rng_stim_end_3 = 1110:1200;
-    rng_int_3 = 1200:1290;
-
-    % RUN TEST
-    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(cond_data, cond_data_control, rng_stim_end_3, rng_int_3, "norm");
-
-    % ADD VALUES
-    [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
+%     rng_b4_swap_3 = 660:750;
+%     rng_after_swap_3 = 750:840;
+% 
+%     % RUN TEST
+%     [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(cond_data, cond_data_control, rng_b4_swap_3, rng_after_swap_3, "norm");
+% 
+%     % ADD VALUES
+%     [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
+% 
+% %% 7 - Change in average forward velocity (+/- 3s) from when the stimulus stops.
+% 
+%     rng_stim_end_3 = 1110:1200;
+%     rng_int_3 = 1200:1290;
+% 
+%     % RUN TEST
+%     [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(cond_data, cond_data_control, rng_stim_end_3, rng_int_3, "norm");
+% 
+%     % ADD VALUES
+%     [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
 
 
 end 

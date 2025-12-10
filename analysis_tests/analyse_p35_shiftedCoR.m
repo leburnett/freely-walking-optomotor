@@ -2,7 +2,29 @@
 % Exploratory code for the different varieties of p35 that were run
 % recently:
 
+%% Create DATA
+protocol = "protocol_36";
+ROOT_DIR = '/Users/burnettl/Documents/Projects/oaky_cokey';
+% Move to the directory to where the results per experiment are saved:
+protocol_dir = fullfile(ROOT_DIR, 'results', protocol);
+cd(protocol_dir);
+
+% Get all of the strain folders that are inside the protocol folder.
+strain_folders = dir;
+strain_folders = strain_folders([strain_folders.isdir]); % Keep only directories
+strain_folders = strain_folders(~ismember({strain_folders.name}, {'.', '..'})); % Remove '.' and '..'
+
+% Number of strains without ES.
+n_strains = height(strain_folders);
+
+% Generate the struct 'DATA' that combines data across experiments and
+% separates data into conditions.
+DATA = comb_data_across_cohorts_cond(protocol_dir);
+
+%%
+
 % % [pattern_id, interval_id, speed_patt, speed_int, trial_dur, int_dur, condition_n]
+t_interval = 30;
 
 all_conditions = [ 
     9, 47, 127, 1, 20, t_interval, 1; %  60 deg gratings - 4Hz - 1 px step pattern
@@ -23,27 +45,33 @@ all_conditions = [
 fps = 30; 
 sex = "F";
 strain = "csw1118";
+% strain = "jfrc100_es_shibire_kir";
 data = DATA.(strain).(sex);
 
 %% Spatial occupancy:
 
-entryIdx = 6;
+entryIdx = 3;
 
-if entryIdx == 1
-    frameRange = 900:1200; %cohort 1
-    stim_dur = 15;
-    swapf = 750;
-    endf = 1200;
-else
-    frameRange = 1200:1500; %cohort 2
-    stim_dur = 20;
-    swapf = 900;
-    endf = 1500;
-end 
-
+% if entryIdx == 1
+%     frameRange = 900:1200; %cohort 1
+%     stim_dur = 15;
+%     swapf = 750;
+%     endf = 1200;
+% else
+%     frameRange = 1200:1500; %cohort 2
+%     stim_dur = 20;
+%     swapf = 900;
+%     endf = 1500;
+% else
+    frameRange = 1700:2100; %cohort 2
+    stim_dur = 30;
+    swapf = 1200;
+    endf = 2100;
+% end 
+% 
 %% Occupancy heatmap
 
-plot_fly_occupancy_heatmaps(data, entryIdx, frameRange)
+plot_fly_occupancy_heatmaps(data, entryIdx, frameRange);
 f = gcf;
 f.Position = [66   694  1357  305];
 
@@ -57,7 +85,7 @@ for typs = 1:2
 
     figure; tiledlayout(1, 3, 'TileSpacing','compact');
     
-    for condIdx = [2,7,8] % [1, 9, 10] %
+    for condIdx =  [2,7,8] % [1, 9, 10] %
     
         nexttile
     

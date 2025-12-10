@@ -30,8 +30,8 @@ function plot_timeseries_metric_both_reps(DATA, metric, condIdx, entryIdx, col, 
     if nargin < 7 || isempty(fps), fps = 30; end
     if nargin < 8 || isempty(stimFrames), stimFrames = [300 1200]; end
 
-    % condNames = {strcat('R1_condition_', string(condIdx)), strcat('R2_condition_', string(condIdx))};
-    condNames = {strcat('R2_condition_', string(condIdx))};
+    condNames = {strcat('R1_condition_', string(condIdx)), strcat('R2_condition_', string(condIdx))};
+    % condNames = {strcat('R2_condition_', string(condIdx))};
 
     % --- Extract available reps for this cohort ---
     reps = struct('name', {}, 'd', {});
