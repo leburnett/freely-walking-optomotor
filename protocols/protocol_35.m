@@ -28,24 +28,25 @@ vidobj.disconnect();
 d = initialize_temp_recording();
 
 % Protocol parameters: 
-t_acclim_start = 300; % 5 minutes of recording in darkness 
+t_acclim_start = 30; %300; % 5 minutes of recording in darkness 
 t_flash = 5;
 t_acclim_end = 30; 
 t_interval = 20;
+t_one_dir = 30;
 t_pause = 0.01;
 
 % [pattern_id, interval_id, speed_patt, speed_int, trial_dur, int_dur, condition_n]
 all_conditions = [ 
-    9, 47, 127, 1, 15, t_interval, 1; %  60 deg gratings - 4Hz - 1 px step pattern
-    4, 47, 64, 1, 15, t_interval, 2; %  30 deg gratings - 4Hz - 1 px step pattern
-    5, 47, 8, 1, 15, t_interval, 3;  % 30 deg Flicker - 4Hz
-    5, 47, 0, 1, 15, t_interval, 4; % 30 deg static grating
-    10, 47, 8, 1, 15, t_interval, 5;  % 60 deg Flicker - 4Hz
-    10, 47, 0, 1, 15, t_interval, 6; % 60 deg static grating
-    70, 47, 64, 1, 15, t_interval, 7; % 30 deg -- 0.75 offset - 4Hz
-    71, 47, 64, 1, 15, t_interval, 8; % 30 deg -- 0.75 offset - 4Hz
-    72, 47, 127, 1, 15, t_interval, 9; % 60 deg -- 0.75 offset - 4Hz
-    73, 47, 127, 1, 15, t_interval, 10; % 60 deg -- 0.75 offset - 4Hz
+    9, 47, 127, 1, t_one_dir, t_interval, 1; %  60 deg gratings - 4Hz - 1 px step pattern
+    6, 47, 64, 1, t_one_dir, t_interval, 2; %  30 deg gratings - 4Hz - 1 px step pattern
+    7, 47, 8, 1, t_one_dir, t_interval, 3;  % 30 deg Flicker - 4Hz
+    7, 47, 0, 1, t_one_dir, t_interval, 4; % 30 deg static grating
+    10, 47, 8, 1, t_one_dir, t_interval, 5;  % 60 deg Flicker - 4Hz
+    10, 47, 0, 1, t_one_dir, t_interval, 6; % 60 deg static grating
+    70, 47, 64, 1, t_one_dir, t_interval, 7; % 30 deg -- 0.75 offset - 4Hz
+    71, 47, 64, 1, t_one_dir, t_interval, 8; % 30 deg -- 0.75 offset - 4Hz
+    72, 47, 127, 1, t_one_dir, t_interval, 9; % 60 deg -- 0.75 offset - 4Hz
+    73, 47, 127, 1, t_one_dir, t_interval, 10; % 60 deg -- 0.75 offset - 4Hz
 ];  
 
 num_conditions = height(all_conditions); 

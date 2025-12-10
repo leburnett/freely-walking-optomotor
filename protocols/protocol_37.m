@@ -1,20 +1,15 @@
-% Protocol_27.m  - Screen protocol 2 - updated 10th March 2025
-% Based on protocol 24
+% Protocol_37.m  - partial arena tests
 
 % Includes:
 % - off background interval - pattern 47
-% - 60 deg gratings - 2 speeds
-% - thin non50:50 bars - 2 speeds
-% - curtains - fast  - on / off - 32px not 16 px
-% - reverse phi - 2 speeds
-% - flicker - 1 speed
-% - stationary grating pattern - 60 deg
-% - stationary bar - on - phototaxis - 32px
-% - shifted centre of rotation - 60 deg - 0.8
+% - 60 deg gratings - 1 speed
+% - 1/3 a,b,c (74, 75, 76)
+% - 1/2 arena (77)
+% - double speed half arena (78)
+% - triple speed half arena (79)
 
 % 20s interval
 % 30s trial duration - 2x trials
-% stationary bars = 60s only one position
 
 clear 
 
@@ -29,26 +24,23 @@ vidobj.disconnect();
 d = initialize_temp_recording();
 
 % Protocol parameters: 
-t_acclim_start = 30; % 5 minutes of recording in darkness 
+t_acclim_start = 30; %300; % 5 minutes of recording in darkness 
 t_flash = 5;
 t_acclim_end = 30; 
 t_interval = 20;
+t_one_dir = 30;
 t_pause = 0.01;
 
 % [pattern_id, interval_id, speed_patt, speed_int, trial_dur, int_dur, condition_n]
 all_conditions = [ 
-    9, 47, 127, 1, 15, t_interval, 1; %  60 deg gratings - 4Hz - 1 px step pattern
-    27, 47, 127, 1, 15, t_interval, 2; % 60 deg gratings - 8Hz - 2px step pattern
-    17, 47, 127, 1, 15, t_interval, 3; % 2:14 ON bars - 4Hz
-    24, 47, 127, 1, 15, t_interval, 4; % 2:14 OFF bars - 4Hz
-    51, 47, 127, 1, 15, t_interval, 5; % ON curtains - 8Hz - 32 px
-    52, 47, 127, 1, 15, t_interval, 6; % OFF curtains - 8Hz - 32 px
-    60, 47, 32, 1, 15, t_interval, 7;  % Reverse Phi - 16px bar - 8px step
-    60, 47, 64, 1, 15, t_interval, 8;  % Reverse Phi - 16px bar - 8px step
-    10, 47, 8, 1, 15, t_interval, 9;  % Flicker - 4Hz
-    10, 47, 0, 1, 15, t_interval, 10; % static grating - 60deg
-    21, 47, 127, 1, 15, t_interval, 11; % shifted centre of rotation - 60deg - 0.8
-    57, 47, 1, 1, 45, t_interval, 12; % bar fixation - 32px ON - single bar
+    9, 47, 127, 1, t_one_dir, t_interval, 1; %  60 deg gratings - 4Hz - 1 px step pattern
+    74, 47, 127, 1, t_one_dir, t_interval, 2; %  60 deg gratings - 4Hz - 1 px step pattern - 1/3a
+    75, 47, 127, 1, t_one_dir, t_interval, 3; %  60 deg gratings - 4Hz - 1 px step pattern - 1/3b
+    76, 47, 127, 1, t_one_dir, t_interval, 4; %  60 deg gratings - 4Hz - 1 px step pattern - 1/3c
+    77, 47, 127, 1, t_one_dir, t_interval, 5; %  60 deg gratings - 4Hz - 1 px step pattern - 1/2
+    78, 47, 64, 1, t_one_dir, t_interval, 6; %  60 deg gratings - 2Hz versus 4Hz - 1 px step pattern - double speed.
+    79, 47, 32, 1, t_one_dir, t_interval, 7; %  60 deg gratings - 1Hz versus 4Hz - 1 px step pattern - double speed.
+    80, 47, 64, 1, t_one_dir, t_interval, 8; %  60 deg gratings 4Hz - 30 deg 4Hz (60 deg 2 pix per f)
 ];  
 
 num_conditions = height(all_conditions); 
@@ -145,22 +137,12 @@ for j = [1,2]
 
          % Display the number of the current condition
         disp (current_condition);
-    
-        if current_condition > 11 % Bar fixation stimuli
-            Log = present_fixation_stimulus(current_condition, all_conditions, vidobj, d);
-            fieldName = sprintf('log_%d', log_n);
-            LOG.(fieldName) = Log;
-        elseif current_condition == 5 || current_condition == 6
-            Log = present_optomotor_stimulus_curtain(current_condition, all_conditions, vidobj, d);
-            fieldName = sprintf('log_%d', log_n);
-            LOG.(fieldName) = Log;
-        else
-            Log = present_optomotor_stimulus(current_condition, all_conditions, vidobj, d);
-            % Add the 'Log' from each condition to the overall log 'LOG'.
-            fieldName = sprintf('log_%d', log_n);
-            LOG.(fieldName) = Log;
-        end
-
+   
+        Log = present_optomotor_stimulus(current_condition, all_conditions, vidobj, d);
+        % Add the 'Log' from each condition to the overall log 'LOG'.
+        fieldName = sprintf('log_%d', log_n);
+        LOG.(fieldName) = Log;
+  
         log_n = log_n+1;
      end
 end 
