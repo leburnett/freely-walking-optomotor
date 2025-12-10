@@ -1,4 +1,4 @@
-function create_stim_video_loop(log, trx, video_filename, rep, fly_strain)
+function create_stim_video_loop(log, trx, video_filename, rep, metadata)
 % Generates individual "condition-stimulus" videos per condition. This function is called by "generate_circ_stim_ufmf".
 
 % Inputs 
@@ -7,7 +7,7 @@ function create_stim_video_loop(log, trx, video_filename, rep, fly_strain)
 %       FlyTracker.
 %       video_filename - string - name of the .ufmf video of the entire recording. 
 %       rep - int - 1 or 2, which repetition.
-%       fly_strain - string - genetic strain from LOG.meta.
+%       metadata - struct - containing strings used in the filename.
 
     % JAABA function determines the readframe function to use:
     [readframe,~,fid,~] = get_readframe_fcn(video_filename);
@@ -41,8 +41,12 @@ function create_stim_video_loop(log, trx, video_filename, rep, fly_strain)
 
     fps = 30; % frames per second. 
 
-    video_output_path = "C:\Users\burnettl\Documents\oakey-cokey\condition_videos";
-    movie_name = strcat(fly_strain, '_', video_filename(17:end-10), '_condition', string(condition_n),'_pattern', string(optomotor_pattern), '_rep', string(rep), '.mp4');
+    video_output_path = strcat("/Users/burnettl/Documents/Projects/oaky_cokey/condition_videos/", metadata.protocol, '/', string(condition_n));
+    if ~isfolder(video_output_path)
+        mkdir(video_output_path);
+    end
+
+    movie_name = strcat(metadata.strain, '_', metadata.date_str, '_', metadata.time_str, '_', metadata.protocol, '_condition', string(condition_n),'_pattern', string(optomotor_pattern), '_rep', string(rep), '.mp4');
     
     movie_obj = VideoWriter(fullfile(video_output_path, movie_name), 'MPEG-4');
     set(movie_obj,'FrameRate',fps);
