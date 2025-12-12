@@ -12,7 +12,7 @@ function [rep_data, rep_data_fv] = check_and_average_across_reps(rep1_data, rep2
         % Check what the fly's average forward velocity was during the first rep.
         mean_fv_rep1 = mean(rep1_data_fv(rr, :));
         min_dcent_rep1 = min(rep1_data_dcent(rr, :));
-        if mean_fv_rep1 < 2  || min_dcent_rep1 > 110 % Less than 3mms-1 or never closer than 100mm from centre.
+        if mean_fv_rep1 < 3  || min_dcent_rep1 > 110 % Less than 3mms-1 or never closer than 100mm from centre.
             % disp('Removing rep1')
             rep1_data(rr, :) = nan(size(rep1_data(rr, :)));
             rep1_data_fv(rr, :) = nan(size(rep1_data_fv(rr, :)));
@@ -21,7 +21,7 @@ function [rep_data, rep_data_fv] = check_and_average_across_reps(rep1_data, rep2
         % Check what the fly's average forward velocity was during the second rep.
         mean_fv_rep2 = mean(rep2_data_fv(rr, :));
         min_dcent_rep2 = min(rep2_data_dcent(rr, :));
-        if mean_fv_rep2 < 2 || min_dcent_rep2 > 110 % Less than 3mms-1 or never closer than 100mm from centre.
+        if mean_fv_rep2 < 3 || min_dcent_rep2 > 110 % Less than 3mms-1 or never closer than 100mm from centre.
             % disp('Removing rep2')
             rep2_data(rr, :) = nan(size(rep2_data(rr, :)));
             rep2_data_fv(rr, :) = nan(size(rep2_data_fv(rr, :)));
