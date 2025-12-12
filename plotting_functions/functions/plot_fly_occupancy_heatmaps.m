@@ -49,7 +49,12 @@ crossLW = 0.75;
 % condList = {'condition_1','condition_9','condition_10'};
 
 %% P 36 
-condList = {'condition_1','condition_2','condition_3'};
+% condList = {'condition_1','condition_2','condition_3'};
+
+%5 p37
+% condList = {'condition_2','condition_3','condition_4'};
+condList = {'condition_6','condition_7','condition_8'};
+% condList = {'condition_1','condition_2','condition_5'};
 
 % ---------- Gather all data to make consistent bin edges ----------
 allX = []; allY = [];
