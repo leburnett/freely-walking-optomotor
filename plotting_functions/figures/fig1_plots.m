@@ -84,7 +84,7 @@ cond_titles = {"60deg-gratings-4Hz"...
 figure_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/FIGS';
 
 
-strain = "jfrc100_es_shibire_kir";
+strain = {"jfrc100_es_shibire_kir"};
 fps = 30; 
 sex = "F";
 data = DATA.(strain).(sex);
@@ -128,14 +128,14 @@ savefig(fullfile(figure_folder, strcat('TimeSeries_p27_Cond10-9-1_ES_', sd_str,'
 figure_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/FIGS/ES_timeseries_with_shaded_metric_areas';
 
 strain_names = strain;
-cond_ids = 1;
+cond_ids = [10, 9, 1];
 data_type = "dist_data";
 protocol = "protocol_27";
 params.save_figs = 0;
 params.plot_sem = 1;
 params.plot_sd = 0;
 params.plot_individ = 0;
-params.shaded_areas = 1;
+params.shaded_areas = 0;
 
 figure;
 plot_xcond_per_strain2(protocol, data_type, cond_ids, strain_names, params, DATA)
@@ -151,39 +151,79 @@ end
 savefig(fullfile(figure_folder, strcat('TimeSeries_p27_Cond10-9-1_ES_', sd_str,'_', data_type,'.fig')));
 
 
-% FV
-% 300:1200
-% 210:300 - 300:390 (3s +/-)
-
-% AV 
-% 300:1200
-% 315:450 (first 5s)
-
-% DIST1
-% 270:300 (1s around start)
-% 1170:1200 (1s around end)
-
-% DIST2 
-% 570:600 (1s min - dist moved from start to 10s in)
-% 1170:1200 
-
-% DIST3
-% 1470:1500 (difference from end of stim to 10s after stim ends)
-
-
-
-
-
-
-
 
 
 
 %% 3 - Box and whisker plots. 
 
+% delta == 1 - - difference from stimulus start
+% delta == 2 - - difference from stimulus end
+
+cond_ids = [1, 10, 9]; % 4 Hz, 0Hz, Flicker.
+
+%% DIST1
+% 270:300 (1s around start)
+% 1170:1200 (1s around end)
+
+data_type = "dist_data";
+% rng = 270:300;
+rng = 1170:1200;
+delta = 0;
+
+plot_boxchart_metrics_xcond(DATA, cond_ids, strain_names, data_type, rng, delta)
+
+%% DIST2 
+% 570:600 (1s min - dist moved from start to 10s in)
+% 1170:1200 
+
+data_type = "dist_data";
+% rng = 570:600;
+rng = 1170:1200;
+delta = 1;
+
+figure;
+plot([0.5 3.5], [0 0], 'k')
+hold on
+plot_boxchart_metrics_xcond(DATA, cond_ids, strain_names, data_type, rng, delta)
+
+%%  DIST3
+% 1470:1500 (difference from end of stim to 10s after stim ends)
+
+data_type = "dist_data";
+rng = 1470:1500;
+delta = 2;
+
+figure;
+plot([0.5 3.5], [0 0], 'k')
+hold on
+plot_boxchart_metrics_xcond(DATA, cond_ids, strain_names, data_type, rng, delta)
+xlim([0.5 3.5])
+
+%% FV
+% 300:1200
+% 210:300 - 300:390 (3s +/-)
+
+data_type = "fv_data";
+rng = 300:1200;
+delta = 0;
+
+figure;
+plot([0.5 3.5], [0 0], 'k')
+hold on
+plot_boxchart_metrics_xcond(DATA, cond_ids, strain_names, data_type, rng, delta)
+xlim([0.5 3.5])
 
 
+%% AV 
+% 300:1200
+% 315:450 (first 5s)
 
+data_type = "curv_data";
+rng = 300:1200;
+delta = 0;
 
-
-
+figure;
+plot([0.5 3.5], [0 0], 'k')
+hold on
+plot_boxchart_metrics_xcond(DATA, cond_ids, strain_names, data_type, rng, delta)
+xlim([0.5 3.5])

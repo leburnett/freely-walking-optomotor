@@ -69,8 +69,10 @@ if params.plot_sem == 1
         rng = [60 140];
     elseif data_type == "dist_dt"
         rng = [-7 5];
-    elseif data_type == "av_data" || data_type == "curv_data" 
+    elseif data_type == "av_data"
         rng = [-200 200];
+    elseif data_type == "curv_data" 
+        rng = [-150 150];
     end 
 elseif params.plot_sd == 1
     if data_type == "fv_data" 
@@ -163,23 +165,29 @@ for strain_id = 1:numel(strain_names)
             cond_data = cond_data - cond_data(:, 300); % relative
         end 
     
-        mean_data = nanmean(cond_data);
+        % Average per fly. 
+        mean_data = squeeze(nanmean(reshape(cond_data, 2, [], size(cond_data,2)), 1));
+
+        % Mean across all flies
+        mean_data_all = nanmean(mean_data);
+
+        % mean_data = nanmean(cond_data);
 
         if params.plot_sem == 1
-            sem_data = nanstd(cond_data)/sqrt(size(cond_data,1));
+            sem_data = nanstd(mean_data)/sqrt(size(mean_data,1));
         elseif params.plot_sd == 1
-            sem_data = nanstd(cond_data);
+            sem_data = nanstd(mean_data);
         end 
 
-        y1 = mean_data+sem_data;
-        y2 = mean_data-sem_data;
-        nf_comb = size(mean_data, 2);
+        y1 = mean_data_all+sem_data;
+        y2 = mean_data_all-sem_data;
+        nf_comb = size(mean_data_all, 2);
         x = 1:1:nf_comb;
 
         if params.plot_individ == 1
-            n_indiv = height(cond_data);
+            n_indiv = height(mean_data);
             for id = 1:n_indiv
-                plot(cond_data(id, :), 'Color', [0.7 0.7 0.7], 'LineWidth', 0.7); 
+                plot(mean_data(id, :), 'Color', [0.7 0.7 0.7], 'LineWidth', 0.7); 
                 hold on
             end 
         end 
@@ -190,7 +198,7 @@ for strain_id = 1:numel(strain_names)
             plot(x, y2, 'w', 'LineWidth', 1)
             patch([x fliplr(x)], [y1 fliplr(y2)], col, 'FaceAlpha', 0.25, 'EdgeColor', 'none')
         end
-        plot(mean_data, 'Color', col, 'LineWidth', 2.5);
+        plot(mean_data_all, 'Color', col, 'LineWidth', 2.5);
         hold on
     end 
     

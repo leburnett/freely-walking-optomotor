@@ -1,4 +1,4 @@
-function cond_data = combine_timeseries_across_exp(data, condition_n, data_type)
+function cond_data = combine_timeseries_across_exp_check(data, condition_n, data_type)
 % Combines the timeseries data across the two reps and across all
 % experiments for a given strain. 
 % Currently, the two rep time series are vertically concatenated, but not
@@ -21,10 +21,10 @@ rep2_str = strcat('R2_condition_', string(condition_n));
         
             if ~isempty(rep1_data) % check that the row is not empty.
     
-                % rep1_data_fv = rep1_data.fv_data;
-                % rep2_data_fv = data(idx).(rep2_str).fv_data;
-                % rep1_data_dcent = rep1_data.dist_data;
-                % rep2_data_dcent = data(idx).(rep2_str).dist_data;
+                rep1_data_fv = rep1_data.fv_data;
+                rep2_data_fv = data(idx).(rep2_str).fv_data;
+                rep1_data_dcent = rep1_data.dist_data;
+                rep2_data_dcent = data(idx).(rep2_str).dist_data;
     
                 % Extract the relevant data
                 rep1_data = rep1_data.(data_type);
@@ -61,18 +61,18 @@ rep2_str = strcat('R2_condition_', string(condition_n));
                     % and that average across both reps for the single fly
                     % is combined together to get 'cond_data'. 
     
-                    % [rep_data, rep_data_fv] = check_and_average_across_reps(rep1_data, rep2_data, rep1_data_fv, rep2_data_fv, rep1_data_dcent, rep2_data_dcent);
+                    [rep_data] = check_and_average_across_reps(rep1_data, rep2_data, rep1_data_fv, rep2_data_fv, rep1_data_dcent, rep2_data_dcent);
                    
                     % Combine the data from both reps for a single fly so
                     % that rows following each other are the two reps for
                     % one fly. 
     
-                    n_flies = height(rep1_data);
-                    rep_data = zeros(n_flies*2, nf); % Preallocate array
-    
-                    % Interleave rows
-                    rep_data(1:2:end, :) = rep1_data;
-                    rep_data(2:2:end, :) = rep2_data;
+                    % n_flies = height(rep1_data);
+                    % rep_data = zeros(n_flies*2, nf); % Preallocate array
+                    % 
+                    % % Interleave rows
+                    % rep_data(1:2:end, :) = rep1_data;
+                    % rep_data(2:2:end, :) = rep2_data;
     
                     cond_data = vertcat(cond_data, rep_data);
 
@@ -81,6 +81,10 @@ rep2_str = strcat('R2_condition_', string(condition_n));
                     if nf>=nf_comb % trim incoming data
                         rep1_data = rep1_data(:, 1:nf_comb);
                         rep2_data = rep2_data(:, 1:nf_comb);
+                        rep1_data_fv = rep1_data_fv(:, 1:nf_comb);
+                        rep2_data_fv = rep2_data_fv(:, 1:nf_comb);
+                        rep1_data_dcent = rep1_data_dcent(:, 1:nf_comb);
+                        rep2_data_dcent = rep2_data_dcent(:, 1:nf_comb);
     
                     elseif nf_comb>nf % Add NaNs to end
     
@@ -88,15 +92,20 @@ rep2_str = strcat('R2_condition_', string(condition_n));
                         n_flies = size(rep1_data, 1);
                         rep1_data(:, nf:nf_comb) = NaN(n_flies, diff_f);
                         rep2_data(:, nf:nf_comb) = NaN(n_flies, diff_f);
+                        rep1_data_fv(:, nf:nf_comb) = NaN(n_flies, diff_f);
+                        rep2_data_fv(:, nf:nf_comb) = NaN(n_flies, diff_f);
+                        rep1_data_dcent(:, nf:nf_comb) = NaN(n_flies, diff_f);
+                        rep2_data_dcent(:, nf:nf_comb) = NaN(n_flies, diff_f);
                     end 
     
-                    n_flies = height(rep1_data);
-                    rep_data = zeros(n_flies*2, nf_comb); % Preallocate array
+                    % n_flies = height(rep1_data);
+                    % rep_data = zeros(n_flies*2, nf_comb); % Preallocate array
+                    [rep_data] = check_and_average_across_reps(rep1_data, rep2_data, rep1_data_fv, rep2_data_fv, rep1_data_dcent, rep2_data_dcent);
     
                     % Interleave rows so that the 2 reps from each animal
                     % are next to each other.
-                    rep_data(1:2:end, :) = rep1_data;
-                    rep_data(2:2:end, :) = rep2_data;
+                    % rep_data(1:2:end, :) = rep1_data;
+                    % rep_data(2:2:end, :) = rep2_data;
     
                     % [rep_data, rep_data_fv] = check_and_average_across_reps(rep1_data, rep2_data, rep1_data_fv, rep2_data_fv, rep1_data_dcent, rep2_data_dcent);
                     cond_data = vertcat(cond_data, rep_data);
