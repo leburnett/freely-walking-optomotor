@@ -1,5 +1,7 @@
-function hFig = plot_fly_occupancy_heatmaps(DATA, entryIdx, frameRange, nbins, varargin)
+function hFig = plot_fly_occupancy_heatmaps(DATA, protocol, entryIdx, frameRange, nbins, varargin)
 % PLOT_FLY_OCCUPANCY_HEATMAPS_FIXED
+
+
 % 2D occupancy heatmaps for R1+R2 in conditions 1, 11, and 9 over frames
 % 1000:1200 by default. Overlays arena circle using FIXED center/radius.
 %
@@ -42,19 +44,24 @@ crossLW = 0.75;
 % Conditions to plot (R1+R2 per panel)
 % condList = {'condition_1','condition_3','condition_5'};
 
-% P 35
-% 30 deg
-% condList = {'condition_2','condition_7','condition_8'};
-% 60 deg
-% condList = {'condition_1','condition_9','condition_10'};
-
-%% P 36 
-% condList = {'condition_1','condition_2','condition_3'};
-
-%5 p37
-% condList = {'condition_2','condition_3','condition_4'};
-condList = {'condition_6','condition_7','condition_8'};
-% condList = {'condition_1','condition_2','condition_5'};
+if protocol == "protocol_35"
+    % P 35
+    % 30 deg
+    condList = {'condition_2','condition_7','condition_8'};
+    % 60 deg
+    % condList = {'condition_1','condition_9','condition_10'};
+elseif protocol == "protocol_36"
+    % P 36 
+    condList = {'condition_1','condition_2','condition_3'};
+elseif protocol == "protocol_37"
+    % p37
+    condList = {'condition_2','condition_3','condition_4'};
+    % condList = {'condition_6','condition_7','condition_8'};
+    % condList = {'condition_1','condition_2','condition_5'};
+elseif protocol == "protocol_27"
+    % p 27
+    condList = {'condition_1','condition_10','condition_9'};
+end 
 
 % ---------- Gather all data to make consistent bin edges ----------
 allX = []; allY = [];
@@ -170,18 +177,21 @@ for i = 1:numel(condList)
         colorbar(ax);
     end 
     xlabel(ax, xlab); ylabel(ax, ylab);
-    title(ax, strrep(sprintf('R1+R2 %s (frames %d:%d)', cond, frameRange(1), frameRange(end)), '_', '-'));
+    title(ax, strrep(sprintf('%s (frames %d:%d)', cond, frameRange(1), frameRange(end)), '_', '-'));
 
     % Arena circle overlay (thin white line)
     hold(ax,'on');
     plot(ax, xc, yc, '-', 'Color', ccolor, 'LineWidth', clw, 'HitTest','off');
     % Red cross for centre of the arena
     plot(ax, Center(1), Center(2), '+', 'Color', [0.8 0 0], 'LineWidth', crossLW, 'MarkerSize', 20, 'LineWidth', 2.5);
-    % Blue cross for shifted centre of rotation.
-    if cond == "condition_10" || cond == "condition_8" 
-        plot(ax, 113.397, 212.914, '+', 'Color', [1 0.4 0.8], 'LineWidth', crossLW, 'MarkerSize', 20, 'LineWidth', 2.5);
-    elseif cond == "condition_9" || cond == "condition_7"
-        plot(ax, 141.61, 31.8534, '+', 'Color', [1 0.4 0.8], 'LineWidth', crossLW, 'MarkerSize', 20, 'LineWidth', 2.5);
+
+    if protocol ~= "protocol_27"
+        % Blue cross for shifted centre of rotation.
+        if cond == "condition_10" || cond == "condition_8" 
+            plot(ax, 113.397, 212.914, '+', 'Color', [1 0.4 0.8], 'LineWidth', crossLW, 'MarkerSize', 20, 'LineWidth', 2.5);
+        elseif cond == "condition_9" || cond == "condition_7"
+            plot(ax, 141.61, 31.8534, '+', 'Color', [1 0.4 0.8], 'LineWidth', crossLW, 'MarkerSize', 20, 'LineWidth', 2.5);
+        end 
     end 
     axis(ax,'off');
     box(ax,'off');

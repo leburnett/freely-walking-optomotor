@@ -46,6 +46,7 @@ function plot_traj_subplot(DATA, strain, condition_n, save_folder)
                 lgd = legend;
                 lgd.Position = [0.8309    0.1333    0.0562    0.0445];
             end 
+            title(string(i))
         end 
     
         sgtitle(strcat(strrep(strain, '_', '-'), "- Condition ", string(condition_n), " - ", string(flies_to_plot(1)), ":", string(flies_to_plot(end))))
@@ -56,14 +57,14 @@ function plot_traj_subplot(DATA, strain, condition_n, save_folder)
         % Save the figure:
         f_name = fullfile(save_folder, strcat("Traj_fig", string(p),"_", strain, "_Condition", string(condition_n), ".pdf"));
         
-        exportgraphics(f ...
-                , f_name ...
-                , 'BackgroundColor', 'none' ...
-                , 'Resolution', 90 ...
-                );
-        %                % , 'ContentType', 'vector' ... % Use if you want
-        %                to generate high quality figures.
-        close
+        % exportgraphics(f ...
+        %         , f_name ...
+        %         , 'BackgroundColor', 'none' ...
+        %         , 'Resolution', 90 ...
+        %         );
+        % %                % , 'ContentType', 'vector' ... % Use if you want
+        % %                to generate high quality figures.
+        % close
     end 
 end 
 

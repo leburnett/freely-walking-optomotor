@@ -84,7 +84,7 @@ cond_titles = {"60deg-gratings-4Hz"...
 figure_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/FIGS';
 
 
-strain = {"jfrc100_es_shibire_kir"};
+strain = "jfrc100_es_shibire_kir";
 fps = 30; 
 sex = "F";
 data = DATA.(strain).(sex);
@@ -227,3 +227,41 @@ plot([0.5 3.5], [0 0], 'k')
 hold on
 plot_boxchart_metrics_xcond(DATA, cond_ids, strain_names, data_type, rng, delta)
 xlim([0.5 3.5])
+
+
+
+%% Spatial occupancy maps
+
+strain = "jfrc100_es_shibire_kir";
+fps = 30; 
+sex = "F";
+data = DATA.(strain).(sex);
+
+
+for entryIdx = 16:25
+    protocol = "protocol_27";
+    plot_fly_occupancy_heatmaps(data, protocol, entryIdx, [], []);
+    f = gcf;
+    f.Position = [103   726   766   238];
+end 
+
+% - ALL COHORTS
+hFig = plot_fly_occupancy_heatmaps_all(data);
+hFig.Position = [27  622  1774  425];
+
+
+%% Trajectories. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -25,7 +25,7 @@ Centre_mm  = [528, 516] / PPM;
 Radius_mm  = 496 / PPM;
 
 if nargin < 2 || isempty(frameRange), frameRange = 1110:1200; end
-if nargin < 3 || isempty(nbins),      nbins      = 25;       end
+if nargin < 3 || isempty(nbins),      nbins      = 20;       end
 
 % Options
 p = inputParser;
@@ -43,7 +43,9 @@ maxOccCol = [0.3 0.7 1.0];     % light-blue cross for top-25% centroid
 topFrac   = 0.5;              % <-- fraction of total probability mass to define the "highly occupied" blob
 
 % Conditions to plot (R1+R2 per panel)
-condList = {'condition_1','condition_11','condition_9'};
+% condList = {'condition_1','condition_11','condition_9'};
+% p27
+condList = {'condition_1','condition_10','condition_9'};
 
 % ---------- Gather ALL entries' data for consistent binning & shared CLim ----------
 panelXY = cell(numel(condList),1);
@@ -178,10 +180,10 @@ for i = 1:numel(condList)
         'LineWidth', crossLW, 'MarkerSize', markerSz);
 
     % Pink cross = shifted center of rotation (mm if your data are mm)
-    shifted_px = [141.61, 31.8534];      % << your numbers (px) if needed
-    shifted_mm = shifted_px;             % keep as-is if your data are already in same units as x/y
-    plot(ax, shifted_mm(1), shifted_mm(2), '+', 'Color', [1 0.4 0.8], ...
-        'LineWidth', crossLW, 'MarkerSize', markerSz);
+    % shifted_px = [141.61, 31.8534];      % << your numbers (px) if needed
+    % shifted_mm = shifted_px;             % keep as-is if your data are already in same units as x/y
+    % plot(ax, shifted_mm(1), shifted_mm(2), '+', 'Color', [1 0.4 0.8], ...
+    %     'LineWidth', crossLW, 'MarkerSize', markerSz);
 
     % Light-blue cross = centroid of the top-25%-mass region
     plot(ax, xBlue, yBlue, '+', 'Color', maxOccCol, ...
@@ -189,8 +191,8 @@ for i = 1:numel(condList)
 
     % Contour outline of the top-25%-mass region
     % Use the binary mask M; contour at 0.5 draws the boundary of the blob.
-    contour(ax, xcent, ycent, M', [0.5 0.5], ...
-        'LineWidth', 2.5, 'LineColor', maxOccCol);
+    % contour(ax, xcent, ycent, M', [0.5 0.5], ...
+    %     'LineWidth', 2.5, 'LineColor', maxOccCol);
 
     % Clean look
     axis(ax,'off'); box(ax,'off'); hold(ax,'off');
