@@ -252,16 +252,70 @@ hFig.Position = [27  622  1774  425];
 
 %% Trajectories. 
 
+cond_ids = [10, 9, 1];
+
+% [807, 802, 791, 314, 24, 776, 786, 804, 746, 215, 743, 701, 705, 727, 239]
+% [24, 692, 646, 639, 631, 245, 637, 625, 581, 583, 87, 547]
+for f = [543, 557, 544, 523, 370, 312, 396, 212, 816, 818, 166]
+    plot_traj_xcond(DATA, strain, cond_ids, f)
+end 
+
+cond_idx = 7; %10 
+% fly_ids = [557, 543, 637]; %557
+fly_ids = [807, 802, 791];
+
+plot_traj_xflies(DATA, strain, cond_idx, fly_ids)
+legend off
+
+%% Plot time series data - across strains for one conditions
+
+    % {'ss2575_LPC1_shibire_kir'   } 1
+    % {'csw1118'                   } 2
+    % {'jfrc100_es_shibire_kir'    } 3
+    % {'l1l4_jfrc100_shibire_kir'  } 4
+    % {'ss00297_Dm4_shibire_kir'   } 5
+    % {'ss00316_Mi4_shibire_kir'   } 6
+    % {'ss00326_Pm2ab_shibire_kir' } 7 
+    % {'ss00395_TmY3_shibire_kir'  } 8
+    % {'ss01027_H2_shibire_kir'    } 9
+    % {'ss02594_TmY5a_shibire_kir' } 10
+    % {'ss03722_Tm5Y_shibire_kir'  } 11
+    % {'ss1209_DCH_VCH_shibire_kir'} 12
+    % {'ss2344_T4_shibire_kir'     } 13
+    % {'ss2571_T5_shibire_kir'     } 14
+    % {'ss2603_TmY20_shibire_kir'  } 15
+    % {'ss26283_H1_shibire_kir'    } 16
+    % {'ss324_t4t5_shibire_kir'    } 17 
+    % {'ss34318_Am1_shibire_kir'   } 18
 
 
+close
+strains_to_plot= 1:17;
+% strains_to_plot = [1:5, 17];
+% strains_to_plot = [6:11, 17];
+% strains_to_plot = [12:16, 17];
+% strains_to_plot = [18, 17];
+
+cond_ids = 1;
+data_type = "dist_data_delta";
+protocol = "protocol_27";
+params.save_figs = 0;
+params.plot_sem = 1;
+params.plot_sd = 0;
+params.plot_individ = 0;
+params.shaded_areas = 0;
+
+figure;
+plot_xstrain_per_cond(protocol, data_type, cond_ids, strains_to_plot, params, DATA)
+f = gcf;
+f.Position = [181   611   641   340];
 
 
+%%
 
-
-
-
-
-
+figure; 
+scatter(1:18, ones(1, 18), 200, strain_colours, 'filled')
+axis off
 
 
 
