@@ -17,12 +17,12 @@ strain = "jfrc100_es_shibire_kir";
 
 % condition_n = 1:4;
 
-for condition_n = 1 %[1,2,4,6,7,9]
+for condition_n = 7 %[1,2,4,6,7,9]
 
     save_folder = fullfile(ROOT_DIR, "figures", "trajectories", protocol, strain, string(condition_n));
-    if ~isfolder(save_folder)
-        mkdir(save_folder);
-    end
+    % if ~isfolder(save_folder)
+    %     mkdir(save_folder);
+    % end
     
     plot_traj_subplot(DATA, strain, condition_n, save_folder)
     
@@ -41,6 +41,15 @@ end
 
 cond_idx = 10;
 fly_ids = [557, 543, 637]; %557
+
+plot_traj_xflies(DATA, strain, cond_idx, fly_ids)
+legend off
+
+%% Trajectory for reverse phi
+
+cond_idx = 7;
+
+fly_ids = [716, 611, 524];
 
 plot_traj_xflies(DATA, strain, cond_idx, fly_ids)
 legend off
