@@ -101,8 +101,8 @@ end
 
 % PLOT 
 strain_names = strain;
-cond_ids = [10, 9, 1];
-data_type = "fv_data";
+cond_ids = [10, 1];
+data_type = "dist_data_delta";
 protocol = "protocol_27";
 params.save_figs = 0;
 params.plot_sem = 1;
@@ -268,6 +268,7 @@ plot_traj_xflies(DATA, strain, cond_idx, fly_ids)
 legend off
 
 %% Plot time series data - across strains for one conditions
+% Rainbow plots 
 
     % {'ss2575_LPC1_shibire_kir'   } 1
     % {'csw1118'                   } 2
@@ -296,8 +297,8 @@ strains_to_plot= 1:17;
 % strains_to_plot = [12:16, 17];
 % strains_to_plot = [18, 17];
 
-cond_ids = 1;
-data_type = "dist_data_delta";
+cond_ids = 7;
+data_type = "fv_data";
 protocol = "protocol_27";
 params.save_figs = 0;
 params.plot_sem = 1;
@@ -311,11 +312,66 @@ f = gcf;
 f.Position = [181   611   641   340];
 
 
-%%
+%% Make rainbow dot plot to show which colour corresponds to which strain.
 
 figure; 
 scatter(1:18, ones(1, 18), 200, strain_colours, 'filled')
 axis off
 
 
+%% Boxplots - X-strain - per cond. 
 
+strain_ids = 1:17;
+cond_idx = 7;
+
+% Distance metrics
+data_type = "dist_data";
+rng = 1170:1200;
+delta = 0;
+
+figure;
+plot([0.5 17.5], [0 0], 'k')
+hold on
+plot_boxchart_metrics_xstrains(DATA, strain_ids, cond_idx, data_type, rng, delta)
+f = gcf;
+f.Position = [138   605   607   241];
+
+
+% Angular velocity
+data_type = "av_data";
+rng = 300:1200;
+delta = 0;
+
+figure;
+plot([0.5 17.5], [0 0], 'k')
+hold on
+plot_boxchart_metrics_xstrains(DATA, strain_ids, cond_idx, data_type, rng, delta)
+f = gcf;
+f.Position = [138   605   607   241];
+
+
+% Turning rate 
+data_type = "curv_data";
+rng = 300:1200;
+delta = 0;
+
+figure;
+plot([0.5 17.5], [0 0], 'k')
+hold on
+plot_boxchart_metrics_xstrains(DATA, strain_ids, cond_idx, data_type, rng, delta)
+f = gcf;
+f.Position = [138   605   607   241];
+
+ % ylim([-40 320])
+
+% Forward velocity
+data_type = "fv_data";
+rng = 300:1200;
+delta = 0;
+
+figure;
+plot([0.5 17.5], [0 0], 'k')
+hold on
+plot_boxchart_metrics_xstrains(DATA, strain_ids, cond_idx, data_type, rng, delta)
+f = gcf;
+f.Position = [138   605   607   241];
