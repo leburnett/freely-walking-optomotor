@@ -46,7 +46,7 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
     theta = rand() * 2 * pi;
 
     for i = 2:n_steps
-        % --- Compute viewing distance along current heading ---
+        % Compute viewing distance along current heading
         % Ray-circle intersection from point (x,y) along heading theta
         dx = cos(theta);
         dy = sin(theta);
@@ -68,9 +68,9 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
             viewing_dist = min(t_candidates);
         end
 
-        % --- Update heading based on Brownian motion and viewing distance ---
+        % Update heading based on Brownian motion and viewing distance
 
-        % --- Remove turning bias if the viewing distance is too small. 
+        % Remove turning bias if the viewing distance is too small. 
         if viewing_dist < 20
             bb = 0;
         else 
@@ -93,16 +93,16 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
         end 
         theta = theta + dtheta;
 
-        % --- Inverse relationship: speed drops as turning increases ---
+        % Inverse relationship: speed drops as turning increases
         alpha = 7;          % sensitivity of speed to turning (tune as needed)
         v_max = 20;         % max possible speed (when not turning)
         v_inst = v_max / (1 + alpha * abs(dtheta));
 
-        % --- Move forward ---
+        % Move forward
         x_new = x + v_inst * dt * cos(theta);
         y_new = y + v_inst * dt * sin(theta);
 
-        % --- Check bounds: stay inside arena ---
+        % Check bounds: stay inside arena
         if sqrt(x_new^2 + y_new^2) >= arena_radius
             % Reflect heading
             theta = theta + pi;

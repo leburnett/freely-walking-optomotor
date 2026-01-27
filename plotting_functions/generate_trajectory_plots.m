@@ -1,7 +1,7 @@
 
 ROOT_DIR = '/Users/burnettl/Documents/Projects/oaky_cokey';
 
-protocol = "protocol_31";
+protocol = "protocol_35";
 protocol_dir = fullfile(ROOT_DIR, "results", protocol);
 cd(protocol_dir);
 
@@ -52,4 +52,15 @@ cond_idx = 7;
 fly_ids = [716, 611, 524];
 
 plot_traj_xflies(DATA, strain, cond_idx, fly_ids)
+legend off
+
+
+%% Plot example empty split trajectory
+
+cond_idx = 7;
+
+fly_ids = 524;
+
+close
+plot_traj_pre_post(DATA, strain, cond_idx, fly_ids)
 legend off

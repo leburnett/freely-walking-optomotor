@@ -16,7 +16,7 @@ data = DATA.(strain).(sex);
 control_strain = "jfrc100_es_shibire_kir";
 data_control = DATA.(control_strain).(sex);
 
-data_types = {'fv_data', 'curv_data', 'dist_data', 'dist_data_delta', 'dist_data_delta_end'};
+data_types = {'fv_data', 'curv_data', 'dist_data_delta'};
 n_data_types = numel(data_types);
 
 for typ_id = 1:n_data_types
@@ -67,10 +67,10 @@ end
 % Combine the arrays horizontally across metrics, Size: [1 x n_metrics]
 % These arrays will then be combined vertically across strains. 
 
-pvals = horzcat(pvals_fv, pvals_cv,  pvals_dist, pvals_delta, pvals_dist_dt);
+pvals = horzcat(pvals_fv, pvals_cv, pvals_delta);
 
-target_mean = horzcat(target_mean_fv, target_mean_cv, target_mean_dist, target_mean_delta, target_mean_dist_dt);
+target_mean = horzcat(target_mean_fv, target_mean_cv, target_mean_delta);
 
-control_mean = horzcat(control_mean_fv, control_mean_cv, control_mean_dist, control_mean_delta, control_mean_dist_dt);
+control_mean = horzcat(control_mean_fv, control_mean_cv, control_mean_delta);
 
 end 

@@ -18,7 +18,7 @@ function [pvals_all, target_mean_all, control_mean_all, strain_names] = make_pva
     % strain_names{n_strains+2} = 'NorpA_UAS_Norp_plus';
 
     n_strains = height(strain_names);
-    n_metrics = 10; % This might change and need to be updated.
+    n_metrics = 6; % This might change and need to be updated.
     
     % Initialise empty arrays:
     pvals_all = zeros(n_strains, n_metrics);

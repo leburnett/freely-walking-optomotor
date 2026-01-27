@@ -37,7 +37,8 @@ ns = numel(strain_ids);
     
 for strain_id = 1:ns
 
-    strain = strain_names{strain_id};
+    strain = strain_names{strain_ids(strain_id)};
+    disp(strain)
     
     condition_n = cond_idx;
 

@@ -17,7 +17,7 @@ if ~isfolder(fig_date_folder)
     mkdir(fig_date_folder);
 end
 
-save_fig = 1; 
+save_fig = 0; 
 
 %% Method 1 - bootstrapping from p27 ES-Shibire-Kir flies.
 
@@ -90,10 +90,12 @@ for d = 1:numel(data_types)
          [0.8 0.8 0.8], 'EdgeColor', 'none', 'FaceAlpha', 0.4);
     plot(t, group_mean, 'k', 'LineWidth', 2);
     
+    % burgundy colour for group - - [0.36 0.05 0.20]
+
     % Plot solo mean with ±1 standard deviation
     fill([t, fliplr(t)], [solo_ci(1,:), fliplr(solo_ci(2,:))], ...
-         [0.8 0.8 1], 'EdgeColor', 'none', 'FaceAlpha', 0.4);
-    plot(t, solo_mean, 'Color', [0 0 0.85], 'LineWidth', 2);
+         [0.46 0.15 0.30], 'EdgeColor', 'none', 'FaceAlpha', 0.2);
+    plot(t, solo_mean, 'Color', [0.46 0.15 0.30], 'LineWidth', 2);
     
     ylb = get_ylb_from_data_type(data_type, delta);
     

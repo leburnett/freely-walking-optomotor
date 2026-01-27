@@ -34,6 +34,13 @@ end
 % separates data into conditions.
 DATA = comb_data_across_cohorts_cond(protocol_dir);
 
+% Save a text file with the number of flies and vials for each strain
+% that has been run so far: 
+exp_data = generate_exp_data_struct(DATA);
+% Print and save text file
+% export_num_flies_summary(exp_data, save_folder)
+
+generate_fly_n_bar_charts(exp_data, save_folder)
 
 % % Store figures in folders of the day that they were created too. Can go
 % % back and look at previous versions. 
@@ -83,8 +90,10 @@ cond_titles = {"60deg-gratings-4Hz"...
 
 figure_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/FIGS';
 
-
 strain = "jfrc100_es_shibire_kir";
+% strain = "ss324_t4t5_shibire_kir";
+% strain = "ss00297_Dm4_shibire_kir";
+
 fps = 30; 
 sex = "F";
 data = DATA.(strain).(sex);
@@ -101,8 +110,11 @@ end
 
 % PLOT 
 strain_names = strain;
-cond_ids = [10, 1];
-data_type = "dist_data_delta";
+% cond_ids = [10, 1];
+% cond_ids = [3, 4, 1];
+cond_ids = [1,7];
+% data_type = "dist_data_delta";
+data_type = "av_data";
 protocol = "protocol_27";
 params.save_figs = 0;
 params.plot_sem = 1;
@@ -128,14 +140,14 @@ savefig(fullfile(figure_folder, strcat('TimeSeries_p27_Cond10-9-1_ES_', sd_str,'
 figure_folder = '/Users/burnettl/Documents/Projects/oaky_cokey/figures/FIGS/ES_timeseries_with_shaded_metric_areas';
 
 strain_names = strain;
-cond_ids = [10, 9, 1];
-data_type = "dist_data";
+cond_ids = 1; %[10, 9, 1];
+data_type = "curv_data";
 protocol = "protocol_27";
 params.save_figs = 0;
-params.plot_sem = 1;
+params.plot_sem = 0;
 params.plot_sd = 0;
 params.plot_individ = 0;
-params.shaded_areas = 0;
+params.shaded_areas = 1;
 
 figure;
 plot_xcond_per_strain2(protocol, data_type, cond_ids, strain_names, params, DATA)
@@ -159,7 +171,8 @@ savefig(fullfile(figure_folder, strcat('TimeSeries_p27_Cond10-9-1_ES_', sd_str,'
 % delta == 1 - - difference from stimulus start
 % delta == 2 - - difference from stimulus end
 
-cond_ids = [1, 10, 9]; % 4 Hz, 0Hz, Flicker.
+% cond_ids = [1, 10, 9]; % 4 Hz, 0Hz, Flicker.
+cond_ids = [1,7];
 
 %% DIST1
 % 270:300 (1s around start)
@@ -182,7 +195,7 @@ rng = 1170:1200;
 delta = 1;
 
 figure;
-plot([0.5 3.5], [0 0], 'k')
+plot([0.5 4.5], [0 0], 'k')
 hold on
 plot_boxchart_metrics_xcond(DATA, cond_ids, strain_names, data_type, rng, delta)
 
@@ -218,16 +231,15 @@ xlim([0.5 3.5])
 % 300:1200
 % 315:450 (first 5s)
 
-data_type = "curv_data";
+data_type = "av_data";
 rng = 300:1200;
 delta = 0;
 
 figure;
-plot([0.5 3.5], [0 0], 'k')
-hold on
+% plot([0.5 4.5], [0 0], 'k')
+% hold on
 plot_boxchart_metrics_xcond(DATA, cond_ids, strain_names, data_type, rng, delta)
-xlim([0.5 3.5])
-
+% xlim([0.5 4.5])
 
 
 %% Spatial occupancy maps
@@ -291,14 +303,17 @@ legend off
 
 
 close
-strains_to_plot= 1:17;
+% strains_to_plot= 1:17; % Which strains to plot the data for:
 % strains_to_plot = [1:5, 17];
-% strains_to_plot = [6:11, 17];
+% strains_to_plot = [6,8,9,10,11,7,17]; %[6:11, 17];
 % strains_to_plot = [12:16, 17];
 % strains_to_plot = [18, 17];
+strains_to_plot = [3, 7, 17]; % T4t5, Dm4, ES
 
-cond_ids = 7;
-data_type = "fv_data";
+
+cond_ids = 3; % Which condition number to plot the data for.
+% data_type = "dist_data_delta";
+data_type = "av_data";
 protocol = "protocol_27";
 params.save_figs = 0;
 params.plot_sem = 1;
@@ -321,20 +336,22 @@ axis off
 
 %% Boxplots - X-strain - per cond. 
 
-strain_ids = 1:17;
-cond_idx = 7;
+strain_ids = [3,7,17]; %1:17;
+cond_idx = 3;
 
 % Distance metrics
 data_type = "dist_data";
 rng = 1170:1200;
-delta = 0;
+delta = 1;
 
 figure;
 plot([0.5 17.5], [0 0], 'k')
 hold on
 plot_boxchart_metrics_xstrains(DATA, strain_ids, cond_idx, data_type, rng, delta)
 f = gcf;
-f.Position = [138   605   607   241];
+% f.Position = [138   605   607   241];
+% 3 strains
+f.Position = [138   605   197   241];
 
 
 % Angular velocity

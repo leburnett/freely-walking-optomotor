@@ -16,21 +16,24 @@ exp_data = generate_exp_data_struct(DATA);
 % strains = {"jfrc100_es_shibire_kir", "ss00297_Dm4_shibire_kir"};
 % strains = {"jfrc100_es_shibire_kir", "ss02360_Dm4_shibire_kir"};
 % strains = {"jfrc100_es_shibire_kir", "ss00326_Pm2ab_shibire_kir"};
-% strains = {"jfrc100_es_shibire_kir", "ss324_t4t5_shibire_kir"};
-strains = {"jfrc100_es_shibire_kir", "l1l4_jfrc100_shibire_kir"};
+strains = {"jfrc100_es_shibire_kir", "ss324_t4t5_shibire_kir"};
+% strains = {"jfrc100_es_shibire_kir", "l1l4_jfrc100_shibire_kir"};
+% strains = {"jfrc100_es_shibire_kir"};
 data_types = {'av_data', 'dist_data_delta'};
 
 close all
 for dt = 1:numel(data_types)
     data_type = data_types{dt};
     figure
-    for st = [1,2]
+    for st = 1:numel(strains)
         strain = strains{st};
         f3 = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type);
     end 
     if data_type == "gain"
         ylim([-0.2 1])
     end 
+    f = gcf;
+    f.Position = [125   643   261   221];
 end 
 
 

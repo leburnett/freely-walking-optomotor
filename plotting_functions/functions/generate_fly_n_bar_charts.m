@@ -39,9 +39,9 @@ function generate_fly_n_bar_charts(exp_data, save_folder)
     f = gcf;
     f.Position = [73   431   626   347];
 
-    fname = fullfile(save_folder, 'Number_of_vials_per_strain.pdf');
-    exportgraphics(f, fname, 'ContentType', 'vector', 'BackgroundColor', 'none');
-    close
+    % fname = fullfile(save_folder, 'Number_of_vials_per_strain.pdf');
+    % exportgraphics(f, fname, 'ContentType', 'vector', 'BackgroundColor', 'none');
+    % close
     
     %% 2 - Total number of flies - after tracking and processing. 
     
@@ -77,7 +77,7 @@ function generate_fly_n_bar_charts(exp_data, save_folder)
     
     f = gcf;
     f.Position = [73   431   626   347];
-    fname = fullfile(save_folder, 'Number_of_flies_per_strain.pdf');
-    exportgraphics(f, fname, 'ContentType', 'vector', 'BackgroundColor', 'none');
-    close
+    % fname = fullfile(save_folder, 'Number_of_flies_per_strain.pdf');
+    % exportgraphics(f, fname, 'ContentType', 'vector', 'BackgroundColor', 'none');
+    % close
 end

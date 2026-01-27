@@ -1,4 +1,4 @@
-function DATA = make_summary_heat_maps_p27(zscore, compare_to_ES, DATA)
+function DATA = make_summary_heat_maps_p27(DATA)
 
 %   Inputs
 %   ______
@@ -27,7 +27,7 @@ function DATA = make_summary_heat_maps_p27(zscore, compare_to_ES, DATA)
     % Add the matrices "dist_dt" - centring rate - for each experiment. 
     % This is not currently included in the standard processing pipeline
     % and so has to be added later here.
-    DATA = add_dist_dt(DATA);
+    % DATA = add_dist_dt(DATA);
 
      cond_titles = {"60deg-gratings-4Hz"...
         , "60deg-gratings-8Hz"...
@@ -51,7 +51,7 @@ function DATA = make_summary_heat_maps_p27(zscore, compare_to_ES, DATA)
     control_all = [];
 
     % Combine the data across the conditions
-    for condition_n = 9 %1:12 % [1,2,9,10]
+    for condition_n = 1 %1:12 % [1,2,9,10]
 
         [pvals_cond, target_mean_all, control_mean_all, strain_names] = make_pvalue_heatmap_across_strains(DATA, condition_n);
     
@@ -83,7 +83,7 @@ function DATA = make_summary_heat_maps_p27(zscore, compare_to_ES, DATA)
     title(strrep(cond_titles{condition_n}, '_', '-'))
 
     f = gcf;
-    f.Position = [118   469   467   466]; % [2612  -522  373  1588]; %[564    73   362   974];
+    f.Position = [118   469   363   466]; %[118   469   467   466]; % [2612  -522  373  1588]; %[564    73   362   974];
 
  
     

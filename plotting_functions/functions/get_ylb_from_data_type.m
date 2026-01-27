@@ -3,7 +3,8 @@ function ylb = get_ylb_from_data_type(data_type, delta)
 switch data_type
     case "dist_data"
         if delta > 0
-            ylb = 'Centripetal displacement (mm)';
+            ylb = "Distance moved towards centre (mm)";
+            % ylb = 'Centripetal displacement (mm)';
         else
             ylb = 'Distance from centre (mm)';
         end

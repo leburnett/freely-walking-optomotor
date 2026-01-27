@@ -1,9 +1,10 @@
 
 % Shifted Centre of Rotation analysis - condition 11 - protocol 27.
-% ALSO - protocol_35 - variations of shifted CoR stimulus. 
+% Currently this code is made to work with the screen protocol 27 - needs
+% adaptation to p35. 
 
 %% Create DATA
-protocol = "protocol_35";
+protocol = "protocol_27";
 ROOT_DIR = '/Users/burnettl/Documents/Projects/oaky_cokey';
 % Move to the directory to where the results per experiment are saved:
 protocol_dir = fullfile(ROOT_DIR, 'results', protocol);
@@ -20,8 +21,9 @@ n_strains = height(strain_folders);
 % Generate the struct 'DATA' that combines data across experiments and
 % separates data into conditions.
 DATA = comb_data_across_cohorts_cond(protocol_dir);
+DATA2 = DATA; 
 
-% DATA2 = DATA.jfrc100_es_shibire_kir.F;
+DATA = DATA.jfrc100_es_shibire_kir.F;
 % Extract the data for the flicker (cond 9), normal gratings (cond 1) and shifted gratings (cond 11).
 % Saved in "2025_11_03_DATA_CoR_conds_1-11-9_es_shibire_kir.mat"
 
@@ -42,7 +44,25 @@ t = 0.8;               % the translation you used in the generator (arena radii)
 
 ref_mm = S / PPM; % Find the centre of rotation in mm.
 
-conds = {'R1_condition_11','R2_condition_11', 'R1_condition_1','R2_condition_1', 'R1_condition_9','R2_condition_9'};
+% conds = {'R1_condition_11','R2_condition_11', 'R1_condition_1','R2_condition_1', 'R1_condition_9','R2_condition_9'};
+% conds = {'R1_condition_7','R2_condition_7', 'R1_condition_8','R2_condition_8', 'R1_condition_9','R2_condition_9', 'R1_condition_10','R2_condition_10'};
+conds = {'R1_condition_1','R2_condition_1', 'R1_condition_5','R2_condition_5', 'R1_condition_6','R2_condition_6', 'R1_condition_9','R2_condition_9', 'R1_condition_10','R2_condition_10'};
+
+% P35 conditions:
+% all_conditions = [ 
+%     9, 47, 127, 1, 20, t_interval, 1; %  60 deg gratings - 4Hz - 1 px step pattern
+%     6, 47, 64, 1, 20, t_interval, 2; %  30 deg gratings - 4Hz - 1 px step pattern
+% 
+%     7, 47, 8, 1, 20, t_interval, 3;  % 30 deg Flicker - 4Hz
+%     7, 47, 0, 1, 20, t_interval, 4; % 30 deg static grating
+%     10, 47, 8, 1, 20, t_interval, 5;  % 60 deg Flicker - 4Hz
+%     10, 47, 0, 1, 20, t_interval, 6; % 60 deg static grating
+% 
+%     70, 47, 64, 1, 20, t_interval, 7; % 30 deg -- 0.75 offset - 4Hz
+%     71, 47, 64, 1, 20, t_interval, 8; % 30 deg -- 0.75 offset - 4Hz
+%     72, 47, 127, 1, 20, t_interval, 9; % 60 deg -- 0.75 offset - 4Hz
+%     73, 47, 127, 1, 20, t_interval, 10; % 60 deg -- 0.75 offset - 4Hz
+% ]; 
 
 for i = 1:numel(DATA)
     for c = 1:numel(conds)
@@ -93,13 +113,13 @@ for entryIdx = 1 %:30
     ylim([0 yl])
     
     subplot(1,4,2)
-    condIdx = 11; % Offset gratings
+    condIdx = 9; %11; % Offset gratings
     col = [0.6 0 0];
     plot_timeseries_metric_both_reps(DATA, metric, condIdx, entryIdx, col, 1)
     ylim([0 yl])
     
     subplot(1,4,3)
-    condIdx = 9; % Flicker
+    condIdx = 5; % 9; % Flicker
     col = [0 0 0.6];
     plot_timeseries_metric_both_reps(DATA, metric, condIdx, entryIdx, col, 1)
     ylim([0 yl])
@@ -108,10 +128,10 @@ for entryIdx = 1 %:30
     condIdx = 1; % Regular gratings
     col = [0 0 0];
     plot_timeseries_metric_both_reps(DATA, metric, condIdx, entryIdx, col, 0)
-    condIdx = 11; % Offset gratings
+    condIdx = 9; % Offset gratings
     col = [0.6 0 0];
     plot_timeseries_metric_both_reps(DATA, metric, condIdx, entryIdx, col, 0)
-    condIdx = 9; % Flicker
+    condIdx = 5; % Flicker
     col = [0 0 0.6];
     plot_timeseries_metric_both_reps(DATA, metric, condIdx, entryIdx, col, 0)
     title('Combined')

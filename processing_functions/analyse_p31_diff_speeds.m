@@ -1,3 +1,5 @@
+%% This makes the bar plots - purple bars - gain 
+
 % Plot datapoints - different speeds - p31
 
 data_type = "av_data";

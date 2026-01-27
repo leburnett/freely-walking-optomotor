@@ -15,7 +15,7 @@ function plot_xstrain_per_cond(protocol, data_type, cond_ids, strain_ids, params
     strain_names = strain_names.strain_names;
     n_strains = height(strain_names);
     strain_names{n_strains+1} = 'jfrc100_es_shibire_kir';
-    strain_names{n_strains+2} = 'csw1118';
+    % strain_names{n_strains+2} = 'csw1118';
     
     % % Where to save the figures:
     % date_str = string(datetime("today", "Format", "yyyy_MM_dd"));
@@ -64,7 +64,23 @@ strain_colours = [[220,  40,  30]; ...  % muted red
  [40 40 40]; ...
  [180 180 180]]./255;
       
-if params.plot_sem == 1
+if params.plot_sd == 1
+    if data_type == "fv_data" 
+        rng = [0 22];
+    elseif data_type == "dist_data_delta"
+        delta = 1;
+        data_type = "dist_data";
+        rng = [-70 30];
+    elseif data_type == "dist_data"
+        rng = [0 120];
+    elseif data_type == "view_dist"
+        rng = [60 140];
+    elseif data_type == "dist_dt"
+        rng = [-7 5];
+    elseif data_type == "av_data" || data_type == "curv_data" 
+        rng = [-350 350];
+    end 
+else
     if data_type == "fv_data" 
         rng = [0 20];
     elseif data_type == "dist_data_delta"
@@ -80,23 +96,7 @@ if params.plot_sem == 1
     elseif data_type == "av_data"
         rng = [-200 200];
     elseif data_type == "curv_data" 
-        rng = [-200 200];
-    end 
-elseif params.plot_sd == 1
-    if data_type == "fv_data" 
-        rng = [0 22];
-    elseif data_type == "dist_data_delta"
-        delta = 1;
-        data_type = "dist_data";
-        rng = [-70 30];
-    elseif data_type == "dist_data"
-        rng = [0 120];
-    elseif data_type == "view_dist"
-        rng = [60 140];
-    elseif data_type == "dist_dt"
-        rng = [-7 5];
-    elseif data_type == "av_data" || data_type == "curv_data" 
-        rng = [-350 350];
+        rng = [-170 170];
     end 
 end 
     
@@ -187,8 +187,11 @@ for strain_id = strain_ids
             sem_data = nanstd(mean_data);
         end 
 
-        y1 = mean_data_all+sem_data;
-        y2 = mean_data_all-sem_data;
+        if params.plot_sem == 1 || params.plot_sd == 1
+            y1 = mean_data_all+sem_data;
+            y2 = mean_data_all-sem_data;
+        end 
+
         nf_comb = size(mean_data_all, 2);
         x = 1:1:nf_comb;
 
@@ -206,7 +209,7 @@ for strain_id = strain_ids
             plot(x, y2, 'w', 'LineWidth', 1)
             patch([x fliplr(x)], [y1 fliplr(y2)], col, 'FaceAlpha', 0.25, 'EdgeColor', 'none')
         end
-        plot(mean_data_all, 'Color', col, 'LineWidth', 2.5);
+        plot(mean_data_all, 'Color', col, 'LineWidth', 2.5); % 2.5
         hold on
     end 
     

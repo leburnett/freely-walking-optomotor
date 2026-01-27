@@ -16,13 +16,13 @@ function [pvals, target_mean, control_mean] = fv_metric_tests(cond_data, cond_da
 
 %% 1 - Average absolute forward velocity before the stimulus (10s).
 
-    rng_baseline = 1:300;
-
-    % RUN TEST
-    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data, cond_data_control, rng_baseline);
-
-    % ADD VALUES
-    [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
+    % rng_baseline = 1:300;
+    % 
+    % % RUN TEST
+    % [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data, cond_data_control, rng_baseline);
+    % 
+    % % ADD VALUES
+    % [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
 
 %% 2 - Average absolute forward velocity during the entire stimulus (30s).
 

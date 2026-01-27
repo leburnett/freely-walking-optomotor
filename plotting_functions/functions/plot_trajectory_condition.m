@@ -1,19 +1,27 @@
-function plot_trajectory_condition(x, y, cx, cy, line_colour, cond_name, traj_only)
+function plot_trajectory_condition(x, y, cx, cy, line_colour, cond_name, traj_only, start_stop)
 % 'x' and 'y' are the x and y values of the fly over the period you would
 % like to plot the trajectory for. Arena centre is [cx, cy].
 
 if ~traj_only
     rectangle('Position',[0.25, 2.5, 245, 245], 'Curvature', [1,1], 'FaceColor', [0.95 0.95 0.95], 'EdgeColor', 'none')
     viscircles([cx, cy], 121, 'Color', [0.8 0.8 0.8], 'LineStyle', '-', 'LineWidth', 1) % Edge
-    viscircles([cx, cy], 110, 'Color', [0.8 0.8 0.8], 'LineStyle', '--', 'LineWidth',1) % 10mm from edge
-    viscircles([cx, cy], 63, 'Color', [0.8 0.8 0.8], 'LineStyle', '--', 'LineWidth',1) % Half way
+    viscircles([cx, cy], 110, 'Color', [0.8 0.8 0.8], 'LineStyle', '-', 'LineWidth', 0.8) % 10mm from edge
+    % viscircles([cx, cy], 63, 'Color', [0.8 0.8 0.8], 'LineStyle', '--', 'LineWidth',1) % Half way
 end 
     hold on;
     plot(x, y, '-', 'Color', line_colour, 'LineWidth', 1.5, 'DisplayName', cond_name); % line for trajectory
     
-    % Mark the start and end points
-    plot(x(1), y(1), 'o', 'MarkerFaceColor', 'w', 'MarkerEdgeColor', 'k', 'DisplayName', 'Start'); % green start
-    plot(x(end), y(end), 'o', 'MarkerFaceColor', [0.8 0.8 0.8], 'MarkerEdgeColor', 'k', 'DisplayName', 'End'); % red end
+    if start_stop == 1
+        % Mark the start
+        plot(x(1), y(1), 'o', 'MarkerFaceColor', 'w', 'MarkerEdgeColor', 'k', 'DisplayName', 'Start'); % white start
+    elseif start_stop == 2
+        % Mark the end
+        plot(x(end), y(end), 'o', 'MarkerFaceColor', [0.8 0.8 0.8], 'MarkerEdgeColor', 'k', 'DisplayName', 'End'); % dark grey end
+    elseif start_stop == 3
+        % Mark the start and end points
+        plot(x(1), y(1), 'o', 'MarkerFaceColor', 'w', 'MarkerEdgeColor', 'k', 'DisplayName', 'Start'); % white start
+        plot(x(end), y(end), 'o', 'MarkerFaceColor', [0.8 0.8 0.8], 'MarkerEdgeColor', 'k', 'DisplayName', 'End'); % dary grey end
+    end 
     
   if ~traj_only  
     % Mark the center of the arena

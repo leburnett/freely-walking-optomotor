@@ -24,6 +24,21 @@ function plot_xcond_per_strain2(protocol, data_type, cond_ids, strain_names, par
 
     xmax = 1800;
 
+    % Rainbow
+    % col_12 = [31 120 180; ...
+    %         166 206 227; ...
+    %         178 223 138; ...
+    %         47 141 41; ...
+    %         251 154 153; ...
+    %         227 26 28; ...
+    %         253 191 111; ...
+    %         255 127 0; ...
+    %         202 178 214; ...
+    %         106 61 154; ...
+    %         255 224 41; ...
+    %         187 75 12; ...
+    %         ]./255;
+    
     % Purples
     % Colourmap:
     % col_12 = [106 61 154; ... %50 50 50; ...% 166 206 227; 106 61 154; ...
@@ -41,40 +56,36 @@ function plot_xcond_per_strain2(protocol, data_type, cond_ids, strain_names, par
     %     ]./255;
 
     % Blues
-    col_12 = [31 120 180; ... %50 50 50; ...% 166 206 227; 106 61 154; ...
-        31 120 180; ...
-        178 223 138; ...
-        47 141 41; ...
-        251 154 153; ...
-        227 26 28; ...
-        253 191 111; ...
-        255 127 0; ...
-        166 206 227; ...%202 178 214; ...
+    % col_12 = [31 120 180; ... %50 50 50; ...% 166 206 227; 106 61 154; ...
+    %     31 120 180; ...
+    %     178 223 138; ...
+    %     47 141 41; ...
+    %     251 154 153; ...
+    %     227 26 28; ...
+    %     253 191 111; ...
+    %     255 127 0; ...
+    %     166 206 227; ...%202 178 214; ...
+    %     200 200 200; ... % 106 61 154; ...166 206 227;
+    %     255 224 41; ...
+    %     187 75 12; ...
+    %     ]./255;
+
+    % Different speeds - blues / greens 
+     col_12 = [173 216 230; ... % 1Hz %50 50 50; ...% 166 206 227; 106 61 154; ...
+        82 173 227; ... % 2Hz
+        31 120 180; ... % 4 HZ
+        61 82 159; ... % 8 Hz
+        231 158 190; ... % Flicker
+        243 207 226; ...
+        231 158 190; ...
+        223 113 167; ...
+        215 48 139; ...%202 178 214; ...
         200 200 200; ... % 106 61 154; ...166 206 227;
         255 224 41; ...
         187 75 12; ...
         ]./255;
-
         
-if params.plot_sem == 1
-    if data_type == "fv_data" 
-        rng = [0 15];
-    elseif data_type == "dist_data_delta"
-        delta = 1;
-        data_type = "dist_data";
-        rng = [-45 10];
-    elseif data_type == "dist_data"
-        rng = [30 90];
-    elseif data_type == "view_dist"
-        rng = [60 140];
-    elseif data_type == "dist_dt"
-        rng = [-7 5];
-    elseif data_type == "av_data"
-        rng = [-200 200];
-    elseif data_type == "curv_data" 
-        rng = [-150 150];
-    end 
-elseif params.plot_sd == 1
+if params.plot_sd == 1
     if data_type == "fv_data" 
         rng = [0 22];
     elseif data_type == "dist_data_delta"
@@ -89,6 +100,24 @@ elseif params.plot_sd == 1
         rng = [-7 5];
     elseif data_type == "av_data" || data_type == "curv_data" 
         rng = [-350 350];
+    end 
+else
+    if data_type == "fv_data" 
+        rng = [0 15];
+    elseif data_type == "dist_data_delta"
+        delta = 1;
+        data_type = "dist_data";
+        rng = [-45 10];
+    elseif data_type == "dist_data"
+        rng = [30 90];
+    elseif data_type == "view_dist"
+        rng = [60 140];
+    elseif data_type == "dist_dt"
+        rng = [-7 5];
+    elseif data_type == "av_data"
+        rng = [-245 245];
+    elseif data_type == "curv_data" 
+        rng = [-200 200];
     end 
 end 
     
@@ -179,8 +208,10 @@ for strain_id = 1:numel(strain_names)
             sem_data = nanstd(mean_data);
         end 
 
+        if params.plot_sem == 1 || params.plot_sd == 1
         y1 = mean_data_all+sem_data;
         y2 = mean_data_all-sem_data;
+        end 
         nf_comb = size(mean_data_all, 2);
         x = 1:1:nf_comb;
 
@@ -191,7 +222,15 @@ for strain_id = 1:numel(strain_names)
                 hold on
             end 
         end 
-    
+        
+        % T4T5 vs ES plots - - - 
+
+        % col = [0.4, 0.4, 0.4];
+        col = [1 0.5, 0];
+
+        % col = [0.8, 0.8, 0.8];
+        % col = [1 0.8, 0];
+
         if params.plot_sem == 1 || params.plot_sd == 1
             plot(x, y1, 'w', 'LineWidth', 1)
             hold on
@@ -206,7 +245,7 @@ for strain_id = 1:numel(strain_names)
     ax = gca;
     ax.TickDir = 'out';
     ax.LineWidth = 1.2;
-    ax.FontSize = 14;
+    ax.FontSize = 20;
     
     f = gcf;
     % f.Position = [233   581   603   390]; % p27

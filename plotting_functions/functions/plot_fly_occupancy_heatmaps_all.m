@@ -45,8 +45,9 @@ topFrac   = 0.5;              % <-- fraction of total probability mass to define
 % Conditions to plot (R1+R2 per panel)
 % condList = {'condition_1','condition_11','condition_9'};
 % p27
+% condList = {'condition_1','condition_10','condition_9'};
+% p 35
 condList = {'condition_1','condition_10','condition_9'};
-
 % ---------- Gather ALL entries' data for consistent binning & shared CLim ----------
 panelXY = cell(numel(condList),1);
 allX = []; allY = [];
