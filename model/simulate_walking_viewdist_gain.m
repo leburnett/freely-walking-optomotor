@@ -40,10 +40,18 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
     g_traj = zeros(1, n_steps);
     vd_traj = zeros(1, n_steps);
 
-    % Start at center with random heading
+    % Start at left side of arena with random y and random heading
     x = -90; %randi([-5 5], 1);
     y = randi([-60 60], 1);
     theta = rand() * 2 * pi;
+
+    % Save initial state
+    x_traj(1) = x;
+    y_traj(1) = y;
+    theta_traj(1) = mod(theta + pi, 2*pi) - pi;  % wrap to [-pi, pi]
+    v_traj(1) = 0;  % No velocity at t=0
+    g_traj(1) = 0;  % No gain at t=0
+    vd_traj(1) = 0; % Will be computed on first step
 
     for i = 2:n_steps
         % Compute viewing distance along current heading
@@ -77,7 +85,7 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
             bb = base_bias;
         end 
         bias_term = k * bb * dt; % gain * base turning bias * time step.
-        brwn_val = 1.2; % decrease for increased randomness.
+        brwn_val = 1.2; % increase to decrease randomness (divides randn).
         brownian_turn = randn()/brwn_val * sqrt(dt);  % Brownian noise
  
         d0 = 90; % distance at which turning is half maximal
@@ -125,13 +133,8 @@ function [x_traj, y_traj, theta_traj, v_traj, g_traj, vd_traj] = simulate_walkin
    
     end
 
-    % Remove first value
-    x_traj = x_traj(2:end);
-    y_traj = y_traj(2:end);
-    theta_traj = theta_traj(2:end);
-    v_traj = v_traj(2:end);
-    g_traj = g_traj(2:end);
-    vd_traj = vd_traj(2:end);
+    % Note: Initial values are now saved at index 1, so all trajectories
+    % include the starting state.
 
     if disp_params
         % display the parameters used

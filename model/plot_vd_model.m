@@ -7,7 +7,7 @@ tiledlayout(2,5,"TileSpacing","compact", "TileIndexing", "columnmajor");
 base_bias = 0.1;
 % k_vals = [0.1, 0.5, 1, 5, 10];
 k_vals = [0.5, 1.5, 2.5, 3.5, 4.5];
-arena_radius = 12.5;
+arena_radius = 120.5;  % Must match arena_radius in simulate_walking_viewdist_gain.m
 
 for k_id = 1:5
 

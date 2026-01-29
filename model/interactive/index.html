@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optomotor Response & Centripetal Drift Model</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --background-color: #f5f6fa;
+            --panel-bg: #ffffff;
+            --text-color: #2c3e50;
+            --border-color: #dcdde1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.5rem 2rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        header p {
+            opacity: 0.9;
+            margin-top: 0.5rem;
+        }
+
+        main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        section {
+            background: var(--panel-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .collapsible-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .collapsible-header::after {
+            content: '\25BC';
+            font-size: 0.8rem;
+            transition: transform 0.3s;
+        }
+
+        .collapsible-header.collapsed::after {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .collapsible-content.collapsed {
+            max-height: 0 !important;
+        }
+
+        .simulation-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1000px) {
+            .simulation-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .simulation-panel {
+            background: var(--panel-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+        }
+
+        .simulation-panel h3 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .panel-a {
+            border-color: #e74c3c;
+        }
+
+        .panel-a h3 {
+            color: #e74c3c;
+        }
+
+        .panel-b {
+            border-color: #27ae60;
+        }
+
+        .panel-b h3 {
+            color: #27ae60;
+        }
+
+        .arena-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .arena-canvas {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: #fafafa;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-group label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+
+        .control-group .value-display {
+            font-size: 0.8rem;
+            color: #666;
+            text-align: right;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            cursor: pointer;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+
+        .btn-export {
+            background-color: #9b59b6;
+            color: white;
+        }
+
+        .btn-export:hover {
+            background-color: #8e44ad;
+        }
+
+        .plots-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .plot-canvas {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: #fafafa;
+        }
+
+        .equation {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 0.5rem 0;
+        }
+
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .param-table th, .param-table td {
+            padding: 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .param-table th {
+            background: #f8f9fa;
+        }
+
+        .explanation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .explanation-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .explanation-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        .explanation-card h4 {
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Optomotor Response & Centripetal Drift Model</h1>
+        <p>Interactive simulation of fly walking behaviour in a cylindrical LED arena</p>
+    </header>
+
+    <main>
+        <!-- Introduction Section -->
+        <section>
+            <h2 class="collapsible-header" onclick="toggleSection(this)">Introduction</h2>
+            <div class="collapsible-content">
+                <p>When fruit flies (<em>Drosophila</em>) walk in a cylindrical arena with moving gratings displayed on the walls, they exhibit two behaviours:</p>
+                <ol style="margin: 1rem 0 1rem 2rem;">
+                    <li><strong>Optomotor response:</strong> Flies turn in the direction of grating motion to stabilise their visual field.</li>
+                    <li><strong>Centripetal drift:</strong> Over time, flies tend to move towards the centre of the arena.</li>
+                </ol>
+                <p>This model proposes that centripetal drift emerges from the optomotor response being modulated by <strong>viewing distance</strong> - the distance from the fly to the arena wall along its heading direction.</p>
+            </div>
+        </section>
+
+        <!-- Model Description Section -->
+        <section>
+            <h2 class="collapsible-header" onclick="toggleSection(this)">The Model</h2>
+            <div class="collapsible-content">
+                <h4 style="margin-top: 1rem;">Core Hypothesis</h4>
+                <p>When a fly is closer to the arena wall, the gratings appear to move faster on its retina (higher angular velocity). This causes a stronger optomotor turning response. The increased turning when approaching walls, combined with reduced turning when moving towards the centre, creates a statistical bias towards the arena centre.</p>
+
+                <h4 style="margin-top: 1rem;">Turning Dynamics</h4>
+                <p>At each time step, the change in heading (&Delta;&theta;) is the sum of three components:</p>
+                <div class="equation">
+                    &Delta;&theta; = bias_term + brownian_turn + gain_turn
+                </div>
+
+                <table class="param-table">
+                    <tr>
+                        <th>Component</th>
+                        <th>Formula</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td>Base optomotor</td>
+                        <td>k_base &times; base_bias &times; &Delta;t</td>
+                        <td>Constant turning with gratings</td>
+                    </tr>
+                    <tr>
+                        <td>Brownian noise</td>
+                        <td>randn() / brownian_amp &times; &radic;&Delta;t</td>
+                        <td>Random heading fluctuations</td>
+                    </tr>
+                    <tr>
+                        <td>Distance-dependent</td>
+                        <td>k_dist &times; view_factor &times; &Delta;t</td>
+                        <td>Extra turning when close to wall</td>
+                    </tr>
+                </table>
+
+                <h4 style="margin-top: 1rem;">Sigmoid Gain Function</h4>
+                <p>The <code>view_factor</code> uses a sigmoid function that approaches 1 when close to the wall and 0 when far:</p>
+                <div class="equation">
+                    view_factor = 1 / (1 + exp(b &times; (viewing_dist - d0)))
+                </div>
+                <p>Where <code>d0</code> is the distance at half-maximal response and <code>b</code> controls the steepness of the transition.</p>
+
+                <h4 style="margin-top: 1rem;">Speed-Turning Relationship</h4>
+                <p>Speed decreases with turning magnitude (flies slow down when turning sharply):</p>
+                <div class="equation">
+                    speed = v_max / (1 + alpha &times; |&Delta;&theta;|)
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Simulation Section -->
+        <section>
+            <h2>Interactive Simulation</h2>
+            <p style="margin-bottom: 1rem;">Compare two parameter sets side-by-side. Adjust the sliders and click "Run" to simulate.</p>
+
+            <div class="simulation-container">
+                <!-- Panel A -->
+                <div class="simulation-panel panel-a">
+                    <h3>Simulation A</h3>
+                    <div class="arena-container">
+                        <canvas id="arenaA" class="arena-canvas" width="280" height="280"></canvas>
+                    </div>
+                    <div class="controls">
+                        <div class="control-group">
+                            <label>k_base (base gain): <span id="kBaseA_val">1.0</span></label>
+                            <input type="range" id="kBaseA" min="0" max="5" step="0.1" value="1.0" oninput="updateValue('kBaseA')">
+                        </div>
+                        <div class="control-group">
+                            <label>k_dist (distance gain): <span id="kDistA_val">2.0</span></label>
+                            <input type="range" id="kDistA" min="0" max="10" step="0.1" value="2.0" oninput="updateValue('kDistA')">
+                        </div>
+                        <div class="control-group">
+                            <label>d0 (half-max distance, mm): <span id="d0A_val">90</span></label>
+                            <input type="range" id="d0A" min="20" max="120" step="1" value="90" oninput="updateValue('d0A')">
+                        </div>
+                        <div class="control-group">
+                            <label>b (sigmoid slope): <span id="bA_val">0.02</span></label>
+                            <input type="range" id="bA" min="0.005" max="0.1" step="0.005" value="0.02" oninput="updateValue('bA')">
+                        </div>
+                        <div class="control-group">
+                            <label>base_bias: <span id="baseBiasA_val">0.1</span></label>
+                            <input type="range" id="baseBiasA" min="0" max="1" step="0.01" value="0.1" oninput="updateValue('baseBiasA')">
+                        </div>
+                        <div class="control-group">
+                            <label>Grating direction:</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="gratingA" value="1" checked> CW</label>
+                                <label><input type="radio" name="gratingA" value="-1"> CCW</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="buttons">
+                        <button class="btn-primary" onclick="runSimulation('A')">Run</button>
+                        <button class="btn-secondary" onclick="resetSimulation('A')">Reset</button>
+                        <button class="btn-export" onclick="exportJSON('A')">Export JSON</button>
+                    </div>
+                    <div class="plots-container">
+                        <canvas id="sigmoidA" class="plot-canvas" width="135" height="100"></canvas>
+                        <canvas id="vdPlotA" class="plot-canvas" width="135" height="100"></canvas>
+                    </div>
+                </div>
+
+                <!-- Panel B -->
+                <div class="simulation-panel panel-b">
+                    <h3>Simulation B</h3>
+                    <div class="arena-container">
+                        <canvas id="arenaB" class="arena-canvas" width="280" height="280"></canvas>
+                    </div>
+                    <div class="controls">
+                        <div class="control-group">
+                            <label>k_base (base gain): <span id="kBaseB_val">1.0</span></label>
+                            <input type="range" id="kBaseB" min="0" max="5" step="0.1" value="1.0" oninput="updateValue('kBaseB')">
+                        </div>
+                        <div class="control-group">
+                            <label>k_dist (distance gain): <span id="kDistB_val">4.0</span></label>
+                            <input type="range" id="kDistB" min="0" max="10" step="0.1" value="4.0" oninput="updateValue('kDistB')">
+                        </div>
+                        <div class="control-group">
+                            <label>d0 (half-max distance, mm): <span id="d0B_val">90</span></label>
+                            <input type="range" id="d0B" min="20" max="120" step="1" value="90" oninput="updateValue('d0B')">
+                        </div>
+                        <div class="control-group">
+                            <label>b (sigmoid slope): <span id="bB_val">0.02</span></label>
+                            <input type="range" id="bB" min="0.005" max="0.1" step="0.005" value="0.02" oninput="updateValue('bB')">
+                        </div>
+                        <div class="control-group">
+                            <label>base_bias: <span id="baseBiasB_val">0.1</span></label>
+                            <input type="range" id="baseBiasB" min="0" max="1" step="0.01" value="0.1" oninput="updateValue('baseBiasB')">
+                        </div>
+                        <div class="control-group">
+                            <label>Grating direction:</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="gratingB" value="1" checked> CW</label>
+                                <label><input type="radio" name="gratingB" value="-1"> CCW</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="buttons">
+                        <button class="btn-primary" onclick="runSimulation('B')">Run</button>
+                        <button class="btn-secondary" onclick="resetSimulation('B')">Reset</button>
+                        <button class="btn-export" onclick="exportJSON('B')">Export JSON</button>
+                    </div>
+                    <div class="plots-container">
+                        <canvas id="sigmoidB" class="plot-canvas" width="135" height="100"></canvas>
+                        <canvas id="vdPlotB" class="plot-canvas" width="135" height="100"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 1rem;">
+                <button class="btn-export" onclick="exportBothJSON()">Export Both Simulations</button>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section>
+            <h2 class="collapsible-header" onclick="toggleSection(this)">How It Works</h2>
+            <div class="collapsible-content">
+                <div class="explanation-grid">
+                    <div class="explanation-card">
+                        <h4>When heading towards wall</h4>
+                        <p>Short viewing distance &rarr; High view_factor &rarr; Strong turning response &rarr; Trajectory quickly redirected away from wall</p>
+                    </div>
+                    <div class="explanation-card">
+                        <h4>When heading towards centre</h4>
+                        <p>Long viewing distance &rarr; Low view_factor &rarr; Weak turning response &rarr; Trajectory persists longer</p>
+                    </div>
+                </div>
+                <p style="margin-top: 1rem;">This asymmetry creates a statistical bias: wall-approaching trajectories are "cut short" while centre-approaching trajectories continue. Over time, this produces net movement towards the arena centre.</p>
+            </div>
+        </section>
+
+        <!-- Discussion Section -->
+        <section>
+            <h2 class="collapsible-header" onclick="toggleSection(this)">Discussion & Limitations</h2>
+            <div class="collapsible-content">
+                <h4>Current Model Limitations</h4>
+                <ul style="margin: 1rem 0 1rem 2rem;">
+                    <li><strong>Single "eye" model:</strong> Uses viewing distance along heading only, not separate left/right eye inputs.</li>
+                    <li><strong>Turning direction:</strong> Distance-dependent turning adds to the base optomotor direction rather than explicitly turning away from walls.</li>
+                    <li><strong>Constant parameters:</strong> In reality, optomotor gain may adapt over time.</li>
+                </ul>
+
+                <h4 style="margin-top: 1rem;">Future Directions</h4>
+                <ul style="margin: 1rem 0 1rem 2rem;">
+                    <li>Incorporate binocular processing with separate left/right eye viewing distances.</li>
+                    <li>Model how the fly's brain integrates asymmetric visual motion between eyes.</li>
+                    <li>Compare model predictions with experimental trajectory data.</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Optomotor Response Model | Freely Walking Drosophila Project</p>
+    </footer>
+
+    <script>
+        // Simulation parameters and state
+        const ARENA_RADIUS = 120.5;  // mm
+        const CANVAS_PADDING = 10;
+        const FPS = 30;
+        const DURATION = 30;  // seconds
+
+        // Store simulation results
+        let simulations = { A: null, B: null };
+
+        // Get parameters from UI for a given panel
+        function getParams(panel) {
+            const gratingRadio = document.querySelector(`input[name="grating${panel}"]:checked`);
+            return {
+                T: DURATION,
+                fps: FPS,
+                arena_radius: ARENA_RADIUS,
+                k_base: parseFloat(document.getElementById(`kBase${panel}`).value),
+                k_dist: parseFloat(document.getElementById(`kDist${panel}`).value),
+                d0: parseFloat(document.getElementById(`d0${panel}`).value),
+                b: parseFloat(document.getElementById(`b${panel}`).value),
+                base_bias: parseFloat(document.getElementById(`baseBias${panel}`).value),
+                grating_dir: parseInt(gratingRadio.value),
+                v_max: 20,
+                alpha: 7,
+                brownian_amp: 1.2,
+                min_dist: 20,
+                seed: Math.floor(Math.random() * 1000000)
+            };
+        }
+
+        // Update displayed value when slider changes
+        function updateValue(id) {
+            const input = document.getElementById(id);
+            const display = document.getElementById(id + '_val');
+            display.textContent = input.value;
+
+            // Update sigmoid plot when d0 or b changes
+            const panel = id.slice(-1);
+            if (id.startsWith('d0') || id.startsWith('b')) {
+                drawSigmoidPlot(panel);
+            }
+        }
+
+        // Compute viewing distance via ray-circle intersection
+        function computeViewingDistance(x, y, theta, arenaRadius) {
+            const dx = Math.cos(theta);
+            const dy = Math.sin(theta);
+
+            const A = dx * dx + dy * dy;
+            const B = 2 * (x * dx + y * dy);
+            const C = x * x + y * y - arenaRadius * arenaRadius;
+            const discriminant = B * B - 4 * A * C;
+
+            if (discriminant < 0) return 0;
+
+            const t1 = (-B + Math.sqrt(discriminant)) / (2 * A);
+            const t2 = (-B - Math.sqrt(discriminant)) / (2 * A);
+
+            const candidates = [t1, t2].filter(t => t > 0);
+            return candidates.length > 0 ? Math.min(...candidates) : 0;
+        }
+
+        // Seeded random number generator
+        function seededRandom(seed) {
+            let state = seed;
+            return function() {
+                state = (state * 1103515245 + 12345) & 0x7fffffff;
+                return state / 0x7fffffff;
+            };
+        }
+
+        // Box-Muller transform for normal distribution
+        function gaussianRandom(rand) {
+            const u1 = rand();
+            const u2 = rand();
+            return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        }
+
+        // Run simulation with given parameters
+        function simulate(params) {
+            const dt = 1 / params.fps;
+            const nSteps = Math.floor(params.T / dt) + 1;
+            const rand = seededRandom(params.seed);
+
+            // Initialize arrays
+            const trajectory = {
+                time_s: [],
+                x_mm: [],
+                y_mm: [],
+                heading_rad: [],
+                speed_mm_s: [],
+                gain: [],
+                viewing_dist_mm: []
+            };
+
+            // Initial conditions
+            let x = -90;
+            let y = (rand() * 2 - 1) * 60;
+            let theta = rand() * 2 * Math.PI;
+
+            // Save initial state
+            trajectory.time_s.push(0);
+            trajectory.x_mm.push(x);
+            trajectory.y_mm.push(y);
+            trajectory.heading_rad.push(wrapAngle(theta));
+            trajectory.speed_mm_s.push(0);
+            trajectory.gain.push(0);
+            trajectory.viewing_dist_mm.push(computeViewingDistance(x, y, theta, params.arena_radius));
+
+            // Main loop
+            for (let i = 1; i < nSteps; i++) {
+                const viewing_dist = computeViewingDistance(x, y, theta, params.arena_radius);
+
+                // Compute turning components
+                let bias_term = 0;
+                if (viewing_dist >= params.min_dist) {
+                    bias_term = params.grating_dir * params.k_base * params.base_bias * dt;
+                }
+
+                const brownian_turn = gaussianRandom(rand) / params.brownian_amp * Math.sqrt(dt);
+
+                const view_factor = 1 / (1 + Math.exp(params.b * (viewing_dist - params.d0)));
+                const gain_turn = params.grating_dir * params.k_dist * view_factor * dt;
+
+                let dtheta;
+                if (viewing_dist < params.min_dist) {
+                    dtheta = brownian_turn;
+                } else {
+                    dtheta = bias_term + brownian_turn + gain_turn;
+                }
+
+                theta = theta + dtheta;
+
+                // Compute speed
+                const v_inst = params.v_max / (1 + params.alpha * Math.abs(dtheta));
+
+                // Update position
+                let x_new = x + v_inst * dt * Math.cos(theta);
+                let y_new = y + v_inst * dt * Math.sin(theta);
+
+                // Boundary check
+                if (Math.sqrt(x_new * x_new + y_new * y_new) >= params.arena_radius) {
+                    theta = theta + Math.PI;
+                    x_new = x;
+                    y_new = y;
+                }
+
+                x = x_new;
+                y = y_new;
+
+                // Save state
+                trajectory.time_s.push(i * dt);
+                trajectory.x_mm.push(x);
+                trajectory.y_mm.push(y);
+                trajectory.heading_rad.push(wrapAngle(theta));
+                trajectory.speed_mm_s.push(v_inst);
+                trajectory.gain.push(gain_turn);
+                trajectory.viewing_dist_mm.push(viewing_dist);
+            }
+
+            return trajectory;
+        }
+
+        // Wrap angle to [-pi, pi]
+        function wrapAngle(theta) {
+            return ((theta + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+        }
+
+        // Draw arena with trajectory
+        function drawArena(panel, trajectory) {
+            const canvas = document.getElementById(`arena${panel}`);
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const scale = (width - 2 * CANVAS_PADDING) / (2 * ARENA_RADIUS);
+            const cx = width / 2;
+            const cy = height / 2;
+
+            // Clear canvas
+            ctx.fillStyle = '#fafafa';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw arena circle
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.arc(cx, cy, ARENA_RADIUS * scale, 0, 2 * Math.PI);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw centre cross
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(cx - 10, cy);
+            ctx.lineTo(cx + 10, cy);
+            ctx.moveTo(cx, cy - 10);
+            ctx.lineTo(cx, cy + 10);
+            ctx.stroke();
+
+            if (!trajectory) return;
+
+            // Draw trajectory with colour gradient (blue -> red over time)
+            const n = trajectory.x_mm.length;
+            ctx.lineWidth = 1.5;
+
+            for (let i = 1; i < n; i++) {
+                const t = i / n;
+                const r = Math.floor(255 * t);
+                const b = Math.floor(255 * (1 - t));
+                ctx.strokeStyle = `rgb(${r}, 50, ${b})`;
+
+                ctx.beginPath();
+                ctx.moveTo(cx + trajectory.x_mm[i-1] * scale, cy - trajectory.y_mm[i-1] * scale);
+                ctx.lineTo(cx + trajectory.x_mm[i] * scale, cy - trajectory.y_mm[i] * scale);
+                ctx.stroke();
+            }
+
+            // Draw start point (white circle)
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(cx + trajectory.x_mm[0] * scale, cy - trajectory.y_mm[0] * scale, 5, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            // Draw end point (grey circle)
+            ctx.fillStyle = '#888';
+            ctx.beginPath();
+            ctx.arc(cx + trajectory.x_mm[n-1] * scale, cy - trajectory.y_mm[n-1] * scale, 5, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        // Draw sigmoid gain function plot
+        function drawSigmoidPlot(panel) {
+            const canvas = document.getElementById(`sigmoid${panel}`);
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = { left: 30, right: 10, top: 15, bottom: 25 };
+
+            const d0 = parseFloat(document.getElementById(`d0${panel}`).value);
+            const b = parseFloat(document.getElementById(`b${panel}`).value);
+
+            // Clear canvas
+            ctx.fillStyle = '#fafafa';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, padding.top);
+            ctx.lineTo(padding.left, height - padding.bottom);
+            ctx.lineTo(width - padding.right, height - padding.bottom);
+            ctx.stroke();
+
+            // Labels
+            ctx.fillStyle = '#333';
+            ctx.font = '9px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Viewing dist (mm)', width / 2, height - 3);
+            ctx.save();
+            ctx.translate(10, height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Gain factor', 0, 0);
+            ctx.restore();
+
+            // Plot sigmoid
+            const plotWidth = width - padding.left - padding.right;
+            const plotHeight = height - padding.top - padding.bottom;
+
+            ctx.strokeStyle = panel === 'A' ? '#e74c3c' : '#27ae60';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            for (let i = 0; i <= plotWidth; i++) {
+                const dist = (i / plotWidth) * ARENA_RADIUS * 2;
+                const viewFactor = 1 / (1 + Math.exp(b * (dist - d0)));
+                const x = padding.left + i;
+                const y = height - padding.bottom - viewFactor * plotHeight;
+
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+
+            // Draw d0 marker
+            const d0x = padding.left + (d0 / (ARENA_RADIUS * 2)) * plotWidth;
+            ctx.strokeStyle = '#999';
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(d0x, padding.top);
+            ctx.lineTo(d0x, height - padding.bottom);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Axis labels
+            ctx.fillStyle = '#666';
+            ctx.font = '8px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('1', padding.left + 2, padding.top + 8);
+            ctx.fillText('0', padding.left + 2, height - padding.bottom - 2);
+            ctx.textAlign = 'center';
+            ctx.fillText('0', padding.left, height - padding.bottom + 10);
+            ctx.fillText(Math.round(ARENA_RADIUS * 2).toString(), width - padding.right, height - padding.bottom + 10);
+        }
+
+        // Draw viewing distance over time plot
+        function drawVDPlot(panel, trajectory) {
+            const canvas = document.getElementById(`vdPlot${panel}`);
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = { left: 30, right: 10, top: 15, bottom: 25 };
+
+            // Clear canvas
+            ctx.fillStyle = '#fafafa';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, padding.top);
+            ctx.lineTo(padding.left, height - padding.bottom);
+            ctx.lineTo(width - padding.right, height - padding.bottom);
+            ctx.stroke();
+
+            // Labels
+            ctx.fillStyle = '#333';
+            ctx.font = '9px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Time (s)', width / 2, height - 3);
+            ctx.save();
+            ctx.translate(10, height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('View dist', 0, 0);
+            ctx.restore();
+
+            if (!trajectory) return;
+
+            const plotWidth = width - padding.left - padding.right;
+            const plotHeight = height - padding.top - padding.bottom;
+            const maxVD = ARENA_RADIUS * 2;
+            const maxTime = trajectory.time_s[trajectory.time_s.length - 1];
+
+            // Plot viewing distance
+            ctx.strokeStyle = panel === 'A' ? '#e74c3c' : '#27ae60';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+
+            for (let i = 0; i < trajectory.time_s.length; i++) {
+                const x = padding.left + (trajectory.time_s[i] / maxTime) * plotWidth;
+                const y = height - padding.bottom - (trajectory.viewing_dist_mm[i] / maxVD) * plotHeight;
+
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+
+            // Axis labels
+            ctx.fillStyle = '#666';
+            ctx.font = '8px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(Math.round(maxVD).toString(), padding.left + 2, padding.top + 8);
+            ctx.fillText('0', padding.left + 2, height - padding.bottom - 2);
+            ctx.textAlign = 'center';
+            ctx.fillText('0', padding.left, height - padding.bottom + 10);
+            ctx.fillText(maxTime.toString(), width - padding.right, height - padding.bottom + 10);
+        }
+
+        // Run simulation for a panel
+        function runSimulation(panel) {
+            const params = getParams(panel);
+            const trajectory = simulate(params);
+
+            simulations[panel] = {
+                params: params,
+                trajectory: trajectory,
+                generated: new Date().toISOString()
+            };
+
+            drawArena(panel, trajectory);
+            drawVDPlot(panel, trajectory);
+        }
+
+        // Reset simulation for a panel
+        function resetSimulation(panel) {
+            simulations[panel] = null;
+            drawArena(panel, null);
+            drawVDPlot(panel, null);
+        }
+
+        // Export simulation to JSON
+        function exportJSON(panel) {
+            if (!simulations[panel]) {
+                alert(`Please run Simulation ${panel} first.`);
+                return;
+            }
+
+            const data = {
+                metadata: {
+                    generated: simulations[panel].generated,
+                    model_version: '1.0',
+                    panel: panel
+                },
+                parameters: simulations[panel].params,
+                trajectory: simulations[panel].trajectory
+            };
+
+            downloadJSON(data, `simulation_${panel}_${Date.now()}.json`);
+        }
+
+        // Export both simulations to single JSON file
+        function exportBothJSON() {
+            if (!simulations.A && !simulations.B) {
+                alert('Please run at least one simulation first.');
+                return;
+            }
+
+            const data = {
+                metadata: {
+                    generated: new Date().toISOString(),
+                    model_version: '1.0',
+                    description: 'Dual simulation comparison export'
+                },
+                simulations: {}
+            };
+
+            if (simulations.A) {
+                data.simulations.A = {
+                    parameters: simulations.A.params,
+                    trajectory: simulations.A.trajectory
+                };
+            }
+
+            if (simulations.B) {
+                data.simulations.B = {
+                    parameters: simulations.B.params,
+                    trajectory: simulations.B.trajectory
+                };
+            }
+
+            downloadJSON(data, `simulation_comparison_${Date.now()}.json`);
+        }
+
+        // Download JSON file
+        function downloadJSON(data, filename) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Toggle collapsible sections
+        function toggleSection(header) {
+            header.classList.toggle('collapsed');
+            const content = header.nextElementSibling;
+            content.classList.toggle('collapsed');
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize value displays
+            ['kBaseA', 'kDistA', 'd0A', 'bA', 'baseBiasA',
+             'kBaseB', 'kDistB', 'd0B', 'bB', 'baseBiasB'].forEach(updateValue);
+
+            // Draw initial sigmoid plots
+            drawSigmoidPlot('A');
+            drawSigmoidPlot('B');
+
+            // Draw empty arenas
+            drawArena('A', null);
+            drawArena('B', null);
+
+            // Draw empty VD plots
+            drawVDPlot('A', null);
+            drawVDPlot('B', null);
+        });
+    </script>
+</body>
+</html>
