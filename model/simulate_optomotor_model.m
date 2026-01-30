@@ -35,8 +35,9 @@ function [trajectory, params] = simulate_optomotor_model(params)
 %
 %     Optomotor response:
 %       .base_bias      - Base turning bias from grating motion (default: 0.1)
+%                         This represents the strength of the optomotor response
+%                         and would correspond to grating speed in experiments.
 %       .grating_dir    - Grating direction: 1 (CW) or -1 (CCW) (default: 1)
-%       .k_base         - Gain for base optomotor response (default: 1.0)
 %
 %     Distance-dependent modulation:
 %       .k_dist         - Gain for distance-dependent turning (default: 2.0)
@@ -87,7 +88,6 @@ function [trajectory, params] = simulate_optomotor_model(params)
         'seed', [], ...
         'base_bias', 0.1, ...
         'grating_dir', 1, ...
-        'k_base', 1.0, ...
         'k_dist', 2.0, ...
         'd0', 90, ...
         'b', 0.02, ...
@@ -163,7 +163,7 @@ function [trajectory, params] = simulate_optomotor_model(params)
 
         % 1. Base optomotor response (constant direction based on grating)
         if viewing_dist >= params.min_dist
-            bias_term = params.grating_dir * params.k_base * params.base_bias * dt;
+            bias_term = params.grating_dir * params.base_bias * dt;
         else
             bias_term = 0;  % Suppress optomotor response when too close to wall
         end

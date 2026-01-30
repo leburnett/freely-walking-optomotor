@@ -341,7 +341,7 @@
                     </tr>
                     <tr>
                         <td>Base optomotor</td>
-                        <td>k_base &times; base_bias &times; &Delta;t</td>
+                        <td>base_bias &times; &Delta;t</td>
                         <td>Constant turning with gratings</td>
                     </tr>
                     <tr>
@@ -385,10 +385,6 @@
                     </div>
                     <div class="controls">
                         <div class="control-group">
-                            <label>k_base (base gain): <span id="kBaseA_val">1.0</span></label>
-                            <input type="range" id="kBaseA" min="0" max="5" step="0.1" value="1.0" oninput="updateValue('kBaseA')">
-                        </div>
-                        <div class="control-group">
                             <label>k_dist (distance gain): <span id="kDistA_val">2.0</span></label>
                             <input type="range" id="kDistA" min="0" max="10" step="0.1" value="2.0" oninput="updateValue('kDistA')">
                         </div>
@@ -430,10 +426,6 @@
                         <canvas id="arenaB" class="arena-canvas" width="280" height="280"></canvas>
                     </div>
                     <div class="controls">
-                        <div class="control-group">
-                            <label>k_base (base gain): <span id="kBaseB_val">1.0</span></label>
-                            <input type="range" id="kBaseB" min="0" max="5" step="0.1" value="1.0" oninput="updateValue('kBaseB')">
-                        </div>
                         <div class="control-group">
                             <label>k_dist (distance gain): <span id="kDistB_val">4.0</span></label>
                             <input type="range" id="kDistB" min="0" max="10" step="0.1" value="4.0" oninput="updateValue('kDistB')">
@@ -535,7 +527,6 @@
                 T: DURATION,
                 fps: FPS,
                 arena_radius: ARENA_RADIUS,
-                k_base: parseFloat(document.getElementById(`kBase${panel}`).value),
                 k_dist: parseFloat(document.getElementById(`kDist${panel}`).value),
                 d0: parseFloat(document.getElementById(`d0${panel}`).value),
                 b: parseFloat(document.getElementById(`b${panel}`).value),
@@ -635,7 +626,7 @@
                 // Compute turning components
                 let bias_term = 0;
                 if (viewing_dist >= params.min_dist) {
-                    bias_term = params.grating_dir * params.k_base * params.base_bias * dt;
+                    bias_term = params.grating_dir * params.base_bias * dt;
                 }
 
                 const brownian_turn = gaussianRandom(rand) / params.brownian_amp * Math.sqrt(dt);
@@ -998,8 +989,8 @@
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize value displays
-            ['kBaseA', 'kDistA', 'd0A', 'bA', 'baseBiasA',
-             'kBaseB', 'kDistB', 'd0B', 'bB', 'baseBiasB'].forEach(updateValue);
+            ['kDistA', 'd0A', 'bA', 'baseBiasA',
+             'kDistB', 'd0B', 'bB', 'baseBiasB'].forEach(updateValue);
 
             // Draw initial sigmoid plots
             drawSigmoidPlot('A');
