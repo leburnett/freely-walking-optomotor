@@ -327,47 +327,137 @@
                 <h4 style="margin-top: 1rem;">Core Hypothesis</h4>
                 <p>When a fly is closer to the arena wall, the gratings appear to move faster on its retina (higher angular velocity). This causes a stronger optomotor turning response. The increased turning when approaching walls, combined with reduced turning when moving towards the centre, creates a statistical bias towards the arena centre.</p>
 
-                <h4 style="margin-top: 1rem;">Turning Dynamics</h4>
-                <p>At each time step, the change in heading (&Delta;&theta;) is the sum of three components:</p>
-                <div class="equation">
-                    &Delta;&theta; = bias_term + brownian_turn + gain_turn
-                </div>
+                <h4 style="margin-top: 1rem;">Simulation Steps</h4>
+                <p>At each time step, the model performs the following calculations:</p>
+                <ol style="margin: 0.5rem 0 1rem 2rem;">
+                    <li><strong>Compute viewing distance:</strong> Ray-cast from the fly's position along its heading direction to find the distance to the arena wall.</li>
+                    <li><strong>Calculate distance-dependent gain:</strong> Use a sigmoid function to determine how much to amplify the optomotor response based on viewing distance.</li>
+                    <li><strong>Compute turning:</strong> Combine the amplified optomotor response with random Brownian motion.</li>
+                    <li><strong>Update heading:</strong> Add the turning amount to the current heading direction.</li>
+                    <li><strong>Compute speed:</strong> Calculate instantaneous speed (inversely related to turning magnitude).</li>
+                    <li><strong>Update position:</strong> Move forward based on speed and heading. If the fly would exit the arena, reflect its heading.</li>
+                </ol>
 
-                <table class="param-table">
-                    <tr>
-                        <th>Component</th>
-                        <th>Formula</th>
-                        <th>Description</th>
-                    </tr>
-                    <tr>
-                        <td>Base optomotor</td>
-                        <td>base_bias &times; &Delta;t</td>
-                        <td>Constant turning with gratings</td>
-                    </tr>
-                    <tr>
-                        <td>Brownian noise</td>
-                        <td>randn() / brownian_amp &times; &radic;&Delta;t</td>
-                        <td>Random heading fluctuations</td>
-                    </tr>
-                    <tr>
-                        <td>Distance-dependent</td>
-                        <td>k_dist &times; view_factor &times; &Delta;t</td>
-                        <td>Extra turning when close to wall</td>
-                    </tr>
-                </table>
+                <h4 style="margin-top: 1rem;">Turning Dynamics</h4>
+                <p>The change in heading (&Delta;&theta;) at each time step is:</p>
+                <div class="equation">
+                    &Delta;&theta; = optomotor_turn + brownian_turn
+                </div>
+                <p>Where the optomotor turning is <em>amplified</em> by the distance-dependent gain:</p>
+                <div class="equation">
+                    optomotor_turn = grating_dir &times; (1 + k_dist &times; view_factor) &times; base_bias &times; &Delta;t
+                </div>
+                <p>This multiplicative formulation means:</p>
+                <ul style="margin: 0.5rem 0 1rem 2rem;">
+                    <li>When <strong>far from wall</strong>: view_factor &asymp; 0, so gain &asymp; 1 (baseline turning with gratings)</li>
+                    <li>When <strong>close to wall</strong>: view_factor &asymp; 1, so gain &asymp; 1 + k_dist (amplified turning)</li>
+                </ul>
 
                 <h4 style="margin-top: 1rem;">Sigmoid Gain Function</h4>
                 <p>The <code>view_factor</code> uses a sigmoid function that approaches 1 when close to the wall and 0 when far:</p>
                 <div class="equation">
                     view_factor = 1 / (1 + exp(b &times; (viewing_dist - d0)))
                 </div>
-                <p>Where <code>d0</code> is the distance at half-maximal response and <code>b</code> controls the steepness of the transition.</p>
 
                 <h4 style="margin-top: 1rem;">Speed-Turning Relationship</h4>
                 <p>Speed decreases with turning magnitude (flies slow down when turning sharply):</p>
                 <div class="equation">
                     speed = v_max / (1 + alpha &times; |&Delta;&theta;|)
                 </div>
+
+                <h4 style="margin-top: 1rem;">Parameter Reference</h4>
+                <table class="param-table">
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Default</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr style="background: #f0f7ff;">
+                        <td colspan="3"><strong>Optomotor Response</strong></td>
+                    </tr>
+                    <tr>
+                        <td><code>base_bias</code></td>
+                        <td>0.1</td>
+                        <td>Base turning rate with gratings (rad/s). Corresponds to grating speed in experiments. Higher values = stronger baseline optomotor response.</td>
+                    </tr>
+                    <tr>
+                        <td><code>grating_dir</code></td>
+                        <td>CW (+1)</td>
+                        <td>Direction of grating motion: +1 for clockwise, -1 for counter-clockwise. Determines which way the fly turns.</td>
+                    </tr>
+                    <tr style="background: #f0f7ff;">
+                        <td colspan="3"><strong>Distance-Dependent Modulation</strong></td>
+                    </tr>
+                    <tr>
+                        <td><code>k_dist</code></td>
+                        <td>2.0</td>
+                        <td>Multiplier for distance-dependent amplification. When k_dist=0, there is no distance modulation. Higher values = stronger turning amplification near walls.</td>
+                    </tr>
+                    <tr>
+                        <td><code>d0</code></td>
+                        <td>90 mm</td>
+                        <td>Viewing distance at half-maximal gain. At distances &lt; d0, turning is stronger; at distances &gt; d0, turning approaches baseline.</td>
+                    </tr>
+                    <tr>
+                        <td><code>b</code></td>
+                        <td>0.02</td>
+                        <td>Sigmoid slope (steepness). Higher values = sharper transition between "close" and "far" regimes.</td>
+                    </tr>
+                    <tr>
+                        <td><code>min_dist</code></td>
+                        <td>20 mm</td>
+                        <td>Below this viewing distance, optomotor response is suppressed (only Brownian motion remains). Prevents extreme behaviour at wall.</td>
+                    </tr>
+                    <tr style="background: #f0f7ff;">
+                        <td colspan="3"><strong>Movement</strong></td>
+                    </tr>
+                    <tr>
+                        <td><code>v_max</code></td>
+                        <td>20 mm/s</td>
+                        <td>Maximum forward speed when not turning.</td>
+                    </tr>
+                    <tr>
+                        <td><code>alpha</code></td>
+                        <td>7</td>
+                        <td>Speed sensitivity to turning. Higher values = more slowing during sharp turns.</td>
+                    </tr>
+                    <tr>
+                        <td><code>brownian_amp</code></td>
+                        <td>1.2</td>
+                        <td>Divisor for random heading noise. Higher values = less random wandering, smoother trajectories.</td>
+                    </tr>
+                    <tr style="background: #f0f7ff;">
+                        <td colspan="3"><strong>Arena &amp; Timing</strong></td>
+                    </tr>
+                    <tr>
+                        <td><code>arena_radius</code></td>
+                        <td>120.5 mm</td>
+                        <td>Radius of the circular arena.</td>
+                    </tr>
+                    <tr>
+                        <td><code>T</code></td>
+                        <td>30 s</td>
+                        <td>Total simulation duration.</td>
+                    </tr>
+                    <tr>
+                        <td><code>fps</code></td>
+                        <td>30</td>
+                        <td>Simulation frame rate (determines time step &Delta;t = 1/fps).</td>
+                    </tr>
+                    <tr style="background: #f0f7ff;">
+                        <td colspan="3"><strong>Initial Conditions</strong></td>
+                    </tr>
+                    <tr>
+                        <td><code>x0, y0</code></td>
+                        <td>-90, 0 mm</td>
+                        <td>Starting position (left side of arena, centred vertically).</td>
+                    </tr>
+                    <tr>
+                        <td><code>theta0</code></td>
+                        <td>0 rad</td>
+                        <td>Starting heading (facing right, towards arena centre).</td>
+                    </tr>
+                </table>
             </div>
         </section>
 
@@ -605,10 +695,10 @@
                 viewing_dist_mm: []
             };
 
-            // Initial conditions
-            let x = -90;
-            let y = (rand() * 2 - 1) * 60;
-            let theta = rand() * 2 * Math.PI;
+            // Fixed initial conditions (same for all simulations for comparison)
+            let x = -90;    // Start on left side of arena
+            let y = 0;      // Centred vertically
+            let theta = 0;  // Facing right (towards arena centre)
 
             // Save initial state
             trajectory.time_s.push(0);
@@ -624,33 +714,43 @@
                 const viewing_dist = computeViewingDistance(x, y, theta, params.arena_radius);
 
                 // Compute turning components
-                let bias_term = 0;
-                if (viewing_dist >= params.min_dist) {
-                    bias_term = params.grating_dir * params.base_bias * dt;
-                }
 
+                // 1. Brownian noise (always present)
                 const brownian_turn = gaussianRandom(rand) / params.brownian_amp * Math.sqrt(dt);
 
+                // 2. Distance-dependent gain (sigmoid function)
+                // view_factor approaches 1 when close to wall, 0 when far
                 const view_factor = 1 / (1 + Math.exp(params.b * (viewing_dist - params.d0)));
-                const gain_turn = params.grating_dir * params.k_dist * view_factor * dt;
 
+                // 3. Optomotor response with multiplicative distance modulation
+                // optomotor_gain = 1 + k_dist * view_factor
+                //   - When far from wall: view_factor ≈ 0, gain ≈ 1 (baseline turning)
+                //   - When close to wall: view_factor ≈ 1, gain ≈ 1 + k_dist (amplified turning)
+                let optomotor_turn = 0;
+                let optomotor_gain = 0;
+                if (viewing_dist >= params.min_dist) {
+                    optomotor_gain = 1 + params.k_dist * view_factor;
+                    optomotor_turn = params.grating_dir * optomotor_gain * params.base_bias * dt;
+                }
+
+                // Combine turning components
                 let dtheta;
                 if (viewing_dist < params.min_dist) {
-                    dtheta = brownian_turn;
+                    dtheta = brownian_turn;  // Only random walk when very close to wall
                 } else {
-                    dtheta = bias_term + brownian_turn + gain_turn;
+                    dtheta = optomotor_turn + brownian_turn;
                 }
 
                 theta = theta + dtheta;
 
-                // Compute speed
+                // Compute speed (inverse relationship with turning)
                 const v_inst = params.v_max / (1 + params.alpha * Math.abs(dtheta));
 
                 // Update position
                 let x_new = x + v_inst * dt * Math.cos(theta);
                 let y_new = y + v_inst * dt * Math.sin(theta);
 
-                // Boundary check
+                // Boundary check: reflect heading if hitting wall
                 if (Math.sqrt(x_new * x_new + y_new * y_new) >= params.arena_radius) {
                     theta = theta + Math.PI;
                     x_new = x;
@@ -666,7 +766,7 @@
                 trajectory.y_mm.push(y);
                 trajectory.heading_rad.push(wrapAngle(theta));
                 trajectory.speed_mm_s.push(v_inst);
-                trajectory.gain.push(gain_turn);
+                trajectory.gain.push(optomotor_gain);  // Save the multiplicative gain factor
                 trajectory.viewing_dist_mm.push(viewing_dist);
             }
 

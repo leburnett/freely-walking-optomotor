@@ -27,10 +27,9 @@ function [trajectory, params] = simulate_optomotor_model(params)
 %       .arena_radius   - Arena radius in mm (default: 120.5)
 %
 %     Initial conditions:
-%       .x0             - Initial x position, or 'random' (default: -90)
-%       .y0             - Initial y position, or 'random' (default: 'random')
-%       .y0_range       - Range for random y0: [min, max] (default: [-60, 60])
-%       .theta0         - Initial heading in rad, or 'random' (default: 'random')
+%       .x0             - Initial x position in mm (default: -90)
+%       .y0             - Initial y position in mm (default: 0)
+%       .theta0         - Initial heading in radians (default: 0, facing +x)
 %       .seed           - Random seed for reproducibility (default: [], no seed)
 %
 %     Optomotor response:
@@ -40,7 +39,11 @@ function [trajectory, params] = simulate_optomotor_model(params)
 %       .grating_dir    - Grating direction: 1 (CW) or -1 (CCW) (default: 1)
 %
 %     Distance-dependent modulation:
-%       .k_dist         - Gain for distance-dependent turning (default: 2.0)
+%       .k_dist         - Multiplier for distance-dependent amplification of
+%                         optomotor response (default: 2.0). The optomotor gain
+%                         is: 1 + k_dist * view_factor. When k_dist=0, there is
+%                         no distance modulation. Higher values = stronger
+%                         amplification of turning when close to wall.
 %       .d0             - Distance at half-maximal turning in mm (default: 90)
 %       .b              - Sigmoid slope/steepness (default: 0.02)
 %       .min_dist       - Minimum viewing distance for turning (default: 20)
@@ -82,9 +85,8 @@ function [trajectory, params] = simulate_optomotor_model(params)
         'fps', 30, ...
         'arena_radius', 120.5, ...
         'x0', -90, ...
-        'y0', 'random', ...
-        'y0_range', [-60, 60], ...
-        'theta0', 'random', ...
+        'y0', 0, ...
+        'theta0', 0, ...
         'seed', [], ...
         'base_bias', 0.1, ...
         'grating_dir', 1, ...
@@ -128,23 +130,9 @@ function [trajectory, params] = simulate_optomotor_model(params)
     vd_traj = zeros(1, n_steps);
 
     %% Set initial conditions
-    if ischar(params.x0) && strcmp(params.x0, 'random')
-        x = (rand() * 2 - 1) * params.arena_radius * 0.8;  % Random within 80% of radius
-    else
-        x = params.x0;
-    end
-
-    if ischar(params.y0) && strcmp(params.y0, 'random')
-        y = params.y0_range(1) + rand() * (params.y0_range(2) - params.y0_range(1));
-    else
-        y = params.y0;
-    end
-
-    if ischar(params.theta0) && strcmp(params.theta0, 'random')
-        theta = rand() * 2 * pi;
-    else
-        theta = params.theta0;
-    end
+    x = params.x0;
+    y = params.y0;
+    theta = params.theta0;
 
     % Save initial state
     x_traj(1) = x;
@@ -161,26 +149,31 @@ function [trajectory, params] = simulate_optomotor_model(params)
 
         % Compute turning components
 
-        % 1. Base optomotor response (constant direction based on grating)
-        if viewing_dist >= params.min_dist
-            bias_term = params.grating_dir * params.base_bias * dt;
-        else
-            bias_term = 0;  % Suppress optomotor response when too close to wall
-        end
-
-        % 2. Brownian noise (always present)
+        % 1. Brownian noise (always present)
         brownian_turn = randn() / params.brownian_amp * sqrt(dt);
 
-        % 3. Distance-dependent gain (sigmoid function)
+        % 2. Distance-dependent gain (sigmoid function)
         % view_factor approaches 1 when close to wall, 0 when far
         view_factor = 1 / (1 + exp(params.b * (viewing_dist - params.d0)));
-        gain_turn = params.grating_dir * params.k_dist * view_factor * dt;
+
+        % 3. Optomotor response with multiplicative distance modulation
+        % The gain amplifies the base optomotor turning based on viewing distance
+        % optomotor_gain = 1 + k_dist * view_factor
+        %   - When far from wall: view_factor ≈ 0, gain ≈ 1 (baseline turning)
+        %   - When close to wall: view_factor ≈ 1, gain ≈ 1 + k_dist (amplified turning)
+        if viewing_dist >= params.min_dist
+            optomotor_gain = 1 + params.k_dist * view_factor;
+            optomotor_turn = params.grating_dir * optomotor_gain * params.base_bias * dt;
+        else
+            optomotor_turn = 0;  % Suppress optomotor response when too close to wall
+            optomotor_gain = 0;
+        end
 
         % Combine turning components
         if viewing_dist < params.min_dist
             dtheta = brownian_turn;  % Only random walk when very close to wall
         else
-            dtheta = bias_term + brownian_turn + gain_turn;
+            dtheta = optomotor_turn + brownian_turn;
         end
 
         theta = theta + dtheta;
@@ -208,7 +201,7 @@ function [trajectory, params] = simulate_optomotor_model(params)
         y_traj(i) = y;
         theta_traj(i) = mod(theta + pi, 2*pi) - pi;
         v_traj(i) = v_inst;
-        g_traj(i) = gain_turn;
+        g_traj(i) = optomotor_gain;  % Save the multiplicative gain factor
         vd_traj(i) = viewing_dist;
     end
 
