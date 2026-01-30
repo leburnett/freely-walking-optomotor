@@ -6,12 +6,14 @@
     <title>Optomotor Response & Centripetal Drift Model</title>
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --background-color: #f5f6fa;
+            --primary-color: #000000;
+            --secondary-color: #555555;
+            --background-color: #f0f0f0;
             --panel-bg: #ffffff;
-            --text-color: #2c3e50;
-            --border-color: #dcdde1;
+            --text-color: #1a1a1a;
+            --border-color: #cccccc;
+            --panel-a-color: #c0392b;
+            --panel-b-color: #5dade2;
         }
 
         * {
@@ -118,19 +120,19 @@
         }
 
         .panel-a {
-            border-color: #e74c3c;
+            border-color: var(--panel-a-color);
         }
 
         .panel-a h3 {
-            color: #e74c3c;
+            color: var(--panel-a-color);
         }
 
         .panel-b {
-            border-color: #27ae60;
+            border-color: var(--panel-b-color);
         }
 
         .panel-b h3 {
-            color: #27ae60;
+            color: var(--panel-b-color);
         }
 
         .arena-container {
@@ -204,39 +206,51 @@
         }
 
         .btn-primary {
-            background-color: var(--secondary-color);
+            background-color: #333333;
             color: white;
         }
 
         .btn-primary:hover {
-            background-color: #2980b9;
+            background-color: #1a1a1a;
         }
 
         .btn-secondary {
-            background-color: #95a5a6;
+            background-color: #888888;
             color: white;
         }
 
         .btn-secondary:hover {
-            background-color: #7f8c8d;
+            background-color: #666666;
         }
 
         .btn-export {
-            background-color: #9b59b6;
+            background-color: #555555;
             color: white;
         }
 
         .btn-export:hover {
-            background-color: #8e44ad;
+            background-color: #333333;
+        }
+
+        .btn-image {
+            background-color: #777777;
+            color: white;
+        }
+
+        .btn-image:hover {
+            background-color: #555555;
         }
 
         .plots-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
         }
 
         .plot-canvas {
+            width: 100%;
+            height: auto;
             border: 1px solid var(--border-color);
             border-radius: 4px;
             background: #fafafa;
@@ -281,10 +295,10 @@
         }
 
         .explanation-card {
-            background: #f8f9fa;
+            background: #f5f5f5;
             padding: 1rem;
             border-radius: 4px;
-            border-left: 4px solid var(--secondary-color);
+            border-left: 4px solid #333333;
         }
 
         .explanation-card h4 {
@@ -557,10 +571,11 @@
                         <button class="btn-primary" onclick="runSimulation('A')">Run</button>
                         <button class="btn-secondary" onclick="resetSimulation('A')">Reset</button>
                         <button class="btn-export" onclick="exportJSON('A')">Export JSON</button>
+                        <button class="btn-image" onclick="downloadImage('A')">Download Image</button>
                     </div>
                     <div class="plots-container">
-                        <canvas id="sigmoidA" class="plot-canvas" width="135" height="100"></canvas>
-                        <canvas id="vdPlotA" class="plot-canvas" width="135" height="100"></canvas>
+                        <canvas id="sigmoidA" class="plot-canvas" width="200" height="120"></canvas>
+                        <canvas id="vdPlotA" class="plot-canvas" width="200" height="120"></canvas>
                     </div>
                 </div>
 
@@ -599,10 +614,11 @@
                         <button class="btn-primary" onclick="runSimulation('B')">Run</button>
                         <button class="btn-secondary" onclick="resetSimulation('B')">Reset</button>
                         <button class="btn-export" onclick="exportJSON('B')">Export JSON</button>
+                        <button class="btn-image" onclick="downloadImage('B')">Download Image</button>
                     </div>
                     <div class="plots-container">
-                        <canvas id="sigmoidB" class="plot-canvas" width="135" height="100"></canvas>
-                        <canvas id="vdPlotB" class="plot-canvas" width="135" height="100"></canvas>
+                        <canvas id="sigmoidB" class="plot-canvas" width="200" height="120"></canvas>
+                        <canvas id="vdPlotB" class="plot-canvas" width="200" height="120"></canvas>
                     </div>
                 </div>
             </div>
@@ -937,7 +953,7 @@
             const plotWidth = width - padding.left - padding.right;
             const plotHeight = height - padding.top - padding.bottom;
 
-            ctx.strokeStyle = panel === 'A' ? '#e74c3c' : '#27ae60';
+            ctx.strokeStyle = panel === 'A' ? '#c0392b' : '#5dade2';
             ctx.lineWidth = 2;
             ctx.beginPath();
 
@@ -1016,7 +1032,7 @@
             const maxTime = trajectory.time_s[trajectory.time_s.length - 1];
 
             // Plot viewing distance
-            ctx.strokeStyle = panel === 'A' ? '#e74c3c' : '#27ae60';
+            ctx.strokeStyle = panel === 'A' ? '#c0392b' : '#5dade2';
             ctx.lineWidth = 1;
             ctx.beginPath();
 
@@ -1129,6 +1145,18 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+        }
+
+        // Download trajectory image as PNG
+        function downloadImage(panel) {
+            const canvas = document.getElementById(`arena${panel}`);
+            const url = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `trajectory_${panel}_${Date.now()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
 
         // Toggle collapsible sections
