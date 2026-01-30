@@ -344,40 +344,75 @@
                     &Delta;&theta; = bias_term + brownian_turn + gain_turn
                 </div>
 
-                <table class="param-table">
-                    <tr>
-                        <th>Component</th>
-                        <th>Formula</th>
-                        <th>Description</th>
-                    </tr>
-                    <tr>
-                        <td>Base optomotor</td>
-                        <td>grating_dir &times; base_bias &times; &Delta;t</td>
-                        <td>Constant turning with gratings (same direction everywhere)</td>
-                    </tr>
-                    <tr>
-                        <td>Brownian noise</td>
-                        <td>randn() / brownian_amp &times; &radic;&Delta;t</td>
-                        <td>Random heading fluctuations</td>
-                    </tr>
-                    <tr>
-                        <td>Distance-dependent</td>
-                        <td>grating_dir &times; k_dist &times; view_factor &times; &Delta;t</td>
-                        <td>Extra turning in grating direction when close to wall</td>
-                    </tr>
-                </table>
-
-                <p style="margin-top: 1rem;">The distance-dependent component adds <em>extra</em> turning in the same direction as the grating when the fly is close to the wall. This means:</p>
+                <h5 style="margin-top: 1.5rem; color: #2c3e50;">1. bias_term (Base Optomotor Response)</h5>
+                <div class="equation">
+                    bias_term = grating_dir &times; base_bias &times; &Delta;t
+                </div>
+                <p>This is the baseline optomotor turning that occurs everywhere in the arena. It represents the fly's tendency to turn in the direction of the moving gratings to stabilise its visual field.</p>
                 <ul style="margin: 0.5rem 0 1rem 2rem;">
-                    <li>When <strong>far from wall</strong>: view_factor &asymp; 0, so gain_turn &asymp; 0 (only baseline turning)</li>
-                    <li>When <strong>close to wall</strong>: view_factor &asymp; 1, so gain_turn &asymp; k_dist &times; &Delta;t (extra turning added)</li>
+                    <li><code>grating_dir</code>: Direction of grating motion (+1 for CW, -1 for CCW). Determines which way the fly turns.</li>
+                    <li><code>base_bias</code>: Strength of the optomotor response. Corresponds to the angular speed of the gratings - faster gratings produce stronger turning.</li>
+                    <li><code>&Delta;t</code>: Time step (1/fps seconds). Converts the turning rate to an angle change per frame.</li>
                 </ul>
+                <p><strong>Effect on behaviour:</strong> Creates a constant spiralling motion. Higher <code>base_bias</code> = tighter spirals. If <code>base_bias = 0</code>, there is no optomotor response and the fly only performs a random walk.</p>
 
-                <h4 style="margin-top: 1rem;">Sigmoid Gain Function</h4>
-                <p>The <code>view_factor</code> uses a sigmoid function that approaches 1 when close to the wall and 0 when far:</p>
+                <h5 style="margin-top: 1.5rem; color: #2c3e50;">2. brownian_turn (Random Noise)</h5>
+                <div class="equation">
+                    brownian_turn = randn() / brownian_amp &times; &radic;&Delta;t
+                </div>
+                <p>This adds stochastic variability to the fly's heading, simulating the natural randomness in walking behaviour.</p>
+                <ul style="margin: 0.5rem 0 1rem 2rem;">
+                    <li><code>randn()</code>: A random number drawn from a standard normal distribution (mean=0, std=1).</li>
+                    <li><code>brownian_amp</code>: Divisor that controls noise amplitude. Higher values = less noise, smoother trajectories.</li>
+                    <li><code>&radic;&Delta;t</code>: Scaling factor that ensures correct Brownian motion statistics regardless of frame rate.</li>
+                </ul>
+                <p><strong>Effect on behaviour:</strong> Prevents perfectly deterministic spirals. Allows the fly to occasionally escape tight loops. Lower <code>brownian_amp</code> = more erratic paths; higher values = smoother, more predictable paths.</p>
+
+                <h5 style="margin-top: 1.5rem; color: #2c3e50;">3. gain_turn (Distance-Dependent Extra Turning)</h5>
+                <div class="equation">
+                    gain_turn = grating_dir &times; k_dist &times; view_factor &times; &Delta;t
+                </div>
+                <p>This is the key component for centripetal drift. It adds <em>extra</em> turning in the same direction as the grating, but only when the fly is close to the arena wall.</p>
+                <ul style="margin: 0.5rem 0 1rem 2rem;">
+                    <li><code>grating_dir</code>: Same direction as base optomotor response.</li>
+                    <li><code>k_dist</code>: Gain that scales the strength of distance-dependent turning. Higher values = stronger effect near walls.</li>
+                    <li><code>view_factor</code>: A value between 0 and 1 determined by the viewing distance (see sigmoid function below).</li>
+                    <li><code>&Delta;t</code>: Time step.</li>
+                </ul>
+                <p><strong>Effect on behaviour:</strong> When the fly is heading towards a wall (short viewing distance), <code>view_factor</code> is high, causing extra turning that redirects it away. When heading towards the centre (long viewing distance), <code>view_factor</code> is low, so the fly maintains its trajectory. This asymmetry creates the centripetal drift.</p>
+
+                <h5 style="margin-top: 1.5rem; color: #2c3e50;">The view_factor (Sigmoid Gain Function)</h5>
                 <div class="equation">
                     view_factor = 1 / (1 + exp(b &times; (viewing_dist - d0)))
                 </div>
+                <p>This sigmoid function converts viewing distance into a gain multiplier:</p>
+                <ul style="margin: 0.5rem 0 1rem 2rem;">
+                    <li><code>viewing_dist</code>: Distance from fly to arena wall along its current heading direction (computed via ray-casting).</li>
+                    <li><code>d0</code>: The "half-max" distance - when <code>viewing_dist = d0</code>, the <code>view_factor = 0.5</code>.</li>
+                    <li><code>b</code>: Slope/steepness of the sigmoid. Higher values = sharper transition between "close" and "far".</li>
+                </ul>
+                <table class="param-table" style="margin-top: 0.5rem;">
+                    <tr>
+                        <th>Viewing Distance</th>
+                        <th>view_factor</th>
+                        <th>Effect</th>
+                    </tr>
+                    <tr>
+                        <td>Much less than d0 (close to wall)</td>
+                        <td>&asymp; 1</td>
+                        <td>Strong extra turning (gain_turn &asymp; k_dist &times; &Delta;t)</td>
+                    </tr>
+                    <tr>
+                        <td>Equal to d0</td>
+                        <td>= 0.5</td>
+                        <td>Half-maximal extra turning</td>
+                    </tr>
+                    <tr>
+                        <td>Much greater than d0 (far from wall)</td>
+                        <td>&asymp; 0</td>
+                        <td>Minimal extra turning (gain_turn &asymp; 0)</td>
+                    </tr>
+                </table>
 
                 <h4 style="margin-top: 1rem;">Speed-Turning Relationship</h4>
                 <p>Speed decreases with turning magnitude (flies slow down when turning sharply):</p>
