@@ -339,18 +339,38 @@
                 </ol>
 
                 <h4 style="margin-top: 1rem;">Turning Dynamics</h4>
-                <p>The change in heading (&Delta;&theta;) at each time step is:</p>
+                <p>The change in heading (&Delta;&theta;) at each time step is the sum of three components:</p>
                 <div class="equation">
-                    &Delta;&theta; = optomotor_turn + brownian_turn
+                    &Delta;&theta; = bias_term + brownian_turn + gain_turn
                 </div>
-                <p>Where the optomotor turning is <em>amplified</em> by the distance-dependent gain:</p>
-                <div class="equation">
-                    optomotor_turn = grating_dir &times; (1 + k_dist &times; view_factor) &times; base_bias &times; &Delta;t
-                </div>
-                <p>This multiplicative formulation means:</p>
+
+                <table class="param-table">
+                    <tr>
+                        <th>Component</th>
+                        <th>Formula</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td>Base optomotor</td>
+                        <td>grating_dir &times; base_bias &times; &Delta;t</td>
+                        <td>Constant turning with gratings (same direction everywhere)</td>
+                    </tr>
+                    <tr>
+                        <td>Brownian noise</td>
+                        <td>randn() / brownian_amp &times; &radic;&Delta;t</td>
+                        <td>Random heading fluctuations</td>
+                    </tr>
+                    <tr>
+                        <td>Distance-dependent</td>
+                        <td>grating_dir &times; k_dist &times; view_factor &times; &Delta;t</td>
+                        <td>Extra turning in grating direction when close to wall</td>
+                    </tr>
+                </table>
+
+                <p style="margin-top: 1rem;">The distance-dependent component adds <em>extra</em> turning in the same direction as the grating when the fly is close to the wall. This means:</p>
                 <ul style="margin: 0.5rem 0 1rem 2rem;">
-                    <li>When <strong>far from wall</strong>: view_factor &asymp; 0, so gain &asymp; 1 (baseline turning with gratings)</li>
-                    <li>When <strong>close to wall</strong>: view_factor &asymp; 1, so gain &asymp; 1 + k_dist (amplified turning)</li>
+                    <li>When <strong>far from wall</strong>: view_factor &asymp; 0, so gain_turn &asymp; 0 (only baseline turning)</li>
+                    <li>When <strong>close to wall</strong>: view_factor &asymp; 1, so gain_turn &asymp; k_dist &times; &Delta;t (extra turning added)</li>
                 </ul>
 
                 <h4 style="margin-top: 1rem;">Sigmoid Gain Function</h4>
@@ -391,7 +411,7 @@
                     <tr>
                         <td><code>k_dist</code></td>
                         <td>2.0</td>
-                        <td>Multiplier for distance-dependent amplification. When k_dist=0, there is no distance modulation. Higher values = stronger turning amplification near walls.</td>
+                        <td>Gain for extra turning when close to wall. Adds turning in the same direction as the grating. When k_dist=0, there is no distance modulation. Higher values = more extra turning near walls.</td>
                     </tr>
                     <tr>
                         <td><code>d0</code></td>
@@ -715,30 +735,27 @@
 
                 // Compute turning components
 
-                // 1. Brownian noise (always present)
+                // 1. Base optomotor response (constant turning with gratings)
+                let bias_term = 0;
+                if (viewing_dist >= params.min_dist) {
+                    bias_term = params.grating_dir * params.base_bias * dt;
+                }
+
+                // 2. Brownian noise (always present)
                 const brownian_turn = gaussianRandom(rand) / params.brownian_amp * Math.sqrt(dt);
 
-                // 2. Distance-dependent gain (sigmoid function)
+                // 3. Distance-dependent gain (sigmoid function)
                 // view_factor approaches 1 when close to wall, 0 when far
+                // This adds extra turning in the same direction as the grating
                 const view_factor = 1 / (1 + Math.exp(params.b * (viewing_dist - params.d0)));
-
-                // 3. Optomotor response with multiplicative distance modulation
-                // optomotor_gain = 1 + k_dist * view_factor
-                //   - When far from wall: view_factor ≈ 0, gain ≈ 1 (baseline turning)
-                //   - When close to wall: view_factor ≈ 1, gain ≈ 1 + k_dist (amplified turning)
-                let optomotor_turn = 0;
-                let optomotor_gain = 0;
-                if (viewing_dist >= params.min_dist) {
-                    optomotor_gain = 1 + params.k_dist * view_factor;
-                    optomotor_turn = params.grating_dir * optomotor_gain * params.base_bias * dt;
-                }
+                const gain_turn = params.grating_dir * params.k_dist * view_factor * dt;
 
                 // Combine turning components
                 let dtheta;
                 if (viewing_dist < params.min_dist) {
                     dtheta = brownian_turn;  // Only random walk when very close to wall
                 } else {
-                    dtheta = optomotor_turn + brownian_turn;
+                    dtheta = bias_term + brownian_turn + gain_turn;
                 }
 
                 theta = theta + dtheta;
@@ -766,7 +783,7 @@
                 trajectory.y_mm.push(y);
                 trajectory.heading_rad.push(wrapAngle(theta));
                 trajectory.speed_mm_s.push(v_inst);
-                trajectory.gain.push(optomotor_gain);  // Save the multiplicative gain factor
+                trajectory.gain.push(gain_turn);  // Save the distance-dependent turning component
                 trajectory.viewing_dist_mm.push(viewing_dist);
             }
 

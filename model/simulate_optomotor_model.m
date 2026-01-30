@@ -39,11 +39,10 @@ function [trajectory, params] = simulate_optomotor_model(params)
 %       .grating_dir    - Grating direction: 1 (CW) or -1 (CCW) (default: 1)
 %
 %     Distance-dependent modulation:
-%       .k_dist         - Multiplier for distance-dependent amplification of
-%                         optomotor response (default: 2.0). The optomotor gain
-%                         is: 1 + k_dist * view_factor. When k_dist=0, there is
-%                         no distance modulation. Higher values = stronger
-%                         amplification of turning when close to wall.
+%       .k_dist         - Gain for distance-dependent turning (default: 2.0).
+%                         This adds extra turning in the grating direction when
+%                         close to the wall. When k_dist=0, there is no distance
+%                         modulation. Higher values = more extra turning near walls.
 %       .d0             - Distance at half-maximal turning in mm (default: 90)
 %       .b              - Sigmoid slope/steepness (default: 0.02)
 %       .min_dist       - Minimum viewing distance for turning (default: 20)
@@ -149,31 +148,27 @@ function [trajectory, params] = simulate_optomotor_model(params)
 
         % Compute turning components
 
-        % 1. Brownian noise (always present)
+        % 1. Base optomotor response (constant turning with gratings)
+        if viewing_dist >= params.min_dist
+            bias_term = params.grating_dir * params.base_bias * dt;
+        else
+            bias_term = 0;  % Suppress optomotor response when too close to wall
+        end
+
+        % 2. Brownian noise (always present)
         brownian_turn = randn() / params.brownian_amp * sqrt(dt);
 
-        % 2. Distance-dependent gain (sigmoid function)
+        % 3. Distance-dependent gain (sigmoid function)
         % view_factor approaches 1 when close to wall, 0 when far
+        % This adds extra turning in the same direction as the grating
         view_factor = 1 / (1 + exp(params.b * (viewing_dist - params.d0)));
-
-        % 3. Optomotor response with multiplicative distance modulation
-        % The gain amplifies the base optomotor turning based on viewing distance
-        % optomotor_gain = 1 + k_dist * view_factor
-        %   - When far from wall: view_factor ≈ 0, gain ≈ 1 (baseline turning)
-        %   - When close to wall: view_factor ≈ 1, gain ≈ 1 + k_dist (amplified turning)
-        if viewing_dist >= params.min_dist
-            optomotor_gain = 1 + params.k_dist * view_factor;
-            optomotor_turn = params.grating_dir * optomotor_gain * params.base_bias * dt;
-        else
-            optomotor_turn = 0;  % Suppress optomotor response when too close to wall
-            optomotor_gain = 0;
-        end
+        gain_turn = params.grating_dir * params.k_dist * view_factor * dt;
 
         % Combine turning components
         if viewing_dist < params.min_dist
             dtheta = brownian_turn;  % Only random walk when very close to wall
         else
-            dtheta = optomotor_turn + brownian_turn;
+            dtheta = bias_term + brownian_turn + gain_turn;
         end
 
         theta = theta + dtheta;
@@ -201,7 +196,7 @@ function [trajectory, params] = simulate_optomotor_model(params)
         y_traj(i) = y;
         theta_traj(i) = mod(theta + pi, 2*pi) - pi;
         v_traj(i) = v_inst;
-        g_traj(i) = optomotor_gain;  % Save the multiplicative gain factor
+        g_traj(i) = gain_turn;  % Save the distance-dependent turning component
         vd_traj(i) = viewing_dist;
     end
 
