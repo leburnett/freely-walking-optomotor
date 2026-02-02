@@ -1,194 +1,338 @@
-function DATA = comb_data_across_cohorts_cond(protocol_dir)
-    % Combine the data within "comb_data" - behavioural data for each
-    % individual fly across a single cohort for one run of an experiment 
-    % - across all experiments for a particular protocol.
+function DATA = comb_data_across_cohorts_cond(protocol_dir, pattern_dir, verbose)
+% COMB_DATA_ACROSS_COHORTS_COND Combine data across experiments with pattern metadata
+%
+% This function combines behavioral data across all experiments for a protocol,
+% organizing it into a hierarchical structure with enhanced metadata including:
+%   - Protocol-level metadata (_metadata field)
+%   - Pattern lookup table (_pattern_lut field)
+%   - Phase markers for trial segmentation
+%   - Linked pattern metadata per condition
+%
+% Inputs:
+%   protocol_dir - String: path to protocol results directory
+%                  e.g., '/path/to/results/protocol_27'
+%   pattern_dir  - (Optional) String: path to pattern files
+%                  Default: '../patterns/Patterns_optomotor/' relative to this file
+%   verbose      - (Optional) Logical: print progress messages (default: true)
+%
+% Returns:
+%   DATA - Struct with hierarchical organization:
+%       ._metadata          - Protocol-level information
+%       ._pattern_lut       - Pattern metadata lookup table
+%       .{strain}.{sex}(n)  - Experiment data arrays
+%
+% Structure of DATA._metadata:
+%   .protocol_name      - String: protocol identifier
+%   .protocol_version   - String: '2.0' for this version
+%   .created_date       - Datetime: when DATA was created
+%   .n_strains          - Integer: number of unique strains
+%   .n_total_experiments - Integer: total experiments processed
+%   .n_total_flies      - Integer: total flies across all experiments
+%   .cond_array         - Matrix: condition parameters (from first file)
+%   .config             - Struct: protocol configuration
+%
+% Structure of each experiment DATA.{strain}.{sex}(n):
+%   .meta               - Experiment metadata (from LOG.meta)
+%   .acclim_off1        - Pre-acclimatization data
+%   .acclim_patt        - Pattern acclimatization data
+%   .acclim_off2        - Post-acclimatization data
+%   .R1_condition_N     - Repetition 1, Condition N data
+%   .R2_condition_N     - Repetition 2, Condition N data
+%
+% Structure of each condition (R1_condition_N):
+%   .trial_len          - Trial duration in seconds
+%   .interval_dur       - Inter-trial interval in seconds
+%   .optomotor_pattern  - Pattern ID used
+%   .optomotor_speed    - Stimulus speed parameter
+%   .interval_pattern   - Pattern during interval
+%   .interval_speed     - Speed during interval
+%   .start_flicker_f    - Frame where inter-trial begins (relative to condition start)
+%   .phase_markers      - Frame boundaries for baseline/dir1/dir2/interval
+%   .pattern_meta       - Linked pattern metadata from _pattern_lut
+%   .vel_data           - Velocity (mm/s), size [n_flies x n_frames]
+%   .fv_data            - Forward velocity (mm/s)
+%   .av_data            - Angular velocity (deg/s)
+%   .curv_data          - Curvature (deg/mm)
+%   .dist_data          - Distance from center (mm)
+%   .dist_trav          - Cumulative distance traveled (mm)
+%   .heading_data       - Heading unwrapped (deg)
+%   .heading_wrap       - Heading wrapped (deg)
+%   .x_data             - X position (mm)
+%   .y_data             - Y position (mm)
+%   .view_dist          - Viewing distance to wall (mm)
+%   .IFD_data           - Inter-fly distance (mm)
+%   .IFA_data           - Inter-fly angle (deg)
+%
+% Example:
+%   % Process all data for protocol_27
+%   DATA = comb_data_across_cohorts_cond('/path/to/results/protocol_27');
+%
+%   % Access condition 1 data for a strain
+%   cond_data = DATA.jfrc100_es_shibire_kir.F(1).R1_condition_1;
+%   av = cond_data.av_data;  % Angular velocity
+%   markers = cond_data.phase_markers;  % Phase boundaries
+%
+%   % Extract direction 1 data
+%   dir1_av = av(:, markers.dir1_start:markers.dir1_end);
+%
+% See also: parse_pattern_metadata, build_pattern_lookup, discover_strains,
+%           get_protocol_config
 
-    % This function has now been optimised for "protocol_27" - the screen
-    % protocol. 
+    %% Handle arguments
+    if nargin < 2 || isempty(pattern_dir)
+        this_file = mfilename('fullpath');
+        [this_dir, ~, ~] = fileparts(this_file);
+        pattern_dir = fullfile(this_dir, '..', '..', 'patterns', 'Patterns_optomotor');
+    end
 
-    % Inputs:
-    % _______
+    if nargin < 3
+        verbose = true;
+    end
 
-    % 'protocol_dir': path
-    %       Path to the results files for a particular protocol. E.g. 
-    % '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_27'
+    %% Validate directories
+    if ~isfolder(protocol_dir)
+        error('comb_data_across_cohorts_cond:DirectoryNotFound', ...
+            'Protocol directory not found: %s', protocol_dir);
+    end
 
-    % Returns:
-    % _______
+    %% Extract protocol name
+    [~, protocol_name] = fileparts(protocol_dir);
 
-    % DATA : struct
-    %       MATLAB struct that contains the data from multiple cohorts
-    %       parsed based on data type and condition.
+    %% Load or build pattern lookup table
+    if isfolder(pattern_dir)
+        lut_file = fullfile(pattern_dir, 'PATTERN_LUT.mat');
+        if exist(lut_file, 'file')
+            if verbose
+                fprintf('Loading pattern lookup table from: %s\n', lut_file);
+            end
+            load(lut_file, 'PATTERN_LUT');
+        else
+            if verbose
+                fprintf('Building pattern lookup table...\n');
+            end
+            PATTERN_LUT = build_pattern_lookup(pattern_dir, true);
+        end
+    else
+        if verbose
+            warning('Pattern directory not found, pattern metadata will not be linked.');
+        end
+        PATTERN_LUT = struct();
+    end
 
-    % Find all processed data for one protocol. 
+    %% Get protocol configuration
+    protocol_config = get_protocol_config(protocol_name);
+
+    %% Find all processed data files
     filelist = dir(fullfile(protocol_dir, '**/*.mat'));
-
-    % Remove the DATA file if it already exits:
-    idxToRemove = contains({filelist.name}, "DATA");
+    % Remove DATA aggregate files
+    idxToRemove = contains({filelist.name}, 'DATA');
     filelist(idxToRemove) = [];
-
     n_files = length(filelist);
-    
-    % Initialise a struct 'DATA' to store data in. 
-    DATA = struct();
-    
-    for idx = 1:n_files
-        
-        fname = filelist(idx).name;
-        disp(fname)
-        f_folder = filelist(idx).folder; 
-    
-        % Load 'comb_data', 'LOG', and 'n_fly_data' that was generated by
-        % `combine_data_one_cohort` within `process_data_features`.
-        load(fullfile(f_folder, fname), 'comb_data', 'LOG', 'n_fly_data');
 
-        % Get key information about strain and sex:
+    if n_files == 0
+        error('comb_data_across_cohorts_cond:NoDataFiles', ...
+            'No data files found in: %s', protocol_dir);
+    end
+
+    if verbose
+        fprintf('\nProcessing %d data files from %s\n', n_files, protocol_name);
+        fprintf('================================================================================\n');
+    end
+
+    %% Initialize DATA struct with metadata
+    DATA = struct();
+    DATA._metadata.protocol_name = protocol_name;
+    DATA._metadata.protocol_version = '2.0';
+    DATA._metadata.created_date = datetime('now');
+    DATA._metadata.n_strains = 0;
+    DATA._metadata.n_total_experiments = n_files;
+    DATA._metadata.n_total_flies = 0;
+    DATA._metadata.cond_array = [];
+    DATA._metadata.config = protocol_config;
+    DATA._pattern_lut = PATTERN_LUT;
+
+    %% Behavioral data fields to extract
+    data_fields = {'vel_data', 'fv_data', 'av_data', 'curv_data', 'dist_data', ...
+                   'dist_trav', 'heading_data', 'heading_wrap', 'x_data', 'y_data', ...
+                   'view_dist', 'IFD_data', 'IFA_data'};
+
+    %% Process each file
+    for idx = 1:n_files
+
+        fname = filelist(idx).name;
+        f_folder = filelist(idx).folder;
+
+        if verbose
+            fprintf('  [%d/%d] %s\n', idx, n_files, fname);
+        end
+
+        % Load experiment data
+        try
+            loaded = load(fullfile(f_folder, fname), 'comb_data', 'LOG', 'n_fly_data');
+            comb_data = loaded.comb_data;
+            LOG = loaded.LOG;
+            n_fly_data = loaded.n_fly_data;
+        catch ME
+            warning('Failed to load %s: %s', fname, ME.message);
+            continue;
+        end
+
+        % Get strain and sex
         strain = LOG.meta.fly_strain;
         strain = check_strain_typos(strain);
         strain = strrep(strain, '-', '_');
-
         sex = LOG.meta.fly_sex;
-    
-        %% Extract all of the data from the entire experiment:
-        % [comb_data, feat, trx] = combine_data_one_cohort(feat, trx);
-    
-        if isfield(DATA, strain)
-                if isfield(DATA.(strain), sex)
-                    sz = length(DATA.(strain).(sex))+1;
-                else
-                    sz = 1;
-                end 
-        else 
-            sz = 1; 
-        end 
 
-        %% Start filling in the struct.
+        % Determine experiment index within strain/sex
+        if isfield(DATA, strain) && isfield(DATA.(strain), sex)
+            sz = length(DATA.(strain).(sex)) + 1;
+        else
+            sz = 1;
+        end
+
+        %% Store experiment metadata
         DATA.(strain).(sex)(sz).meta = LOG.meta;
         DATA.(strain).(sex)(sz).meta.n_flies_arena = n_fly_data(1);
         DATA.(strain).(sex)(sz).meta.n_flies = n_fly_data(2);
         DATA.(strain).(sex)(sz).meta.n_flies_rm = n_fly_data(3);
-    
-        %% Add data from acclim_off1
-        Log = LOG.acclim_off1;
-        start_f = Log.start_f(1);
-        if start_f ==0 
-            start_f = 1;
-        end 
+        DATA.(strain).(sex)(sz).meta.source_file = fname;
 
-        if Log.stop_t(end)<3
-            stop_f = 600; %
+        DATA._metadata.n_total_flies = DATA._metadata.n_total_flies + n_fly_data(2);
+
+        % Store cond_array from first file
+        if isempty(DATA._metadata.cond_array) && isfield(LOG.meta, 'cond_array')
+            DATA._metadata.cond_array = LOG.meta.cond_array;
+        end
+
+        %% Process acclimatization periods
+        DATA.(strain).(sex)(sz) = extract_acclim_data(...
+            DATA.(strain).(sex)(sz), LOG, comb_data, 'acclim_off1', data_fields);
+        DATA.(strain).(sex)(sz) = extract_acclim_data(...
+            DATA.(strain).(sex)(sz), LOG, comb_data, 'acclim_patt', data_fields);
+        DATA.(strain).(sex)(sz) = extract_acclim_data(...
+            DATA.(strain).(sex)(sz), LOG, comb_data, 'acclim_off2', data_fields);
+
+        %% Process conditions
+        fields = fieldnames(LOG);
+        logfields = fields(startsWith(fields, 'log_'));
+        n_cond = length(logfields);
+
+        for log_n = 1:n_cond
+
+            Log = LOG.(logfields{log_n});
+
+            % Determine repetition and condition
+            if log_n <= n_cond/2
+                rep_str = sprintf('R1_condition_%d', Log.which_condition);
+            else
+                rep_str = sprintf('R2_condition_%d', Log.which_condition);
+            end
+
+            % Calculate frame boundaries with baseline
+            if LOG.acclim_off1.stop_t(end) < 3 && log_n == 1
+                framesb4 = 0;
+            else
+                framesb4 = protocol_config.baseline_frames;  % 300 frames = 10s
+            end
+
+            start_f = Log.start_f(1) - framesb4;
+            stop_f = Log.stop_f(end);
+
+            %% Store condition metadata
+            DATA.(strain).(sex)(sz).(rep_str).trial_len = Log.trial_len;
+            if isfield(Log, 'interval_dur')
+                DATA.(strain).(sex)(sz).(rep_str).interval_dur = Log.interval_dur;
+            end
+            DATA.(strain).(sex)(sz).(rep_str).optomotor_pattern = Log.optomotor_pattern;
+            DATA.(strain).(sex)(sz).(rep_str).optomotor_speed = Log.optomotor_speed;
+            DATA.(strain).(sex)(sz).(rep_str).interval_pattern = Log.interval_pattern;
+            DATA.(strain).(sex)(sz).(rep_str).interval_speed = Log.interval_speed;
+            DATA.(strain).(sex)(sz).(rep_str).start_flicker_f = Log.start_f(end) - start_f;
+
+            %% Create phase markers
+            phase_markers = struct();
+            phase_markers.baseline_start = 1;
+            phase_markers.baseline_end = framesb4;
+            phase_markers.dir1_start = framesb4 + 1;
+            phase_markers.dir1_end = Log.start_f(2) - start_f;
+            phase_markers.dir2_start = Log.start_f(2) - start_f + 1;
+            if length(Log.start_f) >= 3
+                phase_markers.dir2_end = Log.start_f(3) - start_f;
+                phase_markers.interval_start = Log.start_f(3) - start_f + 1;
+            else
+                phase_markers.dir2_end = stop_f - start_f + 1;
+                phase_markers.interval_start = stop_f - start_f + 1;
+            end
+            phase_markers.interval_end = stop_f - start_f + 1;
+
+            DATA.(strain).(sex)(sz).(rep_str).phase_markers = phase_markers;
+
+            %% Link pattern metadata
+            patt_id = Log.optomotor_pattern;
+            patt_field = sprintf('P%02d', patt_id);
+            if isfield(PATTERN_LUT, patt_field)
+                DATA.(strain).(sex)(sz).(rep_str).pattern_meta = PATTERN_LUT.(patt_field);
+            else
+                DATA.(strain).(sex)(sz).(rep_str).pattern_meta = [];
+            end
+
+            %% Extract behavioral data
+            for f = 1:length(data_fields)
+                field = data_fields{f};
+                if isfield(comb_data, field)
+                    DATA.(strain).(sex)(sz).(rep_str).(field) = ...
+                        comb_data.(field)(:, start_f:stop_f);
+                end
+            end
+        end
+    end
+
+    %% Count unique strains
+    all_fields = fieldnames(DATA);
+    strain_fields = all_fields(~startsWith(all_fields, '_'));
+    DATA._metadata.n_strains = length(strain_fields);
+
+    %% Print summary
+    if verbose
+        fprintf('================================================================================\n');
+        fprintf('  Processing complete!\n');
+        fprintf('  Strains: %d\n', DATA._metadata.n_strains);
+        fprintf('  Total experiments: %d\n', DATA._metadata.n_total_experiments);
+        fprintf('  Total flies: %d\n', DATA._metadata.n_total_flies);
+        fprintf('================================================================================\n');
+    end
+
+end
+
+
+%% Helper function: Extract acclimatization period data
+function exp_data = extract_acclim_data(exp_data, LOG, comb_data, period_name, data_fields)
+% Extract behavioral data for an acclimatization period
+
+    Log = LOG.(period_name);
+
+    % Determine frame boundaries based on period type
+    if strcmp(period_name, 'acclim_off1')
+        start_f = max(Log.start_f(1), 1);
+        if Log.stop_t(end) < 3
+            stop_f = 600;  % Short acclim period
         else
             stop_f = Log.stop_f(end);
         end
-
-        DATA.(strain).(sex)(sz).acclim_off1.vel_data = comb_data.vel_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_off1.fv_data = comb_data.fv_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_off1.dist_data = comb_data.dist_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_off1.dist_trav = comb_data.dist_trav(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_off1.av_data = comb_data.av_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_off1.curv_data = comb_data.curv_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_off1.heading_data = comb_data.heading_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_off1.heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_off1.x_data = comb_data.x_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_off1.y_data = comb_data.y_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_off1.view_dist = comb_data.view_dist(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_off1.IFD_data = comb_data.IFD_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_off1.IFA_data = comb_data.IFA_data(:, start_f:stop_f);
-    
-        %% Add data from acclim_patt
-        Log = LOG.acclim_patt;
+    elseif strcmp(period_name, 'acclim_off2')
+        start_f = Log.start_f(1);
+        stop_f = size(comb_data.vel_data, 2);  % End of recording
+    else  % acclim_patt
         start_f = Log.start_f(1);
         stop_f = Log.stop_f(end);
-        DATA.(strain).(sex)(sz).acclim_patt.vel_data = comb_data.vel_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_patt.fv_data = comb_data.fv_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_patt.dist_data = comb_data.dist_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_patt.dist_trav = comb_data.dist_trav(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_patt.av_data = comb_data.av_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_patt.curv_data = comb_data.curv_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_patt.heading_data = comb_data.heading_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_patt.heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_patt.x_data = comb_data.x_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_patt.y_data = comb_data.y_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_patt.view_dist = comb_data.view_dist(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_patt.IFD_data = comb_data.IFD_data(:, start_f:stop_f);
-        DATA.(strain).(sex)(sz).acclim_patt.IFA_data = comb_data.IFA_data(:, start_f:stop_f);
+    end
 
-        % Find out how many unique conditions there are:
-        fields = fieldnames(LOG);
-        logfields = fields(startsWith(fields, 'log_'));
-        n_cond = height(logfields);
+    % Extract each data field
+    for f = 1:length(data_fields)
+        field = data_fields{f};
+        if isfield(comb_data, field)
+            exp_data.(period_name).(field) = comb_data.(field)(:, start_f:stop_f);
+        end
+    end
 
-        %% Then run through the conditions: 
-        for log_n = 1:n_cond
-    
-            Log = LOG.(logfields{log_n});
-
-            if log_n <(n_cond/2)+1
-                rep_str = 'R1_condition_';
-            else
-                rep_str = 'R2_condition_';
-            end 
-
-            condition_n = Log.which_condition;
-
-            % if ismember(condition_n, [1,2,9,10])
-                if LOG.acclim_off1.stop_t(end)<3 && log_n == 1
-                    framesb4 = 0;
-                else
-                    framesb4 = 300;
-                end
-    
-                start_f = Log.start_f(1)-framesb4;
-                stop_f = Log.stop_f(end);
-    
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).trial_len = Log.trial_len;
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).interval_dur = Log.interval_dur;
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).optomotor_pattern = Log.optomotor_pattern;
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).optomotor_speed = Log.optomotor_speed;
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).interval_pattern = Log.interval_pattern;
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).interval_speed = Log.interval_speed;
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).start_flicker_f = Log.start_f(end)-start_f;
-    
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).vel_data = comb_data.vel_data(:, start_f:stop_f);
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).fv_data = comb_data.fv_data(:, start_f:stop_f);
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).dist_data = comb_data.dist_data(:, start_f:stop_f);
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).dist_trav = comb_data.dist_trav(:, start_f:stop_f);
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).av_data = comb_data.av_data(:, start_f:stop_f);
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).curv_data = comb_data.curv_data(:, start_f:stop_f);
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).heading_data = comb_data.heading_data(:, start_f:stop_f);
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).heading_wrap = comb_data.heading_wrap(:, start_f:stop_f);
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).x_data = comb_data.x_data(:, start_f:stop_f);
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).y_data = comb_data.y_data(:, start_f:stop_f);
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).view_dist = comb_data.view_dist(:, start_f:stop_f);
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).IFD_data = comb_data.IFD_data(:, start_f:stop_f);
-                DATA.(strain).(sex)(sz).(strcat(rep_str, string(condition_n))).IFA_data = comb_data.IFA_data(:, start_f:stop_f);
-            % end 
-        end 
-    
-        %% Add data from acclim_off2
-        Log = LOG.acclim_off2;
-        start_f = Log.start_f(1);
-        % stop_f = Log.stop_f(end); % Could use the actual last frame
-        % instead of "end".
-        DATA.(strain).(sex)(sz).acclim_off2.vel_data = comb_data.vel_data(:, start_f:end);
-        DATA.(strain).(sex)(sz).acclim_off2.fv_data = comb_data.fv_data(:, start_f:end);
-        DATA.(strain).(sex)(sz).acclim_off2.dist_data = comb_data.dist_data(:, start_f:end);
-        DATA.(strain).(sex)(sz).acclim_off2.dist_trav = comb_data.dist_trav(:, start_f:end);
-        DATA.(strain).(sex)(sz).acclim_off2.av_data = comb_data.av_data(:, start_f:end);
-        DATA.(strain).(sex)(sz).acclim_off2.curv_data = comb_data.curv_data(:, start_f:end);
-        DATA.(strain).(sex)(sz).acclim_off2.heading_data = comb_data.heading_data(:, start_f:end);
-        DATA.(strain).(sex)(sz).acclim_off2.heading_wrap = comb_data.heading_wrap(:, start_f:end);
-        DATA.(strain).(sex)(sz).acclim_off2.x_data = comb_data.x_data(:, start_f:end);
-        DATA.(strain).(sex)(sz).acclim_off2.y_data = comb_data.y_data(:, start_f:end);
-        DATA.(strain).(sex)(sz).acclim_off2.view_dist = comb_data.view_dist(:, start_f:end);
-        DATA.(strain).(sex)(sz).acclim_off2.IFD_data = comb_data.IFD_data(:, start_f:end);
-        DATA.(strain).(sex)(sz).acclim_off2.IFA_data = comb_data.IFA_data(:, start_f:end);
-    
-    end 
-
-    % Save 'DATA' - this is currently commented out because the struct were
-    % becoming > 2GB and so couldn't be saved.
-    % todaysdate =  string(datetime('now', 'Format','yyyy-MM-dd'));
-    % save(string(fullfile(protocol_dir, strcat(protocol, '_DATA_', todaysdate, '.mat'))), 'DATA');
-
-end 
+end
