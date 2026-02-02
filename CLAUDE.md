@@ -569,8 +569,8 @@ results/
 | Center (pixels) | [528, 520] | |
 | Center (mm) | [126.6, 124.6] | |
 | LED panels | 24 | Around arena |
-| Pixels per panel | 8 | |
-| Total pixels | 192 | 24 × 8 |
+| Pixels per panel | 8 x 8 | 64 pixels per panel|
+| Total pixels | 192 circumference | 24 height |
 | Angular resolution | 1.875 °/px | 360° ÷ 192 |
 
 ### 10.2 Acquisition Parameters
