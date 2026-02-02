@@ -375,6 +375,7 @@ end
 
     f = gcf;
     f.Position = [1   161   751   886]; % new smaller size.
-    sgtitle(strcat(strrep(strain, '_', '-'), " - ", ylb), 'FontSize', 16)
+    % sgtitle(strcat(strrep(strain, '_', '-'), " - ", ylb), 'FontSize', 16)
+    sgtitle(ylb, 'FontSize', 16)
 
 end 

@@ -3,7 +3,7 @@
 % recently:
 
 %% Create DATA
-protocol = "protocol_36";
+protocol = "protocol_35";
 ROOT_DIR = '/Users/burnettl/Documents/Projects/oaky_cokey';
 % Move to the directory to where the results per experiment are saved:
 protocol_dir = fullfile(ROOT_DIR, 'results', protocol);
@@ -50,7 +50,7 @@ data = DATA.(strain).(sex);
 
 %% Spatial occupancy:
 
-entryIdx = 3;
+entryIdx = 4;
 
 % if entryIdx == 1
 %     frameRange = 900:1200; %cohort 1

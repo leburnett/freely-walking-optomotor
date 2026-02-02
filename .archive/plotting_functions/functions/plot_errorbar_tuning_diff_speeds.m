@@ -26,12 +26,13 @@ function f = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type)
 
     % % Eventually have this as the input to the function 
     sex = 'F';
-    landing = 'none';
-    data = DATA.(strain).(landing).(sex); 
+    % landing = 'none';
+    data = DATA.(strain).(sex); 
     if strain == "jfrc100_es_shibire_kir" % grey
         col = [0.8, 0.8, 0.8];
     else
-        col = [1, 0.5, 0];
+        col = [1, 0.8, 0]; % orange - for T4T5  %[1, 0.7, 1]; magenta
+        % col = [1, 0.5, 0];
     end 
     n_exp = length(data);
 
@@ -39,7 +40,7 @@ function f = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type)
     sem_stim = zeros(1, 10);
 
     % Run through the different conditions: 
-    for cond_n = 1:10
+    for cond_n = [1,2,3,4,6,7,8,9] %1:10
 
         rep1_str = strcat('R1_condition_', string(cond_n));   
         rep2_str = strcat('R2_condition_', string(cond_n));  
@@ -89,7 +90,7 @@ function f = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type)
                     nf_comb = size(cond_data, 2);
         
                     if idx == 1 || nf_comb == 0
-                            [rep_data, rep_data_fv] = check_and_average_across_reps(rep1_data, rep2_data, rep1_data_fv, rep2_data_fv, rep1_data_dcent, rep2_data_dcent);
+                            [rep_data] = check_and_average_across_reps(rep1_data, rep2_data, rep1_data_fv, rep2_data_fv, rep1_data_dcent, rep2_data_dcent);
                             cond_data = vertcat(cond_data, rep_data);
     
                         if d_fv
@@ -117,7 +118,7 @@ function f = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type)
                             end 
                         end 
     
-                        [rep_data, rep_data_fv] = check_and_average_across_reps(rep1_data, rep2_data, rep1_data_fv, rep2_data_fv, rep1_data_dcent, rep2_data_dcent);
+                        [rep_data] = check_and_average_across_reps(rep1_data, rep2_data, rep1_data_fv, rep2_data_fv, rep1_data_dcent, rep2_data_dcent);
                         cond_data = vertcat(cond_data, rep_data);
     
                             if d_fv
@@ -221,23 +222,27 @@ end
 
 sem_acclim1 = nanmean(sem_acclim1);
 
-vals15 = [val_acclim1, val_stim(6:10)];
-sem15 = [sem_acclim1, sem_stim(6:10)];
+vals15 = [val_acclim1, val_stim(6:9)];
+sem15 = [sem_acclim1, sem_stim(6:9)];
 
-vals60 = [val_acclim1, val_stim(1:5)];
-sem60 = [sem_acclim1, sem_stim(1:5)];
+vals60 = [val_acclim1, val_stim(1:4)];
+sem60 = [sem_acclim1, sem_stim(1:4)];
 
 
 % Plot the figure;
 errorbar(vals15, sem15, 'Color', col, 'LineWidth', 1.5)
 hold on
-scatter(1:6, vals15, 'o', 'MarkerFaceColor','w', 'MarkerEdgeColor', col, 'LineWidth', 1)
-
+scatter(1:5, vals15, 'o', 'MarkerFaceColor','w', 'MarkerEdgeColor', col, 'LineWidth', 1)
+% 
 errorbar(vals60, sem60, 'Color', col/1.5, 'LineWidth', 1.5)
 hold on
-scatter(1:6, vals60, 'o', 'MarkerFaceColor','w', 'MarkerEdgeColor', col/1.5, 'LineWidth', 1)
+scatter(1:5, vals60, 'o', 'MarkerFaceColor','w', 'MarkerEdgeColor', col/1.5, 'LineWidth', 1)
+% 
+% errorbar(vals60, sem60, 'Color', [1, 0.5, 0], 'LineWidth', 1.5)
+% hold on
+% scatter(1:5, vals60, 'o', 'MarkerFaceColor','w', 'MarkerEdgeColor', [1, 0.5, 0], 'LineWidth', 1) 
 
-xlim([0 7])
+xlim([0 6])
 
 if data_type == "dist_data" && delta == 0
     plot([0 7], [60 60], 'k:', 'LineWidth', 0.5)
@@ -286,10 +291,12 @@ ax.TickLength = [0.02 0.02];
 ax.LineWidth = 1; 
 ax.FontSize = 12;
 
-xticks(1:6)
-xticklabels({'0', '60', '120', '240', '480', 'F'})
+% xticks(1:6)
+% xticklabels({'0', '60', '120', '240', '480', 'F'})
+xticks(1:5)
+xticklabels({'0', '60', '120', '240', '480'})
 xlabel('Angular speed (^o/s)')
-sgtitle(strcat(strrep(strain, '_', '-'), " - ", ylb), 'FontSize', 16)
+% sgtitle(strcat(strrep(strain, '_', '-'), " - ", ylb), 'FontSize', 16)
 
 end 
 
