@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "optomotor-data"
+version = "2.0.0"
+description = "Data loading and analysis for freely-walking Drosophila optomotor experiments"
+readme = "../../processing_functions/README_DATA_PARSING.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Laura Burnett"}
+]
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+keywords = ["drosophila", "optomotor", "behavior", "neuroscience", "matlab"]
+dependencies = [
+    "numpy>=1.20.0",
+    "scipy>=1.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+analysis = [
+    "matplotlib>=3.5.0",
+    "pandas>=1.4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/burnettl/freely-walking-optomotor"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["optomotor_data*"]
