@@ -3,8 +3,8 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir, pattern_dir, verbose
 %
 % This function combines behavioral data across all experiments for a protocol,
 % organizing it into a hierarchical structure with enhanced metadata including:
-%   - Protocol-level metadata (_metadata field)
-%   - Pattern lookup table (_pattern_lut field)
+%   - Protocol-level metadata (metadata field)
+%   - Pattern lookup table (pattern_lut field)
 %   - Phase markers for trial segmentation
 %   - Linked pattern metadata per condition
 %
@@ -17,11 +17,11 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir, pattern_dir, verbose
 %
 % Returns:
 %   DATA - Struct with hierarchical organization:
-%       ._metadata          - Protocol-level information
-%       ._pattern_lut       - Pattern metadata lookup table
+%       .metadata           - Protocol-level information
+%       .pattern_lut        - Pattern metadata lookup table
 %       .{strain}.{sex}(n)  - Experiment data arrays
 %
-% Structure of DATA._metadata:
+% Structure of DATA.metadata:
 %   .protocol_name      - String: protocol identifier
 %   .protocol_version   - String: '2.0' for this version
 %   .created_date       - Datetime: when DATA was created
@@ -48,7 +48,7 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir, pattern_dir, verbose
 %   .interval_speed     - Speed during interval
 %   .start_flicker_f    - Frame where inter-trial begins (relative to condition start)
 %   .phase_markers      - Frame boundaries for baseline/dir1/dir2/interval
-%   .pattern_meta       - Linked pattern metadata from _pattern_lut
+%   .pattern_meta       - Linked pattern metadata from pattern_lut
 %   .vel_data           - Velocity (mm/s), size [n_flies x n_frames]
 %   .fv_data            - Forward velocity (mm/s)
 %   .av_data            - Angular velocity (deg/s)
@@ -139,17 +139,10 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir, pattern_dir, verbose
         fprintf('================================================================================\n');
     end
 
-    %% Initialize DATA struct with metadata
+    %% Initialize DATA struct (metadata added at end to avoid struct conflicts)
     DATA = struct();
-    DATA._metadata.protocol_name = protocol_name;
-    DATA._metadata.protocol_version = '2.0';
-    DATA._metadata.created_date = datetime('now');
-    DATA._metadata.n_strains = 0;
-    DATA._metadata.n_total_experiments = n_files;
-    DATA._metadata.n_total_flies = 0;
-    DATA._metadata.cond_array = [];
-    DATA._metadata.config = protocol_config;
-    DATA._pattern_lut = PATTERN_LUT;
+    n_total_flies = 0;
+    cond_array_stored = [];
 
     %% Behavioral data fields to extract
     data_fields = {'vel_data', 'fv_data', 'av_data', 'curv_data', 'dist_data', ...
@@ -197,20 +190,20 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir, pattern_dir, verbose
         DATA.(strain).(sex)(sz).meta.n_flies_rm = n_fly_data(3);
         DATA.(strain).(sex)(sz).meta.source_file = fname;
 
-        DATA._metadata.n_total_flies = DATA._metadata.n_total_flies + n_fly_data(2);
+        n_total_flies = n_total_flies + n_fly_data(2);
 
         % Store cond_array from first file
-        if isempty(DATA._metadata.cond_array) && isfield(LOG.meta, 'cond_array')
-            DATA._metadata.cond_array = LOG.meta.cond_array;
+        if isempty(cond_array_stored) && isfield(LOG.meta, 'cond_array')
+            cond_array_stored = LOG.meta.cond_array;
         end
 
         %% Process acclimatization periods
-        DATA.(strain).(sex)(sz) = extract_acclim_data(...
-            DATA.(strain).(sex)(sz), LOG, comb_data, 'acclim_off1', data_fields);
-        DATA.(strain).(sex)(sz) = extract_acclim_data(...
-            DATA.(strain).(sex)(sz), LOG, comb_data, 'acclim_patt', data_fields);
-        DATA.(strain).(sex)(sz) = extract_acclim_data(...
-            DATA.(strain).(sex)(sz), LOG, comb_data, 'acclim_off2', data_fields);
+        DATA.(strain).(sex)(sz).acclim_off1 = extract_acclim_data(...
+            LOG, comb_data, 'acclim_off1', data_fields);
+        DATA.(strain).(sex)(sz).acclim_patt = extract_acclim_data(...
+            LOG, comb_data, 'acclim_patt', data_fields);
+        DATA.(strain).(sex)(sz).acclim_off2 = extract_acclim_data(...
+            LOG, comb_data, 'acclim_off2', data_fields);
 
         %% Process conditions
         fields = fieldnames(LOG);
@@ -287,18 +280,30 @@ function DATA = comb_data_across_cohorts_cond(protocol_dir, pattern_dir, verbose
         end
     end
 
-    %% Count unique strains
-    all_fields = fieldnames(DATA);
-    strain_fields = all_fields(~startsWith(all_fields, '_'));
-    DATA._metadata.n_strains = length(strain_fields);
+    %% Count unique strains and add metadata at the end
+    strain_fields = fieldnames(DATA);
+    n_strains = length(strain_fields);
+
+    %% Add protocol-level metadata (added at end to avoid struct assignment issues)
+    metadata_struct = struct();
+    metadata_struct.protocol_name = protocol_name;
+    metadata_struct.protocol_version = '2.0';
+    metadata_struct.created_date = datetime('now');
+    metadata_struct.n_strains = n_strains;
+    metadata_struct.n_total_experiments = n_files;
+    metadata_struct.n_total_flies = n_total_flies;
+    metadata_struct.cond_array = cond_array_stored;
+    metadata_struct.config = protocol_config;
+    DATA.metadata = metadata_struct;
+    DATA.pattern_lut = PATTERN_LUT;
 
     %% Print summary
     if verbose
         fprintf('================================================================================\n');
         fprintf('  Processing complete!\n');
-        fprintf('  Strains: %d\n', DATA._metadata.n_strains);
-        fprintf('  Total experiments: %d\n', DATA._metadata.n_total_experiments);
-        fprintf('  Total flies: %d\n', DATA._metadata.n_total_flies);
+        fprintf('  Strains: %d\n', n_strains);
+        fprintf('  Total experiments: %d\n', n_files);
+        fprintf('  Total flies: %d\n', n_total_flies);
         fprintf('================================================================================\n');
     end
 
@@ -306,8 +311,9 @@ end
 
 
 %% Helper function: Extract acclimatization period data
-function exp_data = extract_acclim_data(exp_data, LOG, comb_data, period_name, data_fields)
+function acclim_data = extract_acclim_data(LOG, comb_data, period_name, data_fields)
 % Extract behavioral data for an acclimatization period
+% Returns a struct with the behavioral data fields
 
     Log = LOG.(period_name);
 
@@ -328,10 +334,11 @@ function exp_data = extract_acclim_data(exp_data, LOG, comb_data, period_name, d
     end
 
     % Extract each data field
+    acclim_data = struct();
     for f = 1:length(data_fields)
         field = data_fields{f};
         if isfield(comb_data, field)
-            exp_data.(period_name).(field) = comb_data.(field)(:, start_f:stop_f);
+            acclim_data.(field) = comb_data.(field)(:, start_f:stop_f);
         end
     end
 
