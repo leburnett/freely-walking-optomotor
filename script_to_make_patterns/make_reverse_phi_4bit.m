@@ -79,12 +79,28 @@ save(str, 'pattern');
 %     imagesc(Pats_OFF(:,:,k));
 %     pause(0.01)
 % end
-% 
-% figure;
-% imshow(Pats(:,:,1))
-% for k = 1:192/shiftpx
-%     imagesc(Pats(:,:,k));
-%     pause(0.1)
-% end
 
+
+% Visualise the reverse phi pattern:
+figure;
+imshow(Pats(:,:,1))
+for k = 1:192/shiftpx
+    imagesc(Pats(:,:,k));
+    pause(0.1)
+end
+
+% Create a plot of the first 4 frames. 
+figure; 
+subplot(4,1,1)
+imagesc(Pats(:,:,1))
+xticklabels("")
+subplot(4,1,2)
+imagesc(Pats(:,:,2))
+xticklabels("")
+subplot(4,1,3)
+imagesc(Pats(:,:,3))
+xticklabels("")
+subplot(4,1,4)
+imagesc(Pats(:,:,4))
+xticklabels("")
 
