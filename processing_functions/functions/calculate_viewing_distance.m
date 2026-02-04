@@ -1,11 +1,37 @@
 function view_dist = calculate_viewing_distance(x_data, y_data, heading_wrap)
-% Inputs
-% x_data (matrix, size:[n_flies, n_frames]) - x position of each fly in
-% every frame. 
-% y_data (matrix, size:[n_flies, n_frames]) - y position of each fly in
-% every frame.  
-% heading_wrap (matrix, size:[n_flies, n_frames]) - wrapped heading angle
-% of every fly in every frame in radians. 
+% CALCULATE_VIEWING_DISTANCE Compute distance from fly to arena wall in heading direction
+%
+%   view_dist = CALCULATE_VIEWING_DISTANCE(x_data, y_data, heading_wrap)
+%   calculates the viewing distance for each fly at each frame - the distance
+%   from the fly's current position to the arena wall along its heading vector.
+%
+% INPUTS:
+%   x_data       - [n_flies x n_frames] matrix of x positions (mm)
+%   y_data       - [n_flies x n_frames] matrix of y positions (mm)
+%   heading_wrap - [n_flies x n_frames] matrix of heading angles (radians)
+%
+% OUTPUT:
+%   view_dist    - [n_flies x n_frames] matrix of viewing distances (mm)
+%
+% ALGORITHM:
+%   Solves the quadratic equation for ray-circle intersection:
+%   - Ray: (x_f + t*cos(theta), y_f + t*sin(theta))
+%   - Circle: (x - x_c)^2 + (y - y_c)^2 = R^2
+%   Returns the smaller positive t value (closest wall in heading direction)
+%
+% ARENA PARAMETERS (hardcoded):
+%   - PPM (pixels per mm): 4.1691
+%   - Center of arena: [528, 520] pixels = [126.6, 124.7] mm
+%   - Arena radius: 496 pixels = 119.0 mm
+%
+% NOTE:
+%   If arena geometry changes, update the hardcoded PPM, CoA, and R values.
+%
+% EXAMPLE:
+%   view_dist = calculate_viewing_distance(x_data, y_data, heading_wrap);
+%   mean_vd = mean(view_dist(:));  % average viewing distance
+%
+% See also: analyse_viewing_distance, analyse_viewdist_angvel_formodel 
 
     % Fixed parameters of the arena - THIS WILL NEED TO BE UPDATED IF THE
     % ARENA CHANGES:

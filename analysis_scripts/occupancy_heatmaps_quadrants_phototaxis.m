@@ -1,3 +1,36 @@
+% OCCUPANCY_HEATMAPS_QUADRANTS_PHOTOTAXIS - Spatial occupancy analysis for phototaxis
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Generate quadrant-wise occupancy heatmaps for different time windows
+%   - Section 2: Plot occupancy difference (later - early) heatmaps
+%   - Section 3: Average occupancy across all cohorts
+%
+% DESCRIPTION:
+%   This script analyzes spatial occupancy patterns during phototaxis experiments.
+%   It divides the arena into quadrants and computes the fraction of time flies
+%   spend in each region during different experimental epochs (pre-stimulus,
+%   during stimulus, post-stimulus). Differential heatmaps show changes in
+%   occupancy between epochs.
+%
+% TIME WINDOWS (frames at 30fps):
+%   - 1-300: Before stimulus (10s)
+%   - 300-600: First 10s of stimulus
+%   - 300-900: First 20s of stimulus
+%   - 300-1200: First 30s of stimulus
+%   - 300-1650: Full 45s of stimulus
+%   - 1650-2000: After stimulus
+%
+% REQUIREMENTS:
+%   - DATA struct with phototaxis data ("2025_10_30_DATA_phototaxis_with_angles.mat")
+%   - Functions: plot_fly_occupancy_quadrants_phototaxis,
+%     plot_fly_occupancy_quadrants_diff_phototaxis,
+%     plot_fly_occupancy_quadrants_diff_avg_phototaxis
+%
+% OUTPUTS:
+%   - Tiled figure with occupancy heatmaps for each time window
+%   - Differential heatmap showing change from early to later epochs
+%
+% See also: plot_fly_occupancy_quadrants_phototaxis
 
 % Use DATA: "2025_10_30_DATA_phototaxis_with_angles.mat"
 

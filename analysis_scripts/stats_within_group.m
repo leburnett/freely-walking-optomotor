@@ -1,7 +1,43 @@
-%% 1 - Is there a difference WITHIN strains to the different stimulus
-% parameters?
+% STATS_WITHIN_GROUP - Within-group repeated measures ANOVA for condition comparisons
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Load DATA and specify strain/sex to analyze
+%   - Section 2: Extract per-fly mean values for each condition
+%   - Section 3: Build data table for repeated measures ANOVA
+%   - Section 4: Perform repeated measures ANOVA (Table 1: conditions 1-8)
+%   - Section 5: Perform repeated measures ANOVA (Table 2: conditions 5-12)
+%   - Section 6: Post-hoc pairwise comparisons with Bonferroni correction
+%   - Section 7: Save statistical results
+%
+% DESCRIPTION:
+%   This script performs within-group statistical analysis to determine if
+%   there are significant differences in behavioral responses across different
+%   stimulus conditions within a single strain. It uses repeated measures ANOVA
+%   since the same flies are tested under multiple conditions.
+%
+% PROTOCOL 10 CONDITIONS:
+%   Columns: [spatial_freq, temporal_freq, contrast]
+%   - Conditions 1-8: Various combinations of 60deg, 30deg, 15deg gratings
+%   - Different temporal frequencies (4Hz, 8Hz)
+%   - Different contrast levels (2, 15)
+%
+% STATISTICAL METHODS:
+%   - Repeated measures ANOVA (fitrm + ranova)
+%   - Post-hoc pairwise comparisons with Bonferroni correction
+%
+% REQUIREMENTS:
+%   - DATA struct from comb_data_across_cohorts_cond
+%   - Statistics and Machine Learning Toolbox
+%
+% OUTPUTS:
+%   - stats_results struct containing:
+%     - T1, T2: data tables for different condition subsets
+%     - ranova results and p-values
+%     - pairwise comparison results
+%   - Saved to: results/stats/within_group/
+%
+% See also: fitrm, ranova, multcompare, comb_data_across_cohorts_cond
 
-% Repeated measures ANOVA
 clear
 
 protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_10';

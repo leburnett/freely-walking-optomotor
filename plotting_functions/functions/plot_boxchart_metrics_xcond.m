@@ -1,7 +1,35 @@
 function plot_boxchart_metrics_xcond(DATA, cond_ids, strain_names, data_type, rng, delta)
-%% Box and whisker plots  - plot metric values for different conditions next to each other. 
-
-% rng - frames over which to calculate metric.
+% PLOT_BOXCHART_METRICS_XCOND Generate box plots comparing conditions
+%
+%   PLOT_BOXCHART_METRICS_XCOND(DATA, cond_ids, strain_names, data_type, rng, delta)
+%   creates box plots comparing behavioral metrics across multiple stimulus conditions.
+%
+% INPUTS:
+%   DATA         - DATA struct from comb_data_across_cohorts_cond
+%   cond_ids     - Vector of condition indices to plot (e.g., [1,2,3,4])
+%   strain_names - Cell array of strain names to include
+%   data_type    - String specifying metric: 'av_data', 'fv_data', 'dist_data', etc.
+%   rng          - Frame range to average over (e.g., 300:1200 for stimulus period)
+%   delta        - 0=raw values, 1=relative to frame 300, 2=relative to frame 1200
+%
+% OUTPUTS:
+%   Creates box plot figure with:
+%   - Individual data points (jittered white circles)
+%   - Box charts with colored fills matching condition
+%   - Rainbow colormap for up to 12 conditions
+%
+% PREPROCESSING:
+%   - Uses combine_timeseries_across_exp_check (filters non-walking flies)
+%   - For av_data/curv_data: flips second half of stimulus (frames 750:1200)
+%   - Conditions 7,8 (reverse phi): multiplies by -1 for sign convention
+%
+% Y-AXIS LIMITS (auto-set by data_type):
+%   - fv_data: [0, 27]
+%   - dist_data: [0, 125] or [-110, 100] if delta=1
+%   - av_data: [-20, 225]
+%   - curv_data: [-40, 210]
+%
+% See also: boxchart, scatter, combine_timeseries_across_exp_check, get_ylb_from_data_type
    
 % Rainbow
 col_12 = [31 120 180; ...

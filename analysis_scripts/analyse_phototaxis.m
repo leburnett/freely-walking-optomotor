@@ -1,3 +1,29 @@
+% ANALYSE_PHOTOTAXIS - Phototaxis trajectory and heading analysis
+%
+% SCRIPT CONTENTS:
+%   - Section 1: [DEPRECATED] Trajectory plotting for phototaxis conditions
+%   - Section 2: Extract x, y, heading data for a specific trial and fly
+%   - Section 3: Parse data into trials and interval periods
+%   - Section 4: Calculate heading angle relative to bar positions
+%   - Section 5: Generate polar histogram distributions of heading angles
+%
+% DESCRIPTION:
+%   This script analyzes phototaxis behavior by computing the heading angle
+%   of flies relative to visual bar stimuli. It extracts position and heading
+%   data, filters by forward velocity (>2mm/s), and calculates the relative
+%   angle between the fly's heading and each bar position. Results are
+%   visualized as histograms showing orientation preferences.
+%
+% REQUIREMENTS:
+%   - DATA struct must be loaded with fly tracking data
+%   - Expected fields: x_data, y_data, heading_data, fv_data
+%
+% NOTES:
+%   - THIS IS OLD CODE. See "phototaxis_test_code.m" for newer analysis
+%   - Bar positions are hardcoded for specific experimental conditions
+%   - Condition 7 = ON bars, Condition 8 = OFF bars
+%
+% See also: phototaxis_test_code, analyse_phototaxis_polar
 
 %% THIS IS OLD CODE. Look at "phototaxis_test_code.m" for newer analysis.
 

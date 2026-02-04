@@ -1,5 +1,36 @@
 function [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(cond_data, cond_data_control, rng1, rng2, rel_or_norm)
-    
+% WELCH_TTEST_FOR_CHANGE Compare pre-post change between target and control strains
+%
+%   [p, mean_per_strain, mean_per_strain_control] = WELCH_TTEST_FOR_CHANGE(...)
+%   computes the fold change or normalized difference between two time ranges
+%   and performs Welch's t-test comparing target vs control groups.
+%
+% INPUTS:
+%   cond_data         - [n_flies x n_frames] target strain data
+%   cond_data_control - [n_flies x n_frames] control strain data
+%   rng1              - Frame indices for baseline (pre) period
+%   rng2              - Frame indices for test (post) period
+%   rel_or_norm       - "rel" for relative (fold change) or "norm" for normalized
+%
+% OUTPUTS:
+%   p                      - p-value from Welch's t-test
+%   mean_per_strain        - Mean change value for target strain
+%   mean_per_strain_control - Mean change value for control strain
+%
+% CHANGE METRICS:
+%   "rel"  - Fold change: mean(rng2) / mean(rng1)
+%   "norm" - Normalized difference: (rng2 - rng1) / (rng2 + rng1)
+%
+% NOTES:
+%   - Uses Welch's t-test (unequal variance assumption)
+%   - Averages every two rows before computing per-fly means
+%   - Filters out NaN, Inf, and extreme fold changes (>10000)
+%
+% EXAMPLE:
+%   [p, m_target, m_ctrl] = welch_ttest_for_change(target_data, ctrl_data, 1:300, 300:600, "rel");
+%
+% See also: ttest2, mean_every_two_rows
+
     % TARGET 
 
     % During range 1 - before 

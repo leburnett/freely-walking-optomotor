@@ -1,3 +1,30 @@
+% GENERATE_TRAJECTORY_PLOTS - Generate fly trajectory visualizations
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Load DATA and generate trajectory subplot grids per condition
+%   - Section 2: Plot individual fly trajectories across multiple conditions
+%   - Section 3: Plot multiple flies for a single condition (reverse phi)
+%   - Section 4: Plot pre/post stimulus split trajectories
+%
+% DESCRIPTION:
+%   This script generates various trajectory visualizations for freely-walking
+%   optomotor experiments. It creates subplot grids showing all fly trajectories
+%   for a given condition, compares individual fly behavior across conditions,
+%   and generates split trajectory plots showing behavior before and after
+%   stimulus onset.
+%
+% REQUIREMENTS:
+%   - DATA struct from comb_data_across_cohorts_cond
+%   - Plotting functions: plot_traj_subplot, plot_traj_xcond, plot_traj_xflies,
+%     plot_traj_pre_post
+%
+% USAGE:
+%   1. Set ROOT_DIR and protocol
+%   2. Run comb_data_across_cohorts_cond to generate DATA
+%   3. Select strain and condition numbers to visualize
+%   4. Execute desired plotting sections
+%
+% See also: plot_traj_subplot, plot_traj_xcond, plot_traj_xflies, plot_traj_pre_post
 
 ROOT_DIR = '/Users/burnettl/Documents/Projects/oaky_cokey';
 

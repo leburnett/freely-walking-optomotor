@@ -1,5 +1,33 @@
-% CONVEX HULL ANALYSIS
-
+% CONVEX_HULL_ANALYSIS - Analyze collective fly positioning using convex hulls
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Generate spatial probability heatmaps for each experiment
+%   - Section 2: Calculate convex hull area and centroid per frame
+%   - Section 3: Plot trajectory of convex hull centroid over time
+%   - Section 4: Plot convex hull area timeseries
+%
+% DESCRIPTION:
+%   This script analyzes the collective spatial distribution of flies in the
+%   arena by computing the convex hull of valid fly positions at each frame.
+%   Flies too close to the arena edge (within 10mm buffer) are excluded.
+%   The convex hull area and centroid position are tracked over time to
+%   assess group cohesion and collective movement patterns.
+%
+% REQUIREMENTS:
+%   - DATA struct with position data (x_data, y_data)
+%   - make_spatial_prob_heatmap function
+%
+% ARENA PARAMETERS:
+%   - Arena center: [125.682, 125.682] mm
+%   - Arena radius: 118.97 mm
+%   - Edge buffer: 10 mm (flies within this distance from edge are excluded)
+%
+% OUTPUTS:
+%   - hull_area: convex hull area per frame
+%   - hull_x, hull_y: centroid coordinates of convex hull per frame
+%   - Trajectory and area plots
+%
+% See also: make_spatial_prob_heatmap, convhull, polyarea
 
 for i = 1:21
     make_spatial_prob_heatmap(DATA, strain, i, condition)

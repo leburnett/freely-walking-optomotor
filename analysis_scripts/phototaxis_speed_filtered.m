@@ -1,4 +1,38 @@
-% Orientation to bright bar - Condition 12 - Speed-filtered data
+% PHOTOTAXIS_SPEED_FILTERED - Speed-filtered phototaxis orientation analysis
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Filter flies by distance threshold during stimulus
+%   - Section 2: Collect heading angles for qualifying flies only
+%   - Section 3: Plot polar histogram of heading orientation
+%   - Section 4: Speed-filtered statistical testing with circular stats
+%   - Section 5: Per-fly circular mean computation across reps
+%   - Section 6: V-test and Watson-Williams tests for orientation
+%
+% DESCRIPTION:
+%   This script performs rigorous statistical analysis of phototaxis orientation
+%   behavior with speed filtering. Only flies that meet speed thresholds in BOTH
+%   time windows (pre and during stimulus) AND in BOTH experimental reps are
+%   included. This ensures reliable heading estimates from actively moving flies.
+%
+% FILTERING CRITERIA:
+%   - Distance threshold: flies must come within 150mm of bar during stimulus
+%   - Velocity threshold: mean speed >= 5 mm/s in both pre and stim windows
+%   - Must pass criteria in BOTH R1 and R2 repetitions
+%
+% TIME WINDOWS:
+%   - framesA (pre): 135-285 (5s before stimulus onset)
+%   - framesB (stim): 315-465 (5s after stimulus onset)
+%
+% STATISTICAL TESTS:
+%   - V-test: tests if post-stimulus headings cluster toward 0 degrees (bar)
+%   - Watson-Williams: tests for difference between pre/post distributions
+%   - Paired circular difference test
+%
+% REQUIREMENTS:
+%   - DATA struct with phototaxis data including d2bar, heading_rel_ref
+%   - Circular Statistics Toolbox (circ_vtest, circ_wwtest)
+%
+% See also: analyse_phototaxis_polar, phototaxis_test_code, circ_vtest
 
 %% PLOT 
 

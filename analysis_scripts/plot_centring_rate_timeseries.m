@@ -1,5 +1,40 @@
-
-%% Centring rate 
+% PLOT_CENTRING_RATE_TIMESERIES - Plot rate of movement toward arena center
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Define condition IDs and titles for Protocol 27
+%   - Section 2: Set up colormap for 12 conditions
+%   - Section 3: Plot multi-condition timeseries using plot_xcond_per_strain
+%   - Section 4: Calculate centring rate as derivative of distance
+%   - Section 5: Plot centring rate timeseries with stimulus markers
+%
+% DESCRIPTION:
+%   This script calculates and plots the centring rate - the rate at which
+%   flies move toward or away from the arena center. Centring rate is computed
+%   as the temporal derivative of distance from center (negative = centring).
+%   The script visualizes this metric across multiple stimulus conditions.
+%
+% PROTOCOL 27 CONDITIONS (12 total):
+%   1. 60deg-gratings-4Hz
+%   2. 60deg-gratings-8Hz
+%   3. narrow-ON-bars-4Hz
+%   4. narrow-OFF-bars-4Hz
+%   5. ON-curtains-8Hz
+%   6. OFF-curtains-8Hz
+%   7. reverse-phi-2Hz
+%   8. reverse-phi-4Hz
+%   9. 60deg-flicker-4Hz
+%   10. 60deg-gratings-static
+%   11. 60deg-gratings-0-8-offset
+%   12. 32px-ON-single-bar
+%
+% CALCULATION:
+%   centring_rate = diff(smoothed_distance) * -30  (mm/s, negative = centring)
+%
+% REQUIREMENTS:
+%   - DATA struct from comb_data_across_cohorts_cond
+%   - Functions: combine_timeseries_across_exp, plot_xcond_per_strain
+%
+% See also: combine_timeseries_across_exp, plot_xcond_per_strain
 
 strain_names = fieldnames(DATA);
 

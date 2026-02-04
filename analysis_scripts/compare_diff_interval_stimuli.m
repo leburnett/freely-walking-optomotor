@@ -1,4 +1,38 @@
-% % For PROTOCOL 14
+% COMPARE_DIFF_INTERVAL_STIMULI - Compare behavioral responses to different interval stimuli
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Load combined data from Protocol 14
+%   - Section 2: Plot timeseries with stimulus periods highlighted
+%   - Section 3: Parse data by condition (contrast levels, grating directions)
+%   - Section 4: Perform repeated measures ANOVA across conditions
+%   - Section 5: Post-hoc pairwise comparisons with Bonferroni correction
+%
+% DESCRIPTION:
+%   This script analyzes Protocol 14 data to compare fly behavioral responses
+%   to different interval stimuli. It extracts distance from center data,
+%   groups responses by stimulus condition (acclimation, gratings, flicker,
+%   static, all-on, all-off), and performs statistical comparisons.
+%
+% PROTOCOL 14 CONDITIONS:
+%   - acclim_off: no stimulus (contrast = 0)
+%   - acclim_on: pattern displayed, no motion (contrast = 1, dir = 0)
+%   - gratings: moving gratings (contrast = 1, dir != 0)
+%   - flicker: contrast = 1.2
+%   - static: contrast = 1.3
+%   - allon: contrast = 1.4
+%   - alloff: contrast = 1.5
+%
+% REQUIREMENTS:
+%   - combine_data_across_exp function
+%   - plot_pink_blue_rects function
+%   - LOG struct with stimulus timing information
+%
+% OUTPUTS:
+%   - cond_data: table of per-fly mean values per condition
+%   - ranovaResults1: repeated measures ANOVA results
+%   - pairwiseResults1: post-hoc pairwise comparison results
+%
+% See also: combine_data_across_exp, plot_pink_blue_rects, fitrm, ranova, multcompare
 
 clear
 

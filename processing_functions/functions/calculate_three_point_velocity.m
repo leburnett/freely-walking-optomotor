@@ -1,11 +1,35 @@
 function v = calculate_three_point_velocity(x,y)
-% This function calculates the three point velocity/displacement over time.
-
-% It computes the forward velocity for the first time point and the
-% backwards velocity for the last time point to ensure 'v' has the same
-% number of datapoints as 'x' and 'y'. 
-
-% 'x' and 'y' are 1D vectors of the x and y position of the fly over time. 
+% CALCULATE_THREE_POINT_VELOCITY Compute velocity magnitude using central differences
+%
+%   v = CALCULATE_THREE_POINT_VELOCITY(x, y) calculates the instantaneous
+%   speed at each time point using central difference approximation.
+%
+% INPUTS:
+%   x - 1D vector of x positions (mm) over time
+%   y - 1D vector of y positions (mm) over time
+%
+% OUTPUT:
+%   v - 1D vector of velocity magnitudes (mm/s), same length as input
+%
+% ALGORITHM:
+%   - First point: forward difference (x(2) - x(1)) / dt
+%   - Intermediate points: central difference (x(i+1) - x(i-1)) / (2*dt)
+%   - Last point: backward difference (x(n) - x(n-1)) / dt
+%
+% PARAMETERS:
+%   FPS = 30 (frames per second)
+%   dt = 1/30 seconds
+%
+% NOTES:
+%   - Returns speed magnitude, not velocity components
+%   - Central difference is more accurate than forward/backward difference
+%   - Output length matches input length (no edge trimming)
+%
+% EXAMPLE:
+%   v = calculate_three_point_velocity(x_data(1,:), y_data(1,:));
+%   mean_speed = mean(v);  % average walking speed
+%
+% See also: combine_data_one_cohort, diff 
 
 FPS = 30;
 dt = 1/FPS;

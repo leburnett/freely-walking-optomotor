@@ -1,7 +1,40 @@
+% PLOT_TRAJECTORY - Plot fly trajectories colored by stimulus direction
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Basic trajectory plot with color-coded stimulus periods
+%   - Section 2: Find stimulus direction transition frames
+%   - Section 3: Generate horsetail plots centered on transition frames
+%
+% DESCRIPTION:
+%   This script visualizes fly trajectories with color coding based on
+%   stimulus direction. Blue indicates clockwise (dir=1) stimulus, magenta
+%   indicates counter-clockwise (dir=-1) stimulus, and black indicates
+%   intervals/no stimulus.
+%
+%   The horsetail plot analysis centers all trajectories on the fly's
+%   position at stimulus direction transitions, then rotates so the arena
+%   center is always along the positive x-axis. This allows visualization
+%   of whether flies turn toward or away from center during transitions.
+%
+% INPUTS (from workspace):
+%   trx  - FlyTracker trajectory struct with fields x, y
+%   Log  - Stimulus timing struct with fields dir, start_f, stop_f
+%   feat - FlyTracker feature struct (for distance from wall)
+%
+% PARAMETERS:
+%   t_len = 3 seconds before/after transition
+%   fps = 30 frames per second
+%   arena_centre = [512, 512] pixels
+%
+% OUTPUTS:
+%   - Trajectory figures with color-coded segments
+%   - Horsetail plots showing movement relative to arena center at transitions
+%
+% See also: generate_trajectory_plots, plot_traj_xcond
 
-% Plot trajectories. 
+% Plot trajectories.
 % What is important to plot?
-% Quantify whether they turn in out of circle. 
+% Quantify whether they turn in out of circle.
 % Horsetail plot. centre on position at transition. Take away those xy
 % values from subsequent ones. Plots them with different time intervals. 
 

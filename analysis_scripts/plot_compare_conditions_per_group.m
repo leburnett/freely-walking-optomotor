@@ -1,4 +1,38 @@
-% Generate plots for protocol_10-type protocols: 
+% PLOT_COMPARE_CONDITIONS_PER_GROUP - Compare behavioral responses across groups and conditions
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Load DATA and define experimental groups (strains)
+%   - Section 2: Compare multiple groups to same conditions (X-group plots)
+%   - Section 3: Compare single group to multiple conditions (X-condition plots)
+%   - Section 4: Generate scatter/box plots per condition per group
+%   - Section 5: Generate line plots for tuning curves (spatial frequency)
+%
+% DESCRIPTION:
+%   This is the main analysis script for comparing behavioral responses across
+%   different experimental groups (strains) and stimulus conditions. It supports
+%   multiple protocol types (10, 14, 19, 21, 22, 24, 25, 27, 28, 29, 30) and
+%   generates timeseries plots, tuning curves, and summary statistics.
+%
+% EXPERIMENTAL GROUPS DEFINED:
+%   - csw1118: Wild-type Canton-S/w1118
+%   - jfrc100_es_shibire_kir: Empty Split control (Shibire/Kir)
+%   - ss324_t4t5_shibire_kir: T4/T5 silenced
+%   - l1l4_jfrc100_shibire_kir: L1/L4 silenced
+%   - ss26283_H1_shibire_kir: H1 silenced
+%   - ss01027_H2_shibire_kir: H2 silenced
+%   - ss1209_DCH_VCH_shibire_kir: DCH/VCH silenced
+%   - ss34318_Am1_shibire_kir: Am1 silenced
+%   - t4t5_RNAi_control: T4T5 RNAi control
+%
+% DATA TYPES ANALYZED:
+%   - fv_data, av_data, curv_data, dist_data, dist_data_delta
+%
+% REQUIREMENTS:
+%   - DATA struct from comb_data_across_cohorts_cond
+%   - Functions: plot_allcond_acrossgroups_tuning, scatter_boxchart_per_cond_per_grp,
+%     scatter_boxchart_per_cond_one_grp, line_per_cond_one_grp
+%
+% See also: comb_data_across_cohorts_cond, plot_allcond_acrossgroups_tuning
 
 protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_30';
 cd(protocol_dir);

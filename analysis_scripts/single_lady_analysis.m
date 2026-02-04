@@ -1,4 +1,34 @@
 function single_lady_analysis()
+% SINGLE_LADY_ANALYSIS - Compare group vs solo fly behavioral responses
+%
+% FUNCTION CONTENTS:
+%   - Section 1: Bootstrapped comparison using p27 data
+%   - Section 2: Direct comparison using p25 group and solo data
+%
+% DESCRIPTION:
+%   This function compares behavioral responses between flies tested in groups
+%   versus flies tested individually ("single ladies"). It uses two methods:
+%   1. Bootstrapping from grouped fly data to match solo sample sizes
+%   2. Direct comparison of group vs solo flies from the same protocol
+%
+% BOOTSTRAPPING METHOD:
+%   Randomly samples N flies from the group data (N = number of solo flies)
+%   1000 times to generate confidence intervals for the group mean.
+%
+% ANALYSIS:
+%   - Generates timeseries plots with 95% CI shading
+%   - Compares fv_data, av_data, curv_data, dist_data, dist_data_delta
+%   - Stimulus timing: pre (0-300), stim (300-1200), post (1200-1800)
+%
+% INPUT DATA:
+%   - DATA_ES_Shibire_Kir_group_vs_solo.mat (Method 1)
+%   - DATA_single_ladies_es_shibire_kir_p25.mat (Method 2)
+%
+% STRAINS:
+%   - jfrc100_es_shibire_kir: Group flies (15 per vial)
+%   - jfrc100_es_shibire_kir_solo: Single fly experiments
+%
+% See also: combine_timeseries_data_per_cond, get_ylb_from_data_type
 
 load("/Users/burnettl/Documents/Projects/oaky_cokey/results/DATA_ES_Shibire_Kir_group_vs_solo.mat", 'DATA');
 

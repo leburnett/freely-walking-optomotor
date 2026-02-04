@@ -1,5 +1,35 @@
-% VIEWING DISTANCE
-
+% ANALYSE_VIEWING_DISTANCE - Calculate and visualize fly viewing distance
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Load DATA and extract position/heading for a single fly
+%   - Section 2: Calculate viewing distance (distance to arena wall in heading direction)
+%   - Section 3: Plot fly position with viewing distance vector
+%   - Section 4: Generate video animation of viewing distance over time
+%   - Section 5: Calculate viewing distance for all frames
+%
+% DESCRIPTION:
+%   This script calculates the "viewing distance" - the distance from the fly's
+%   position to the arena wall in the direction the fly is heading. This metric
+%   is useful for understanding how flies perceive visual stimuli at different
+%   distances from the arena edge.
+%
+%   The viewing distance is computed by solving the quadratic equation for the
+%   intersection of the fly's heading vector with the circular arena boundary.
+%
+% ARENA PARAMETERS:
+%   - Center of arena (pixels): [528, 520]
+%   - Arena radius (pixels): 496
+%   - Pixels per mm (PPM): 4.1691
+%
+% REQUIREMENTS:
+%   - DATA struct with position and heading data
+%   - Fields: dist_data, x_data, y_data, heading_wrap
+%
+% OUTPUTS:
+%   - d_view: viewing distance in mm
+%   - Optional video file showing viewing distance over time
+%
+% See also: calculate_viewing_distance
 
 % Load the DATA
 

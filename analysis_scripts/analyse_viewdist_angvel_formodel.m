@@ -1,3 +1,36 @@
+% ANALYSE_VIEWDIST_ANGVEL_FORMODEL - Analyze viewing distance vs angular velocity
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Extract position, viewing distance, and angular velocity data
+%   - Section 2: Plot trajectory colored by time
+%   - Section 3: Scatter plot of viewing distance vs angular velocity
+%   - Section 4: Combined trajectory and scatter visualization
+%   - Section 5: Verification of viewing distance calculation
+%   - Section 6: Optional turning rate vs viewing distance analysis
+%
+% DESCRIPTION:
+%   This script analyzes the relationship between viewing distance (distance
+%   from fly to arena wall in heading direction) and angular velocity. The
+%   goal is to understand how flies modulate their turning behavior based on
+%   their visual field extent. Data is prepared for potential modeling of
+%   the optomotor response as a function of viewing distance.
+%
+% KEY VISUALIZATIONS:
+%   - Scatter plots of viewing distance vs angular velocity (colored by time)
+%   - Trajectory plots showing fly movement in arena
+%   - Combined panels showing both spatial and behavioral relationships
+%
+% ARENA PARAMETERS:
+%   - Arena center: [122.8079, 124.7267] mm
+%   - Arena radius: 121 mm
+%
+% REQUIREMENTS:
+%   - DATA struct with view_dist, av_data, x_data, y_data
+%   - Functions: combine_timeseries_across_exp, plot_trajectory_simple,
+%     plot_traj_vd_av
+%
+% See also: analyse_viewing_distance, combine_timeseries_across_exp
+
 %% Viewing distance versus angular velocity:
 
 % For condition 1 - 60 deg gratings. Empty Split flies. 
