@@ -1,0 +1,48 @@
+---
+title: "{{ protocol.name }}"
+---
+
+{{ protocol.description }}
+
+## Protocol Parameters
+
+| Parameter | Value |
+|:----------|:------|
+| Conditions | {{ protocol.conditions|length }} |
+| Patterns Used | {{ protocol.patterns_used|length }} |
+{% for key, value in protocol.timing.items() -%}
+| {{ key }} | {{ value }}{% if key != 't_pause' %}s{% endif %} |
+{% endfor %}
+
+{% if protocol.conditions -%}
+## Conditions
+
+| # | Pattern | Speed | Duration | Description |
+|--:|:--------|------:|---------:|:------------|
+{% for cond in protocol.conditions -%}
+| {{ cond.condition_n }} | [Pattern {{ cond.pattern_id }}](../patterns/freely_walking_pattern_{{ '%02d'|format(cond.pattern_id) }}.qmd) | {{ cond.speed }} | {{ cond.trial_dur if cond.trial_dur else '-' }}s | {{ cond.description }} |
+{% endfor -%}
+{% if protocol.interval_pattern -%}
+| Interval | [Pattern {{ protocol.interval_pattern }}](../patterns/freely_walking_pattern_{{ '%02d'|format(protocol.interval_pattern) }}.qmd) | N/A | {{ protocol.timing.t_interval if protocol.timing.t_interval else '-' }}s | Interval pattern |
+{% endif %}
+
+{% endif -%}
+## Pattern Previews
+{% for pattern_id in protocol.patterns_used %}
+#### [Pattern {{ pattern_id }}](../patterns/freely_walking_pattern_{{ '%02d'|format(pattern_id) }}.qmd)
+{% if pattern_id in protocol.pattern_metadata -%}
+{% if protocol.pattern_metadata[pattern_id].has_animation %}
+::: {.content-visible when-format="html"}
+![](../../assets/imgs/freely/patterns/{{ protocol.pattern_metadata[pattern_id].folder }}/animation.gif){.ifr}
+:::
+
+::: {.content-visible when-format="pdf"}
+![](../../assets/imgs/freely/patterns/{{ protocol.pattern_metadata[pattern_id].folder }}/frame_0000.png){.ifr}
+:::
+{% else %}
+![](../../assets/imgs/freely/patterns/{{ protocol.pattern_metadata[pattern_id].folder }}/frame_0000.png){.ifr}
+{% endif -%}
+{% else %}
+*Pattern {{ pattern_id }} images not yet generated.*
+{% endif %}
+{% endfor %}

@@ -1,0 +1,49 @@
+---
+title: "{{ pattern.name }}"
+---
+
+## Preview
+
+{% if pattern.has_animation %}
+::: {.content-visible when-format="html"}
+![{{ pattern.name }} animation](../assets/imgs/freely/patterns/{{ pattern.folder }}/animation.gif){.ifr_center}
+:::
+
+::: {.content-visible when-format="pdf"}
+![{{ pattern.name }}](../assets/imgs/freely/patterns/{{ pattern.folder }}/frame_0000.png){.ifr_center}
+:::
+{% else %}
+![{{ pattern.name }}](../assets/imgs/freely/patterns/{{ pattern.folder }}/frame_0000.png){.ifr_center}
+{% endif %}
+
+## Metadata
+
+| Property | Value |
+|:---------|------:|
+| Pattern ID | {{ pattern.id }} |
+| Type | {{ pattern.type }} |
+| Greyscale Levels | {{ 2 ** pattern.gs_val }} (gs_val={{ pattern.gs_val }}) |
+| Animation Frames | {{ pattern.x_num }} |
+| Y Frames | {{ pattern.y_num }} |
+
+: {.bordered .striped}
+
+## Description
+
+{{ pattern.description }}
+
+{% if pattern.used_in_protocols %}
+## Used In Protocols
+
+{% for protocol in pattern.used_in_protocols %}
+- [{{ protocol }}]({{ protocol }}.qmd)
+{% endfor %}
+{% endif %}
+
+## Frame Gallery
+
+::: {layout-ncol=4}
+{% for i in range(pattern.num_frames_shown) %}
+![Frame {{ i }}](../assets/imgs/freely/patterns/{{ pattern.folder }}/frame_{{ '%04d'|format(i) }}.png)
+{% endfor %}
+:::

@@ -94,9 +94,9 @@ strain = "jfrc100_es_shibire_kir";
 % strain = "ss324_t4t5_shibire_kir";
 % strain = "ss00297_Dm4_shibire_kir";
 
-fps = 30; 
-sex = "F";
-data = DATA.(strain).(sex);
+% fps = 30; 
+% sex = "F";
+% data = DATA.(strain).(sex);
 cond_n = 1; 
 plot_sem = 1;
 data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_data_delta',};
