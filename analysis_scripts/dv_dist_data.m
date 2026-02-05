@@ -1,9 +1,45 @@
-
+% DV_DIST_DATA - Analyze rate of change of distance from arena center
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Extract and combine distance data across experiments/reps
+%   - Section 2: Visualize distance data as heatmap and mean timeseries
+%   - Section 3: Analyze relationship between viewing distance and centring
+%   - Section 4: Plot start vs end distance during stimulus
+%   - Section 5: Find peak centring rate and its timing/location
+%   - Section 6: Bin centring behavior by distance and time
+%   - Section 7: Compute rate of change (dv) of distance from center
+%   - Section 8: Analyze relationship between angular velocity and centring
+%
+% DESCRIPTION:
+%   This script analyzes the dynamics of fly centring behavior by computing
+%   the rate of change (derivative) of distance from the arena center. It
+%   examines when and where flies move most strongly towards the center,
+%   and how this relates to other behavioral metrics like angular velocity
+%   and viewing distance.
+%
+% KEY ANALYSES:
+%   - Start position vs final position during stimulus
+%   - Peak centring rate timing and magnitude
+%   - Relationship between distance from center and centring rate
+%   - Relationship between angular velocity and centring behavior
+%
+% REQUIREMENTS:
+%   - DATA struct with dist_data, view_dist, av_data
+%   - Pre-loaded DATA from comb_data_across_cohorts_cond
+%
+% VARIABLES:
+%   - cond_data: combined distance data [n_flies x n_frames]
+%   - dv: derivative of distance (rate of change)
+%   - time_peak: frame of peak centring per fly
+%   - val_peak: magnitude of peak centring per fly
+%   - dist_peak: distance from center at peak centring
+%
+% See also: comb_data_across_cohorts_cond, check_and_average_across_reps
 
 strain = "jfrc100_es_shibire_kir";
 sex= "F";
 
-data = DATA.(strain).(sex); 
+data = DATA.(strain).(sex);
 n_exp = length(data); % Number of experiments run for this strain / sex.
 
 idx2 = 1;

@@ -1,25 +1,46 @@
 function [comb_data, feat, trx] = combine_data_one_cohort(feat, trx)
-    % Combine the timeseries data of different features per fly for a
-    % single cohort into a single struct 'comb_data'. This struct is then
-    % saved per experiment in the "results" folder and then combined across
-    % experiments to form the larger structure 'DATA' with the timeseries
-    % data for all flies, across all strains and experiments for a single
-    % protocol.
-
-    % The data extracted directly from the FlyTracker output are:
-    % - distance from the edge of the arena.
-    % - heading 
-    % - x position 
-    % - y position
-
-    % Data calculated from this data:
-    % - angular velocity
-    % - forward velocity (two point, in direction of heading)
-    % - three point velocity in any direction
-    % - turning rate (angular velocity / forward velocity)
-    % - viewing distance 
-    % - inter fly distance 
-    % - inter fly angle
+% COMBINE_DATA_ONE_COHORT Combine behavioral metrics for a single cohort
+%
+%   [comb_data, feat, trx] = COMBINE_DATA_ONE_COHORT(feat, trx) processes
+%   FlyTracker output and computes derived behavioral metrics for all flies
+%   in a single experimental cohort.
+%
+% INPUTS:
+%   feat - FlyTracker feature struct (from *-feat.mat)
+%   trx  - FlyTracker trajectory struct (from trx.mat)
+%
+% OUTPUTS:
+%   comb_data - Struct containing all behavioral metrics:
+%               .vel_data      - Three-point velocity (mm/s)
+%               .dist_data     - Distance from arena center (mm)
+%               .av_data       - Angular velocity (deg/s)
+%               .fv_data       - Forward velocity in heading direction (mm/s)
+%               .curv_data     - Turning rate (deg/mm)
+%               .heading_data  - Unwrapped heading (deg)
+%               .heading_wrap  - Wrapped heading (deg)
+%               .x_data        - X position (mm)
+%               .y_data        - Y position (mm)
+%               .view_dist     - Viewing distance to wall (mm)
+%               .IFD_data      - Inter-fly distance (mm)
+%               .IFA_data      - Inter-fly angle (deg)
+%   feat      - Modified feat struct (bad flies removed)
+%   trx       - Modified trx struct (bad flies removed)
+%
+% PROCESSING STEPS:
+%   1. Remove flies with incomplete/bad tracking (check_tracking_FlyTrk)
+%   2. Filter high-velocity frames (>50mm/s) as tracking errors
+%   3. Fill missing values using spline/linear interpolation
+%   4. Compute angular velocity using least-squares line fit
+%   5. Compute forward velocity from position derivatives
+%   6. Compute turning rate as av_data/fv_data
+%   7. Calculate viewing distance and inter-fly metrics
+%
+% PARAMETERS (hardcoded):
+%   FPS = 30 (frames per second)
+%   t_window = 16 (smoothing window for angular velocity)
+%   Max forward velocity = 50 mm/s (higher values set to NaN)
+%
+% See also: process_data_features, comb_data_across_cohorts_cond, check_tracking_FlyTrk
 
     % Check tracking and ignore flies that have incomplete tracking.
     flies2ignore = check_tracking_FlyTrk(trx);

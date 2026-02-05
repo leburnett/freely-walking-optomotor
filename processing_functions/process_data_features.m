@@ -1,58 +1,49 @@
 function process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_str, generate_stim_videos)
-    % Processes data from an individual freely-walking optomotor experiment.
-    % Loads the data from FlyTracker ('trx' and 'feat') and uses the timing
-    % data saved in 'LOG' to parse the behavioural data per fly, per
-    % condition. 
-
-    % 'combine_data_one_cohort' combines the data of the different
-    % behavioural metrics together into a single struct 'comb_data' per
-    % cohort. This function also checks for any flies with bad tracking
-    % (too close to edge, incomplete tracking data) and removes these flies
-    % from further analysis. Some smoothing and filtering of the
-    % behavioural data takes place within this function, a three point
-    % velocity is calculated as well as the turning rate of the fly.
-
-    % This script generates several plots: 
-
-    % - 1 x 'f_feat' - general overview plot of walking, turning and distance
-    % from centre over the entire experiment. Each fly plotted individually
-    % and the mean across all flies is plotted over the top. 
-    % - 1 x 'f_acclim' - general overview plot of the same metrics over the
-    % acclim period at the beginning of the experiment. Each fly plotted individually
-    % and the mean across all flies is plotted over the top. 
-
-    % - 5 x 'f_cond' - timeseries plots per behavioural metric over the
-    % different conditions in the protocol. Mean and SEM over all of the
-    % flies. 
-
-    % If 'generate_stim_videos' = true then `generate_circ_stim_ufmf` is
-    % run and individual videos are made for each condition with the tracks
-    % and the stimulus overlaid on top of the original behaviour frame.
-
-    % The processed and combined data is saved into a results file that
-    % ends in "_data.mat" within "save_folder". 
-    
-    % Inputs
-    % ______
-    
-    % PROJECT_ROOT : path
-    %           Root directory used for generating the folder where the
-    %           data and the figures will be saved.
-    %       
-    % path_to_folder : path
-    %           Path of data to analyse.
-    
-    % save_folder : path 
-    %           Path to save the processed data.  
-
-    % date_str : string 
-    %           String of the date folder to be analysed. This script will
-    %           process all experiment folders found within the date
-    %           folder. 'date_str' should be in the format "YYYY_MM_DD".
-
-    % generate_stim_videos : bool, default = False.
-    %           Boolean value to determine whether to make videos of ech
-    %           condition or not. 
+% PROCESS_DATA_FEATURES Process a single freely-walking optomotor experiment
+%
+%   PROCESS_DATA_FEATURES(PROJECT_ROOT, path_to_folder, save_folder, date_str)
+%   processes FlyTracker output for a single experiment, combining tracking
+%   data with stimulus timing to generate behavioral metrics.
+%
+%   PROCESS_DATA_FEATURES(..., generate_stim_videos) optionally generates
+%   videos with tracks and stimulus overlaid on behavior frames.
+%
+% INPUTS:
+%   PROJECT_ROOT        - Root directory for data and figure storage
+%   path_to_folder      - Path to experiment folder containing tracking data
+%   save_folder         - Path to save processed data and results
+%   date_str            - Date string in format "YYYY_MM_DD"
+%   generate_stim_videos - Boolean for video generation (default: false)
+%
+% OUTPUTS:
+%   Saves to save_folder:
+%   - {date}_{time}_{strain}_{protocol}_{sex}_data.mat containing:
+%     - LOG: stimulus timing information
+%     - feat: FlyTracker feature data
+%     - trx: fly trajectory data
+%     - comb_data: combined behavioral metrics
+%     - n_fly_data: [n_flies_in_arena, n_flies_tracked, n_flies_removed]
+%
+% GENERATED FIGURES:
+%   - f_feat: Overview plot of walking, turning, distance over full experiment
+%   - f_acclim: Same metrics for acclimation period only
+%   - f_cond (x5): Timeseries per behavioral metric across conditions
+%
+% PROCESSING STEPS:
+%   1. Load LOG (timing), trx (trajectories), feat (features) from experiment
+%   2. Combine data and remove bad tracking (combine_data_one_cohort)
+%   3. Parse data by condition using LOG timing (comb_data_one_cohort_cond)
+%   4. Generate overview and condition-wise plots
+%   5. Save processed data to results folder
+%
+% BEHAVIORAL METRICS COMPUTED:
+%   - Forward velocity (fv_data)
+%   - Angular velocity (av_data)
+%   - Turning rate/curvature (curv_data)
+%   - Distance from center (dist_data)
+%   - Three-point velocity
+%
+% See also: combine_data_one_cohort, comb_data_one_cohort_cond, process_freely_walking_data 
    
     % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 

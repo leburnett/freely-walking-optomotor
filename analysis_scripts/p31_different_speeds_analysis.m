@@ -1,9 +1,35 @@
-%% Protocol 31 analysis
-% Updated different speeds protocol.
-
-% This script contains the functions to plot both the timeseries and a
-% tuning curve for the different speeds for a single strain and
-% comparing across strains.
+% P31_DIFFERENT_SPEEDS_ANALYSIS - Analyze optomotor responses at different speeds
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Load DATA and generate experiment data struct
+%   - Section 2: Plot tuning curves comparing strains (errorbar plots)
+%   - Section 3: Generate timeseries plots for different speed conditions
+%
+% DESCRIPTION:
+%   This script analyzes Protocol 31 data which tests optomotor responses
+%   at different stimulus speeds. It generates tuning curves showing how
+%   behavioral metrics (angular velocity, distance change) vary with
+%   stimulus speed, and compares responses between different fly strains.
+%
+% PROTOCOL 31 CONDITIONS:
+%   - Multiple stimulus speeds (60, 120, 240, 480 deg/s)
+%   - Two spatial frequencies (15 deg and 60 deg gratings)
+%   - Flicker control condition
+%
+% REQUIREMENTS:
+%   - DATA struct from comb_data_across_cohorts_cond
+%   - Functions: generate_exp_data_struct, plot_errorbar_tuning_diff_speeds,
+%     plot_timeseries_diff_speeds
+%
+% DATA TYPES ANALYZED:
+%   - av_data: angular velocity
+%   - fv_data: forward velocity
+%   - dist_data: distance from center
+%   - dist_data_delta: change in distance from center
+%   - curv_data: path curvature (turning rate)
+%
+% See also: comb_data_across_cohorts_cond, plot_errorbar_tuning_diff_speeds,
+%           plot_timeseries_diff_speeds
 
 protocol_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_31';
 cd(protocol_dir);

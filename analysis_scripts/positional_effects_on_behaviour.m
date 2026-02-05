@@ -1,3 +1,41 @@
+% POSITIONAL_EFFECTS_ON_BEHAVIOUR - Analyze spatial position effects on turning
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Histograms of behavioral metrics for different time windows
+%   - Section 2: Scatter plots of distance vs centripetal movement (5s bins)
+%   - Section 3: Scatter plots of distance vs turning rate/angular velocity
+%   - Section 4: Relationship between forward velocity and turning rate
+%   - Section 5: Histogram of distance at max centring/turning rate
+%   - Section 6: Trajectory plots with centring behavior visualization
+%   - Section 7: Centring grouped by walking speed, starting distance, turning
+%   - Section 8: Angular velocity grouped by arena position
+%   - Section 9: Inter-fly distance (IFD) collision analysis
+%
+% DESCRIPTION:
+%   This script examines how a fly's position within the arena affects its
+%   turning and centring behavior during optomotor stimulation. It analyzes
+%   the relationship between distance from the arena center/edge and various
+%   behavioral metrics including centripetal movement, turning rate, angular
+%   velocity, and forward velocity.
+%
+% KEY ANALYSES:
+%   - Distance from center vs change in distance (centring)
+%   - Distance vs turning rate and angular velocity
+%   - When and where flies exhibit maximum centring/turning
+%   - How starting position affects subsequent centring behavior
+%   - Grouping centring by walking speed, position, or turning rate
+%
+% REQUIREMENTS:
+%   - DATA struct from comb_data_across_cohorts_cond
+%   - Functions: combine_timeseries_across_exp, bin_data_from_cond_data,
+%     plot_histogram_from_cond_data, centring_turning_traj_plots, format_figure
+%   - calib struct with arena calibration (centroids, PPM)
+%
+% DATA TYPES ANALYZED:
+%   - IFD_data, fv_data, av_data, curv_data, dist_data, dist_data_delta
+%
+% See also: combine_timeseries_across_exp, bin_data_from_cond_data
+
 % Analyse how the physical location of the fly within the arena -
 % specifically its distance from the centre/ edge - affects it's turning /
 % centring behaviour. 

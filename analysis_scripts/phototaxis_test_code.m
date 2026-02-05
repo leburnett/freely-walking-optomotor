@@ -1,3 +1,34 @@
+% PHOTOTAXIS_TEST_CODE - Analyze phototaxis heading orientation behavior
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Calculate distance and bearing to phototaxis bar reference
+%   - Section 2: Add heading_rel_ref (heading relative to reference point)
+%   - Section 3: Plot fly positions and reference point
+%   - Section 4: Visualize heading angles for single fly/frame
+%   - Section 5: Generate polar histograms comparing pre- vs during-stimulus
+%
+% DESCRIPTION:
+%   This is the current analysis script for phototaxis experiments. It computes
+%   the heading direction of flies relative to a visual bar stimulus (reference
+%   point) and generates polar histograms to visualize orientation preferences.
+%   The script adds several computed fields to the DATA struct:
+%   - d2bar: Euclidean distance from each fly to the bar (mm)
+%   - bearing_to_ref: absolute bearing angle to reference point (degrees)
+%   - heading_rel_ref: heading angle relative to reference (degrees, [-180,180])
+%
+% COORDINATE CONVENTIONS:
+%   - 0 degrees = east (right), +90 degrees = south (down)
+%   - Heading_rel_ref: 0 = pointing directly at bar, +/-180 = pointing away
+%
+% ARENA/BAR PARAMETERS:
+%   - Pixels per mm (PPM): 4.1691
+%   - Reference point (bar center): [29.7426, 52.5293] mm
+%
+% REQUIREMENTS:
+%   - DATA struct with phototaxis condition data (R1_condition_12, R2_condition_12)
+%   - Fields needed: x_data, y_data, heading_wrap
+%
+% See also: analyse_phototaxis, analyse_phototaxis_polar
 
 % Extract JUST the empty split data:
 DATA2 = DATA.jfrc100_es_shibire_kir.F;

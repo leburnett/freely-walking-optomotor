@@ -1,24 +1,48 @@
 function DATA = comb_data_across_cohorts_cond(protocol_dir)
-    % Combine the data within "comb_data" - behavioural data for each
-    % individual fly across a single cohort for one run of an experiment 
-    % - across all experiments for a particular protocol.
-
-    % This function has now been optimised for "protocol_27" - the screen
-    % protocol. 
-
-    % Inputs:
-    % _______
-
-    % 'protocol_dir': path
-    %       Path to the results files for a particular protocol. E.g. 
-    % '/Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_27'
-
-    % Returns:
-    % _______
-
-    % DATA : struct
-    %       MATLAB struct that contains the data from multiple cohorts
-    %       parsed based on data type and condition.
+% COMB_DATA_ACROSS_COHORTS_COND Combine behavioral data across all experiments
+%
+%   DATA = COMB_DATA_ACROSS_COHORTS_COND(protocol_dir) combines processed
+%   behavioral data from all experiments for a single protocol, organizing
+%   by strain, sex, and condition.
+%
+% INPUT:
+%   protocol_dir - Path to results folder for a protocol
+%                  e.g., '/path/to/results/protocol_27'
+%
+% OUTPUT:
+%   DATA - Hierarchical struct organized as:
+%          DATA.(strain).(sex)(cohort_idx).(condition).(data_type)
+%
+% STRUCT ORGANIZATION:
+%   Level 1: strain name (e.g., 'jfrc100_es_shibire_kir')
+%   Level 2: sex ('F' or 'M')
+%   Level 3: cohort index (1, 2, 3, ...)
+%   Level 4: condition name:
+%            - 'meta': experiment metadata
+%            - 'acclim_off1': pre-stimulus acclimation (dark)
+%            - 'acclim_patt': acclimation with pattern displayed
+%            - 'R1_condition_N': Rep 1, condition N
+%            - 'R2_condition_N': Rep 2, condition N
+%            - 'acclim_off2': post-stimulus acclimation (dark)
+%   Level 5: data_type (fv_data, av_data, dist_data, etc.)
+%
+% DATA FIELDS PER CONDITION:
+%   - Behavioral metrics: vel_data, fv_data, av_data, curv_data, dist_data, etc.
+%   - Position data: x_data, y_data, heading_data, heading_wrap
+%   - Stimulus info: trial_len, interval_dur, optomotor_pattern, optomotor_speed
+%   - Social metrics: IFD_data, IFA_data
+%
+% NOTES:
+%   - Automatically excludes existing DATA*.mat files
+%   - Each condition includes 10s (300 frames) before stimulus onset
+%   - Condition numbering matches protocol definition
+%
+% EXAMPLE:
+%   DATA = comb_data_across_cohorts_cond('/path/to/results/protocol_27');
+%   es_data = DATA.jfrc100_es_shibire_kir.F;
+%   cond1_dist = es_data(1).R1_condition_1.dist_data;
+%
+% See also: combine_data_one_cohort, process_data_features, generate_exp_data_struct
 
     % Find all processed data for one protocol. 
     filelist = dir(fullfile(protocol_dir, '**/*.mat'));

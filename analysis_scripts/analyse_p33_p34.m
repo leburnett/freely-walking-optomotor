@@ -1,3 +1,36 @@
+% ANALYSE_P33_P34 - Analyze eye-painted fly experiments
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Create DATA struct from protocol directory
+%   - Section 2: Plot timeseries comparing painted vs unpainted eyes
+%   - Section 3: [OLD CODE] Alternative analysis approach
+%
+% DESCRIPTION:
+%   This script analyzes optomotor responses in flies with one or both
+%   eyes painted (occluded). It compares behavioral responses across four
+%   experimental groups: no paint (control), left eye painted, right eye
+%   painted, and both eyes painted. This allows assessment of monocular
+%   versus binocular contributions to optomotor behavior.
+%
+% EXPERIMENTAL GROUPS:
+%   - csw1118_none: No paint (control) - light grey
+%   - csw1118_left: Left eye painted - red
+%   - csw1118_right: Right eye painted - blue
+%   - csw1118_both: Both eyes painted - purple
+%
+% PROTOCOL CONDITIONS:
+%   - Protocol 33: 60deg gratings and flicker at gsval3 (8 grey levels)
+%   - Protocol 34: 60deg gratings and flicker at low luminance
+%
+% DATA ORGANIZATION:
+%   Results files must be sorted into folders based on which eye(s)
+%   were painted before running this script.
+%
+% REQUIREMENTS:
+%   - DATA struct from comb_data_across_cohorts_cond
+%   - Functions: plot_allcond_acrossgroups_tuning
+%
+% See also: comb_data_across_cohorts_cond, plot_allcond_acrossgroups_tuning
 
 % Plotting p34 / p33
 

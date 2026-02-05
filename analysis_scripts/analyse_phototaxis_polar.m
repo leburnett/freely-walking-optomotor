@@ -1,5 +1,49 @@
-%% Make polarplots - phototaxis conditions. 
-% Requires DATA. 
+% ANALYSE_PHOTOTAXIS_POLAR - Polar histogram analysis of phototaxis orientation
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Pool heading angles across all cohorts, flies, and reps
+%   - Section 2: Generate polar histograms (pre vs during stimulus)
+%   - Section 3: Statistical testing with per-fly circular means
+%   - Section 4: V-test and Watson-Williams test
+%   - Section 5: Individual fly polar plots per cohort
+%   - Section 6: Speed-filtered analysis (both reps)
+%   - Section 7: Distance-to-bar analysis over time
+%   - Section 8: Towardness vs distance analysis (binned)
+%   - Section 9: Half-arena analysis (near vs far from bar)
+%
+% DESCRIPTION:
+%   This script performs comprehensive polar histogram analysis of fly
+%   heading orientation relative to a bright bar stimulus. It computes
+%   heading_rel_ref (heading relative to reference) where 0 degrees means
+%   pointing directly at the bar, and +/-180 degrees means pointing away.
+%
+% STATISTICAL APPROACH:
+%   1. Compute per-fly circular mean headings for pre and stim windows
+%   2. V-test: tests if post-stim headings cluster around 0 (toward bar)
+%   3. Watson-Williams: paired test comparing pre vs post distributions
+%
+% TIME WINDOWS (at 30fps):
+%   - Pre: frames 135-285 (5s before stimulus, 0.5s buffer)
+%   - Stim: frames 315-465 (first 5s of stimulus, 0.5s buffer)
+%
+% TOWARDNESS METRIC:
+%   <cos(theta)> where theta = heading_rel_ref
+%   - +1: pointing directly at bar
+%   -  0: perpendicular to bar
+%   - -1: pointing away from bar
+%
+% REQUIREMENTS:
+%   - DATA struct with x_data, y_data, heading_wrap, d2bar fields
+%   - Circular Statistics Toolbox (circ_vtest, circ_wwtest)
+%   - Functions: polar_hist_all_flies, plot_polar_hist_subplot_one_cohort
+%
+% DATA FILE:
+%   "/Users/burnettl/Documents/Projects/oaky_cokey/results/2025_10_30_DATA_phototaxis_with_angles.mat"
+%
+% See also: phototaxis_test_code, phototaxis_speed_filtered, circ_vtest, circ_wwtest
+
+%% Make polarplots - phototaxis conditions.
+% Requires DATA.
 % "/Users/burnettl/Documents/Projects/oaky_cokey/results/2025_10_30_DATA_phototaxis_with_angles.mat"
 
 %% PLOT ALL FLIES - ALL COHORTS - BOTH REPS

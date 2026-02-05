@@ -1,15 +1,35 @@
 function process_freely_walking_data(date_to_analyse, generate_stim_videos)
-% Process data from freely-walking optomotor experiments within the date
-% folder "date_to_analyse". This script determines the protocols and
-% strains that have been tested within this day and then runs the function
-% `process_data_features` on that data.
-
-% Inputs
-% ______
-
-% date_to_analyse : string
-%           String of the date folder that contains the data to be analysed. 
-%           'date_to_analyse' should be in the format "YYYY_MM_DD".
+% PROCESS_FREELY_WALKING_DATA Process data from freely-walking optomotor experiments
+%
+%   PROCESS_FREELY_WALKING_DATA(date_to_analyse) processes all experiments
+%   within the specified date folder. Automatically discovers protocols,
+%   strains, and sexes within the folder hierarchy.
+%
+%   PROCESS_FREELY_WALKING_DATA(date_to_analyse, generate_stim_videos) optionally
+%   generates stimulus overlay videos for each condition.
+%
+% INPUTS:
+%   date_to_analyse     - String of date folder to analyze (format: "YYYY_MM_DD")
+%   generate_stim_videos - Boolean to generate condition videos (default: false)
+%
+% OUTPUTS:
+%   Processed data saved to results folder as "*_data.mat" files
+%   Overview figures saved to figures/overview_figs/
+%
+% FOLDER STRUCTURE EXPECTED:
+%   DATA/01_tracked/{date}/{protocol}/{strain}/{sex}/{time}/
+%
+% WORKFLOW:
+%   1. Iterates through all protocol folders in the date directory
+%   2. For each protocol, iterates through strain folders
+%   3. For each strain, iterates through sex folders (F/M)
+%   4. Calls process_data_features for each experiment
+%
+% EXAMPLE:
+%   process_freely_walking_data("2024_09_24")
+%   process_freely_walking_data("2024_09_24", true)  % with video generation
+%
+% See also: process_data_features, combine_data_one_cohort, comb_data_across_cohorts_cond
 
     if nargin < 2 || isempty(generate_stim_videos)
         generate_stim_videos = false;

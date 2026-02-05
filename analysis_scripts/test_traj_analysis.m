@@ -1,4 +1,38 @@
-% Trajectory curvature
+% TEST_TRAJ_ANALYSIS - Trajectory curvature and turning rate analysis
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Compute path curvature from x,y trajectory data
+%   - Section 2: Compute heading angular velocity from heading_wrap
+%   - Section 3: Plot individual fly trajectories
+%   - Section 4: Curvature analysis by stimulus period (pre/during/post)
+%   - Section 5: Turning rate timeseries across strains with SEM
+%   - Section 6: Binned turning rate analysis
+%   - Section 7: Scatter plot of distance vs turning rate per fly
+%
+% DESCRIPTION:
+%   This script analyzes trajectory curvature and turning rate for different
+%   fly strains (T4T5 RNAi experiments). Curvature is computed from the
+%   mathematical definition using position derivatives, where:
+%   curvature = (dx * ddy - dy * ddx) / (dx^2 + dy^2)^(3/2)
+%
+%   Low curvature indicates straight walking; high curvature indicates turning.
+%   The script compares control flies to T4T5 silenced flies.
+%
+% STRAINS COMPARED:
+%   - t4t5_RNAi_control: Control flies
+%   - t4t5_ttl_RNAi: T4T5 TTL RNAi knockdown
+%   - t4t5_mmd_RNAi: T4T5 MMD RNAi knockdown
+%
+% CURVATURE CALCULATION:
+%   Uses gradient() for first and second derivatives of smoothed (movmean)
+%   x,y positions. NaN/Inf values (from stationary periods) are handled.
+%
+% REQUIREMENTS:
+%   - DATA struct from comb_data_across_cohorts_cond
+%   - Functions: combine_timeseries_data_per_cond, plot_trajectory_xy,
+%     binTurningRate
+%
+% See also: combine_timeseries_data_per_cond, binTurningRate
 
 % strain = 't4t5_RNAi_control';
 % strain = 't4t5_ttl_RNAi';

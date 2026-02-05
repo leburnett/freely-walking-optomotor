@@ -1,4 +1,36 @@
-%% This makes the bar plots - purple bars - gain 
+% ANALYSE_P31_DIFF_SPEEDS - Generate bar plots for different speed responses
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Extract data for selected strain and compute gain
+%   - Section 2: Calculate mean/SEM for each speed condition
+%   - Section 3: Extract acclimation period baseline values
+%   - Section 4: Combine acclimation and stimulus values
+%   - Section 5: Generate bar plots for 60deg and 15deg gratings
+%   - Section 6: Generate gain plots (turning/stimulus speed)
+%
+% DESCRIPTION:
+%   This script generates bar plots showing optomotor response gain at
+%   different stimulus speeds for Protocol 31. Gain is calculated as
+%   angular velocity (deg/s) divided by stimulus speed (deg/s). The script
+%   plots responses for both 60-degree and 15-degree spatial period gratings.
+%
+% PROTOCOL 31 CONDITIONS:
+%   - Conditions 1-5: 60 degree gratings at 60, 120, 240, 480 deg/s + flicker
+%   - Conditions 6-10: 15 degree gratings at 60, 120, 240, 480 deg/s + flicker
+%
+% GAIN CALCULATION:
+%   gain = angular_velocity / stimulus_speed
+%   - Values <1: under-compensation
+%   - Values =1: perfect tracking
+%   - Values >1: over-compensation
+%
+% REQUIREMENTS:
+%   - DATA struct from comb_data_across_cohorts_cond
+%   - check_and_average_across_reps function
+%
+% See also: p31_different_speeds_analysis, check_and_average_across_reps
+
+%% This makes the bar plots - purple bars - gain
 
 % Plot datapoints - different speeds - p31
 

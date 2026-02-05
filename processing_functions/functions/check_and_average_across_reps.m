@@ -1,7 +1,35 @@
 function [rep_data] = check_and_average_across_reps(rep1_data, rep2_data, rep1_data_fv, rep2_data_fv, rep1_data_dcent, rep2_data_dcent)
-% Check the data for an individual fly across an individual rep. 
-% Remove reps where the fly either doesn't move, or remains too close to
-% the edge of the arena. 
+% CHECK_AND_AVERAGE_ACROSS_REPS Quality filter and average data across two reps
+%
+%   rep_data = CHECK_AND_AVERAGE_ACROSS_REPS(rep1_data, rep2_data, rep1_data_fv,
+%       rep2_data_fv, rep1_data_dcent, rep2_data_dcent) checks each fly's
+%   behavior in both reps and averages valid data.
+%
+% INPUTS:
+%   rep1_data      - [n_flies x n_frames] behavioral data from rep 1
+%   rep2_data      - [n_flies x n_frames] behavioral data from rep 2
+%   rep1_data_fv   - [n_flies x n_frames] forward velocity from rep 1
+%   rep2_data_fv   - [n_flies x n_frames] forward velocity from rep 2
+%   rep1_data_dcent - [n_flies x n_frames] distance from center, rep 1
+%   rep2_data_dcent - [n_flies x n_frames] distance from center, rep 2
+%
+% OUTPUT:
+%   rep_data - [n_flies x n_frames] averaged data (NaN where both reps invalid)
+%
+% QUALITY CRITERIA:
+%   A rep is marked invalid (set to NaN) if:
+%   - Mean forward velocity < 3 mm/s (fly not walking)
+%   - Minimum distance from center > 110 mm (fly stuck near edge)
+%
+% NOTES:
+%   - Invalid reps are set to NaN before averaging
+%   - Uses nanmean so valid rep data is preserved even if one rep is invalid
+%   - Returns NaN for flies where both reps are invalid
+%
+% EXAMPLE:
+%   avg_av = check_and_average_across_reps(r1_av, r2_av, r1_fv, r2_fv, r1_dist, r2_dist);
+%
+% See also: comb_data_across_cohorts_cond, nanmean 
 
     % Initialise empty array:
     rep_data = zeros(size(rep1_data));

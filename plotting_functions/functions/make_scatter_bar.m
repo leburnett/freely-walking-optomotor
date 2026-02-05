@@ -1,5 +1,36 @@
 function make_scatter_bar(data, feature)
-% data can be one of the 'data_per_cond' arrays. 
+% MAKE_SCATTER_BAR Create scatter plot with box plot overlay by condition
+%
+%   MAKE_SCATTER_BAR(data, feature) creates a combined scatter/box plot
+%   showing individual fly data points with summary statistics.
+%
+% INPUTS:
+%   data    - Per-condition data matrix [n_conditions x n_flies]
+%   feature - String specifying data type: "dist", "angvel", "vel", or "ratio"
+%
+% FEATURE TYPES:
+%   "dist"   - Distance from center (mm), ylim [0, 120]
+%   "angvel" - Angular velocity (deg/s), ylim [0, 100]
+%   "vel"    - Velocity (mm/s), ylim [0, 25]
+%   "ratio"  - AV/V turning ratio (deg/mm), ylim [0, 40]
+%
+% CONDITIONS PLOTTED:
+%   1. Off - Pattern off
+%   2. On - Pattern displayed (static)
+%   3. Opto - Optomotor (moving gratings)
+%   4. Flicker - Temporal flicker control
+%
+% PLOT FEATURES:
+%   - Individual data points with jittered x-positions
+%   - Box plots showing median and quartiles
+%   - Bold median line
+%
+% NOTES:
+%   - Designed for protocol v1 data format
+%   - Opto conditions averaged from rows 13:16 and 18:21
+%   - Flicker from row 17
+%
+% See also: boxplot, scatter, plot_boxchart_metrics_xcond 
 
 if feature == "dist"
     data = 120-dist_data_per_cond_mean;

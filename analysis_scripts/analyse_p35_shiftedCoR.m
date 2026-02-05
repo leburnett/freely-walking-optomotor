@@ -1,3 +1,35 @@
+% ANALYSE_P35_SHIFTEDCOR - Analyze shifted center-of-rotation experiments
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Create DATA struct from protocol directory
+%   - Section 2: Generate spatial occupancy heatmaps
+%   - Section 3: Plot timeseries for angular velocity and distance
+%   - Section 4: Plot distance to different centers of rotation
+%   - Section 5: Protocol 36 analysis (additional shifted CoR conditions)
+%
+% DESCRIPTION:
+%   This script analyzes experiments where the center of rotation (CoR) of
+%   the visual stimulus is shifted relative to the arena center. By varying
+%   the CoR offset (e.g., 0.75 arena radius), we can assess how flies
+%   integrate global motion signals and whether they attempt to center on
+%   the apparent rotation point.
+%
+% PROTOCOL 35/36 CONDITIONS:
+%   - Conditions 1-2: Standard gratings (60deg, 30deg) - center CoR
+%   - Conditions 3-6: Flicker and static controls
+%   - Conditions 7-10: 0.75 offset CoR (positive and negative)
+%
+% KEY ANALYSES:
+%   - Spatial occupancy: where flies accumulate during offset stimuli
+%   - Distance to various reference points (arena center, shifted CoR)
+%   - Angular velocity responses to shifted CoR
+%
+% REQUIREMENTS:
+%   - DATA struct from comb_data_across_cohorts_cond
+%   - Functions: plot_fly_occupancy_heatmaps, plot_timeseries_dist_to_centres
+%
+% See also: comb_data_across_cohorts_cond, plot_fly_occupancy_heatmaps
+
 %%  Protocol 35 analysis:
 % Exploratory code for the different varieties of p35 that were run
 % recently:
