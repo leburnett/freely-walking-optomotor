@@ -15,7 +15,7 @@ shiftpx = 4;
 pattern.x_num = 192/shiftpx; % There are 192 frames in this pattern
 pattern.y_num = 1; % frames of Y, at different contrast levels
 pattern.num_panels = 72; % This is the number of unique Panel IDs required.
-pattern.gs_val = 2; % GREYSCALE - This pattern will use 7 intensity levels
+pattern.gs_val = 2; % GREYSCALE - This pattern will use 0-4 intensity levels
 pattern.row_compression = 1;
 
 %% Generate separate ON and OFF patterns first:
