@@ -1,0 +1,1107 @@
+---
+title: "Freely-Walking Optomotor Experiment"
+subtitle: "Data Logging, Processing, and Analysis Guide"
+author: "Laura Burnett -- Reiser Lab, HHMI Janelia Research Campus"
+date: today
+format:
+  pdf:
+    header-includes: |
+      \usepackage{float}
+      \floatplacement{figure}{H}
+      \usepackage{fvextra}
+      \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\},fontsize=\footnotesize}
+      \usepackage{xcolor}
+      \definecolor{fnbg}{HTML}{d9edf7}
+      \usepackage{tabularx}
+      \usepackage{longtable}
+---
+
+\newpage
+
+# Quick Reference {#sec-quickref}
+
+## Pipeline at a Glance
+
+1. **Run the experiment** -- `protocol_27.m` controls the LED arena and camera, producing a **UFMF video** and a **LOG.mat** file with stimulus timing.
+2. **Track the flies** -- FlyTracker processes the video offline, producing `feat.mat` (features) and `trx.mat` (trajectories).
+3. **Compute behavioral metrics** -- `combine_data_one_cohort(feat, trx)` filters bad tracking, interpolates gaps, and computes 12 behavioral metrics.
+4. **Split by condition** -- `comb_data_one_cohort_cond(LOG, comb_data)` uses LOG frame indices to slice continuous data into per-condition segments.
+5. **Merge experiments** -- `comb_data_across_cohorts_cond(protocol_dir)` combines all sessions into a single hierarchical DATA struct.
+
+## Key Files
+
+\begin{footnotesize}
+\begin{longtable}{p{6.5cm} p{8cm}}
+\textbf{File} & \textbf{Purpose} \\
+\hline
+\endhead
+\texttt{protocols/protocol\_27.m} & Example protocol script (defines conditions, runs experiment) \\
+\texttt{protocols/protocol\_functions/} & 14 shared functions for initialization, stimulus, acclimation \\
+\texttt{processing\_functions/\newline process\_freely\_walking\_data.m} & Top-level processing entry point (by date) \\
+\texttt{processing\_functions/\newline process\_data\_features.m} & Single-experiment processing orchestrator \\
+\texttt{processing\_functions/functions/\newline combine\_data\_one\_cohort.m} & Core: computes 12 behavioral metrics from tracking data \\
+\texttt{processing\_functions/functions/\newline comb\_data\_one\_cohort\_cond.m} & Splits continuous data by condition using LOG frame indices \\
+\texttt{processing\_functions/functions/\newline comb\_data\_across\_cohorts\_cond.m} & Merges experiments into final DATA struct \\
+\end{longtable}
+\end{footnotesize}
+
+## Behavioral Metrics Quick Reference
+
+| Metric | Field | Units | Typical Range | Description |
+|:-------|:------|:------|:--------------|:------------|
+| Forward velocity | `fv_data` | mm/s | 0--30 | Speed along heading direction |
+| Angular velocity | `av_data` | deg/s | -500 to +500 | Heading change rate (turning speed) |
+| Turning rate | `curv_data` | deg/mm | Variable | Path curvature (av / fv) |
+| Distance from center | `dist_data` | mm | 0--120 | Distance from arena center |
+| Three-point velocity | `vel_data` | mm/s | 0--50 | Overall speed (any direction) |
+| Viewing distance | `view_dist` | mm | 0--240 | Distance to wall along heading |
+| Inter-fly distance | `IFD_data` | mm | 0--240 | Distance to nearest fly |
+| Inter-fly angle | `IFA_data` | deg | -180 to 180 | Angle to nearest fly vs heading |
+| X position | `x_data` | mm | -120 to 120 | Horizontal position |
+| Y position | `y_data` | mm | -120 to 120 | Vertical position |
+| Heading (unwrapped) | `heading_data` | deg | Continuous | Cumulative heading angle |
+| Heading (wrapped) | `heading_wrap` | deg | -180 to 180 | Heading within one revolution |
+
+## Common MATLAB Access Patterns
+
+```matlab
+% Load combined data
+DATA = comb_data_across_cohorts_cond( ...
+    '/path/to/results/protocol_27');
+
+% Access forward velocity:
+%   strain, sex F, cohort 1, Rep 1 condition 1
+fv = DATA.jfrc100_es_shibire_kir ...
+    .F(1).R1_condition_1.fv_data;
+%   fv is [n_flies x n_frames]
+
+% Mean across flies at each timepoint
+mean_fv = mean(fv, 1, 'omitnan');
+
+% Number of cohorts for a strain/sex
+n_cohorts = length( ...
+    DATA.jfrc100_es_shibire_kir.F);
+
+% List all strains
+strain_names = fieldnames(DATA);
+```
+
+## Glossary of Key Terms
+
+| Term | Definition |
+|:-----|:-----------|
+| **LOG** | MATLAB struct saved during experiment; contains stimulus timing, metadata, and frame indices |
+| **comb_data** | Intermediate struct with 12 behavioral metric matrices for one experiment |
+| **DATA** | Final hierarchical struct organizing all experiments by strain, sex, cohort, and condition |
+| **FlyTracker** | Offline tracking software that extracts fly positions and features from video |
+| **UFMF** | Micro Fly Movie Format -- compressed video format used by the overhead camera |
+| **Panel_com** | MATLAB function that sends commands to the G3 LED arena controller |
+| **BIAS** | Camera control software (Basic Image Acquisition Software) |
+| **G3 arena** | Cylindrical LED display (72 panels, 3 rows x 192 columns) |
+| **PPM** | Pixels per millimeter (calibration constant: 4.1691) |
+| **Condition** | One stimulus configuration (pattern + speed + duration) |
+| **Repetition** | One complete pass through all conditions (each experiment has 2 reps) |
+| **Cohort** | One experimental session (one group of flies) |
+
+
+\newpage
+
+# Introduction and Overview {#sec-intro}
+
+::: {.callout-note appearance="simple" icon=false}
+## At a Glance
+
+- Flies walk freely in a cylindrical LED arena while visual patterns are displayed
+- An overhead camera records behavior at 30 fps in UFMF format
+- A MATLAB protocol script controls the arena and logs stimulus timing
+- The primary response measured is the **optomotor response** (turning in the direction of motion)
+- Data flows through 5 stages: experiment, tracking, metrics, condition-splitting, merging
+:::
+
+## What Is the Freely-Walking Optomotor Experiment?
+
+This experiment studies the visual-motor behavior of freely-walking *Drosophila melanogaster* (fruit flies) inside a cylindrical LED arena (the G3 arena). Groups of 10--20 flies walk freely on a flat surface while visual patterns -- such as moving gratings, curtains, or stationary bars -- are displayed on the surrounding LED panels. An overhead camera records the flies' behavior at 30 frames per second.
+
+The primary behavioral response measured is the **optomotor response**: when a grating pattern moves across the visual field, walking flies tend to turn in the direction of motion. By varying stimulus parameters (pattern type, speed, contrast, spatial frequency), we can probe the neural circuits underlying motion detection.
+
+**Arena geometry:**
+
+- 72 LED panels arranged in a cylinder (3 rows of 24 panels)
+- Each panel is 8 x 8 pixels, giving 3 rows x 192 columns total
+- Arena radius: approximately 120 mm
+- Video recording at 30 fps in UFMF (compressed) format
+
+## The Full Data Pipeline
+
+The data flows through several stages from experiment to analysis:
+
+![Data processing pipeline: from running the experiment to the final DATA struct.](diagrams/03_data_flow_pipeline.png){#fig-pipeline width=100%}
+
+1. **Run the experiment** -- A MATLAB protocol script controls the LED arena and camera, producing a UFMF video file and a LOG.mat file with stimulus timing.
+2. **Track the flies** -- FlyTracker (offline software) processes the video to extract each fly's position, heading, and basic features, producing `feat.mat` and `trx.mat`.
+3. **Compute behavioral metrics** -- `combine_data_one_cohort` filters bad tracking, interpolates gaps, and computes 12 behavioral metrics (forward velocity, angular velocity, turning rate, etc.).
+4. **Split by condition** -- `comb_data_one_cohort_cond` uses the LOG frame indices to separate the continuous data into per-condition segments.
+5. **Merge experiments** -- `comb_data_across_cohorts_cond` combines data from multiple experimental sessions into a single hierarchical DATA struct for group analysis.
+
+
+\newpage
+
+# Running an Experiment -- Protocol Functions {#sec-protocol}
+
+::: {.callout-note appearance="simple" icon=false}
+## At a Glance
+
+- A protocol file (e.g., `protocol_27.m`) orchestrates the entire experiment
+- 14 shared functions in `protocols/protocol_functions/` handle initialization, stimulus, and acclimation
+- Each experiment has: acclimation, flashes, 2 repetitions of all conditions, final acclimation
+- All timing (frame counts and timestamps) is logged in the LOG struct
+- Temperature is recorded at the start and end of every phase
+:::
+
+## Overview of Protocol Structure
+
+A protocol file (e.g., `protocol_27.m`) is a MATLAB script that orchestrates the entire experiment. It defines the stimulus conditions, calls initialization functions, presents stimuli in randomized order, and saves all timing data.
+
+The protocol calls functions from the `protocols/protocol_functions/` directory. There are 14 functions in this directory, organized into four categories: initialization, stimulus presentation, acclimation, and data export.
+
+![Experiment timeline showing the temporal structure of a typical protocol. Each condition block consists of two trials (CW and CCW) plus an interval.](diagrams/01_experiment_timeline.png){#fig-timeline width=100%}
+
+### Typical Experiment Flow (protocol_27.m)
+
+1. Initialize camera, folders, and metadata (`initialize_video_and_folders`)
+2. Initialize temperature recording (`initialize_temp_recording`)
+3. Start camera capture
+4. **Acclimation OFF 1** -- 300s of recording in complete darkness (`present_acclim_off`, rep=1)
+5. **Full-field flashes** -- 5s calibration flashes (pattern 48), then 20s dark interval
+6. **Repetition 1** -- Present all conditions once in random order
+7. **Repetition 2** -- Present all conditions again in a new random order
+8. **Acclimation OFF 2** -- 30s of dark recording (`present_acclim_off`, rep=2)
+9. Stop camera, save LOG.mat, export metadata to Google Sheets
+
+
+Each condition consists of:
+
+- 2 stimulus trials (15s each, alternating CW and CCW directions)
+- 1 interval (20s, dark background pattern)
+
+
+## Initialization Functions
+
+### \colorbox{fnbg}{\texttt{get\_input\_parameters.m}} \label{fn:get_input_parameters}
+
+**Purpose:** Opens a GUI dialog to capture experimental metadata before each experiment.
+
+**Inputs:** None
+
+**Outputs:** `selections` struct with fields:
+
+| Field | Options | Default |
+|:------|:--------|:--------|
+| `nFlies` | 1--20 | 15 |
+| `Experimenter` | GraceBiondi, AparnaDev, LauraBurnett, other | GraceBiondi |
+| `Strain` | 28 strain options (csw1118, jfrc100_es_shibire_kir, RNAi controls, etc.) | jfrc100_es_shibire_kir |
+| `Age` | 1--8, >8, age ranges (1-2, 2-3, ...), NaN | 4 |
+| `Sex` | F, M, NaN | F |
+| `LightCycle` | 20:00_12:00, 01:00_17:00, NaN | 01:00_17:00 |
+
+This metadata is stored in the LOG struct and exported to Google Sheets for experiment tracking.
+
+### \colorbox{fnbg}{\texttt{initialize\_video\_and\_folders.m}} \label{fn:initialize_video_and_folders}
+
+**Purpose:** Sets up the camera, creates the folder hierarchy for data storage, and initializes the LOG struct.
+
+**Inputs:**
+
+- `project_data_folder` -- root data directory (e.g., `C:\MatlabRoot\FreeWalkOptomotor\data`)
+- `func_name` -- protocol name (e.g., `"protocol_27"`)
+
+**Outputs:**
+
+- `LOG` -- metadata struct (with `LOG.meta` subfield)
+- `vidobj` -- BIAS camera interface object
+- `exp_folder` -- full path to experiment folder
+- `date_str`, `t_str` -- date and time strings
+- `params` -- augmented parameter struct
+
+**What it does:**
+
+1. Calls `get_input_parameters()` to collect metadata via GUI
+2. Connects to the BIAS camera on `localhost:5010`
+3. Creates a nested folder hierarchy:
+
+```
+data/{date}/{protocol}/{strain}/{sex}/{time}/
+```
+
+4. Configures video recording (UFMF format, prefix `REC_`)
+5. Creates `LOG.meta` with fields: `date`, `time`, `func_name`, `fly_strain`, `fly_age`, `fly_sex`, `light_cycle`, `experimenter`, `n_flies`
+6. Prompts for start-of-experiment notes
+
+### \colorbox{fnbg}{\texttt{initialize\_temp\_recording.m}} \label{fn:initialize_temp_recording}
+
+**Purpose:** Configures a National Instruments DAQ for temperature monitoring.
+
+**Inputs:** None
+
+**Outputs:** `d` -- DAQ session object
+
+**Configuration:**
+
+- Device: cDAQ1Mod1 (National Instruments CompactDAQ)
+- Channel ai0: `outside_probe` (K-type thermocouple) -- ambient temperature
+- Channel ai1: `ring_probe` (K-type thermocouple) -- arena ring temperature
+- Sampling rate: 2 Hz
+
+### \colorbox{fnbg}{\texttt{get\_temp\_rec.m}} \label{fn:get_temp_rec}
+
+**Purpose:** Reads a single temperature measurement from both probes.
+
+**Inputs:** `d` -- DAQ session object
+
+**Outputs:** `t_outside` (ambient), `t_ring` (arena ring) -- temperature in degrees C
+
+**How it works:** Reads 1 second of data from the DAQ and extracts the first sample from each channel. Called at the start and end of each stimulus condition and acclimation period.
+
+
+## Stimulus Presentation Functions
+
+All stimulus presentation functions share a common pattern:
+
+1. Record temperature at start
+2. Extract parameters from the `all_conditions` matrix row
+3. Present stimulus trials (varying by function type)
+4. Present interval pattern
+5. Record temperature at end
+6. Return a `Log` struct with timing and parameter data
+
+### The `all_conditions` Matrix
+
+Each protocol defines an `all_conditions` matrix with columns:
+
+| Column | Field | Description |
+|:------:|:------|:------------|
+| 1 | pattern_id | LED pattern number for the stimulus |
+| 2 | interval_id | LED pattern for the interval (usually 47 = dark) |
+| 3 | speed_patt | Stimulus animation speed (0--127) |
+| 4 | speed_int | Interval animation speed (usually 0 or 1) |
+| 5 | trial_dur | Duration of each trial in seconds |
+| 6 | int_dur | Duration of the interval in seconds |
+| 7 | condition_n | Condition number (for identification) |
+
+**Speed values:**
+
+| Speed Value | Approximate Rate |
+|:-----------:|:-----------------|
+| 0 | Static (no motion) |
+| 1 | Minimal (fixation) |
+| 8 | ~4 Hz |
+| 32 | ~16 Hz |
+| 64 | ~32 Hz |
+| 127 | Maximum (~63 Hz) |
+
+
+### \colorbox{fnbg}{\texttt{present\_optomotor\_stimulus.m}} -- Standard Bidirectional \label{fn:present_optomotor_stimulus}
+
+**Purpose:** Presents a moving grating pattern in two directions (CW then CCW), followed by a dark interval.
+
+**Inputs:** `current_condition` (index), `all_conditions` (matrix), `vidobj` (camera), `d` (DAQ)
+
+**Outputs:** `Log` struct
+
+**Step-by-step:**
+
+1. Record start temperature
+2. Extract condition parameters from `all_conditions(current_condition, :)`
+3. Calculate `num_trials = 2` (always: `t_stim = trial_len * 2`, then `num_trials = t_stim / trial_len`)
+4. Load the stimulus pattern via `Panel_com('set_pattern_id', pattern_id)`
+5. **Trial loop** (2 iterations):
+   - Alternate direction: `dir_val` flips between +1 and -1 each trial
+   - Set speed and direction: `Panel_com('send_gain_bias', [speed * dir_val, 0, 0, 0])`
+   - Start the LED panels: `Panel_com('start')`
+   - **Log `start_f` and `start_t`** from the camera (`vidobj.getFrameCount()` and `vidobj.getTimeStamp()`)
+   - Pause for `trial_len` seconds (the stimulus runs during this pause)
+   - Stop the panels: `Panel_com('stop')`
+   - **Log `stop_f` and `stop_t`** from the camera
+6. **Interval phase:**
+   - Load interval pattern (pattern 47, dark background)
+   - Set direction to 0 (no motion)
+   - Log start/stop frame counts and timestamps
+   - Pause for `interval_dur` seconds
+7. Record end temperature
+
+**Log structure returned:**
+
+- `Log.trial` = [1, 2, 3] -- trial indices
+- `Log.dir` = [+1, -1, 0] -- directions (CW, CCW, interval)
+- `Log.start_t`, `Log.start_f` = [t1, t2, t3] -- timestamps and frame counts at onset
+- `Log.stop_t`, `Log.stop_f` = [t1, t2, t3] -- timestamps and frame counts at offset
+- Plus: `trial_len`, `interval_dur`, `num_trials`, `optomotor_pattern`, `interval_pattern`, `optomotor_speed`, `interval_speed`, `which_condition`, and four temperature readings
+
+### \colorbox{fnbg}{\texttt{present\_optomotor\_stimulus\_w\_interval.m}} -- Per-Trial Intervals \label{fn:present_optomotor_stimulus_w_interval}
+
+**Difference from standard:** Instead of one interval after all trials, this function inserts a dark interval **after each trial**. This creates a log with alternating stimulus and interval entries.
+
+The `num_trials` value comes directly from `all_conditions` column 7 (not derived from trial length). First trial direction is +1, subsequent trials use -1.
+
+**Log structure:** Arrays are longer, alternating between stimulus entries (dir = +1 or -1) and interval entries (dir = 0).
+
+### \colorbox{fnbg}{\texttt{present\_optomotor\_stimulus\_one\_direction.m}} -- Single Direction \label{fn:present_optomotor_stimulus_one_direction}
+
+**Difference from standard:** Only presents one trial (`num_trials = 1`) in one direction (dir = +1), followed by an interval. Used for stimuli where bidirectional testing is not needed.
+
+### \colorbox{fnbg}{\texttt{present\_optomotor\_stimulus\_curtain.m}} -- Curtain Patterns \label{fn:present_optomotor_stimulus_curtain}
+
+**Difference from standard:** Curtain stimuli (progressive ON/OFF edges) require a different pattern for each direction. This function uses a hardcoded pattern-pair mapping:
+
+| Forward Pattern | Reverse Pattern |
+|:---------------:|:---------------:|
+| 19 | 20 |
+| 51 | 52 |
+| 53 | 54 |
+| 55 | 56 |
+
+On trial 1, the original pattern is used. On trial 2, the pattern switches to the complementary pattern from the table above.
+
+Number of trials depends on trial length: if `trial_len == 2`, then 15 trials; if `trial_len == 15`, then 2 trials.
+
+### \colorbox{fnbg}{\texttt{present\_optomotor\_stimulus\_curtain\_w\_interval.m}} \label{fn:present_optomotor_stimulus_curtain_w_interval}
+
+Combines the curtain pattern-switching logic with per-trial interval logging (like `_w_interval` above).
+
+### \colorbox{fnbg}{\texttt{present\_optomotor\_stimulus\_diff\_contrasts.m}} -- Contrast Variation \label{fn:present_optomotor_stimulus_diff_contrasts}
+
+**Difference from standard:** Uses the `which_condition` parameter as a y-position index to select different contrast levels from the same pattern:
+
+```matlab
+Panel_com('set_position', [1 which_condition])
+```
+
+The contrast levels are: [0.11, 0.2, 0.333, 0.4, 0.556, 0.75, 1.0].
+
+Additionally logs `Log.contrast` with the contrast value for the current condition.
+
+### \colorbox{fnbg}{\texttt{present\_fixation\_stimulus.m}} -- Static Bar Display \label{fn:present_fixation_stimulus}
+
+**Purpose:** Presents a stationary pattern (no motion) for phototaxis/bar fixation experiments.
+
+**Key differences:**
+
+- Speed is set to `[0 0 0 0]` (no animation)
+- Position is set to `[1 1]` (first frame only -- static display)
+- Single trial, no direction alternation
+
+### \colorbox{fnbg}{\texttt{present\_shifted\_stimulus.m}} -- Open-Loop Shifted Patterns \label{fn:present_shifted_stimulus}
+
+**Key differences:**
+
+- Explicitly sets controller mode to `[0 0]` (double open-loop)
+- Does **not** take a DAQ device parameter (no temperature recording within the function)
+- Uses `Panel_com('all_off')` for intervals instead of showing an interval pattern
+- Includes a 30-second "ALL OFF" phase after stimulus trials
+
+### \colorbox{fnbg}{\texttt{present\_acclim\_off.m}} -- Dark Acclimation \label{fn:present_acclim_off}
+
+**Purpose:** Records fly behavior in complete darkness (all LEDs off). Called twice per experiment.
+
+**Inputs:** `LOG` (modified in place), `vidobj`, `t_pause`, `t_acclim` (duration), `rep` (1 or 2), `d` (DAQ)
+
+**Outputs:** Modified `LOG` with `acclim_off1` or `acclim_off2` added
+
+**Step-by-step:**
+
+1. Record start temperature
+2. Turn off all LEDs: `Panel_com('all_off')`
+3. Log start frame count and timestamp
+4. Pause for `t_acclim` seconds
+5. Log stop frame count and timestamp
+6. Record end temperature
+7. Store in `LOG.acclim_off1` (if rep=1) or `LOG.acclim_off2` (if rep=2)
+
+
+## Export Function
+
+### \colorbox{fnbg}{\texttt{export\_to\_google\_sheets.m}} \label{fn:export_to_google_sheets}
+
+**Purpose:** Pushes experiment metadata to a Google Sheet via HTTP POST for centralized experiment tracking.
+
+**Inputs:** `params` struct with: Date, Time, Experimenter, Strain, Age, Sex, LightCycle, Protocol, NotesStart, NotesEnd
+
+**How it works:** Submits the parameters to a Google Form response endpoint using MATLAB's `webwrite()`. Each field maps to a specific Google Form entry ID. The data appears in a linked Google Sheet, providing a lab-wide experiment log.
+
+
+\newpage
+
+# The LOG Data Structure {#sec-log}
+
+::: {.callout-note appearance="simple" icon=false}
+## At a Glance
+
+- The LOG struct is built progressively during the experiment -- each phase adds its subfield
+- `LOG.meta` stores experiment metadata (strain, age, sex, timing parameters, etc.)
+- `LOG.acclim_off1` and `LOG.acclim_off2` store dark acclimation timing
+- `LOG.log_1` through `LOG.log_N` store per-condition stimulus timing with frame counts
+- Frame counts (`start_f`, `stop_f`) are the critical link to the video data
+:::
+
+## How the LOG Is Built
+
+The LOG struct is progressively assembled during an experiment. Each phase of the protocol adds its own subfield.
+
+![The LOG data structure showing all fields organized by experiment phase.](diagrams/02_log_structure.png){#fig-log width=100%}
+
+**Build sequence:**
+
+1. `initialize_video_and_folders` creates `LOG.meta` with date, time, strain, age, sex, etc.
+2. `present_acclim_off(LOG, ..., 1, d)` adds `LOG.acclim_off1`
+3. The protocol script adds `LOG.acclim_patt` (calibration flashes)
+4. The condition loop adds `LOG.log_1`, `LOG.log_2`, ... `LOG.log_N` (where N = 2 x num_conditions, covering both repetitions)
+5. `present_acclim_off(LOG, ..., 2, d)` adds `LOG.acclim_off2`
+6. The protocol script appends final fields to `LOG.meta`: timing parameters, start/end temperatures, `cond_array`, `random_order`
+7. The LOG is saved as `LOG_{date}_{time}.mat`
+
+
+## LOG.meta Fields
+
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `date` | datetime | Experiment date (yyyy_MM_dd) |
+| `time` | datetime | Experiment start time |
+| `func_name` | string | Protocol name (e.g., "protocol_27") |
+| `fly_strain` | string | Genotype of the flies |
+| `fly_age` | string | Age in days |
+| `fly_sex` | string | "F" or "M" |
+| `light_cycle` | string | Light/dark cycle timing |
+| `experimenter` | string | Person running the experiment |
+| `n_flies` | string | Number of flies in the arena |
+| `t_acclim_start` | double | Duration of pre-stimulus acclimation (seconds) |
+| `t_flash` | double | Duration of calibration flashes (seconds) |
+| `t_acclim_end` | double | Duration of post-stimulus acclimation (seconds) |
+| `start_temp_outside` | double | Ambient temperature at experiment start |
+| `start_temp_ring` | double | Arena ring temperature at experiment start |
+| `end_temp_outside` | double | Ambient temperature at experiment end |
+| `end_temp_ring` | double | Arena ring temperature at experiment end |
+| `cond_array` | matrix | The full `all_conditions` matrix [N x 7] |
+| `random_order` | vector | Randomized condition presentation order |
+
+
+## LOG.acclim_off1 and LOG.acclim_off2 Fields
+
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `condition` | double | Always 0 (darkness) |
+| `dir` | double | Always 0 (no direction) |
+| `start_t` | double | Camera timestamp at acclimation start |
+| `start_f` | double | Camera frame count at acclimation start |
+| `stop_t` | double | Camera timestamp at acclimation end |
+| `stop_f` | double | Camera frame count at acclimation end |
+| `t_outside_start` | double | Ambient temperature at start |
+| `t_ring_start` | double | Ring temperature at start |
+| `t_outside_end` | double | Ambient temperature at end |
+| `t_ring_end` | double | Ring temperature at end |
+
+## LOG.acclim_patt Fields
+
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `flash_pattern` | double | Pattern 48 (full-field flash) |
+| `flash_speed` | double | Flash animation speed |
+| `flash_dur` | double | Flash duration in seconds |
+| `dir` | double | Always 0 |
+| `start_t`, `start_f` | double | Camera timing at flash start |
+| `stop_t`, `stop_f` | double | Camera timing at flash end |
+| `start_t_int`, `start_f_int` | double | Camera timing at interval start |
+| `stop_t_int`, `stop_f_int` | double | Camera timing at interval end |
+
+## LOG.log_N Fields (Stimulus Conditions)
+
+Each `LOG.log_1` through `LOG.log_N` contains:
+
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `trial` | array | Trial indices [1, 2, 3] |
+| `dir` | array | Directions [+1, -1, 0] (CW, CCW, interval) |
+| `start_t` | array | Camera timestamps at each trial/interval onset |
+| `start_f` | array | Camera frame counts at each trial/interval onset |
+| `stop_t` | array | Camera timestamps at each trial/interval offset |
+| `stop_f` | array | Camera frame counts at each trial/interval offset |
+| `trial_len` | double | Trial duration in seconds |
+| `interval_dur` | double | Interval duration in seconds |
+| `num_trials` | double | Number of stimulus trials (usually 2) |
+| `optomotor_pattern` | double | Pattern ID used for stimulus |
+| `interval_pattern` | double | Pattern ID for interval (usually 47) |
+| `optomotor_speed` | double | Stimulus speed (0--127) |
+| `interval_speed` | double | Interval speed (usually 0 or 1) |
+| `which_condition` | double | Condition number from `all_conditions` |
+| `t_outside_start` | double | Ambient temperature at start |
+| `t_ring_start` | double | Ring temperature at start |
+| `t_outside_end` | double | Ambient temperature at end |
+| `t_ring_end` | double | Ring temperature at end |
+
+**Important:** For the standard `present_optomotor_stimulus`, the arrays have 3 entries (trial 1, trial 2, interval). For `_w_interval` variants, arrays alternate: stimulus, interval, stimulus, interval, ...
+
+## Frame Synchronization
+
+The critical link between stimulus events and behavioral data is the **frame count**. Each time a stimulus starts or stops, the protocol records the camera's current frame number. This allows precise alignment during offline analysis.
+
+![How LOG frame counts (start_f, stop_f) map video frames to stimulus events. The 300-frame pre-buffer is included when slicing data per condition.](diagrams/04_frame_synchronization.png){#fig-framesync width=100%}
+
+**Key points:**
+
+- `start_f = vidobj.getFrameCount().value` is called **immediately after** `Panel_com('start')` -- this is the frame when the stimulus becomes visible
+- `stop_f = vidobj.getFrameCount().value` is called **immediately after** `Panel_com('stop')` -- this is the frame when the stimulus disappears
+- At 30 fps, each frame is ~33.3 ms
+- During processing, a **300-frame (10-second) pre-buffer** is included before each condition to capture baseline behavior before stimulus onset
+
+
+\newpage
+
+# Data Processing Pipeline {#sec-processing}
+
+::: {.callout-note appearance="simple" icon=false}
+## At a Glance
+
+- `process_freely_walking_data` iterates through all experiments for a given date
+- `process_data_features` handles one experiment: loads tracking, computes metrics, saves results
+- `combine_data_one_cohort` is the core function: filters bad tracking, computes 12 behavioral metrics
+- `comb_data_one_cohort_cond` slices continuous data into per-condition segments using LOG frame indices
+- `comb_data_across_cohorts_cond` merges all experiments for group-level analysis
+:::
+
+## \colorbox{fnbg}{\texttt{process\_freely\_walking\_data.m}} -- The Orchestrator \label{fn:process_freely_walking_data}
+
+This is the main entry point for processing all experiments from a given date.
+
+**Usage:**
+
+```matlab
+process_freely_walking_data("2024_09_24")
+process_freely_walking_data("2024_09_24", true)  % with stimulus videos
+```
+
+**How it works:**
+
+1. Sets the project root and data paths
+2. Navigates to the date folder in `DATA/01_tracked/{date}/`
+3. Iterates through all protocol folders (`protocol_*`)
+4. For each protocol, iterates through strain folders
+5. For each strain, iterates through sex folders (F/M)
+6. Calls `process_data_features()` for each combination
+
+![Data folder hierarchy showing the organization of raw, tracked, and processed data.](diagrams/06_folder_structure.png){#fig-folders width=100%}
+
+
+## \colorbox{fnbg}{\texttt{process\_data\_features.m}} -- Single Experiment Processing \label{fn:process_data_features}
+
+Processes a single experiment: loads tracking data, computes metrics, generates overview plots, and saves results.
+
+**Step-by-step:**
+
+1. **Load LOG** -- Finds `LOG_*.mat` in the experiment folder
+2. **Load FlyTracker output** -- Navigates into `REC_*/movie/` and loads:
+   - `feat` from `movie-feat.mat` (behavioral features)
+   - `trx` from `movie_JAABA/trx.mat` (trajectory data)
+3. **Compute behavioral metrics** -- Calls `combine_data_one_cohort(feat, trx)` to produce `comb_data`
+4. **Split by condition** -- Calls `comb_data_one_cohort_cond(LOG, comb_data, protocol)` to produce a per-condition DATA struct
+5. **Generate overview plots** -- Histograms of locomotor parameters, full-experiment feature timeseries, and per-condition timeseries for forward velocity, angular velocity, turning rate, and distance from center
+6. **Save** -- Writes `{date}_{time}_{strain}_{protocol}_{sex}_data.mat` containing: `LOG`, `feat`, `trx`, `comb_data`, `n_fly_data`
+
+
+## \colorbox{fnbg}{\texttt{combine\_data\_one\_cohort.m}} -- Core Feature Extraction \label{fn:combine_data_one_cohort}
+
+This is the most important processing function. It takes raw FlyTracker output and computes all derived behavioral metrics.
+
+**Inputs:** `feat` (FlyTracker features struct), `trx` (trajectory struct)
+
+**Outputs:** `comb_data` (struct with 12 metric matrices), modified `feat` and `trx` (bad flies removed)
+
+### Step 1: Remove Bad Tracking (\colorbox{fnbg}{\texttt{check\_tracking\_FlyTrk}}) \label{fn:check_tracking_FlyTrk}
+
+FlyTracker sometimes produces artifacts: a single fly split into two tracks, or a non-fly object (dust, shadow) tracked. The function `check_tracking_FlyTrk` detects these:
+
+1. Extract the frame count for each fly: `d = [trx.nframes]`
+2. Compute the mode (most common frame count) -- this is the true video length
+3. Any fly whose frame count differs from the mode is flagged for removal
+4. Flagged flies are removed from both `trx` and `feat.data`
+
+This is a simple but effective quality control step.
+
+### Step 2: High-Velocity Filtering
+
+For each fly, frames where the FlyTracker-reported velocity exceeds 50 mm/s are marked as tracking errors. At these frames, position (`x`, `y`), heading, and distance-to-wall data are set to NaN for interpolation.
+
+50 mm/s is well above the typical maximum walking speed of *Drosophila* (~30 mm/s) and reliably catches tracking jumps.
+
+### Step 3: Interpolation
+
+Missing values (from filtering) are filled using method-appropriate interpolation:
+
+| Data | Method | Reason |
+|:-----|:-------|:-------|
+| `d_wall_data` | Spline | Smooth, continuous changes in distance |
+| `heading_data` | Previous value | Avoids introducing artificial heading jumps |
+| `x_data`, `y_data` | Spline | Smooth position trajectories |
+
+### Step 4: Distance from Center
+
+```matlab
+dist_data = 120 - d_wall_data;
+```
+
+FlyTracker reports `d_wall` (distance from fly to arena wall). The arena radius is 120 mm, so distance from center is simply `120 - d_wall`.
+
+### Step 5: Angular Velocity (\colorbox{fnbg}{\texttt{vel\_estimate}}) \label{fn:vel_estimate}
+
+Angular velocity measures how fast the fly is turning, in degrees per second.
+
+**Method:** Least-squares line fit to heading data in a sliding window.
+
+```matlab
+av_data_rad = vel_estimate(heading, samp_rate, 'line_fit', t_window, []);
+av_data = rad2deg(av_data_rad);
+```
+
+**Parameters:**
+
+- `samp_rate = 1/30` (30 fps)
+- `t_window = 16` -- the sliding window is 16 frames (~0.53 seconds)
+- The `vel_estimate` function unwraps heading internally, fits a line in the window, and returns the slope as angular velocity
+
+Larger `t_window` values produce smoother angular velocity estimates.
+
+### Step 6: Forward Velocity (\colorbox{fnbg}{\texttt{gaussian\_conv}}) \label{fn:gaussian_conv}
+
+Forward velocity measures the speed of the fly **in the direction it is heading**, in mm/s.
+
+**Computation:**
+
+1. Smooth x and y positions with Gaussian convolution
+2. Compute frame-to-frame displacements: `dx = diff(x)`, `dy = diff(y)`
+3. Convert to velocities: `vx = dx / dt`, `vy = dy / dt`
+4. **Project onto heading direction:**
+
+```matlab
+fv = vx .* cos(heading) + vy .* sin(heading);
+```
+
+5. **Filter:** Negative values set to NaN (fly moving backwards = tracking artifact). Values > 50 mm/s set to NaN.
+6. Fill NaNs with linear interpolation
+7. Prepend `fv(1)` to maintain array length (since `diff` reduces length by 1)
+
+### Step 7: Three-Point Velocity (\colorbox{fnbg}{\texttt{calculate\_three\_point\_velocity}}) \label{fn:calculate_three_point_velocity}
+
+Speed magnitude regardless of heading direction, computed using central differences:
+
+```matlab
+% Forward difference at first point:
+vx(1) = (x(2) - x(1)) / dt;
+
+% Central difference for intermediate points:
+vx(2:n-1) = (x(3:n) - x(1:n-2)) / (2 * dt);
+
+% Backward difference at last point:
+vx(n) = (x(n) - x(n-1)) / dt;
+
+v = sqrt(vx.^2 + vy.^2);
+```
+
+This gives the speed (always positive) without regard to heading direction. Central difference is more accurate than simple forward difference.
+
+### Step 8: Turning Rate (Curvature)
+
+Turning rate combines angular and forward velocity:
+
+```matlab
+curv_data = av_data ./ fv_data;  % deg/mm
+```
+
+**Filtering:**
+
+- Frames where `abs(fv_data) < 0.1` mm/s are set to NaN (turning rate is undefined when the fly is barely moving)
+- Infinite values are set to NaN
+
+Units are degrees per millimeter: how many degrees the fly turns for each millimeter it walks.
+
+### Step 9: Viewing Distance (\colorbox{fnbg}{\texttt{calculate\_viewing\_distance}}) \label{fn:calculate_viewing_distance}
+
+The distance from the fly to the arena wall **in the direction it is heading**. This tells us how far ahead the fly can "see" before the wall.
+
+**Algorithm:** Solves the ray-circle intersection equation.
+
+Given a fly at position $(x_f, y_f)$ heading in direction $\theta$, and a circular arena centered at $(x_c, y_c)$ with radius $R$:
+
+The ray is parameterized as:
+
+$$x(t) = x_f + t\cos\theta, \quad y(t) = y_f + t\sin\theta$$
+
+Substituting into the circle equation $(x - x_c)^2 + (y - y_c)^2 = R^2$ gives a quadratic in $t$:
+
+$$At^2 + Bt + C = 0$$
+
+where $A = 1$, $B = 2[(x_f - x_c)\cos\theta + (y_f - y_c)\sin\theta]$, $C = (x_f - x_c)^2 + (y_f - y_c)^2 - R^2$.
+
+The viewing distance is the smallest positive root.
+
+**Arena parameters (hardcoded):**
+
+- PPM (pixels per mm) = 4.1691
+- Center of arena = (528, 520) pixels = (126.6, 124.7) mm
+- Arena radius = 496 pixels = 119.0 mm
+
+### Step 10: Inter-Fly Distance and Angle (\colorbox{fnbg}{\texttt{calculate\_distance\_to\_nearest\_fly}}) \label{fn:calculate_distance_to_nearest_fly}
+
+For each fly at each frame:
+
+- **IFD_data** (inter-fly distance): Euclidean distance to the nearest other fly, in mm
+- **IFA_data** (inter-fly angle): Angle to the nearest other fly relative to the focal fly's heading, in degrees
+
+### Output: `comb_data` Struct
+
+All metrics are stored as `[n_flies x n_frames]` matrices:
+
+| Field | Description | Units |
+|:------|:------------|:------|
+| `vel_data` | Three-point velocity | mm/s |
+| `fv_data` | Forward velocity | mm/s |
+| `av_data` | Angular velocity | deg/s |
+| `curv_data` | Turning rate | deg/mm |
+| `dist_data` | Distance from center | mm |
+| `heading_data` | Unwrapped heading | deg |
+| `heading_wrap` | Wrapped heading | deg |
+| `x_data` | X position | mm |
+| `y_data` | Y position | mm |
+| `view_dist` | Viewing distance to wall | mm |
+| `IFD_data` | Inter-fly distance | mm |
+| `IFA_data` | Inter-fly angle | deg |
+
+
+## \colorbox{fnbg}{\texttt{comb\_data\_one\_cohort\_cond.m}} -- Splitting by Condition \label{fn:comb_data_one_cohort_cond}
+
+This function takes the continuous `comb_data` matrices and slices them into per-condition segments using the LOG's frame indices.
+
+**How it works:**
+
+1. Find all LOG fields starting with `log_` to determine the number of conditions
+2. The first half of conditions belong to **Repetition 1**, the second half to **Repetition 2**
+3. For each condition log:
+   - Extract `which_condition` (the condition number from `all_conditions`)
+   - Compute the data slice: `start_f(1) - 300` to `stop_f(end)`
+   - The 300-frame (10-second) pre-buffer captures baseline behavior before stimulus onset
+   - Store the slice as `DATA.(strain).(landing).(sex)(sz).R1_condition_N` or `R2_condition_N`
+4. Also store acclimation phases: `acclim_off1`, `acclim_patt`, `acclim_off2`
+
+**Condition matching:** For newer protocols (protocol_24, protocol_27), the condition number is stored directly in `Log.which_condition`. For older protocols, the function matches parameters against the protocol's condition array.
+
+
+## \colorbox{fnbg}{\texttt{comb\_data\_across\_cohorts\_cond.m}} -- Merging Across Experiments \label{fn:comb_data_across_cohorts_cond}
+
+Combines processed data from all experiments for a single protocol into one hierarchical DATA struct.
+
+**How it works:**
+
+1. Find all `*_data.mat` files in the protocol results directory
+2. For each file, load `comb_data`, `LOG`, and `n_fly_data`
+3. Extract strain and sex from `LOG.meta`
+4. Append to the DATA struct, incrementing the cohort index
+5. Process each condition using the same frame-slicing logic
+
+This produces the final DATA struct used for group analysis.
+
+
+\newpage
+
+# The DATA Struct {#sec-data}
+
+::: {.callout-note appearance="simple" icon=false}
+## At a Glance
+
+- DATA is the final output: a hierarchical struct organizing all experiments
+- Levels: strain, sex, cohort (array index), condition, metric data
+- Conditions are named `R1_condition_1`, `R2_condition_N`, etc., plus acclimation phases
+- Each condition contains stimulus metadata and all 12 behavioral metric matrices
+- All data matrices are `[n_flies x n_frames]`
+:::
+
+## Hierarchy
+
+The DATA struct organizes all experimental data in a nested hierarchy:
+
+![DATA struct hierarchy showing the nesting levels from strain down to individual behavioral metrics.](diagrams/07_data_struct_hierarchy.png){#fig-datastruct width=100%}
+
+**Levels:**
+
+1. **Strain** -- e.g., `DATA.jfrc100_es_shibire_kir`, `DATA.csw1118`
+2. **Sex** -- `DATA.(strain).F` or `DATA.(strain).M`
+3. **Cohort index** -- Array index for each experimental session, e.g., `DATA.(strain).F(1)`, `DATA.(strain).F(2)`
+4. **Condition** -- Named fields for each experimental phase
+5. **Data arrays** -- `[n_flies x n_frames]` matrices of behavioral metrics
+
+## Condition Names
+
+| Name | Description |
+|:-----|:------------|
+| `meta` | Experiment metadata (same as LOG.meta + fly counts) |
+| `acclim_off1` | Pre-stimulus dark acclimation (300s) |
+| `acclim_patt` | Calibration flash period |
+| `R1_condition_1` ... `R1_condition_N` | Repetition 1, conditions 1 through N |
+| `R2_condition_1` ... `R2_condition_N` | Repetition 2, conditions 1 through N |
+| `acclim_off2` | Post-stimulus dark acclimation (30s) |
+
+Condition numbers match the `condition_n` column in the protocol's `all_conditions` matrix.
+
+## Per-Condition Fields
+
+Each condition contains stimulus metadata and all behavioral metrics:
+
+**Stimulus metadata:** `trial_len`, `interval_dur`, `optomotor_pattern`, `optomotor_speed`, `interval_pattern`, `interval_speed`, `start_flicker_f`
+
+**Behavioral data** (all `[n_flies x n_frames]`): `fv_data`, `av_data`, `curv_data`, `dist_data`, `vel_data`, `heading_data`, `heading_wrap`, `x_data`, `y_data`, `view_dist`, `IFD_data`, `IFA_data`
+
+## Accessing Data -- Examples
+
+```matlab
+% Load combined data for protocol_27
+protocol_dir = '/path/to/results/protocol_27';
+DATA = comb_data_across_cohorts_cond( ...
+    protocol_dir);
+
+% Get forward velocity:
+%   strain jfrc100, sex F, cohort 1, R1 cond 1
+fv = DATA.jfrc100_es_shibire_kir ...
+    .F(1).R1_condition_1.fv_data;
+% fv is [n_flies x n_frames]
+
+% Mean forward velocity across all flies
+mean_fv = mean(fv, 1);  % [1 x n_frames]
+
+% Get the stimulus parameters
+speed = DATA.jfrc100_es_shibire_kir ...
+    .F(1).R1_condition_1.optomotor_speed;
+pattern = DATA.jfrc100_es_shibire_kir ...
+    .F(1).R1_condition_1.optomotor_pattern;
+
+% Number of cohorts for this strain/sex
+n_cohorts = length( ...
+    DATA.jfrc100_es_shibire_kir.F);
+
+% List all strains in the dataset
+strain_names = fieldnames(DATA);
+```
+
+
+\newpage
+
+# Behavioral Metrics Reference {#sec-metrics}
+
+::: {.callout-note appearance="simple" icon=false}
+## At a Glance
+
+- 12 behavioral metrics are computed for each fly at each frame
+- Forward velocity and angular velocity are the primary optomotor response measures
+- All metrics are stored as `[n_flies x n_frames]` matrices in `comb_data` and `DATA`
+- See the Quick Reference table (@sec-quickref) for a compact summary of all metrics
+:::
+
+![Overview of behavioral metrics measured for each fly in the arena. Each metric captures a different aspect of walking behavior.](diagrams/05_behavioral_metrics.png){#fig-metrics width=100%}
+
+## Forward Velocity (`fv_data`)
+
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.5cm} X}
+\textbf{Property} & \textbf{Value} \\
+\hline
+\textbf{Units} & mm/s \\
+\textbf{Range} & 0 -- \textasciitilde30 mm/s (typical walking) \\
+\textbf{Meaning} & Speed in the direction the fly is heading \\
+\end{tabularx}
+
+**Computation:** Projection of the velocity vector onto the heading direction: `fv = vx * cos(theta) + vy * sin(theta)`. Position is Gaussian-smoothed before differentiation. Negative values and values > 50 mm/s are filtered as artifacts.
+
+**Interpretation:** A stationary fly has fv near 0. Active walking is typically 5--20 mm/s.
+
+## Angular Velocity (`av_data`)
+
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.5cm} X}
+\textbf{Property} & \textbf{Value} \\
+\hline
+\textbf{Units} & deg/s \\
+\textbf{Range} & approximately $-500$ to $+500$ deg/s \\
+\textbf{Meaning} & Rate of heading change (turning speed) \\
+\end{tabularx}
+
+**Computation:** Least-squares line fit to heading data in a 16-frame sliding window. Positive values indicate counterclockwise turns; negative values indicate clockwise turns.
+
+**Interpretation:** In the optomotor response, flies turn in the direction of stimulus motion. A positive mean angular velocity during a CW stimulus indicates the fly is following the pattern.
+
+## Turning Rate (`curv_data`)
+
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.5cm} X}
+\textbf{Property} & \textbf{Value} \\
+\hline
+\textbf{Units} & deg/mm \\
+\textbf{Range} & Variable \\
+\textbf{Meaning} & Path curvature -- how sharply the fly turns per unit distance \\
+\end{tabularx}
+
+**Computation:** `curv = av_data / fv_data`. Undefined (NaN) when forward velocity < 0.1 mm/s.
+
+**Interpretation:** High absolute values indicate sharp turns; near-zero values indicate straight walking. This metric normalizes turning by walking speed.
+
+## Distance from Center (`dist_data`)
+
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.5cm} X}
+\textbf{Property} & \textbf{Value} \\
+\hline
+\textbf{Units} & mm \\
+\textbf{Range} & 0 -- 120 mm \\
+\textbf{Meaning} & Distance from the fly to the arena center \\
+\end{tabularx}
+
+**Computation:** `dist = 120 - d_wall`, where `d_wall` is FlyTracker's distance-to-wall output and 120 mm is the arena radius.
+
+**Interpretation:** Flies near the center have low dist values; flies near the wall have values approaching 120 mm. Freely-walking flies often exhibit thigmotaxis (preference for walking near the wall).
+
+## Three-Point Velocity (`vel_data`)
+
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.5cm} X}
+\textbf{Property} & \textbf{Value} \\
+\hline
+\textbf{Units} & mm/s \\
+\textbf{Range} & 0 -- \textasciitilde50 mm/s \\
+\textbf{Meaning} & Overall speed regardless of heading direction \\
+\end{tabularx}
+
+**Computation:** Central-difference approximation of speed from x,y positions. Always positive (magnitude, not direction).
+
+**Interpretation:** Unlike forward velocity, this captures all motion including sideways movements. Useful as a general activity measure.
+
+## Viewing Distance (`view_dist`)
+
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.5cm} X}
+\textbf{Property} & \textbf{Value} \\
+\hline
+\textbf{Units} & mm \\
+\textbf{Range} & 0 -- \textasciitilde240 mm (diameter) \\
+\textbf{Meaning} & Distance from fly to arena wall in the heading direction \\
+\end{tabularx}
+
+**Computation:** Ray-circle intersection from the fly's position along its heading vector to the arena wall.
+
+**Interpretation:** A fly facing the nearby wall has a short viewing distance; a fly in the center facing across the arena has a large viewing distance. This metric is important for understanding how the visual environment varies with position and orientation.
+
+## Inter-Fly Distance (`IFD_data`)
+
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.5cm} X}
+\textbf{Property} & \textbf{Value} \\
+\hline
+\textbf{Units} & mm \\
+\textbf{Meaning} & Distance to the nearest other fly \\
+\end{tabularx}
+
+**Interpretation:** Low values indicate flies are close together; useful for studying social interactions or grouping behavior.
+
+## Inter-Fly Angle (`IFA_data`)
+
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.5cm} X}
+\textbf{Property} & \textbf{Value} \\
+\hline
+\textbf{Units} & deg \\
+\textbf{Meaning} & Angle to the nearest fly, relative to the focal fly's heading \\
+\end{tabularx}
+
+**Interpretation:** 0 degrees means the nearest fly is directly ahead; 180 degrees means it is directly behind.
+
+## Position and Heading
+
+- **`x_data`**, **`y_data`**: Position in mm, relative to the arena center
+- **`heading_data`**: Unwrapped heading in degrees (continuous, can exceed 360)
+- **`heading_wrap`**: Wrapped heading in degrees (-180 to +180)
+
+These are the raw tracking outputs (after filtering and interpolation) that all other metrics are derived from.
+
+
+\newpage
+
+# Visualization and Plotting Functions {#sec-plotting}
+
+::: {.callout-note appearance="simple" icon=false}
+## At a Glance
+
+- `make_overview` generates summary histograms of locomotor parameters
+- `plot_all_features_filt` and `plot_all_features_acclim` plot full-experiment timeseries
+- `plot_allcond_onecohort_tuning` creates per-condition comparison plots
+:::
+
+## \colorbox{fnbg}{\texttt{make\_overview.m}} \label{fn:make_overview}
+
+Generates a summary overview figure with histograms of key locomotor parameters for quality checking a single experiment. Called by `process_data_features`.
+
+## \colorbox{fnbg}{\texttt{plot\_all\_features\_filt.m}} \label{fn:plot_all_features_filt}
+
+Plots timeseries of all behavioral features for the full experiment duration (after filtering). Shows forward velocity, angular velocity, turning rate, and distance from center as stacked panels. Called by `process_data_features`.
+
+## \colorbox{fnbg}{\texttt{plot\_all\_features\_acclim.m}} \label{fn:plot_all_features_acclim}
+
+Similar to `plot_all_features_filt` but focused on the acclimation periods only. Useful for verifying baseline behavior before stimulus onset.
+
+## \colorbox{fnbg}{\texttt{plot\_allcond\_onecohort\_tuning.m}} \label{fn:plot_allcond_onecohort_tuning}
+
+Creates per-condition comparison plots for a single cohort. Shows stimulus-evoked responses side by side across conditions, making it easy to compare the optomotor response at different speeds or spatial frequencies.
+
+
+\newpage
+
+# Utility Functions {#sec-utilities}
+
+## \colorbox{fnbg}{\texttt{check\_strain\_typos.m}} \label{fn:check_strain_typos}
+
+Corrects common strain name typos that may have been entered through the metadata GUI. Maps misspelled variants to canonical strain names, ensuring consistent naming across the dataset.
+
+## \colorbox{fnbg}{\texttt{generate\_circ\_stim\_ufmf.m}} \label{fn:generate_circ_stim_ufmf}
+
+Generates a UFMF video of the LED stimulus pattern (circular projection) for documentation and verification purposes. Creates a video showing what the flies see from above.
+
+
+\newpage
+
+\appendix
+
+# Function Index {#sec-index}
+
+Alphabetical listing of all MATLAB functions referenced in this guide. Page numbers indicate the primary documentation location.
+
+\begin{scriptsize}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{5.5cm} c >{\raggedright\arraybackslash}X}
+\textbf{Function} & \textbf{Page} & \textbf{Description} \\
+\hline
+\texttt{calculate\_distance\_to\_\newline nearest\_fly} & \pageref{fn:calculate_distance_to_nearest_fly} & Compute IFD and IFA for each fly \\
+\texttt{calculate\_three\_point\_velocity} & \pageref{fn:calculate_three_point_velocity} & Central-difference speed estimate \\
+\texttt{calculate\_viewing\_distance} & \pageref{fn:calculate_viewing_distance} & Ray-circle intersection for viewing distance \\
+\texttt{check\_strain\_typos} & \pageref{fn:check_strain_typos} & Correct common strain name misspellings \\
+\texttt{check\_tracking\_FlyTrk} & \pageref{fn:check_tracking_FlyTrk} & QC: remove bad fly tracks by frame count \\
+\texttt{comb\_data\_across\_cohorts\_cond} & \pageref{fn:comb_data_across_cohorts_cond} & Merge experiments into hierarchical DATA struct \\
+\texttt{comb\_data\_one\_cohort\_cond} & \pageref{fn:comb_data_one_cohort_cond} & Split continuous data by condition using LOG \\
+\texttt{combine\_data\_one\_cohort} & \pageref{fn:combine_data_one_cohort} & Core: compute 12 behavioral metrics \\
+\texttt{export\_to\_google\_sheets} & \pageref{fn:export_to_google_sheets} & Push metadata to Google Sheet via HTTP \\
+\texttt{gaussian\_conv} & \pageref{fn:gaussian_conv} & Gaussian smoothing for position data \\
+\texttt{generate\_circ\_stim\_ufmf} & \pageref{fn:generate_circ_stim_ufmf} & Generate stimulus video for documentation \\
+\texttt{get\_input\_parameters} & \pageref{fn:get_input_parameters} & GUI dialog for experiment metadata \\
+\texttt{get\_temp\_rec} & \pageref{fn:get_temp_rec} & Read temperature from DAQ probes \\
+\texttt{initialize\_temp\_recording} & \pageref{fn:initialize_temp_recording} & Configure DAQ for temperature monitoring \\
+\texttt{initialize\_video\_and\_folders} & \pageref{fn:initialize_video_and_folders} & Camera setup, folder creation, LOG init \\
+\texttt{make\_overview} & \pageref{fn:make_overview} & Summary histograms for QC \\
+\texttt{plot\_all\_features\_acclim} & \pageref{fn:plot_all_features_acclim} & Acclimation period timeseries plots \\
+\texttt{plot\_all\_features\_filt} & \pageref{fn:plot_all_features_filt} & Full-experiment timeseries plots \\
+\texttt{plot\_allcond\_onecohort\_tuning} & \pageref{fn:plot_allcond_onecohort_tuning} & Per-condition comparison plots \\
+\texttt{present\_acclim\_off} & \pageref{fn:present_acclim_off} & Dark acclimation recording \\
+\texttt{present\_fixation\_stimulus} & \pageref{fn:present_fixation_stimulus} & Static bar display for fixation \\
+\texttt{present\_optomotor\_stimulus} & \pageref{fn:present_optomotor_stimulus} & Standard bidirectional stimulus \\
+\texttt{present\_optomotor\_stimulus\_\newline curtain} & \pageref{fn:present_optomotor_stimulus_curtain} & Curtain pattern stimulus \\
+\texttt{present\_optomotor\_stimulus\_\newline curtain\_w\_interval} & \pageref{fn:present_optomotor_stimulus_curtain_w_interval} & Curtain with per-trial intervals \\
+\texttt{present\_optomotor\_stimulus\_\newline diff\_contrasts} & \pageref{fn:present_optomotor_stimulus_diff_contrasts} & Contrast variation stimulus \\
+\texttt{present\_optomotor\_stimulus\_\newline one\_direction} & \pageref{fn:present_optomotor_stimulus_one_direction} & Single-direction stimulus \\
+\texttt{present\_optomotor\_stimulus\_\newline w\_interval} & \pageref{fn:present_optomotor_stimulus_w_interval} & Stimulus with per-trial intervals \\
+\texttt{present\_shifted\_stimulus} & \pageref{fn:present_shifted_stimulus} & Open-loop shifted patterns \\
+\texttt{process\_data\_features} & \pageref{fn:process_data_features} & Single-experiment processing \\
+\texttt{process\_freely\_walking\_data} & \pageref{fn:process_freely_walking_data} & Top-level processing by date \\
+\texttt{vel\_estimate} & \pageref{fn:vel_estimate} & Sliding-window angular velocity \\
+\end{tabularx}
+\end{scriptsize}
