@@ -158,7 +158,7 @@ strain_names = fieldnames(DATA);
 
 ::: {.callout-note appearance="default" icon=false}
 
-## At a Glance
+## **At a Glance**
 
 - Flies walk freely within a cylindrical arena while visual patterns are displayed on LED panels around the circumference facing inwards.
 - An overhead camera records behavior at 30 fps in near infra-red light and saves the data in the compressed UFMF format.
@@ -205,7 +205,7 @@ Steps 2 and 3 are automated by the pipeline scripts described in @sec-automation
 # Automated Data Pipeline {#sec-automation}
 
 ::: {.callout-note appearance="default" icon=false}
-## At a Glance
+## **At a Glance**
 
 - Three Python scripts (written by Aparna Dev) automate data flow from the acquisition PC to processed results
 - Stage 1: `monitor_and_copy.py` watches the acquisition PC and copies completed experiments to the network
@@ -425,7 +425,7 @@ A standalone utility that syncs `.mp4` video files from local `02_processed` to 
 - Network drive `\\prfs.hhmi.org\reiserlab\oaky-cokey\` must be accessible from both PCs
 
 ::: {.callout-warning appearance="default" icon=false}
-## Known Limitations
+## **Known Limitations**
 
 The automation scripts were developed for rapid deployment and contain several hardcoded assumptions. See @sec-pitfalls for a complete list. The most impactful remaining issues are: the lack of a shared configuration file (all paths are duplicated across scripts), the `move_folder()` nesting bug in `daily_processing.py`, and the absence of retry logic for network operations.
 :::
@@ -436,7 +436,7 @@ The automation scripts were developed for rapid deployment and contain several h
 # Running an Experiment -- Protocol Functions {#sec-protocol}
 
 ::: {.callout-note appearance="default" icon=false}
-## At a Glance
+## **At a Glance**
 
 - A protocol file (e.g., `protocol_27.m`) orchestrates the entire experiment
 - 14 shared functions in `protocols/protocol_functions/` handle initialization, stimulus, and acclimation
@@ -847,7 +847,7 @@ The critical link between stimulus events and behavioral data is the **frame cou
 # Data Processing Pipeline {#sec-processing}
 
 ::: {.callout-note appearance="default" icon=false}
-## At a Glance
+## **At a Glance**
 
 - `process_freely_walking_data` iterates through all experiments for a given date
 - `process_data_features` handles one experiment: loads tracking, computes metrics, saves results
@@ -1101,7 +1101,7 @@ This produces the final DATA struct used for group analysis.
 # The DATA Struct {#sec-data}
 
 ::: {.callout-note appearance="default" icon=false}
-## At a Glance
+## **At a Glance**
 
 - DATA is the final output: a hierarchical struct organizing all experiments
 - Levels: strain, sex, cohort (array index), condition, metric data
@@ -1117,7 +1117,7 @@ The DATA struct organizes all experimental data in a nested hierarchy:
 ![DATA struct hierarchy showing the nesting levels from strain down to individual behavioral metrics.](diagrams/07_data_struct_hierarchy.png){#fig-datastruct width=100%}
 
 ::: {.callout-note appearance="default" icon=false}
-## Example: Accessing DATA
+## **Example: Accessing DATA**
 
 ```matlab
 % Forward velocity: strain, sex F, cohort 1, Rep 1 condition 1
@@ -1192,7 +1192,7 @@ strain_names = fieldnames(DATA);
 # Behavioral Metrics Reference {#sec-metrics}
 
 ::: {.callout-note appearance="default" icon=false}
-## At a Glance
+## **At a Glance**
 
 - 12 behavioral metrics are computed for each fly at each frame
 - Forward velocity and angular velocity are the primary optomotor response measures
@@ -1322,7 +1322,7 @@ These are the raw tracking outputs (after filtering and interpolation) that all 
 # Visualization and Plotting Functions {#sec-plotting}
 
 ::: {.callout-note appearance="default" icon=false}
-## At a Glance
+## **At a Glance**
 
 - `make_overview` generates summary histograms of locomotor parameters
 - `plot_all_features_filt` and `plot_all_features_acclim` plot full-experiment timeseries
