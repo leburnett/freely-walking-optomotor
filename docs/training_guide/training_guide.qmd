@@ -14,6 +14,40 @@ format:
       \definecolor{fnbg}{HTML}{d9edf7}
       \usepackage{tabularx}
       \usepackage{longtable}
+      \usepackage{titling}
+      \providecommand{\thesubtitle}{}
+      \usepackage{etoolbox}
+      \ifdef{\subtitle}{%
+        \let\origsubtitle\subtitle
+        \renewcommand{\subtitle}[1]{\origsubtitle{#1}\renewcommand{\thesubtitle}{#1}}
+      }{}
+      \renewcommand{\maketitle}{%
+        \begin{titlepage}
+          \vspace*{\fill}
+          \begin{center}
+            {\LARGE\bfseries \thetitle \par}
+            \vspace{0.5em}
+            {\large \thesubtitle \par}
+            \vspace{2em}
+            {\normalsize \theauthor \par}
+            \vspace{0.5em}
+            {\normalsize \thedate \par}
+          \end{center}
+          \vspace*{\fill}
+        \end{titlepage}
+      }
+      \usepackage{fancyhdr}
+      \pagestyle{fancy}
+      \fancyhf{}
+      \fancyhead[R]{\nouppercase{\rightmark}}
+      \fancyfoot[C]{\thepage}
+      \renewcommand{\headrulewidth}{0.4pt}
+      \renewcommand{\footrulewidth}{0pt}
+      \fancypagestyle{plain}{%
+        \fancyhf{}
+        \fancyfoot[C]{\thepage}
+        \renewcommand{\headrulewidth}{0pt}
+      }
 ---
 
 \newpage
@@ -136,6 +170,8 @@ The primary behavioral response measured is the **optomotor response**: when a g
 The data flows through several stages from experiment to analysis:
 
 ![Data processing pipeline: from running the experiment to the final DATA struct.](diagrams/03_data_flow_pipeline.png){#fig-pipeline width=100%}
+
+\newpage
 
 1. **Run the experiment** -- A MATLAB protocol script controls the LED arena and camera, producing a UFMF video file and a LOG.mat file with stimulus timing.
 2. **Track the flies** -- FlyTracker (offline software) processes the video to extract each fly's position, heading, and basic features, producing `feat.mat` and `trx.mat`.
@@ -448,6 +484,8 @@ Additionally logs `Log.contrast` with the contrast value for the current conditi
 The LOG struct is progressively assembled during an experiment. Each phase of the protocol adds its own subfield.
 
 ![The LOG data structure showing all fields organized by experiment phase.](diagrams/02_log_structure.png){#fig-log width=100%}
+
+\newpage
 
 **Build sequence:**
 
@@ -827,6 +865,16 @@ The DATA struct organizes all experimental data in a nested hierarchy:
 
 ![DATA struct hierarchy showing the nesting levels from strain down to individual behavioral metrics.](diagrams/07_data_struct_hierarchy.png){#fig-datastruct width=100%}
 
+::: {.callout-note appearance="simple" icon=false}
+## Example: Accessing DATA
+
+```matlab
+% Forward velocity: strain, sex F, cohort 1, Rep 1 condition 1
+fv = DATA.jfrc100_es_shibire_kir.F(1).R1_condition_1.fv_data;
+%   fv is [n_flies x n_frames]
+```
+:::
+
 **Levels:**
 
 1. **Strain** -- e.g., `DATA.jfrc100_es_shibire_kir`, `DATA.csw1118`
@@ -1058,6 +1106,129 @@ Corrects common strain name typos that may have been entered through the metadat
 ## \colorbox{fnbg}{\texttt{generate\_circ\_stim\_ufmf.m}} \label{fn:generate_circ_stim_ufmf}
 
 Generates a UFMF video of the LED stimulus pattern (circular projection) for documentation and verification purposes. Creates a video showing what the flies see from above.
+
+
+\newpage
+
+# Potential Pitfalls {#sec-pitfalls}
+
+When adapting this pipeline to a new experimental setup, protocol, or fly strain, be aware of the following assumptions that are hardcoded in the current codebase. Each can cause silent errors if not addressed.
+
+## Hardcoded Arena Parameters
+
+`calculate_viewing_distance.m` contains hardcoded calibration constants:
+
+```matlab
+PPM = 4.1691;          % pixels per mm
+CoA = [528, 520]/PPM;  % arena center in mm
+R   = 496/PPM;         % arena radius in mm
+```
+
+These values are specific to the current camera and arena setup. If the camera, lens, or arena changes, these must be recalibrated. Incorrect values will silently corrupt all viewing distance and distance-from-center metrics.
+
+**Source:** `processing_functions/functions/calculate_viewing_distance.m`, lines 39--43.
+
+## Hardcoded Project Paths
+
+`process_freely_walking_data.m` sets an absolute project root:
+
+```matlab
+PROJECT_ROOT = '\Users\burnettl\...';
+```
+
+This path must be updated for any other machine before running the processing pipeline.
+
+**Source:** `processing_functions/process_freely_walking_data.m`, line 42.
+
+## Protocol Condition Arrays Are Per-Protocol
+
+`comb_data_one_cohort_cond.m` contains a large `if`/`elseif` block that maps each protocol name to its condition array. New protocols must either:
+
+(a) Store conditions in `LOG.meta.cond_array` (as `protocol_24` and `protocol_27` already do --- this is the recommended approach), or
+
+(b) Add a new `elseif` branch to this function.
+
+If neither is done, condition matching will silently fail and produce incorrect results.
+
+**Source:** `processing_functions/functions/comb_data_one_cohort_cond.m`, lines 3--126.
+
+## Exactly 2 Repetitions Assumed
+
+`comb_data_one_cohort_cond.m` splits the `log_` fields into the first half (Repetition 1) and second half (Repetition 2):
+
+```matlab
+if log_n < (n_cond/2) + 1
+    rep_str = 'R1_condition_';
+else
+    rep_str = 'R2_condition_';
+end
+```
+
+Running 3 or more repetitions, or only 1, will mislabel conditions. The code does not verify that the number of logged conditions equals exactly 2 times the number of unique conditions.
+
+**Source:** `processing_functions/functions/comb_data_one_cohort_cond.m`, line 203.
+
+## Velocity Threshold of 50 mm/s
+
+`combine_data_one_cohort.m` flags frames where velocity exceeds 50 mm/s as tracking errors and sets them to NaN:
+
+```matlab
+vals_to_rm = abs(vel_data(k, :)) > 50;
+```
+
+This threshold is appropriate for *Drosophila melanogaster* but may need adjustment for larger or faster species. Real high-speed behaviour is indistinguishable from tracking errors at this threshold.
+
+**Source:** `processing_functions/functions/combine_data_one_cohort.m`, lines 66 and 130.
+
+## 300-Frame Pre-Buffer Is Hardcoded
+
+`comb_data_one_cohort_cond.m` always includes 300 frames (10 seconds at 30 fps) before each condition onset:
+
+```matlab
+framesb4 = 300;
+start_f = Log.start_f(1) - framesb4;
+```
+
+If a stimulus starts fewer than 300 frames after acclimation ends, this can produce out-of-bounds frame indices.
+
+**Source:** `processing_functions/functions/comb_data_one_cohort_cond.m`, line 228.
+
+## LOG Field Naming Is Fragile
+
+Condition discovery searches for fields whose names start with `log_`:
+
+```matlab
+logfields = fields(startsWith(fields, 'log_'));
+```
+
+Any extra field added to the LOG struct with a name beginning with `log_` (e.g., `log_notes`, `log_metadata`) will be incorrectly treated as a stimulus condition.
+
+**Source:** `processing_functions/functions/comb_data_one_cohort_cond.m`, line 195.
+
+## Pattern-to-Description Mapping
+
+`get_title_from_meta.m` uses a large switch statement to map pattern IDs to human-readable descriptions. New patterns require adding a manual entry. Additionally, some patterns have hidden speed multipliers --- patterns with 2-pixel animation steps (e.g., patterns 26, 27, 63) automatically double the nominal speed value, which is easy to overlook.
+
+**Source:** `processing_functions/functions/get_title_from_meta.m`.
+
+## Tracking QC Uses Statistical Mode
+
+`check_tracking_FlyTrk.m` removes any fly whose frame count differs from the mode (most common frame count):
+
+```matlab
+d = [trx.nframes];
+nframes_video = mode(d);
+```
+
+If a systematic tracking issue causes all flies to be off by one frame, no flies will be flagged. Conversely, if tracking splits are common, valid flies may be removed because their frame count differs from the mode.
+
+**Source:** `processing_functions/functions/check_tracking_FlyTrk.m`.
+
+## Strain Typos Pass Silently
+
+`check_strain_typos.m` corrects only a predefined list of known typos. New misspellings are not caught and will create separate strain folders in the results directory, splitting data for the same genotype across multiple entries. Always verify strain names after data collection.
+
+**Source:** `processing_functions/functions/check_strain_typos.m`.
 
 
 \newpage

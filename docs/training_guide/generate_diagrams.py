@@ -716,10 +716,10 @@ results\\
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def make_data_struct_hierarchy():
-    fig, ax = plt.subplots(figsize=(MAX_WIDTH, 7.0))
+    fig, ax = plt.subplots(figsize=(MAX_WIDTH, 6.0))
     ax.axis("off")
     ax.set_xlim(0, 10)
-    ax.set_ylim(-0.2, 10.8)
+    ax.set_ylim(1.5, 10.8)
 
     tree_text = """DATA
  \u251c\u2500\u2500 jfrc100_es_shibire_kir                    (strain name)
@@ -764,21 +764,6 @@ def make_data_struct_hierarchy():
 
     ax.text(0.5, 10.3, tree_text, fontsize=6.5, fontfamily="monospace",
             verticalalignment="top", linespacing=1.25, color=C_DARK_GRAY)
-
-    # Access example — lightest blue background
-    example_box = FancyBboxPatch((0.3, 0.0), 9.3, 1.2,
-                                 boxstyle="round,pad=0.1",
-                                 facecolor=C_LIGHTEST_BLUE, edgecolor=C_MED_GRAY,
-                                 linewidth=0.8)
-    ax.add_patch(example_box)
-    ax.text(0.5, 1.0,
-            "Example: Access forward velocity for strain, sex F, "
-            "cohort 1, Rep 1 condition 1:",
-            fontsize=6, fontweight="bold", color=C_DARK_GRAY)
-    ax.text(0.5, 0.5,
-            "fv = DATA.jfrc100_es_shibire_kir.F(1).R1_condition_1.fv_data;"
-            "  % [n_flies x n_frames]",
-            fontsize=6, fontfamily="monospace", color=C_NAVY)
 
     ax.set_title("DATA Struct Hierarchy", fontsize=11, fontweight="bold", pad=8)
 
