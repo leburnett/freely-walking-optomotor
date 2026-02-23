@@ -5,10 +5,12 @@ author: "Laura Burnett -- Reiser Lab, HHMI Janelia Research Campus"
 date: today
 format:
   pdf:
+    monofont: "Menlo"
     header-includes: |
       \usepackage{float}
       \floatplacement{figure}{H}
       \usepackage{fvextra}
+      \usepackage[htt]{hyphenat}
       \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\},fontsize=\footnotesize}
       \usepackage{xcolor}
       \definecolor{fnbg}{HTML}{d9edf7}
@@ -173,7 +175,7 @@ These experiments study the visual-motor behaviour of freely-walking *Drosophila
 
 The primary behavioural response measured is the **optomotor response**: when a grating pattern moves across the visual field, walking flies tend to turn in the direction of motion. By varying stimulus parameters (pattern type, speed, contrast, spatial frequency), we can probe the neural circuits underlying motion detection. The experiments also include control conditions (e.g., static patterns, dark intervals) and a pre/post-stimulus acclimation period in darkness to measure baseline behavior. 
 
-In the summer of 2024, while performing the first round of these experiments, we observed another behaviour that we call the **centring response**: while the grating stimuli are being presented and flies perform the well-characterised optomotor turning, they also tend to walk towards the center of the arena. The response was colloquiially given the moniker the <i>"hokey-cokey"</i> after its resemblance to the centripetal movement within the group dance performed by several cultures around the world. Many of the protocols designed for this arena were designed to try and. investigate this centring behaviour, it's reliance on stimulus parameters and its interaction with the optomotor response.
+In the summer of 2024, while performing the first round of these experiments, we observed another behaviour that we call the **centring response**: while the grating stimuli are being presented and flies perform the well-characterised optomotor turning, they also tend to walk towards the center of the arena. The response was colloquially given the moniker the *"hokey-cokey"* after its resemblance to the centripetal movement within the group dance performed by several cultures around the world. Many of the protocols designed for this arena were designed to try and. investigate this centring behaviour, it's reliance on stimulus parameters and its interaction with the optomotor response.
 
 **Arena geometry:**
 
@@ -197,7 +199,7 @@ The data flows through several stages from experiment to analysis:
 4. **Split by condition** -- `comb_data_one_cohort_cond` uses the LOG frame indices to separate the continuous data into per-condition segments.
 5. **Merge experiments** -- `comb_data_across_cohorts_cond` combines data from multiple experimental sessions into a single hierarchical DATA struct for group analysis.
 
-Steps 2 and 3 are automated by the pipeline scripts described in @sec-automation. When running, the automation handles copying, tracking, and processing without manual intervention.
+Steps **2** and **3** are automated by the pipeline scripts described in @sec-automation. When running, the automation handles copying, tracking, and processing without manual intervention.
 
 
 \newpage
@@ -207,10 +209,10 @@ Steps 2 and 3 are automated by the pipeline scripts described in @sec-automation
 ::: {.callout-note appearance="default" icon=false}
 ## **At a Glance**
 
-- Three Python scripts (written by Aparna Dev) automate data flow from the acquisition PC to processed results
-- Stage 1: `monitor_and_copy.py` watches the acquisition PC and copies completed experiments to the network
-- Stage 2: `monitor_and_track.py` polls the network, runs FlyTracker batch tracking, and moves data to `1_tracked`
-- Stage 3: `daily_processing.py` runs `process_freely_walking_data` on tracked data and distributes results to the network
+- Three Python scripts (written by **Aparna Dev**) automate data flow from the acquisition PC to processed results
+- **Stage 1:** `monitor_and_copy.py` watches the acquisition PC and copies completed experiments to the network
+- **Stage 2:** `monitor_and_track.py` polls the network, runs FlyTracker batch tracking, and moves data to `1_tracked`
+- **Stage 3:** `daily_processing.py` runs `process_freely_walking_data` on tracked data and distributes results to the network
 - The scripts run on two different physical PCs and communicate via shared network directories
 :::
 
@@ -220,18 +222,27 @@ The automated data pipeline eliminates manual file management between running an
 
 ![Automated data pipeline: three Python scripts move data through network directory stages from acquisition to processed results.](diagrams/08_automation_pipeline.png){#fig-automation width=100%}
 
+\newpage
+
 **Three-stage summary:**
 
-| Stage | Script | Runs On | Input | Output | Polling |
-|:------|:-------|:--------|:------|:-------|:--------|
-| 1. Copy | `monitor_and_copy.py` | Acquisition PC | Local experiment data | Network `0_unprocessed` | 30 s (watchdog) |
-| 2. Track | `monitor_and_track.py` | Processing PC | Network `0_unprocessed` | Network `1_tracked` | 5 min, 15 cycles |
-| 3. Process | `daily_processing.py` | Processing PC | Local `01_tracked` | Network `2_processed` | One-shot (daily) |
+\begingroup\footnotesize
+\begin{tabularx}{\textwidth}{l l l X X l}
+\hline
+\textbf{Stage} & \textbf{Script} & \textbf{Runs On} & \textbf{Input} & \textbf{Output} & \textbf{Polling} \\
+\hline
+1. Copy & \texttt{monitor\_and\_\newline copy.py} & Acquisition PC & Local experiment data & Network \texttt{0\_unprocessed} & 30\,s (watchdog) \\
+2. Track & \texttt{monitor\_and\_\newline track.py} & Processing PC & Network \texttt{0\_unprocessed} & Network \texttt{1\_tracked} & 5\,min, 15 cycles \\
+3. Process & \texttt{daily\_\newline processing.py} & Processing PC & Local \texttt{01\_tracked} & Network \texttt{2\_processed} & One-shot (daily) \\
+\hline
+\end{tabularx}
+\endgroup
+
 
 **Network directory progression:**
 
 | Directory | Contents | State |
-|:----------|:---------|:------|
+|:-------|:------------|:------|
 | `0_unprocessed` | Raw experiment folders (.ufmf + LOG.mat + stamp_log) | Awaiting tracking |
 | `1_tracked` | Tracked folders (+ trx.mat, feat.mat) | Awaiting processing |
 | `2_processed` | Fully processed folders (+ MP4 videos) | Complete |
@@ -240,8 +251,12 @@ The automated data pipeline eliminates manual file management between running an
 
 All network directories reside on the Janelia network share at `\\prfs.hhmi.org\reiserlab\oaky-cokey\data\`.
 
-**Completeness check:** A folder is considered "complete" (ready to be advanced to the next stage) when it contains at least one `.ufmf` file, at least one `.mat` file, and a file whose name starts with `stamp_log`. This ensures the experiment has finished writing all outputs before any copying or processing begins.
+::: {.callout-tip appearance="default" icon=false}
 
+## **Completeness check:** 
+A folder is considered "complete" (ready to be advanced to the next stage) when it contains at least one `.ufmf` file, at least one `.mat` file, and a file whose name starts with `stamp_log`. This ensures the experiment has finished writing all outputs before any copying or processing begins.
+
+:::
 
 ## Stage 1: Monitoring and Copying
 
@@ -253,7 +268,7 @@ All network directories reside on the Janelia network share at `\\prfs.hhmi.org\
 
 **Mechanism:**
 
-1. Uses the Python `watchdog` library to create a filesystem `Observer` that monitors `C:\MatlabRoot\FreeWalkOptomotor\data` recursively for new directories
+1. Uses the Python `watchdog` library to create a filesystem `Observer` that monitors the acquisition data folder (see paths below) recursively for new directories
 2. When a new directory is detected (`on_created` event), it is added to a `pending_folders` set
 3. Every 30 seconds, the script iterates through pending folders and checks completeness via `is_folder_complete()`
 4. Complete folders are copied to the network using `shutil.copytree()` with `dirs_exist_ok=True`, preserving the full relative path from the source root (so the `{date}/{protocol}/{strain}/{sex}/{time}/` hierarchy is maintained)
@@ -295,13 +310,19 @@ matlab -batch "cd('<folder>'); batch_track_ufmf('<folder>')"
 
 **Path constants:**
 
-| Variable | Path |
-|:---------|:-----|
-| `GROUP_DRIVE_PATH` | `\\prfs.hhmi.org\...\data\0_unprocessed` |
-| `LOCAL_PATH` | `C:\...\oakey-cokey\DATA\00_unprocessed` |
-| `TRACKED_PATH` | `\\prfs.hhmi.org\...\data\1_tracked` |
-| `TRACKED_LOCAL_PATH` | `C:\...\oakey-cokey\DATA\01_tracked` |
-| `PROCESSED_PATH` | `\\prfs.hhmi.org\...\data\2_processed` |
+\begingroup\footnotesize
+\begin{tabularx}{\textwidth}{l X}
+\hline
+\textbf{Variable} & \textbf{Path} \\
+\hline
+\texttt{GROUP\_DRIVE\_PATH} & \texttt{\textbackslash{}\textbackslash{}prfs.hhmi.org\textbackslash{}...\textbackslash{}data\textbackslash{}0\_unprocessed} \\
+\texttt{LOCAL\_PATH} & \texttt{C:\textbackslash{}...\textbackslash{}oakey-cokey\textbackslash{}DATA\textbackslash{}00\_unprocessed} \\
+\texttt{TRACKED\_PATH} & \texttt{\textbackslash{}\textbackslash{}prfs.hhmi.org\textbackslash{}...\textbackslash{}data\textbackslash{}1\_tracked} \\
+\texttt{TRACKED\_LOCAL\_PATH} & \texttt{C:\textbackslash{}...\textbackslash{}oakey-cokey\textbackslash{}DATA\textbackslash{}01\_tracked} \\
+\texttt{PROCESSED\_PATH} & \texttt{\textbackslash{}\textbackslash{}prfs.hhmi.org\textbackslash{}...\textbackslash{}data\textbackslash{}2\_processed} \\
+\hline
+\end{tabularx}
+\endgroup
 
 **Launcher:** `run_monitor_and_track.bat` creates a dated log file in `monitor_and_track_logs/`.
 
@@ -365,23 +386,29 @@ matlab -batch "process_freely_walking_data('YYYY_MM_DD')"
 ```
 
 4. `has_results_for_date()` -- searches the results directory for any file starting with the date string.
-5. `copy_results_to_network()` -- copies result `.mat` files to `\\prfs.hhmi.org\reiserlab\oaky-cokey\exp_results`, preserving protocol folder structure.
-6. `copy_figs_to_network()` -- copies `.pdf` and `.png` figure files to `\\prfs.hhmi.org\reiserlab\oaky-cokey\exp_figures\overview_figs`.
+5. `copy_results_to_network()` -- copies result `.mat` files to the network `exp_results` directory, preserving protocol folder structure.
+6. `copy_figs_to_network()` -- copies `.pdf` and `.png` figure files to the network `exp_figures\overview_figs` directory.
 7. `move_folder()` -- moves date folder from `01_tracked` to `02_processed` (both local and network). **Warning: if the destination folder already exists, `shutil.move` creates a nested structure -- see @sec-pitfalls.**
 8. `copy_mp4s_to_network()` -- copies generated `.mp4` video files to network `2_processed`.
 
 **Path constants:**
 
-| Variable | Path |
-|:---------|:-----|
-| `LOCAL_TRACKED` | `C:\...\oakey-cokey\DATA\01_tracked` |
-| `LOCAL_PROCESSED` | `C:\...\oakey-cokey\DATA\02_processed` |
-| `NETWORK_TRACKED` | `\\prfs.hhmi.org\...\data\1_tracked` |
-| `NETWORK_PROCESSED` | `\\prfs.hhmi.org\...\data\2_processed` |
-| `LOCAL_RESULTS_ROOT` | `C:\...\oakey-cokey\results` |
-| `NETWORK_RESULTS_ROOT` | `\\prfs.hhmi.org\...\oaky-cokey\exp_results` |
-| `LOCAL_FIGS_ROOT` | `C:\...\oakey-cokey\figures\overview_figs` |
-| `NETWORK_FIGS_ROOT` | `\\prfs.hhmi.org\...\exp_figures\overview_figs` |
+\begingroup\footnotesize
+\begin{tabularx}{\textwidth}{l X}
+\hline
+\textbf{Variable} & \textbf{Path} \\
+\hline
+\texttt{LOCAL\_TRACKED} & \texttt{C:\textbackslash{}...\textbackslash{}oakey-cokey\textbackslash{}DATA\textbackslash{}01\_tracked} \\
+\texttt{LOCAL\_PROCESSED} & \texttt{C:\textbackslash{}...\textbackslash{}oakey-cokey\textbackslash{}DATA\textbackslash{}02\_processed} \\
+\texttt{NETWORK\_TRACKED} & \texttt{\textbackslash{}\textbackslash{}prfs.hhmi.org\textbackslash{}...\textbackslash{}data\textbackslash{}1\_tracked} \\
+\texttt{NETWORK\_PROCESSED} & \texttt{\textbackslash{}\textbackslash{}prfs.hhmi.org\textbackslash{}...\textbackslash{}data\textbackslash{}2\_processed} \\
+\texttt{LOCAL\_RESULTS\_ROOT} & \texttt{C:\textbackslash{}...\textbackslash{}oakey-cokey\textbackslash{}results} \\
+\texttt{NETWORK\_RESULTS\_ROOT} & \texttt{\textbackslash{}\textbackslash{}prfs.hhmi.org\textbackslash{}...\textbackslash{}oaky-cokey\textbackslash{}exp\_results} \\
+\texttt{LOCAL\_FIGS\_ROOT} & \texttt{C:\textbackslash{}...\textbackslash{}oakey-cokey\textbackslash{}figures\textbackslash{}overview\_figs} \\
+\texttt{NETWORK\_FIGS\_ROOT} & \texttt{\textbackslash{}\textbackslash{}prfs.hhmi.org\textbackslash{}...\textbackslash{}exp\_figures\textbackslash{}overview\_figs} \\
+\hline
+\end{tabularx}
+\endgroup
 
 **Launcher:** `run_daily_processing.bat` creates a dated log file in `processing_logs/`.
 
@@ -407,7 +434,7 @@ A standalone utility that syncs `.mp4` video files from local `02_processed` to 
 **Physical machine layout:**
 
 | Machine | Role | Windows User | Scripts |
-|:--------|:-----|:-------------|:--------|
+|:--------|:-----|:------|:-----------|
 | Acquisition PC | Runs experiments, captures video | `labadmin` | `monitor_and_copy.py` |
 | Processing PC | FlyTracker tracking, MATLAB processing | `burnettl` | `monitor_and_track.py`, `daily_processing.py` |
 
@@ -483,7 +510,7 @@ Each condition consists of:
 **Outputs:** `selections` struct with fields:
 
 | Field | Options | Default |
-|:------|:--------|:--------|
+|:----|:----------|:------|
 | `nFlies` | 1--20 | 15 |
 | `Experimenter` | GraceBiondi, AparnaDev, LauraBurnett, other | GraceBiondi |
 | `Strain` | 28 strain options (csw1118, jfrc100_es_shibire_kir, RNAi controls, etc.) | jfrc100_es_shibire_kir |
@@ -586,6 +613,34 @@ Each protocol defines an `all_conditions` matrix with columns:
 | 64 | ~32 Hz |
 | 127 | Maximum (~63 Hz) |
 
+### Variant Comparison
+
+All six `present_optomotor_stimulus` variants share the same signature and core structure: extract condition parameters, run stimulus trials with `Panel_com`, and log frame timestamps and temperatures. The table below summarises their key differences.
+
+\begingroup\footnotesize
+\begin{tabularx}{\textwidth}{l l l l l X}
+\hline
+\textbf{Variant} & \textbf{Trials} & \textbf{Direction} & \textbf{Interval} & \textbf{Swap?} & \textbf{Special Feature} \\
+\hline
+\texttt{(base)} & 2 & Alternates $\pm$1 & After all trials & No & \texttt{t\_stim = trial\_len $\times$ 2} \\
+\texttt{\_w\_interval} & Col.\,7 & +1 then $-$1 & After every trial & No & Col.\,7 = \texttt{num\_trials} \\
+\texttt{\_one\_direction} & 1 & +1 only & After the trial & No & Simplest variant \\
+\texttt{\_curtain} & 15 or 2 & Alternates $\pm$1 & After all trials & Yes & Swaps paired pattern on trial\,2 \\
+\texttt{\_curtain\_\newline w\_interval} & Col.\,7 & +1 then $-$1 & After every trial & Yes & Curtain swap + per-trial intervals \\
+\texttt{\_diff\_contrasts} & 2 & Alternates $\pm$1 & After all trials & No & Y-axis selects contrast level \\
+\hline
+\end{tabularx}
+\endgroup
+
+
+\vspace{0.5em}
+
+**Key notes:**
+
+- **Interval placement** is the biggest structural split. The `_w_interval` variants log the interval as its own trial entry inside the loop, producing longer arrays that alternate stimulus/interval.
+- **Curtain variants** load a paired pattern on trial 2 via a hardcoded `switch` block because curtain patterns are directionally asymmetric.
+- **`_diff_contrasts`** is unique in using the pattern's **y-axis** (`set_position([1, which_condition])`) to index into contrast levels, while all others use `[1, 1]`.
+- **Column 7 meaning changes:** In `_w_interval` and `_curtain_w_interval`, column 7 of `all_conditions` is `num_trials`. In all other variants, column 7 is `which_condition`.
 
 ### \colorbox{fnbg}{\texttt{present\_optomotor\_stimulus.m}} -- Standard Bidirectional \label{fn:present_optomotor_stimulus}
 
@@ -716,8 +771,6 @@ Additionally logs `Log.contrast` with the contrast value for the current conditi
 **How it works:** Submits the parameters to a Google Form response endpoint using MATLAB's `webwrite()`. Each field maps to a specific Google Form entry ID. The data appears in a linked Google Sheet, providing a lab-wide experiment log.
 
 
-\newpage
-
 # The LOG Data Structure {#sec-log}
 
 ::: {.callout-note appearance="default" icon=false}
@@ -752,7 +805,7 @@ The LOG struct is progressively assembled during an experiment. Each phase of th
 ## LOG.meta Fields
 
 | Field | Type | Description |
-|:------|:-----|:------------|
+|:------|:---|:--------------|
 | `date` | datetime | Experiment date (yyyy_MM_dd) |
 | `time` | datetime | Experiment start time |
 | `func_name` | string | Protocol name (e.g., "protocol_27") |
@@ -1095,8 +1148,6 @@ Combines processed data from all experiments for a single protocol into one hier
 
 This produces the final DATA struct used for group analysis.
 
-
-\newpage
 
 # The DATA Struct {#sec-data}
 
@@ -1481,18 +1532,6 @@ If a systematic tracking issue causes all flies to be off by one frame, no flies
 
 **Source:** `processing_functions/functions/check_strain_typos.m`.
 
-## ~~Hardcoded Year in Date Folder Detection~~ (Fixed)
-
-Previously, `daily_processing.py` and `reprocessing_script.py` only recognised date folders starting with `"2025_"`. Both scripts now use a year-agnostic regular expression:
-
-```python
-re.match(r'^\d{4}_\d{2}_\d{2}$', name)
-```
-
-This matches any valid `YYYY_MM_DD` date folder regardless of year.
-
-**Source:** `daily_processing/daily_processing.py`, line 41; `daily_processing/reprocessing_script.py`, line 32.
-
 ## Move-Folder Nesting Bug in Daily Processing
 
 In `daily_processing.py`, the `move_folder()` function uses `shutil.move(src, dst)`. If the destination folder already exists, `shutil.move` places the source folder *inside* the destination, creating a nested structure (e.g., `2_processed/2025_04_18/2025_04_18/...`). The function includes a warning comment but does not prevent this.
@@ -1506,18 +1545,6 @@ By contrast, `reprocessing_script.py`'s `move_folder()` deletes the destination 
 All automation scripts log network copy/move failures but do not retry them. A transient network outage during `shutil.copytree()` or `shutil.move()` will leave data in an intermediate state (partially copied, or stuck in the source directory). Manual intervention is required to re-run or complete the transfer.
 
 **Source:** All three main automation scripts (`monitor_and_copy.py`, `monitor_and_track.py`, `daily_processing.py`).
-
-## ~~Inconsistent Network Path Prefixes~~ (Fixed)
-
-Previously, some automation scripts used `\\prfs.hhmi.org\reiserlab\...` while others used the short form `\\prfs\reiserlab\...`. All scripts now consistently use the fully qualified `\\prfs.hhmi.org\reiserlab\...` form.
-
-**Source:** Path constants at the top of each automation script.
-
-## ~~Watchdog Dependency Not Managed~~ (Fixed)
-
-Previously, the `watchdog` Python package required by `monitor_and_copy.py` was not listed in the project's `pixi.toml`. It has now been added as a managed dependency. On the acquisition PC (which uses a standalone Python installation rather than pixi), `watchdog` must still be installed separately via `pip install watchdog`.
-
-**Source:** `python/freely-walking-python/pixi.toml`; `monitor_and_copy_folder/monitor_and_copy.py`, line 5.
 
 ## Duplicated Path Constants Across Automation Scripts
 
