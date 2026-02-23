@@ -1,5 +1,5 @@
 ---
-title: "Freely-Walking Optomotor Experiment"
+title: "Freely-Walking Optomotor Experiments"
 subtitle: "Data Logging, Processing, and Analysis Guide"
 author: "Laura Burnett -- Reiser Lab, HHMI Janelia Research Campus"
 date: today
@@ -54,10 +54,12 @@ format:
 
 # Quick Reference {#sec-quickref}
 
+Outlined below are a few of the key concepts, files, and data structures that are essential for understanding and working with the freely-walking optomotor experiment pipeline. This section serves as a high-level overview and quick reference guide before diving into the detailed explanations in the subsequent sections.
+
 ## Pipeline at a Glance
 
 1. **Run the experiment** -- `protocol_27.m` controls the LED arena and camera, producing a **UFMF video** and a **LOG.mat** file with stimulus timing.
-2. **Track the flies** -- FlyTracker processes the video offline, producing `feat.mat` (features) and `trx.mat` (trajectories).
+2. **Track the flies** -- `FlyTracker` processes the video offline, producing `feat.mat` (features) and `trx.mat` (trajectories).
 3. **Compute behavioral metrics** -- `combine_data_one_cohort(feat, trx)` filters bad tracking, interpolates gaps, and computes 12 behavioral metrics.
 4. **Split by condition** -- `comb_data_one_cohort_cond(LOG, comb_data)` uses LOG frame indices to slice continuous data into per-condition segments.
 5. **Merge experiments** -- `comb_data_across_cohorts_cond(protocol_dir)` combines all sessions into a single hierarchical DATA struct.
@@ -82,7 +84,7 @@ format:
 ## Behavioral Metrics Quick Reference
 
 | Metric | Field | Units | Typical Range | Description |
-|:-------|:------|:------|:--------------|:------------|
+|:-------|:---------|:-----|:--------|:------------|
 | Forward velocity | `fv_data` | mm/s | 0--30 | Speed along heading direction |
 | Angular velocity | `av_data` | deg/s | -500 to +500 | Heading change rate (turning speed) |
 | Turning rate | `curv_data` | deg/mm | Variable | Path curvature (av / fv) |
@@ -123,7 +125,7 @@ strain_names = fieldnames(DATA);
 ## Glossary of Key Terms
 
 | Term | Definition |
-|:-----|:-----------|
+|:---|:-------------|
 | **LOG** | MATLAB struct saved during experiment; contains stimulus timing, metadata, and frame indices |
 | **comb_data** | Intermediate struct with 12 behavioral metric matrices for one experiment |
 | **DATA** | Final hierarchical struct organizing all experiments by strain, sex, cohort, and condition |
@@ -142,21 +144,24 @@ strain_names = fieldnames(DATA);
 
 # Introduction and Overview {#sec-intro}
 
-::: {.callout-note appearance="simple" icon=false}
+::: {.callout-note appearance="default" icon=false}
+
 ## At a Glance
 
-- Flies walk freely in a cylindrical LED arena while visual patterns are displayed
-- An overhead camera records behavior at 30 fps in UFMF format
-- A MATLAB protocol script controls the arena and logs stimulus timing
-- The primary response measured is the **optomotor response** (turning in the direction of motion)
-- Data flows through 5 stages: experiment, tracking, metrics, condition-splitting, merging
+- Flies walk freely within a cylindrical arena while visual patterns are displayed on LED panels around the circumference facing inwards.
+- An overhead camera records behavior at 30 fps in near infra-red light and saves the data in the compressed UFMF format.
+- A MATLAB protocol script controls the arena and logs stimulus timing and parameters.
+- The primary response measured is the **optomotor response** (corrective turning in the direction of motion).
+- Data flows through 5 stages: experiment, tracking, metrics, condition-splitting, merging across cohorts of the same genetic strain.
 :::
 
-## What Is the Freely-Walking Optomotor Experiment?
+## Overview of the Freely-Walking Optomotor Experiments
 
-This experiment studies the visual-motor behavior of freely-walking *Drosophila melanogaster* (fruit flies) inside a cylindrical LED arena (the G3 arena). Groups of 10--20 flies walk freely on a flat surface while visual patterns -- such as moving gratings, curtains, or stationary bars -- are displayed on the surrounding LED panels. An overhead camera records the flies' behavior at 30 frames per second.
+These experiments study the visual-motor behaviour of freely-walking *Drosophila melanogaster* (fruit flies) inside a cylindrical LED arena (3rd generation - G3 arena). Groups of between 10-20 flies (ideally 15) walk freely on a flat surface of the underlying LED backlight while visual patterns -- such as moving gratings, curtains, or stationary bars -- are displayed on the surrounding LED panels. An overhead camera records the flies' behavior at 30 frames per second.
 
-The primary behavioral response measured is the **optomotor response**: when a grating pattern moves across the visual field, walking flies tend to turn in the direction of motion. By varying stimulus parameters (pattern type, speed, contrast, spatial frequency), we can probe the neural circuits underlying motion detection.
+The primary behavioural response measured is the **optomotor response**: when a grating pattern moves across the visual field, walking flies tend to turn in the direction of motion. By varying stimulus parameters (pattern type, speed, contrast, spatial frequency), we can probe the neural circuits underlying motion detection. The experiments also include control conditions (e.g., static patterns, dark intervals) and a pre/post-stimulus acclimation period in darkness to measure baseline behavior. 
+
+In the summer of 2024, while performing the first round of these experiments, we observed another behaviour that we call the **centring resposnse**: while the grating stimuli are being presented and flies perform the well-characterised optomotor turning, they also tend to walk towards the center of the arena. The response was colloquiially given the moniker the <i>"hokey-cokey"</i> after its resemblance to the centripetal movement within the group dance performed by several cultures around the world. Many of the protocols designed for this arena were designed to try and. investigate this centring behaviour, it's reliance on stimulus parameters and its interaction with the optomotor response.
 
 **Arena geometry:**
 
@@ -164,6 +169,7 @@ The primary behavioral response measured is the **optomotor response**: when a g
 - Each panel is 8 x 8 pixels, giving 3 rows x 192 columns total
 - Arena radius: approximately 120 mm
 - Video recording at 30 fps in UFMF (compressed) format
+- The LEDs emit light with a peak in the green range of the visible spectrum (~500nm). 
 
 ## The Full Data Pipeline
 
