@@ -1382,6 +1382,10 @@ These are the raw tracking outputs (after filtering and interpolation) that all 
 - `plot_allcond_onecohort_tuning` creates per-condition comparison plots
 - `plot_allcond_acrossgroups_tuning` overlays strain vs control responses across conditions
 - `make_summary_heat_maps_p27` generates p-value heatmaps for screening results
+- `plot_xcond_per_strain2` and `plot_boxchart_metrics_xcond` compare responses across conditions
+- `plot_xstrain_per_cond` and `plot_boxchart_metrics_xstrains` compare responses across strains
+- `plot_fly_occupancy_heatmaps_all` generates spatial occupancy maps
+- `plot_traj_xcond`, `plot_traj_xflies`, and `plot_traj_pre_post` visualize fly trajectories
 :::
 
 ## \colorbox{fnbg}{\texttt{make\_overview.m}} \label{fn:make_overview}
@@ -1423,6 +1427,188 @@ Overlays the mean $\pm$ SEM timeseries of two or more experimental groups on the
 Generates a p-value heatmap summarizing statistical comparisons of all screened strains against the empty-split control for a given condition. Red cells indicate the target strain has a higher metric value than the control; blue cells indicate lower. Color intensity reflects statistical significance after FDR correction ($\alpha = 0.001$). Calls `make_pvalue_heatmap_across_strains` and `fdr_bh` internally.
 
 ![Example p-value heatmap for condition 1 (60-degree gratings at 4 Hz). Each row is a different strain; columns represent behavioral metrics. Red = higher than control, blue = lower. Only significant comparisons (FDR-corrected) are colored.](example_figs/ex_pvalue_heatmap.png){#fig-ex-heatmap width=45%}
+
+
+\newpage
+
+# Analysis and Figure Scripts {#sec-analysis-scripts}
+
+::: {.callout-note appearance="default" icon=false}
+## **At a Glance**
+
+- Three standalone scripts generate publication-quality figures from the DATA struct
+- `fig_different_speeds.m` compares locomotor responses across stimulus speeds (protocol\_31)
+- `fig1_plots.m` produces the full set of figures for the MIC paper (protocol\_27): time series, box plots, occupancy maps, trajectories, and cross-strain comparisons
+- `generate_trajectory_plots.m` visualizes individual fly movement paths in the arena
+- All scripts load data via `comb_data_across_cohorts_cond` and use the same underlying plotting functions
+:::
+
+These scripts are located in `plotting_functions/figures/` and `analysis_scripts/` and serve as worked examples of how to use the plotting functions described in @sec-plotting with the DATA struct described in @sec-data. They are not part of the automated pipeline; instead, they are run interactively to explore results and generate figures for presentations or publications.
+
+## \colorbox{fnbg}{\texttt{fig\_different\_speeds.m}} \label{fn:fig_different_speeds}
+
+**Location:** `plotting_functions/figures/fig_different_speeds.m`
+
+Compares locomotor responses across different stimulus speeds within a single spatial frequency. Designed for **protocol\_31**, which contains 10 conditions: 60-degree gratings at 1, 2, 4, and 8 Hz; 15-degree gratings at 4, 8, 16, and 32 Hz; and corresponding flicker controls for each spatial frequency.
+
+**What it does:**
+
+1. Loads the protocol\_31 DATA struct using `comb_data_across_cohorts_cond`
+2. Plots time series of a chosen metric across speed conditions using `plot_xcond_per_strain2` --- each condition is a different color on the same axes, making it easy to see how response magnitude scales with temporal frequency
+3. Generates box-and-whisker summary plots using `plot_boxchart_metrics_xcond`, comparing the distribution of a metric across speeds
+
+**Key parameters:**
+
+- `cond_ids` --- which speed conditions to compare (e.g., `[1,2,3,4]` for all 60-degree speeds)
+- `data_type` --- which metric to plot (`dist_data_delta`, `av_data`, etc.)
+- `rng` --- frame range for box plot averaging (e.g., `1170:1200` for the last second of stimulus)
+- `delta` --- reference point for the metric (0 = absolute, 1 = relative to stimulus onset, 2 = relative to stimulus offset)
+
+![Example output from `fig_different_speeds`: distance from center (relative to stimulus onset) across four 60-degree grating speeds (1, 2, 4, 8 Hz) for empty-split control flies. Each color represents a different speed condition, with mean $\pm$ SEM shown.](example_figs/ex_speed_comparison_timeseries.png){#fig-ex-speed-ts width=70%}
+
+![Example box-and-whisker plot from `fig_different_speeds`: distribution of centring (distance from center relative to onset) during the last second of stimulus across four speeds. Each dot is one fly.](example_figs/ex_speed_comparison_boxchart.png){#fig-ex-speed-box width=40%}
+
+
+## \colorbox{fnbg}{\texttt{fig1\_plots.m}} \label{fn:fig1_plots}
+
+**Location:** `plotting_functions/figures/fig1_plots.m`
+
+The most comprehensive figure-generation script, producing the full set of publication figures for the MIC paper using **protocol\_27** data. This script demonstrates all major analysis approaches: single-strain time series, cross-condition box plots, spatial occupancy heatmaps, trajectory visualizations, and multi-strain comparisons.
+
+**What it does:**
+
+1. Loads protocol\_27 DATA struct and generates experiment summary metadata
+2. **Time series** (`plot_xcond_per_strain2`): plots behavioral metrics across selected conditions for a single strain (typically the empty-split control), with optional SEM/SD error bands and shaded metric-calculation regions
+3. **Box plots** (`plot_boxchart_metrics_xcond`): compares metric distributions across conditions. Multiple frame ranges and delta modes are used --- e.g., distance at stimulus end ($\Delta$ from start), forward velocity during the full stimulus period
+4. **Occupancy heatmaps** (`plot_fly_occupancy_heatmaps`, `plot_fly_occupancy_heatmaps_all`): 2D spatial histograms showing where flies spend time during stimulus conditions, with arena circle overlay and probability centroid markers
+5. **Trajectories** (`plot_traj_xcond`, `plot_traj_xflies`): individual fly movement paths in the arena, comparing either one fly across multiple conditions or multiple flies within one condition
+6. **Cross-strain comparison** (`plot_xstrain_per_cond`, `plot_boxchart_metrics_xstrains`): overlays time series or box plots for multiple strains on the same axes, using a per-strain color scheme
+
+**Key functions introduced:**
+
+### \colorbox{fnbg}{\texttt{plot\_xcond\_per\_strain2.m}} \label{fn:plot_xcond_per_strain2}
+
+Plots timeseries of a behavioral metric for a single strain, with each condition rendered in a different color on the same axes. Useful for comparing how a fly genotype responds to different stimuli.
+
+```matlab
+plot_xcond_per_strain2(protocol, data_type, ...
+    cond_ids, strain_names, params, DATA)
+```
+
+The `params` struct controls the plot: `plot_sem` and `plot_sd` toggle error bands, `shaded_areas` highlights the frame ranges used for box plot metrics, and `plot_individ` shows individual fly traces.
+
+![Example output from `plot_xcond_per_strain2`: angular velocity timeseries for empty-split control flies across conditions 1 (60-deg gratings, 4 Hz) and 7 (reverse-phi, 2 Hz). Each condition is a different color; mean $\pm$ SEM is shown.](example_figs/ex_xcond_timeseries.png){#fig-ex-xcond-ts width=70%}
+
+### \colorbox{fnbg}{\texttt{plot\_boxchart\_metrics\_xcond.m}} \label{fn:plot_boxchart_metrics_xcond}
+
+Generates box-and-whisker plots with individual data points, comparing the distribution of a behavioral metric across stimulus conditions. Each condition is a colored box; individual flies are shown as jittered circles.
+
+```matlab
+plot_boxchart_metrics_xcond(DATA, cond_ids, ...
+    strain_names, data_type, rng, delta)
+```
+
+The `rng` parameter specifies which frames to average (e.g., `300:1200` for the full stimulus, `1170:1200` for the last second). The `delta` parameter controls the reference point: 0 = raw values, 1 = relative to frame 300 (stimulus onset), 2 = relative to frame 1200 (stimulus offset).
+
+![Example box plot from `plot_boxchart_metrics_xcond`: angular velocity distribution during the full stimulus period for two conditions (4 Hz gratings and reverse-phi).](example_figs/ex_xcond_boxchart.png){#fig-ex-xcond-box width=40%}
+
+### \colorbox{fnbg}{\texttt{plot\_fly\_occupancy\_heatmaps\_all.m}} \label{fn:plot_fly_occupancy_heatmaps_all}
+
+Generates 2D spatial occupancy heatmaps showing where flies spend time during selected stimulus conditions, pooled across all cohorts. Produces a 3-panel figure (typically: 4 Hz gratings, static gratings, flicker) with arena circle overlay and probability centroid markers.
+
+```matlab
+hFig = plot_fly_occupancy_heatmaps_all(data, ...
+    frameRange, nbins)
+```
+
+The function bins fly x/y positions into a 2D histogram, normalizes to probability, and displays with a consistent colormap. The arena boundary is drawn using the hardcoded calibration constants (`PPM = 4.1691`, center `[528, 516]`, radius `496` pixels).
+
+![Example occupancy heatmap pooled across all empty-split control cohorts. Three panels show spatial distributions for different stimulus conditions; the circle marks the arena boundary and cross markers indicate the centroid of the highest-probability region.](example_figs/ex_occupancy_heatmap.png){#fig-ex-occupancy width=100%}
+
+### \colorbox{fnbg}{\texttt{plot\_xstrain\_per\_cond.m}} \label{fn:plot_xstrain_per_cond}
+
+Plots timeseries of a behavioral metric for a single condition, with each strain rendered in a different color. The complement of `plot_xcond_per_strain2`; here strains vary while the condition is fixed.
+
+```matlab
+plot_xstrain_per_cond(protocol, data_type, ...
+    cond_ids, strains_to_plot, params, DATA)
+```
+
+The `strains_to_plot` parameter is a vector of strain indices (positions in `fieldnames(DATA)`).
+
+![Example cross-strain timeseries: angular velocity for 60-deg gratings at 4 Hz, comparing empty-split control, Pm2ab, and T4T5 strains. Each strain is a different color.](example_figs/ex_xstrain_timeseries.png){#fig-ex-xstrain-ts width=70%}
+
+### \colorbox{fnbg}{\texttt{plot\_boxchart\_metrics\_xstrains.m}} \label{fn:plot_boxchart_metrics_xstrains}
+
+Box-and-whisker plots comparing multiple strains for a single condition --- the cross-strain complement of `plot_boxchart_metrics_xcond`.
+
+```matlab
+plot_boxchart_metrics_xstrains(DATA, ...
+    strain_ids, cond_idx, data_type, rng, delta)
+```
+
+![Example cross-strain box plot: angular velocity during the full stimulus period for condition 1 (4 Hz gratings), comparing three strains.](example_figs/ex_xstrain_boxchart.png){#fig-ex-xstrain-box width=45%}
+
+
+## \colorbox{fnbg}{\texttt{generate\_trajectory\_plots.m}} \label{fn:generate_trajectory_plots}
+
+**Location:** `analysis_scripts/generate_trajectory_plots.m`
+
+Generates trajectory visualizations showing individual fly movement paths in the arena. Uses four complementary trajectory plotting functions that each show a different aspect of fly locomotion.
+
+**What it does:**
+
+1. Loads the DATA struct for a chosen protocol (default: protocol\_35)
+2. Generates a subplot grid of all fly trajectories for one condition using `plot_traj_subplot`
+3. Compares a single fly's trajectory across multiple conditions using `plot_traj_xcond`
+4. Overlays multiple fly trajectories for the same condition using `plot_traj_xflies`
+5. Visualizes pre-stimulus, stimulus, and post-stimulus trajectory segments using `plot_traj_pre_post`
+
+All trajectory plots share a common coordinate system (arena center at approximately 123 mm, 125 mm) and plot the stimulus period (frames 300--1200, i.e., 30 seconds at 30 fps) by default.
+
+**Key functions introduced:**
+
+### \colorbox{fnbg}{\texttt{plot\_traj\_subplot.m}} \label{fn:plot_traj_subplot}
+
+Generates a grid of subplots showing each fly's trajectory in the arena during the stimulus period for one condition. Up to 35 flies per figure; additional figures are created automatically if needed.
+
+```matlab
+plot_traj_subplot(DATA, strain, condition_n, ...
+    save_folder)
+```
+
+![Example trajectory subplot grid: 2D paths of individual empty-split control flies during condition 1 (60-deg gratings at 4 Hz). Each subplot shows one fly's path during the 30-second stimulus.](example_figs/ex_trajectory_subplot.png){#fig-ex-traj-subplot width=90%}
+
+### \colorbox{fnbg}{\texttt{plot\_traj\_xcond.m}} \label{fn:plot_traj_xcond}
+
+Overlays a single fly's trajectory across multiple stimulus conditions on the same axes. Each condition is rendered in a different color, revealing how the fly's movement pattern changes between stimuli.
+
+```matlab
+plot_traj_xcond(DATA, strain, cond_ids, fly_idx)
+```
+
+![Example cross-condition trajectory: one fly's movement path during static gratings (cond.~10), flicker (cond.~9), and 4 Hz gratings (cond.~1). Different conditions produce visually distinct walking patterns.](example_figs/ex_trajectory_xcond.png){#fig-ex-traj-xcond width=50%}
+
+### \colorbox{fnbg}{\texttt{plot\_traj\_xflies.m}} \label{fn:plot_traj_xflies}
+
+Overlays trajectories from multiple flies for a single stimulus condition on the same axes. Useful for showing variability between individuals.
+
+```matlab
+plot_traj_xflies(DATA, strain, cond_idx, fly_ids)
+```
+
+![Example multi-fly trajectory: three empty-split control flies during condition 1 (4 Hz gratings), overlaid on the same arena plot. Each fly's path during the 30-second stimulus is shown.](example_figs/ex_trajectory_xflies.png){#fig-ex-traj-xflies width=50%}
+
+### \colorbox{fnbg}{\texttt{plot\_traj\_pre\_post.m}} \label{fn:plot_traj_pre_post}
+
+Visualizes trajectory segments before, during, and after stimulus onset for one or more flies. Pre-stimulus and post-stimulus segments (5 seconds each) are drawn in grey; the stimulus period is drawn in the condition color. This makes stimulus-evoked changes in locomotion visually obvious.
+
+```matlab
+plot_traj_pre_post(DATA, strain, cond_idx, ...
+    fly_ids)
+```
+
+![Example pre/post trajectory: one fly's path before stimulus (grey), during 4 Hz gratings (colored), and after stimulus (grey). The change in walking pattern at stimulus onset is visible.](example_figs/ex_trajectory_prepost.png){#fig-ex-traj-prepost width=50%}
 
 
 \newpage
@@ -1603,8 +1789,11 @@ Alphabetical listing of all MATLAB functions referenced in this guide. Page numb
 \texttt{comb\_data\_one\_cohort\_cond} & \pageref{fn:comb_data_one_cohort_cond} & Split continuous data by condition using LOG \\
 \texttt{combine\_data\_one\_cohort} & \pageref{fn:combine_data_one_cohort} & Core: compute 12 behavioral metrics \\
 \texttt{export\_to\_google\_sheets} & \pageref{fn:export_to_google_sheets} & Push metadata to Google Sheet via HTTP \\
+\texttt{fig\_different\_speeds} & \pageref{fn:fig_different_speeds} & Speed comparison analysis (protocol\_31) \\
+\texttt{fig1\_plots} & \pageref{fn:fig1_plots} & Publication figures for MIC paper (protocol\_27) \\
 \texttt{gaussian\_conv} & \pageref{fn:gaussian_conv} & Gaussian smoothing for position data \\
 \texttt{generate\_circ\_stim\_ufmf} & \pageref{fn:generate_circ_stim_ufmf} & Generate stimulus video for documentation \\
+\texttt{generate\_trajectory\_plots} & \pageref{fn:generate_trajectory_plots} & Trajectory visualization script \\
 \texttt{get\_input\_parameters} & \pageref{fn:get_input_parameters} & GUI dialog for experiment metadata \\
 \texttt{get\_temp\_rec} & \pageref{fn:get_temp_rec} & Read temperature from DAQ probes \\
 \texttt{initialize\_temp\_recording} & \pageref{fn:initialize_temp_recording} & Configure DAQ for temperature monitoring \\
@@ -1615,6 +1804,15 @@ Alphabetical listing of all MATLAB functions referenced in this guide. Page numb
 \texttt{plot\_all\_features\_filt} & \pageref{fn:plot_all_features_filt} & Full-experiment timeseries plots \\
 \texttt{plot\_allcond\_acrossgroups\_\newline tuning} & \pageref{fn:plot_allcond_acrossgroups_tuning} & Strain vs control timeseries overlay \\
 \texttt{plot\_allcond\_onecohort\_tuning} & \pageref{fn:plot_allcond_onecohort_tuning} & Per-condition comparison plots \\
+\texttt{plot\_boxchart\_metrics\_xcond} & \pageref{fn:plot_boxchart_metrics_xcond} & Box plots comparing conditions \\
+\texttt{plot\_boxchart\_metrics\_xstrains} & \pageref{fn:plot_boxchart_metrics_xstrains} & Box plots comparing strains \\
+\texttt{plot\_fly\_occupancy\_\newline heatmaps\_all} & \pageref{fn:plot_fly_occupancy_heatmaps_all} & Spatial occupancy heatmaps (pooled) \\
+\texttt{plot\_traj\_pre\_post} & \pageref{fn:plot_traj_pre_post} & Pre/stimulus/post trajectory segments \\
+\texttt{plot\_traj\_subplot} & \pageref{fn:plot_traj_subplot} & Trajectory subplot grid (all flies) \\
+\texttt{plot\_traj\_xcond} & \pageref{fn:plot_traj_xcond} & Single-fly trajectory across conditions \\
+\texttt{plot\_traj\_xflies} & \pageref{fn:plot_traj_xflies} & Multi-fly trajectory for one condition \\
+\texttt{plot\_xcond\_per\_strain2} & \pageref{fn:plot_xcond_per_strain2} & Cross-condition timeseries for one strain \\
+\texttt{plot\_xstrain\_per\_cond} & \pageref{fn:plot_xstrain_per_cond} & Cross-strain timeseries for one condition \\
 \texttt{present\_acclim\_off} & \pageref{fn:present_acclim_off} & Dark acclimation recording \\
 \texttt{present\_fixation\_stimulus} & \pageref{fn:present_fixation_stimulus} & Static bar display for fixation \\
 \texttt{present\_optomotor\_stimulus} & \pageref{fn:present_optomotor_stimulus} & Standard bidirectional stimulus \\

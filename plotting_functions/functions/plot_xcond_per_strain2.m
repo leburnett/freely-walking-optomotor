@@ -226,7 +226,7 @@ for strain_id = 1:numel(strain_names)
         % T4T5 vs ES plots - - - 
 
         % col = [0.4, 0.4, 0.4];
-        col = [1 0.5, 0];
+        % col = [1 0.5, 0];
 
         % col = [0.8, 0.8, 0.8];
         % col = [1 0.8, 0];
