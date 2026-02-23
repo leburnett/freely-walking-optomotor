@@ -173,7 +173,7 @@ These experiments study the visual-motor behaviour of freely-walking *Drosophila
 
 The primary behavioural response measured is the **optomotor response**: when a grating pattern moves across the visual field, walking flies tend to turn in the direction of motion. By varying stimulus parameters (pattern type, speed, contrast, spatial frequency), we can probe the neural circuits underlying motion detection. The experiments also include control conditions (e.g., static patterns, dark intervals) and a pre/post-stimulus acclimation period in darkness to measure baseline behavior. 
 
-In the summer of 2024, while performing the first round of these experiments, we observed another behaviour that we call the **centring resposnse**: while the grating stimuli are being presented and flies perform the well-characterised optomotor turning, they also tend to walk towards the center of the arena. The response was colloquiially given the moniker the <i>"hokey-cokey"</i> after its resemblance to the centripetal movement within the group dance performed by several cultures around the world. Many of the protocols designed for this arena were designed to try and. investigate this centring behaviour, it's reliance on stimulus parameters and its interaction with the optomotor response.
+In the summer of 2024, while performing the first round of these experiments, we observed another behaviour that we call the **centring response**: while the grating stimuli are being presented and flies perform the well-characterised optomotor turning, they also tend to walk towards the center of the arena. The response was colloquiially given the moniker the <i>"hokey-cokey"</i> after its resemblance to the centripetal movement within the group dance performed by several cultures around the world. Many of the protocols designed for this arena were designed to try and. investigate this centring behaviour, it's reliance on stimulus parameters and its interaction with the optomotor response.
 
 **Arena geometry:**
 
@@ -204,7 +204,7 @@ Steps 2 and 3 are automated by the pipeline scripts described in @sec-automation
 
 # Automated Data Pipeline {#sec-automation}
 
-::: {.callout-note appearance="simple" icon=false}
+::: {.callout-note appearance="default" icon=false}
 ## At a Glance
 
 - Three Python scripts (written by Aparna Dev) automate data flow from the acquisition PC to processed results
@@ -424,7 +424,7 @@ A standalone utility that syncs `.mp4` video files from local `02_processed` to 
 - MATLAB with FlyTracker (`simple_noninteractive_flytracker`) on the system PATH
 - Network drive `\\prfs.hhmi.org\reiserlab\oaky-cokey\` must be accessible from both PCs
 
-::: {.callout-warning appearance="simple" icon=false}
+::: {.callout-warning appearance="default" icon=false}
 ## Known Limitations
 
 The automation scripts were developed for rapid deployment and contain several hardcoded assumptions. See @sec-pitfalls for a complete list. The most impactful remaining issues are: the lack of a shared configuration file (all paths are duplicated across scripts), the `move_folder()` nesting bug in `daily_processing.py`, and the absence of retry logic for network operations.
@@ -435,7 +435,7 @@ The automation scripts were developed for rapid deployment and contain several h
 
 # Running an Experiment -- Protocol Functions {#sec-protocol}
 
-::: {.callout-note appearance="simple" icon=false}
+::: {.callout-note appearance="default" icon=false}
 ## At a Glance
 
 - A protocol file (e.g., `protocol_27.m`) orchestrates the entire experiment
@@ -720,7 +720,7 @@ Additionally logs `Log.contrast` with the contrast value for the current conditi
 
 # The LOG Data Structure {#sec-log}
 
-::: {.callout-note appearance="simple" icon=false}
+::: {.callout-note appearance="default" icon=false}
 ## At a Glance
 
 - The LOG struct is built progressively during the experiment -- each phase adds its subfield
@@ -846,7 +846,7 @@ The critical link between stimulus events and behavioral data is the **frame cou
 
 # Data Processing Pipeline {#sec-processing}
 
-::: {.callout-note appearance="simple" icon=false}
+::: {.callout-note appearance="default" icon=false}
 ## At a Glance
 
 - `process_freely_walking_data` iterates through all experiments for a given date
@@ -1100,7 +1100,7 @@ This produces the final DATA struct used for group analysis.
 
 # The DATA Struct {#sec-data}
 
-::: {.callout-note appearance="simple" icon=false}
+::: {.callout-note appearance="default" icon=false}
 ## At a Glance
 
 - DATA is the final output: a hierarchical struct organizing all experiments
@@ -1116,7 +1116,7 @@ The DATA struct organizes all experimental data in a nested hierarchy:
 
 ![DATA struct hierarchy showing the nesting levels from strain down to individual behavioral metrics.](diagrams/07_data_struct_hierarchy.png){#fig-datastruct width=100%}
 
-::: {.callout-note appearance="simple" icon=false}
+::: {.callout-note appearance="default" icon=false}
 ## Example: Accessing DATA
 
 ```matlab
@@ -1191,7 +1191,7 @@ strain_names = fieldnames(DATA);
 
 # Behavioral Metrics Reference {#sec-metrics}
 
-::: {.callout-note appearance="simple" icon=false}
+::: {.callout-note appearance="default" icon=false}
 ## At a Glance
 
 - 12 behavioral metrics are computed for each fly at each frame
@@ -1321,7 +1321,7 @@ These are the raw tracking outputs (after filtering and interpolation) that all 
 
 # Visualization and Plotting Functions {#sec-plotting}
 
-::: {.callout-note appearance="simple" icon=false}
+::: {.callout-note appearance="default" icon=false}
 ## At a Glance
 
 - `make_overview` generates summary histograms of locomotor parameters
