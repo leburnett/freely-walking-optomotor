@@ -41,14 +41,15 @@ format:
       \usepackage{fancyhdr}
       \pagestyle{fancy}
       \fancyhf{}
-      \fancyhead[R]{\nouppercase{\rightmark}}
+      \fancyhead[R]{\nouppercase{\leftmark}}
       \fancyfoot[C]{\thepage}
       \renewcommand{\headrulewidth}{0.4pt}
       \renewcommand{\footrulewidth}{0pt}
       \fancypagestyle{plain}{%
         \fancyhf{}
+        \fancyhead[R]{\nouppercase{\leftmark}}
         \fancyfoot[C]{\thepage}
-        \renewcommand{\headrulewidth}{0pt}
+        \renewcommand{\headrulewidth}{0.4pt}
       }
 ---
 
@@ -1367,6 +1368,7 @@ strain_names = fieldnames(DATA);
 
 These are the raw tracking outputs (after filtering and interpolation) that all other metrics are derived from.
 
+![Heading angle convention used by FlyTracker. 0° points East (right), 90° points North (up), increasing counter-clockwise.](diagrams/09_heading_convention.png){#fig-heading width=40%}
 
 \newpage
 

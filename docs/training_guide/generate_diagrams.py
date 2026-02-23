@@ -956,6 +956,59 @@ def make_automation_pipeline():
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Main
+def make_heading_convention():
+    """Diagram 09: Unit circle showing the heading angle convention.
+
+    0° at East, 90° at North, 180° at West, 270° at South.
+    A radius line from center to 0° (East).
+    """
+    fig, ax = plt.subplots(figsize=(3.0, 3.0))
+    ax.set_aspect("equal")
+    ax.axis("off")
+
+    cx, cy = 0.0, 0.0
+    r = 1.0
+    label_offset = 1.22  # how far from centre the degree labels sit
+
+    # Draw the circle
+    circle = plt.Circle((cx, cy), r, fill=False, edgecolor=C_BLACK, linewidth=1.5)
+    ax.add_patch(circle)
+
+    # Draw small centre dot
+    ax.plot(cx, cy, "o", color=C_BLACK, markersize=3)
+
+    # Draw radius line from centre to 0° (East)
+    ax.plot([cx, cx + r], [cy, cy], color=C_BLACK, linewidth=1.5)
+
+    # Tick marks at each cardinal direction
+    tick_len = 0.06
+    for angle_deg in [0, 90, 180, 270]:
+        rad = np.radians(angle_deg)
+        x_inner = cx + (r - tick_len) * np.cos(rad)
+        y_inner = cy + (r - tick_len) * np.sin(rad)
+        x_outer = cx + (r + tick_len) * np.cos(rad)
+        y_outer = cy + (r + tick_len) * np.sin(rad)
+        ax.plot([x_inner, x_outer], [y_inner, y_outer], color=C_BLACK, linewidth=1.2)
+
+    # Degree labels: 0° East, 90° North, 180° West, 270° South
+    labels = {0: "0\u00b0", 90: "90\u00b0", 180: "180\u00b0", 270: "270\u00b0"}
+    ha_map = {0: "left", 90: "center", 180: "right", 270: "center"}
+    va_map = {0: "center", 90: "bottom", 180: "center", 270: "top"}
+
+    for angle_deg, text in labels.items():
+        rad = np.radians(angle_deg)
+        lx = cx + label_offset * np.cos(rad)
+        ly = cy + label_offset * np.sin(rad)
+        ax.text(lx, ly, text, fontsize=11, fontweight="bold",
+                ha=ha_map[angle_deg], va=va_map[angle_deg], color=C_BLACK)
+
+    ax.set_xlim(-1.55, 1.55)
+    ax.set_ylim(-1.55, 1.55)
+
+    fig.tight_layout(pad=0.2)
+    _save(fig, "09_heading_convention.png")
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def main():
@@ -970,8 +1023,9 @@ def main():
     make_folder_structure()
     make_data_struct_hierarchy()
     make_automation_pipeline()
+    make_heading_convention()
 
-    print(f"\nAll 8 diagrams saved to {OUTPUT_DIR}/")
+    print(f"\nAll 9 diagrams saved to {OUTPUT_DIR}/")
 
 
 if __name__ == "__main__":
