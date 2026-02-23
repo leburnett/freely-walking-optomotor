@@ -48,7 +48,7 @@ def sync_videos_and_log_missing(local_root, network_root, log_path):
 
 if __name__ == "__main__":
     local_root = r"C:\Users\burnettl\Documents\oakey-cokey\DATA\02_processed"
-    network_root = r"\\prfs\reiserlab\oaky-cokey\data\2_processed"
+    network_root = r"\\prfs.hhmi.org\reiserlab\oaky-cokey\data\2_processed"
     log_file_path = r"C:\Users\burnettl\Documents\oakey-cokey\logs\missing_videos_log.txt"
 
     os.makedirs(os.path.dirname(log_file_path), exist_ok=True)

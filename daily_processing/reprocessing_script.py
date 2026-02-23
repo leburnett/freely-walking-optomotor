@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import subprocess
 import logging
@@ -19,7 +20,7 @@ NETWORK_PROCESSED = r"\\prfs.hhmi.org\reiserlab\oaky-cokey\data\2_processed"
 RESULTS_PATH = r"C:\Users\burnettl\Documents\oakey-cokey\results"
 
 LOCAL_RESULTS_ROOT = r"C:\Users\burnettl\Documents\oakey-cokey\results"
-NETWORK_RESULTS_ROOT = r"\\prfs\reiserlab\oaky-cokey\exp_results"
+NETWORK_RESULTS_ROOT = r"\\prfs.hhmi.org\reiserlab\oaky-cokey\exp_results"
 
 LOCAL_FIGS_ROOT = r"C:\Users\burnettl\Documents\oakey-cokey\figures\overview_figs"
 NETWORK_FIGS_ROOT = r"\\prfs.hhmi.org\reiserlab\oaky-cokey\exp_figures\overview_figs"
@@ -29,7 +30,7 @@ MATLAB_FUNCTION = "process_freely_walking_data"
 def list_date_folders(path):
     return [
         name for name in os.listdir(path)
-        if os.path.isdir(os.path.join(path, name)) and name.count('_') == 2 and name.startswith("2025_")
+        if os.path.isdir(os.path.join(path, name)) and re.match(r'^\d{4}_\d{2}_\d{2}$', name)
     ]
 
 def has_results_for_date(date_folder_name):

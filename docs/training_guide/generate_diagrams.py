@@ -1,6 +1,6 @@
 """Generate schematic diagrams for the freely-walking optomotor training guide.
 
-Creates 7 annotated PNG diagrams used in the training_guide.qmd document.
+Creates 8 annotated PNG diagrams used in the training_guide.qmd document.
 All diagrams use a consistent visual style: greyscale base with monochrome
 blue intensity ramp accents.  Font: Helvetica throughout.
 
@@ -771,6 +771,190 @@ def make_data_struct_hierarchy():
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# Diagram 8: Automation Pipeline
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def make_automation_pipeline():
+    fig, ax = plt.subplots(figsize=(MAX_WIDTH, 7.5))
+    ax.axis("off")
+    ax.set_xlim(-0.5, 10.5)
+    ax.set_ylim(-0.5, 12)
+
+    def draw_stage_box(x, y, w, h, text, color, text_color="white", fontsize=7):
+        rect = FancyBboxPatch((x - w / 2, y - h / 2), w, h,
+                              boxstyle="round,pad=0.15", facecolor=color,
+                              edgecolor=C_DARK_GRAY, linewidth=1.0)
+        ax.add_patch(rect)
+        ax.text(x, y, text, ha="center", va="center", fontsize=fontsize,
+                fontweight="bold", color=text_color, linespacing=1.3)
+
+    def draw_dir_box(x, y, w, h, text, color, text_color=C_DARK_GRAY):
+        rect = FancyBboxPatch((x - w / 2, y - h / 2), w, h,
+                              boxstyle="round,pad=0.1", facecolor=color,
+                              edgecolor=C_DARK_GRAY, linewidth=0.8,
+                              linestyle="--")
+        ax.add_patch(rect)
+        ax.text(x, y, text, ha="center", va="center", fontsize=5.5,
+                color=text_color, linespacing=1.2)
+
+    def arrow(x1, y1, x2, y2, **kwargs):
+        props = dict(arrowstyle="-|>", color=C_DARK_GRAY, lw=1.2,
+                     mutation_scale=12)
+        props.update(kwargs)
+        ax.annotate("", xy=(x2, y2), xytext=(x1, y1),
+                    arrowprops=props)
+
+    # ── Title ──
+    ax.text(5.0, 11.7, "Automated Data Pipeline",
+            ha="center", va="top", **FONT_TITLE)
+
+    # ── Machine labels (left side) ──
+    # Acquisition PC label
+    ax.text(-0.2, 10.0, "Acquisition\nPC", fontsize=6, color=C_MED_DARK_GRAY,
+            ha="center", va="center", fontweight="bold", fontstyle="italic")
+    # Processing PC label
+    ax.text(-0.2, 5.5, "Processing\nPC", fontsize=6, color=C_MED_DARK_GRAY,
+            ha="center", va="center", fontweight="bold", fontstyle="italic")
+    # Dashed separator line between machines
+    ax.plot([-0.5, 10.5], [8.0, 8.0], color=C_LIGHT_GRAY, lw=0.8,
+            linestyle="--")
+    ax.text(10.3, 8.15, "network", fontsize=4.5, color=C_MED_LIGHT_GRAY,
+            ha="right", fontstyle="italic")
+
+    # ── Source directory (top) ──
+    draw_dir_box(3.0, 10.9, 4.0, 0.65,
+                 "Experiment data folder\n.ufmf + LOG.mat + stamp_log",
+                 C_NEAR_WHITE)
+
+    # ── Stage 1: monitor_and_copy ──
+    draw_stage_box(3.0, 9.8, 4.5, 0.7,
+                   "Stage 1: monitor_and_copy.py\nwatchdog (30 s polling)",
+                   C_MED_BLUE)
+    arrow(3.0, 10.55, 3.0, 10.15)
+
+    # Arrow down to 0_unprocessed
+    arrow(3.0, 9.45, 3.0, 9.0)
+
+    # ── 0_unprocessed directory ──
+    draw_dir_box(3.0, 8.6, 4.0, 0.65,
+                 "0_unprocessed\n.ufmf + LOG.mat + stamp_log",
+                 C_VERY_LIGHT_GRAY)
+
+    # ── Stage 2: monitor_and_track ──
+    # Arrow from 0_unprocessed down to stage 2
+    arrow(3.0, 8.25, 3.0, 7.6)
+
+    draw_stage_box(3.0, 7.15, 4.5, 0.85,
+                   "Stage 2: monitor_and_track.py\npoll (5 min, 15 cycles)\nMATLAB: batch_track_ufmf()",
+                   C_MED_BLUE, fontsize=6)
+
+    # Arrow down to 1_tracked
+    arrow(3.0, 6.7, 3.0, 6.25)
+
+    # ── 1_tracked directory ──
+    draw_dir_box(3.0, 5.85, 4.0, 0.65,
+                 "1_tracked\n+ trx.mat + feat.mat",
+                 C_LIGHTEST_BLUE, text_color=C_NAVY)
+
+    # ── Stage 3: daily_processing ──
+    arrow(3.0, 5.5, 3.0, 5.05)
+
+    draw_stage_box(3.0, 4.5, 4.5, 0.9,
+                   "Stage 3: daily_processing.py\ndaily (one-shot)\nMATLAB: process_freely_walking_data()",
+                   C_MED_BLUE, fontsize=6)
+
+    # Arrow down to 2_processed
+    arrow(3.0, 4.0, 3.0, 3.55)
+
+    # ── 2_processed directory ──
+    draw_dir_box(3.0, 3.15, 4.0, 0.65,
+                 "2_processed\n+ results + figures + MP4",
+                 C_VERY_LIGHT_BLUE, text_color=C_NAVY)
+
+    # ── Network outputs (right side) ──
+    # exp_results
+    draw_dir_box(7.8, 3.85, 3.2, 0.55,
+                 "exp_results/\nresult .mat files by protocol",
+                 C_VERY_LIGHT_GRAY)
+    # Arrow from stage 3 to exp_results
+    ax.annotate("", xy=(6.15, 3.85), xytext=(5.25, 4.3),
+                arrowprops=dict(arrowstyle="-|>", color=C_MED_GRAY, lw=0.8,
+                                mutation_scale=10))
+
+    # exp_figures
+    draw_dir_box(7.8, 2.95, 3.2, 0.55,
+                 "exp_figures/\noverview PDF/PNG",
+                 C_VERY_LIGHT_GRAY)
+    # Arrow from stage 3 to exp_figures
+    ax.annotate("", xy=(6.15, 2.95), xytext=(5.25, 4.1),
+                arrowprops=dict(arrowstyle="-|>", color=C_MED_GRAY, lw=0.8,
+                                mutation_scale=10))
+
+    # ── Annotations on right side for each stage ──
+    # Stage 1 annotation
+    ax.text(7.8, 9.8,
+            "Copies completed experiment\nfolders to network drive",
+            fontsize=5, color=C_MED_GRAY, ha="center", va="center",
+            fontstyle="italic",
+            bbox=dict(boxstyle="round,pad=0.3", facecolor=C_NEAR_WHITE,
+                      edgecolor=C_LIGHT_GRAY, lw=0.5))
+
+    # Stage 2 annotation
+    ax.text(7.8, 7.15,
+            "Copies locally, runs FlyTracker,\nverifies trx.mat, archives\nto 1_tracked",
+            fontsize=5, color=C_MED_GRAY, ha="center", va="center",
+            fontstyle="italic",
+            bbox=dict(boxstyle="round,pad=0.3", facecolor=C_NEAR_WHITE,
+                      edgecolor=C_LIGHT_GRAY, lw=0.5))
+
+    # Stage 3 annotation
+    ax.text(7.8, 4.9,
+            "Processes all new dates,\ncopies results + figures,\nmoves to 2_processed",
+            fontsize=5, color=C_MED_GRAY, ha="center", va="center",
+            fontstyle="italic",
+            bbox=dict(boxstyle="round,pad=0.3", facecolor=C_NEAR_WHITE,
+                      edgecolor=C_LIGHT_GRAY, lw=0.5))
+
+    # ── Delete annotations (Stage 2 cleanup) ──
+    # Small "X" with note near 0_unprocessed
+    ax.text(5.6, 8.55, "deleted after\nsuccessful tracking",
+            fontsize=4.5, color="#b04040", ha="left", va="center",
+            fontstyle="italic")
+
+    # ── Local archive annotations ──
+    # Local copies labeled on left
+    ax.text(0.5, 5.85, "local copy:\n01_tracked",
+            fontsize=4.5, color=C_MED_GRAY, ha="center", va="center",
+            fontstyle="italic")
+    ax.text(0.5, 3.15, "local copy:\n02_processed",
+            fontsize=4.5, color=C_MED_GRAY, ha="center", va="center",
+            fontstyle="italic")
+
+    # ── Bottom: "Ready for analysis" ──
+    arrow(3.0, 2.8, 3.0, 2.3)
+    ax.text(3.0, 2.0, "Ready for manual analysis",
+            fontsize=7, color=C_NAVY, ha="center", va="center",
+            fontweight="bold")
+
+    # ── File type legend at bottom ──
+    legend_y = 0.5
+    ax.text(1.0, legend_y, "File types at each stage:",
+            fontsize=5, color=C_MED_DARK_GRAY, fontweight="bold",
+            va="center")
+    file_types = [
+        (3.5, ".ufmf (video)", C_MED_GRAY),
+        (5.0, "LOG.mat (timing)", C_MED_GRAY),
+        (6.8, "trx.mat (tracks)", C_MED_BLUE),
+        (8.5, "*_data.mat (results)", C_NAVY),
+    ]
+    for x, label, color in file_types:
+        ax.plot(x - 0.15, legend_y, "s", color=color, markersize=4)
+        ax.text(x, legend_y, label, fontsize=4.5, color=color, va="center")
+
+    _save(fig, "08_automation_pipeline.png")
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # Main
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -785,8 +969,9 @@ def main():
     make_behavioral_metrics()
     make_folder_structure()
     make_data_struct_hierarchy()
+    make_automation_pipeline()
 
-    print(f"\nAll 7 diagrams saved to {OUTPUT_DIR}/")
+    print(f"\nAll 8 diagrams saved to {OUTPUT_DIR}/")
 
 
 if __name__ == "__main__":
