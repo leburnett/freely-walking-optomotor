@@ -67,7 +67,7 @@ Outlined below are a few of the key concepts, files, and data structures that ar
 4. **Split by condition** -- `comb_data_one_cohort_cond(LOG, comb_data)` uses LOG frame indices to slice continuous data into per-condition segments.
 5. **Merge experiments** -- `comb_data_across_cohorts_cond(protocol_dir)` combines all sessions into a single hierarchical DATA struct.
 
-Steps 2--3 can be fully automated -- see @sec-automation.
+Steps **2**-**3** can be fully automated -- see @sec-automation.
 
 ## Key Files
 
@@ -76,7 +76,7 @@ Steps 2--3 can be fully automated -- see @sec-automation.
 \textbf{File} & \textbf{Purpose} \\
 \hline
 \endhead
-\texttt{protocols/protocol\_27.m} & Example protocol script (defines conditions, runs experiment) \\
+\texttt{protocols/protocol\_27.m} & Example protocol script (defines conditions, runs experiment). Main protocol used for screen. \\
 \texttt{protocols/protocol\_functions/} & 14 shared functions for initialization, stimulus, acclimation \\
 \texttt{processing\_functions/\newline process\_freely\_walking\_data.m} & Top-level processing entry point (by date) \\
 \texttt{processing\_functions/\newline process\_data\_features.m} & Single-experiment processing orchestrator \\
@@ -243,7 +243,7 @@ The automated data pipeline eliminates manual file management between running an
 **Network directory progression:**
 
 | Directory | Contents | State |
-|:-------|:------------|:------|
+|:-----|:--------------|:------|
 | `0_unprocessed` | Raw experiment folders (.ufmf + LOG.mat + stamp_log) | Awaiting tracking |
 | `1_tracked` | Tracked folders (+ trx.mat, feat.mat) | Awaiting processing |
 | `2_processed` | Fully processed folders (+ MP4 videos) | Complete |
@@ -435,7 +435,7 @@ A standalone utility that syncs `.mp4` video files from local `02_processed` to 
 **Physical machine layout:**
 
 | Machine | Role | Windows User | Scripts |
-|:--------|:-----|:------|:-----------|
+|:-----|:-------|:-----|:---------|
 | Acquisition PC | Runs experiments, captures video | `labadmin` | `monitor_and_copy.py` |
 | Processing PC | FlyTracker tracking, MATLAB processing | `burnettl` | `monitor_and_track.py`, `daily_processing.py` |
 
@@ -979,7 +979,7 @@ For each fly, frames where the FlyTracker-reported velocity exceeds 50 mm/s are 
 Missing values (from filtering) are filled using method-appropriate interpolation:
 
 | Data | Method | Reason |
-|:-----|:-------|:-------|
+|:-----|:---|:------------|
 | `d_wall_data` | Spline | Smooth, continuous changes in distance |
 | `heading_data` | Previous value | Avoids introducing artificial heading jumps |
 | `x_data`, `y_data` | Spline | Smooth position trajectories |
