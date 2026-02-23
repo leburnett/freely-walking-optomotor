@@ -1380,23 +1380,49 @@ These are the raw tracking outputs (after filtering and interpolation) that all 
 - `make_overview` generates summary histograms of locomotor parameters
 - `plot_all_features_filt` and `plot_all_features_acclim` plot full-experiment timeseries
 - `plot_allcond_onecohort_tuning` creates per-condition comparison plots
+- `plot_allcond_acrossgroups_tuning` overlays strain vs control responses across conditions
+- `make_summary_heat_maps_p27` generates p-value heatmaps for screening results
 :::
 
 ## \colorbox{fnbg}{\texttt{make\_overview.m}} \label{fn:make_overview}
 
 Generates a summary overview figure with histograms of key locomotor parameters for quality checking a single experiment. Called by `process_data_features`.
 
+![Example output from `make_overview`: histograms of forward velocity, angular velocity, heading, distance from center, and proportion metrics for a single cohort (empty-split control, protocol\_27, n=15 flies).](example_figs/ex_overview_histograms.png){#fig-ex-overview width=55%}
+
 ## \colorbox{fnbg}{\texttt{plot\_all\_features\_filt.m}} \label{fn:plot_all_features_filt}
 
 Plots timeseries of all behavioral features for the full experiment duration (after filtering). Shows forward velocity, angular velocity, turning rate, and distance from center as stacked panels. Called by `process_data_features`.
+
+![Example output from `plot_all_features_filt`: full-experiment timeseries showing individual fly traces (grey) and population mean (black) with stimulus epochs marked by colored rectangles (pink = CW, blue = CCW).](example_figs/ex_full_experiment_timeseries.png){#fig-ex-timeseries width=100%}
 
 ## \colorbox{fnbg}{\texttt{plot\_all\_features\_acclim.m}} \label{fn:plot_all_features_acclim}
 
 Similar to `plot_all_features_filt` but focused on the acclimation periods only. Useful for verifying baseline behavior before stimulus onset.
 
+![Example output from `plot_all_features_acclim`: acclimation-period timeseries (left) and per-fly summary boxcharts (right) for forward velocity, angular velocity, turning rate, and distance from center.](example_figs/ex_acclimation_period.png){#fig-ex-acclim width=75%}
+
 ## \colorbox{fnbg}{\texttt{plot\_allcond\_onecohort\_tuning.m}} \label{fn:plot_allcond_onecohort_tuning}
 
 Creates per-condition comparison plots for a single cohort. Shows stimulus-evoked responses side by side across conditions, making it easy to compare the optomotor response at different speeds or spatial frequencies.
+
+![Example output from `plot_allcond_onecohort_tuning`: forward velocity timeseries (left) and epoch-mean error bars (right) for each of 12 conditions in protocol\_27. Each row is one stimulus condition.](example_figs/ex_percondition_fv.png){#fig-ex-percond width=75%}
+
+## Across-Cohorts Visualization {#sec-across-cohorts-viz}
+
+Once data from multiple experiments has been combined using `comb_data_across_cohorts_cond`, two main visualization approaches are available for comparing experimental strains against the empty-split control.
+
+### \colorbox{fnbg}{\texttt{plot\_allcond\_acrossgroups\_tuning.m}} \label{fn:plot_allcond_acrossgroups_tuning}
+
+Overlays the mean $\pm$ SEM timeseries of two or more experimental groups on the same axes for each stimulus condition. Typically used to compare a target strain (purple) against the empty-split control (grey). Called by `process_screen_data`.
+
+![Example output: forward velocity comparison between ss2344-T4-shibire-kir (purple, T4 motion-detecting neurons silenced) and jfrc100-es-shibire-kir (grey, empty-split control) across all 12 conditions in protocol\_27.](example_figs/ex_strain_vs_ES_fv.png){#fig-ex-strainvses width=80%}
+
+### \colorbox{fnbg}{\texttt{make\_summary\_heat\_maps\_p27.m}} \label{fn:make_summary_heat_maps_p27}
+
+Generates a p-value heatmap summarizing statistical comparisons of all screened strains against the empty-split control for a given condition. Red cells indicate the target strain has a higher metric value than the control; blue cells indicate lower. Color intensity reflects statistical significance after FDR correction ($\alpha = 0.001$). Calls `make_pvalue_heatmap_across_strains` and `fdr_bh` internally.
+
+![Example p-value heatmap for condition 1 (60-degree gratings at 4 Hz). Each row is a different strain; columns represent behavioral metrics. Red = higher than control, blue = lower. Only significant comparisons (FDR-corrected) are colored.](example_figs/ex_pvalue_heatmap.png){#fig-ex-heatmap width=45%}
 
 
 \newpage
@@ -1584,8 +1610,10 @@ Alphabetical listing of all MATLAB functions referenced in this guide. Page numb
 \texttt{initialize\_temp\_recording} & \pageref{fn:initialize_temp_recording} & Configure DAQ for temperature monitoring \\
 \texttt{initialize\_video\_and\_folders} & \pageref{fn:initialize_video_and_folders} & Camera setup, folder creation, LOG init \\
 \texttt{make\_overview} & \pageref{fn:make_overview} & Summary histograms for QC \\
+\texttt{make\_summary\_heat\_maps\_p27} & \pageref{fn:make_summary_heat_maps_p27} & P-value heatmap across strains \\
 \texttt{plot\_all\_features\_acclim} & \pageref{fn:plot_all_features_acclim} & Acclimation period timeseries plots \\
 \texttt{plot\_all\_features\_filt} & \pageref{fn:plot_all_features_filt} & Full-experiment timeseries plots \\
+\texttt{plot\_allcond\_acrossgroups\_\newline tuning} & \pageref{fn:plot_allcond_acrossgroups_tuning} & Strain vs control timeseries overlay \\
 \texttt{plot\_allcond\_onecohort\_tuning} & \pageref{fn:plot_allcond_onecohort_tuning} & Per-condition comparison plots \\
 \texttt{present\_acclim\_off} & \pageref{fn:present_acclim_off} & Dark acclimation recording \\
 \texttt{present\_fixation\_stimulus} & \pageref{fn:present_fixation_stimulus} & Static bar display for fixation \\
