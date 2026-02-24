@@ -185,6 +185,61 @@ def compute_qc_flags(
     return passed
 
 
+def extract_acclimation(
+    log,
+    comb_data: dict,
+    acclim_key: str = "acclim_off1",
+    metrics: list[str] | None = None,
+) -> dict[str, np.ndarray] | None:
+    """Extract acclimation period data from comb_data using LOG frame boundaries.
+
+    Mirrors comb_data_across_cohorts_cond.m lines 95-120:
+      Log = LOG.acclim_off1
+      start_f = Log.start_f(1);  if start_f==0, start_f=1
+      if Log.stop_t(end)<3: stop_f=600  else: stop_f=Log.stop_f(end)
+
+    Returns dict mapping metric name -> (n_flies, n_frames) array, or None
+    if the acclim field is not present in LOG.
+    """
+    if metrics is None:
+        metrics = METRICS
+
+    if acclim_key not in log.dtype.names:
+        return None
+
+    try:
+        acclim = log[acclim_key][0, 0]
+    except (IndexError, KeyError):
+        return None
+
+    start_f = int(np.asarray(acclim["start_f"]).flat[0])
+    if start_f == 0:
+        start_f = 1  # MATLAB 1-indexed convention
+
+    # Check for corrupted/short acclim log: fallback to 600 frames
+    try:
+        stop_t_arr = np.asarray(acclim["stop_t"]).flatten()
+        if stop_t_arr[-1] < 3:
+            stop_f = 600
+        else:
+            stop_f = int(np.asarray(acclim["stop_f"]).flatten()[-1])
+    except (KeyError, IndexError):
+        stop_f = int(np.asarray(acclim["stop_f"]).flatten()[-1])
+
+    # Clamp to valid range
+    start_f = max(start_f, 0)
+
+    result = {}
+    for metric in metrics:
+        if metric in comb_data:
+            arr = comb_data[metric]
+            actual_stop = min(stop_f, arr.shape[1])
+            if actual_stop > start_f:
+                result[metric] = arr[:, start_f:actual_stop]
+
+    return result if result else None
+
+
 def process_one_file(filepath: Path, metrics: list[str] | None = None) -> dict:
     """Process a single .mat file into per-condition, per-fly data.
 
@@ -253,6 +308,18 @@ def process_one_file(filepath: Path, metrics: list[str] | None = None) -> dict:
         conditions[cond_n][rep_key] = filtered_slice
         conditions[cond_n][f"{rep_key}_qc"] = qc_flags
 
+    # Extract acclimation data (pre-stimulus dark period)
+    acclim_data = extract_acclimation(log, comb_data, "acclim_off1", list(qc_metrics))
+    acclim_qc = None
+    if acclim_data and "fv_data" in acclim_data and "dist_data" in acclim_data:
+        acclim_qc = compute_qc_flags(acclim_data["fv_data"], acclim_data["dist_data"])
+
+    # Filter acclim to requested metrics only
+    if acclim_data:
+        acclim_filtered = {m: acclim_data[m] for m in metrics if m in acclim_data}
+    else:
+        acclim_filtered = None
+
     return {
         "strain": meta["strain"],
         "sex": meta["sex"],
@@ -260,6 +327,8 @@ def process_one_file(filepath: Path, metrics: list[str] | None = None) -> dict:
         "cohort_date": meta["date"],
         "n_flies": int(n_fly_data[1]) if len(n_fly_data) > 1 else int(n_fly_data[0]),
         "conditions": conditions,
+        "acclim": acclim_filtered,
+        "acclim_qc": acclim_qc,
     }
 
 

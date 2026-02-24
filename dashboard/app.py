@@ -92,6 +92,32 @@ sidebar = dbc.Card(
                 value="interleave",
                 className="mb-3",
             ),
+
+            html.Hr(),
+
+            # Central tendency toggle
+            dbc.Label("Central Tendency", className="fw-bold"),
+            dbc.RadioItems(
+                id="central-tendency-toggle",
+                options=[
+                    {"label": "Mean", "value": "mean"},
+                    {"label": "Median", "value": "median"},
+                ],
+                value="mean",
+                className="mb-2",
+            ),
+
+            # Dispersion toggle
+            dbc.Label("Dispersion", className="fw-bold"),
+            dbc.RadioItems(
+                id="dispersion-toggle",
+                options=[
+                    {"label": "SEM", "value": "sem"},
+                    {"label": "MAD", "value": "mad"},
+                ],
+                value="sem",
+                className="mb-3",
+            ),
         ]),
     ],
     className="sticky-top",
@@ -124,6 +150,39 @@ cohort_tab = dbc.Tab(
     children=[
         html.Div([
             cohort_controls,
+            # Acclimation baseline info panel
+            dbc.Card([
+                dbc.CardHeader(
+                    dbc.Row([
+                        dbc.Col(
+                            html.H6("Acclimation Baseline (pre-stimulus dark)", className="mb-0"),
+                            width="auto",
+                        ),
+                        dbc.Col(
+                            dbc.Button(
+                                "Show timeseries",
+                                id="acclim-plot-toggle",
+                                color="link",
+                                size="sm",
+                                className="p-0",
+                            ),
+                            width="auto",
+                        ),
+                    ], align="center", justify="between"),
+                ),
+                dbc.CardBody([
+                    html.Div(id="acclim-stats-text", className="mb-2"),
+                    dbc.Collapse(
+                        dcc.Graph(
+                            id="acclim-plot",
+                            config={"displayModeBar": False},
+                            style={"height": "200px"},
+                        ),
+                        id="acclim-plot-collapse",
+                        is_open=False,
+                    ),
+                ]),
+            ], className="mb-3"),
             dcc.Graph(id="cohort-plot", config={"displayModeBar": True, "scrollZoom": True}),
         ], className="p-3"),
     ],

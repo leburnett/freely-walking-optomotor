@@ -81,6 +81,12 @@ STIM_OFFSET_FRAME = 1200
 # Downsampling factor for Parquet storage (30fps -> 10fps)
 DOWNSAMPLE_FACTOR = 3
 
+# Acclimation period pseudo-condition ID (stored in per-fly Parquet)
+ACCLIM_CONDITION_ID = 0
+
+# Acclimation downsampling factor (acclim is ~9000 frames; 30fps -> ~3.3fps)
+ACCLIM_DOWNSAMPLE_FACTOR = 9
+
 # QC thresholds (from check_and_average_across_reps.m lines 43, 50)
 QC_MIN_MEAN_FV = 3.0       # mm/s - exclude flies walking slower than this
 QC_MAX_MIN_DIST = 110.0    # mm - exclude flies never closer than this to center

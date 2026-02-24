@@ -125,18 +125,23 @@ def register_callbacks(app, data_store):
         Input("condition-dropdown", "value"),
         Input("metric-dropdown", "value"),
         Input("qc-toggle", "value"),
+        Input("central-tendency-toggle", "value"),
+        Input("dispersion-toggle", "value"),
     )
-    def update_cohort_plot(strain, cohort_id, condition, metric, qc_on):
+    def update_cohort_plot(strain, cohort_id, condition, metric, qc_on,
+                           central_tendency, dispersion):
         if not strain or not cohort_id or not metric:
             return go.Figure()
 
         apply_qc = bool(qc_on)
 
         if condition == "all":
-            return _cohort_all_conditions(strain, cohort_id, metric, apply_qc, data_store)
+            return _cohort_all_conditions(strain, cohort_id, metric, apply_qc, data_store,
+                                          central_tendency, dispersion)
         else:
             cond_n = int(condition)
-            return _cohort_single_condition(strain, cohort_id, cond_n, metric, apply_qc, data_store)
+            return _cohort_single_condition(strain, cohort_id, cond_n, metric, apply_qc, data_store,
+                                            central_tendency, dispersion)
 
     # ---- Tab 2: Strain Aggregate View ----
     @app.callback(
@@ -146,18 +151,28 @@ def register_callbacks(app, data_store):
         Input("qc-toggle", "value"),
         Input("rep-toggle", "value"),
         Input("strain-view-mode", "value"),
+        Input("central-tendency-toggle", "value"),
+        Input("dispersion-toggle", "value"),
     )
-    def update_strain_plot(strain, metric, qc_on, rep_mode, view_mode):
+    def update_strain_plot(strain, metric, qc_on, rep_mode, view_mode,
+                           central_tendency, dispersion):
         if not strain or not metric:
             return go.Figure()
 
         apply_qc = bool(qc_on)
-        use_default = (not apply_qc) and (rep_mode == "interleave")
+        use_default = (
+            not apply_qc
+            and rep_mode == "interleave"
+            and central_tendency == "mean"
+            and dispersion == "sem"
+        )
 
         if view_mode == "tiled":
-            return _strain_tiled(strain, metric, apply_qc, rep_mode, use_default, data_store)
+            return _strain_tiled(strain, metric, apply_qc, rep_mode, use_default, data_store,
+                                 central_tendency, dispersion)
         else:
-            return _strain_overlaid(strain, metric, apply_qc, rep_mode, use_default, data_store)
+            return _strain_overlaid(strain, metric, apply_qc, rep_mode, use_default, data_store,
+                                    central_tendency, dispersion)
 
     # ---- Tab 3: Cross-Strain Comparison ----
     @app.callback(
@@ -168,19 +183,29 @@ def register_callbacks(app, data_store):
         Input("qc-toggle", "value"),
         Input("rep-toggle", "value"),
         Input("comparison-view-mode", "value"),
+        Input("central-tendency-toggle", "value"),
+        Input("dispersion-toggle", "value"),
     )
-    def update_comparison_plot(condition, metric, selected_strains, qc_on, rep_mode, view_mode):
+    def update_comparison_plot(condition, metric, selected_strains, qc_on, rep_mode, view_mode,
+                               central_tendency, dispersion):
         if not metric or not selected_strains:
             return go.Figure()
 
         apply_qc = bool(qc_on)
-        use_default = (not apply_qc) and (rep_mode == "interleave")
+        use_default = (
+            not apply_qc
+            and rep_mode == "interleave"
+            and central_tendency == "mean"
+            and dispersion == "sem"
+        )
 
         if view_mode == "single" and condition:
             cond_n = int(condition)
-            return _comparison_single(cond_n, metric, selected_strains, apply_qc, rep_mode, use_default, data_store)
+            return _comparison_single(cond_n, metric, selected_strains, apply_qc, rep_mode, use_default, data_store,
+                                      central_tendency, dispersion)
         else:
-            return _comparison_grid(metric, selected_strains, apply_qc, rep_mode, use_default, data_store)
+            return _comparison_grid(metric, selected_strains, apply_qc, rep_mode, use_default, data_store,
+                                    central_tendency, dispersion)
 
     # ---- Tab 3: Update strain checklist from available strains ----
     @app.callback(
@@ -197,10 +222,104 @@ def register_callbacks(app, data_store):
         default = ["jfrc100_es_shibire_kir"] if "jfrc100_es_shibire_kir" in values else []
         return options, default
 
+    # ---- Acclimation baseline callbacks ----
+    @app.callback(
+        Output("acclim-stats-text", "children"),
+        Input("strain-dropdown", "value"),
+        Input("cohort-dropdown", "value"),
+        Input("metric-dropdown", "value"),
+        Input("qc-toggle", "value"),
+    )
+    def update_acclim_stats(strain, cohort_id, metric, qc_on):
+        if not strain or not cohort_id or not metric:
+            return "No data selected."
+
+        from dash import html
+        summary = data_store.get_acclim_summary(strain, cohort_id, metric, bool(qc_on))
+        if not summary:
+            return "No acclimation data available for this cohort."
+
+        metric_label = METRIC_LABELS.get(metric, metric)
+        return html.Div([
+            html.Span(f"n = {summary['n_flies']} flies  |  ", style={"fontWeight": "bold"}),
+            html.Span(f"Mean {metric_label}: {summary['overall_mean']:.2f} "),
+            html.Span(f"\u00b1 {summary['overall_sem']:.2f} (SEM)"),
+        ])
+
+    @app.callback(
+        Output("acclim-plot-collapse", "is_open"),
+        Input("acclim-plot-toggle", "n_clicks"),
+        State("acclim-plot-collapse", "is_open"),
+    )
+    def toggle_acclim_plot(n_clicks, is_open):
+        if n_clicks:
+            return not is_open
+        return is_open
+
+    @app.callback(
+        Output("acclim-plot", "figure"),
+        Input("acclim-plot-collapse", "is_open"),
+        Input("strain-dropdown", "value"),
+        Input("cohort-dropdown", "value"),
+        Input("metric-dropdown", "value"),
+        Input("qc-toggle", "value"),
+    )
+    def update_acclim_plot(is_open, strain, cohort_id, metric, qc_on):
+        if not is_open or not strain or not cohort_id or not metric:
+            return go.Figure()
+
+        df = data_store.get_acclim_data(strain, cohort_id, metric, bool(qc_on))
+        if df.empty:
+            fig = go.Figure()
+            fig.add_annotation(
+                text="No acclimation data available",
+                xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False,
+            )
+            return fig
+
+        fig = go.Figure()
+
+        # Individual fly traces (thin, transparent)
+        for fly_idx, group in df.groupby("fly_idx"):
+            fig.add_trace(go.Scatter(
+                x=group["time_s"],
+                y=group[metric],
+                mode="lines",
+                line=dict(width=0.5, color="rgba(150,150,150,0.3)"),
+                showlegend=False,
+                hoverinfo="skip",
+            ))
+
+        # Cohort mean + SEM
+        grouped = df.groupby("time_s")[metric].agg(["mean", "std", "count"]).reset_index()
+        grouped["sem"] = grouped["std"] / np.sqrt(grouped["count"])
+        x = grouped["time_s"].values
+        y_mean = grouped["mean"].values
+        y_sem = grouped["sem"].values
+
+        for trace in _make_trace(x, y_mean, y_sem, "rgb(100,100,100)", "Acclim mean"):
+            fig.add_trace(trace)
+
+        y_range = METRIC_RANGES.get(metric)
+        if y_range:
+            fig.update_yaxes(range=list(y_range))
+
+        fig.update_layout(
+            title="Acclimation Baseline (pre-stimulus dark)",
+            xaxis_title="Time (s)",
+            yaxis_title=METRIC_LABELS.get(metric, metric),
+            template="plotly_white",
+            height=200,
+            margin=dict(t=30, b=30, l=50, r=10),
+            showlegend=False,
+        )
+        return fig
+
 
 # ---- Helper functions for building plots ----
 
-def _cohort_single_condition(strain, cohort_id, cond_n, metric, apply_qc, store):
+def _cohort_single_condition(strain, cohort_id, cond_n, metric, apply_qc, store,
+                             central_tendency="mean", dispersion="sem"):
     """Plot individual fly traces + cohort mean for one condition."""
     df = store.get_cohort_data(strain, cohort_id, cond_n, metric, qc_only=apply_qc)
     if df.empty:
@@ -223,14 +342,13 @@ def _cohort_single_condition(strain, cohort_id, cond_n, metric, apply_qc, store)
             hoverinfo="skip",
         ))
 
-    # Cohort mean + SEM
-    grouped = df.groupby("time_s")[metric].agg(["mean", "std", "count"]).reset_index()
-    grouped["sem"] = grouped["std"] / np.sqrt(grouped["count"])
-    x = grouped["time_s"].values
-    y_mean = grouped["mean"].values
-    y_sem = grouped["sem"].values
+    # Cohort central tendency + dispersion
+    x, y_center, y_disp = _compute_cohort_stats(df, metric, central_tendency, dispersion)
+    ct_label = "Median" if central_tendency == "median" else "Mean"
+    disp_label = "MAD" if dispersion == "mad" else "SEM"
+    trace_name = f"{CONDITION_NAMES.get(cond_n, f'Cond {cond_n}')} ({ct_label} \u00b1 {disp_label})"
 
-    for trace in _make_trace(x, y_mean, y_sem, color, CONDITION_NAMES.get(cond_n, f"Cond {cond_n}")):
+    for trace in _make_trace(x, y_center, y_disp, color, trace_name):
         fig.add_trace(trace)
 
     # Stimulus markers
@@ -239,9 +357,21 @@ def _cohort_single_condition(strain, cohort_id, cond_n, metric, apply_qc, store)
         fig.update_yaxes(range=list(y_range))
     _add_stim_markers(fig, y_range)
 
+    # Acclimation baseline reference line
+    acclim_summary = store.get_acclim_summary(strain, cohort_id, metric, apply_qc)
+    if acclim_summary:
+        fig.add_hline(
+            y=acclim_summary["overall_mean"],
+            line=dict(color="rgba(100,100,100,0.5)", width=1, dash="dash"),
+            annotation_text=f"Acclim baseline ({acclim_summary['overall_mean']:.1f})",
+            annotation_position="top left",
+            annotation_font=dict(size=9, color="grey"),
+        )
+
     cond_name = CONDITION_NAMES.get(cond_n, f"Condition {cond_n}")
+    n_unique_flies = df["fly_idx"].nunique()
     fig.update_layout(
-        title=f"{strain.replace('_', ' ')} - {cohort_id.rsplit('_data', 1)[0]} - {cond_name}",
+        title=f"{strain.replace('_', ' ')} - {cohort_id.rsplit('_data', 1)[0]} - {cond_name} (n={n_unique_flies} flies)",
         xaxis_title="Time (s)",
         yaxis_title=METRIC_LABELS.get(metric, metric),
         template="plotly_white",
@@ -251,7 +381,8 @@ def _cohort_single_condition(strain, cohort_id, cond_n, metric, apply_qc, store)
     return fig
 
 
-def _cohort_all_conditions(strain, cohort_id, metric, apply_qc, store):
+def _cohort_all_conditions(strain, cohort_id, metric, apply_qc, store,
+                           central_tendency="mean", dispersion="sem"):
     """12-panel subplot grid showing all conditions for one cohort."""
     n_conds = len(CONDITION_NAMES)
     fig = make_subplots(
@@ -266,18 +397,23 @@ def _cohort_all_conditions(strain, cohort_id, metric, apply_qc, store):
         if df.empty:
             continue
 
-        grouped = df.groupby("time_s")[metric].agg(["mean", "std", "count"]).reset_index()
-        grouped["sem"] = grouped["std"] / np.sqrt(grouped["count"])
-        x = grouped["time_s"].values
-        y_mean = grouped["mean"].values
-        y_sem = grouped["sem"].values
+        x, y_center, y_disp = _compute_cohort_stats(df, metric, central_tendency, dispersion)
 
-        for trace in _make_trace(x, y_mean, y_sem, color, CONDITION_NAMES[cond_n], show_legend=False):
+        for trace in _make_trace(x, y_center, y_disp, color, CONDITION_NAMES[cond_n], show_legend=False):
             fig.add_trace(trace, row=cond_n, col=1)
 
         y_range = METRIC_RANGES.get(metric)
         if y_range:
             fig.update_yaxes(range=list(y_range), row=cond_n, col=1)
+
+        # N-flies annotation
+        n_unique = df["fly_idx"].nunique()
+        fig.add_annotation(
+            text=f"n={n_unique}",
+            xref=f"x{cond_n} domain" if cond_n > 1 else "x domain",
+            yref=f"y{cond_n} domain" if cond_n > 1 else "y domain",
+            x=0.98, y=0.9, showarrow=False, font=dict(size=10, color="grey"),
+        )
 
     fig.update_layout(
         title=f"{strain.replace('_', ' ')} - {cohort_id.rsplit('_data', 1)[0]} - {METRIC_LABELS.get(metric, metric)}",
@@ -290,20 +426,52 @@ def _cohort_all_conditions(strain, cohort_id, metric, apply_qc, store):
     return fig
 
 
-def _get_summary_data(strain, cond_n, metric, apply_qc, rep_mode, use_default, store):
-    """Get mean/SEM data, using pre-computed summary when possible."""
+def _compute_cohort_stats(df, metric, central_tendency="mean", dispersion="sem"):
+    """Compute per-frame central tendency and dispersion from cohort data."""
+    frame_groups = df.groupby("time_s")
+
+    if central_tendency == "median":
+        center = frame_groups[metric].median()
+    else:
+        center = frame_groups[metric].mean()
+
+    if dispersion == "mad":
+        med_per_frame = frame_groups[metric].median()
+        df_with_med = df.merge(
+            med_per_frame.rename("_frame_median").reset_index(),
+            on="time_s",
+        )
+        df_with_med["_abs_dev"] = np.abs(df_with_med[metric] - df_with_med["_frame_median"])
+        disp = df_with_med.groupby("time_s")["_abs_dev"].median()
+    else:
+        std = frame_groups[metric].std()
+        count = frame_groups[metric].count()
+        disp = std / np.sqrt(count.clip(lower=1))
+
+    x = center.index.values
+    return x, center.values, disp.values
+
+
+def _get_summary_data(strain, cond_n, metric, apply_qc, rep_mode, use_default, store,
+                      central_tendency="mean", dispersion="sem"):
+    """Get central tendency / dispersion data, using pre-computed summary when possible."""
     if use_default:
         df = store.get_strain_summary(strain, cond_n, metric)
         if not df.empty:
             return df["time_s"].values, df["mean"].values, df["sem"].values, df["n_flies"].values
     # Fall back to on-the-fly computation
-    df = store.compute_summary_on_the_fly(strain, cond_n, metric, rep_mode, apply_qc)
+    df = store.compute_summary_on_the_fly(
+        strain, cond_n, metric, rep_mode, apply_qc,
+        central_tendency=central_tendency,
+        dispersion=dispersion,
+    )
     if df.empty:
         return None, None, None, None
     return df["time_s"].values, df["mean"].values, df["sem"].values, df["n_flies"].values
 
 
-def _strain_tiled(strain, metric, apply_qc, rep_mode, use_default, store):
+def _strain_tiled(strain, metric, apply_qc, rep_mode, use_default, store,
+                  central_tendency="mean", dispersion="sem"):
     """12-panel tiled layout for one strain, all conditions."""
     n_conds = len(CONDITION_NAMES)
     fig = make_subplots(
@@ -313,7 +481,8 @@ def _strain_tiled(strain, metric, apply_qc, rep_mode, use_default, store):
 
     for cond_n in range(1, n_conds + 1):
         x, y_mean, y_sem, n_flies = _get_summary_data(
-            strain, cond_n, metric, apply_qc, rep_mode, use_default, store
+            strain, cond_n, metric, apply_qc, rep_mode, use_default, store,
+            central_tendency, dispersion,
         )
         if x is None:
             continue
@@ -347,13 +516,15 @@ def _strain_tiled(strain, metric, apply_qc, rep_mode, use_default, store):
     return fig
 
 
-def _strain_overlaid(strain, metric, apply_qc, rep_mode, use_default, store):
+def _strain_overlaid(strain, metric, apply_qc, rep_mode, use_default, store,
+                     central_tendency="mean", dispersion="sem"):
     """All 12 conditions overlaid on one plot for one strain."""
     fig = go.Figure()
 
     for cond_n in range(1, len(CONDITION_NAMES) + 1):
         x, y_mean, y_sem, n_flies = _get_summary_data(
-            strain, cond_n, metric, apply_qc, rep_mode, use_default, store
+            strain, cond_n, metric, apply_qc, rep_mode, use_default, store,
+            central_tendency, dispersion,
         )
         if x is None:
             continue
@@ -382,13 +553,15 @@ def _strain_overlaid(strain, metric, apply_qc, rep_mode, use_default, store):
     return fig
 
 
-def _comparison_single(cond_n, metric, selected_strains, apply_qc, rep_mode, use_default, store):
+def _comparison_single(cond_n, metric, selected_strains, apply_qc, rep_mode, use_default, store,
+                       central_tendency="mean", dispersion="sem"):
     """Overlaid traces for multiple strains, one condition."""
     fig = go.Figure()
 
     for i, strain in enumerate(selected_strains):
         x, y_mean, y_sem, n_flies = _get_summary_data(
-            strain, cond_n, metric, apply_qc, rep_mode, use_default, store
+            strain, cond_n, metric, apply_qc, rep_mode, use_default, store,
+            central_tendency, dispersion,
         )
         if x is None:
             continue
@@ -418,7 +591,8 @@ def _comparison_single(cond_n, metric, selected_strains, apply_qc, rep_mode, use
     return fig
 
 
-def _comparison_grid(metric, selected_strains, apply_qc, rep_mode, use_default, store):
+def _comparison_grid(metric, selected_strains, apply_qc, rep_mode, use_default, store,
+                     central_tendency="mean", dispersion="sem"):
     """12-panel grid with multiple strains overlaid per panel."""
     n_conds = len(CONDITION_NAMES)
     n_cols = 3
@@ -433,17 +607,23 @@ def _comparison_grid(metric, selected_strains, apply_qc, rep_mode, use_default, 
     for cond_n in range(1, n_conds + 1):
         row = (cond_n - 1) // n_cols + 1
         col = (cond_n - 1) % n_cols + 1
+        n_labels = []
 
         for i, strain in enumerate(selected_strains):
             x, y_mean, y_sem, n_flies = _get_summary_data(
-                strain, cond_n, metric, apply_qc, rep_mode, use_default, store
+                strain, cond_n, metric, apply_qc, rep_mode, use_default, store,
+                central_tendency, dispersion,
             )
             if x is None:
                 continue
 
             color = STRAIN_COLORS[i % len(STRAIN_COLORS)]
+            n = int(n_flies[0]) if len(n_flies) > 0 else 0
             show_legend = cond_n == 1  # Only show legend for first condition
             label = strain.replace("_", " ")
+            if show_legend:
+                label = f"{label} (n={n})"
+            n_labels.append(f"n={n}")
 
             for trace in _make_trace(x, y_mean, y_sem, color, label, show_legend=show_legend):
                 fig.add_trace(trace, row=row, col=col)
@@ -451,6 +631,17 @@ def _comparison_grid(metric, selected_strains, apply_qc, rep_mode, use_default, 
         y_range = METRIC_RANGES.get(metric)
         if y_range:
             fig.update_yaxes(range=list(y_range), row=row, col=col)
+
+        # N-flies annotation per subplot
+        if n_labels:
+            axis_idx = (row - 1) * n_cols + col
+            xref = f"x{axis_idx} domain" if axis_idx > 1 else "x domain"
+            yref = f"y{axis_idx} domain" if axis_idx > 1 else "y domain"
+            fig.add_annotation(
+                text=", ".join(n_labels),
+                xref=xref, yref=yref,
+                x=0.98, y=0.92, showarrow=False, font=dict(size=8, color="grey"),
+            )
 
     fig.update_layout(
         title=f"Cross-Strain Comparison - {METRIC_LABELS.get(metric, metric)}",

@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from dashboard.constants import CONDITION_NAMES, FPS, METRICS
+from dashboard.constants import ACCLIM_CONDITION_ID, CONDITION_NAMES, FPS, METRICS
 
 
 class DataStore:
@@ -108,6 +108,60 @@ class DataStore:
             ).reset_index(drop=True)
         return pd.DataFrame()
 
+    def get_acclim_data(
+        self,
+        strain: str,
+        cohort_id: str,
+        metric: str,
+        qc_only: bool = False,
+    ) -> pd.DataFrame:
+        """Get acclimation period data for one cohort.
+
+        Returns DataFrame with columns: fly_idx, frame, time_s, qc_passed, {metric}.
+        """
+        df = self.load_per_fly(strain)
+        if df.empty:
+            return df
+
+        mask = (
+            (df["cohort_id"] == cohort_id)
+            & (df["condition"] == ACCLIM_CONDITION_ID)
+        )
+        if qc_only:
+            mask &= df["qc_passed"]
+
+        result = df[mask]
+        if metric in result.columns:
+            return result[["fly_idx", "frame", "time_s", "qc_passed", metric]].sort_values(
+                ["fly_idx", "frame"]
+            ).reset_index(drop=True)
+        return pd.DataFrame()
+
+    def get_acclim_summary(
+        self,
+        strain: str,
+        cohort_id: str,
+        metric: str,
+        qc_only: bool = False,
+    ) -> dict:
+        """Compute summary statistics for the acclimation period.
+
+        Returns dict with: n_flies, overall_mean, overall_std, overall_sem.
+        Empty dict if no acclim data is available.
+        """
+        df = self.get_acclim_data(strain, cohort_id, metric, qc_only)
+        if df.empty:
+            return {}
+
+        per_fly = df.groupby("fly_idx")[metric].mean()
+        n = len(per_fly)
+        return {
+            "n_flies": n,
+            "overall_mean": float(per_fly.mean()),
+            "overall_std": float(per_fly.std()) if n > 1 else 0.0,
+            "overall_sem": float(per_fly.std() / np.sqrt(n)) if n > 1 else 0.0,
+        }
+
     def compute_summary_on_the_fly(
         self,
         strain: str,
@@ -115,13 +169,18 @@ class DataStore:
         metric: str,
         rep_mode: str = "interleave",
         apply_qc: bool = False,
+        central_tendency: str = "mean",
+        dispersion: str = "sem",
     ) -> pd.DataFrame:
-        """Compute mean/SEM from per-fly data with custom rep_mode and QC settings.
+        """Compute central tendency / dispersion from per-fly data.
 
-        Used when the user changes the rep mode or QC toggle, since the
-        pre-computed summary uses the defaults (interleave, no QC).
+        Used when the user changes the rep mode, QC toggle, or switches
+        to median/MAD, since the pre-computed summary uses defaults
+        (mean, SEM, interleave, no QC).
 
         Returns DataFrame with columns: frame, time_s, mean, sem, n_flies.
+        (Column names kept as 'mean'/'sem' for backward compatibility, but
+        they represent the selected central tendency and dispersion.)
         """
         df = self.load_per_fly(strain)
         if df.empty:
@@ -137,20 +196,46 @@ class DataStore:
 
         if rep_mode == "average":
             # Average R1 and R2 per fly per frame, then compute group stats
-            avg = subset.groupby(["cohort_id", "fly_idx", "frame", "time_s"])[metric].mean().reset_index()
-            grouped = avg.groupby("frame").agg(
-                time_s=("time_s", "first"),
-                mean=(metric, "mean"),
-                sem=(metric, lambda x: x.std() / np.sqrt(len(x)) if len(x) > 1 else 0.0),
-                n_flies=(metric, "count"),
-            ).reset_index()
+            source = subset.groupby(
+                ["cohort_id", "fly_idx", "frame", "time_s"]
+            )[metric].mean().reset_index()
         else:
-            # Interleave: each rep is a separate row
-            grouped = subset.groupby("frame").agg(
-                time_s=("time_s", "first"),
-                mean=(metric, "mean"),
-                sem=(metric, lambda x: x.std() / np.sqrt(len(x)) if len(x) > 1 else 0.0),
-                n_flies=(metric, "count"),
-            ).reset_index()
+            source = subset
 
-        return grouped.sort_values("frame").reset_index(drop=True)
+        # Group by frame and compute central tendency + dispersion
+        frame_groups = source.groupby("frame")
+        time_s = frame_groups["time_s"].first()
+
+        if central_tendency == "median":
+            center = frame_groups[metric].median()
+        else:
+            center = frame_groups[metric].mean()
+
+        if dispersion == "mad":
+            # Median Absolute Deviation: median(|x - median(x)|) per frame
+            med_per_frame = frame_groups[metric].median()
+            source_with_med = source.merge(
+                med_per_frame.rename("_frame_median").reset_index(),
+                on="frame",
+            )
+            source_with_med["_abs_dev"] = np.abs(
+                source_with_med[metric] - source_with_med["_frame_median"]
+            )
+            disp = source_with_med.groupby("frame")["_abs_dev"].median()
+        else:
+            # SEM: std / sqrt(n)
+            std = frame_groups[metric].std()
+            count = frame_groups[metric].count()
+            disp = std / np.sqrt(count.clip(lower=1))
+
+        n_flies = frame_groups[metric].count()
+
+        grouped = pd.DataFrame({
+            "frame": time_s.index,
+            "time_s": time_s.values,
+            "mean": center.values,
+            "sem": disp.values,
+            "n_flies": n_flies.values,
+        }).sort_values("frame").reset_index(drop=True)
+
+        return grouped

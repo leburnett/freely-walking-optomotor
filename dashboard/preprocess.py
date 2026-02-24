@@ -18,6 +18,8 @@ import numpy as np
 import pandas as pd
 
 from dashboard.constants import (
+    ACCLIM_CONDITION_ID,
+    ACCLIM_DOWNSAMPLE_FACTOR,
     CONDITION_NAMES,
     DOWNSAMPLE_FACTOR,
     FPS,
@@ -82,6 +84,34 @@ def build_per_fly_dataframe(
                             if metric in rep_data:
                                 row[metric] = float(rep_data[metric][fly_idx, fi])
                         rows.append(row)
+
+        # --- Acclimation data (pre-stimulus dark period) ---
+        acclim_data = cohort.get("acclim")
+        acclim_qc = cohort.get("acclim_qc")
+
+        if acclim_data:
+            first_metric_acclim = next(iter(acclim_data.values()))
+            n_flies_acclim, n_frames_acclim = first_metric_acclim.shape
+
+            frame_indices_acclim = np.arange(0, n_frames_acclim, ACCLIM_DOWNSAMPLE_FACTOR)
+
+            for fly_idx in range(n_flies_acclim):
+                qc = bool(acclim_qc[fly_idx]) if acclim_qc is not None else True
+
+                for fi in frame_indices_acclim:
+                    row = {
+                        "cohort_id": cohort_id,
+                        "fly_idx": fly_idx,
+                        "rep": 0,
+                        "condition": ACCLIM_CONDITION_ID,
+                        "qc_passed": qc,
+                        "frame": fi,
+                        "time_s": round(fi / FPS, 3),
+                    }
+                    for metric in METRICS:
+                        if metric in acclim_data:
+                            row[metric] = float(acclim_data[metric][fly_idx, fi])
+                    rows.append(row)
 
     if not rows:
         return pd.DataFrame()
