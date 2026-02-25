@@ -325,11 +325,11 @@ def register_callbacks(app, data_store):
             color="n_cohorts",
             color_continuous_scale="Blues",
             hover_data={
+                "date": True,
                 "Number of flies": True,
                 "n_cohorts": True,
                 "Start": False,
                 "Finish": False,
-                "date": False,
             },
             labels={"n_cohorts": "Cohorts"},
         )
@@ -399,12 +399,12 @@ def register_callbacks(app, data_store):
                 color="mean_temp",
                 color_continuous_scale="RdYlBu_r",
                 hover_data={
+                    "date": True,
                     "Mean temp (\u00b0C)": True,
                     "Cohort temps": True,
                     "mean_temp": False,
                     "Start": False,
                     "Finish": False,
-                    "date": False,
                 },
                 labels={"mean_temp": "Temp (\u00b0C)"},
             )
