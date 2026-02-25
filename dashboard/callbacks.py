@@ -2,9 +2,10 @@
 
 import numpy as np
 import pandas as pd
+import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from dash import Input, Output, State, callback_context, no_update
+from dash import Input, Output, State, callback_context, html, no_update
 
 from dashboard.constants import (
     CONDITION_COLORS,
@@ -101,7 +102,34 @@ def register_callbacks(app, data_store):
         options = [{"label": s.replace("_", " "), "value": s} for s in strains]
         preferred = "jfrc100_es_shibire_kir"
         default = preferred if preferred in strains else (strains[0] if strains else None)
-        return options, default, f"Loaded {len(strains)} strains from {preprocessed_dir.name}"
+
+        # Build rich multi-line status text
+        summary = data_store.get_dataset_summary()
+
+        # Line 1: counts
+        line1 = f"\u2713 {summary['n_strains']} strains \u00b7 {summary['n_cohorts_total']} cohorts"
+
+        # Line 2: path
+        line2 = summary["preprocessed_dir"]
+
+        # Line 3: date range
+        if summary.get("date_min") and summary.get("date_max"):
+            if summary["date_min"] == summary["date_max"]:
+                line3 = f"Acquired: {summary['date_min']}"
+            else:
+                line3 = f"Acquired: {summary['date_min']} to {summary['date_max']}"
+        else:
+            line3 = None
+
+        # Line 4: preprocessing timestamp
+        line4 = f"Preprocessed: {summary['preprocessed_on']}" if summary.get("preprocessed_on") else None
+
+        status_children = [line1]
+        for line in [line2, line3, line4]:
+            if line is not None:
+                status_children += [html.Br(), line]
+
+        return options, default, status_children
 
     # ---- Tab 1: Update cohort dropdown when strain changes ----
     @app.callback(
@@ -223,6 +251,180 @@ def register_callbacks(app, data_store):
         default = ["jfrc100_es_shibire_kir"] if "jfrc100_es_shibire_kir" in values else []
         return options, default
 
+    # ---- Tab 4: Metadata ----
+    @app.callback(
+        Output("metadata-table", "data"),
+        Output("metadata-table", "columns"),
+        Output("metadata-gantt", "figure"),
+        Output("metadata-temp", "figure"),
+        Input("data-path-input", "value"),
+    )
+    def update_metadata_tab(data_path):
+        empty_fig = go.Figure()
+        empty_fig.add_annotation(
+            text="Enter a data path to load metadata.",
+            xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False,
+        )
+
+        if not data_store.is_valid:
+            return [], [], empty_fig, empty_fig
+
+        df = data_store.get_metadata_summary()
+        if df.empty:
+            return [], [], empty_fig, empty_fig
+
+        # ---- Summary table (per-strain aggregation) ----
+        summary = (
+            df.groupby("strain", sort=False)
+            .agg(
+                Cohorts=("cohort_id", "count"),
+                Total_Flies=("n_flies", "sum"),
+                First_Tested=("date", "min"),
+                Last_Tested=("date", "max"),
+            )
+            .reset_index()
+        )
+        summary.rename(columns={"strain": "Strain"}, inplace=True)
+        summary["Strain"] = summary["Strain"].str.replace("_", " ")
+        summary = summary.sort_values("Strain").reset_index(drop=True)
+
+        col_labels = {
+            "Strain": "Strain",
+            "Cohorts": "Cohorts",
+            "Total_Flies": "Total Flies",
+            "First_Tested": "First Tested",
+            "Last_Tested": "Last Tested",
+        }
+        table_columns = [{"name": col_labels.get(c, c), "id": c} for c in summary.columns]
+        table_data = summary.to_dict("records")
+
+        # ---- Acquisition timeline (Gantt bars, one bar per strain×day) ----
+        plot_df = df.copy()
+        plot_df["Date"] = pd.to_datetime(plot_df["date"])
+        plot_df["Strain"] = plot_df["strain"].str.replace("_", " ")
+
+        # Aggregate to one row per (Strain, date): count cohorts, collect fly counts
+        agg = (
+            plot_df.groupby(["Strain", "date"])
+            .agg(
+                n_cohorts=("cohort_id", "count"),
+                flies_list=("n_flies", list),
+                Start=("Date", "min"),
+            )
+            .reset_index()
+        )
+        agg["Finish"] = agg["Start"] + pd.Timedelta(days=1)
+        agg["Number of flies"] = agg["flies_list"].apply(lambda lst: str(lst))
+
+        strains_ordered = sorted(agg["Strain"].unique(), reverse=True)
+        gantt_fig = px.timeline(
+            agg.sort_values("Strain"),
+            x_start="Start",
+            x_end="Finish",
+            y="Strain",
+            color="n_cohorts",
+            color_continuous_scale="Blues",
+            hover_data={
+                "Number of flies": True,
+                "n_cohorts": True,
+                "Start": False,
+                "Finish": False,
+                "date": False,
+            },
+            labels={"n_cohorts": "Cohorts"},
+        )
+        gantt_fig.update_yaxes(autorange="reversed", categoryorder="array", categoryarray=strains_ordered)
+        gantt_fig.update_traces(marker_line=dict(width=1, color="rgba(120,120,120,0.5)"))
+        gantt_fig.update_layout(
+            title="Acquisition Timeline by Strain",
+            template="plotly_white",
+            height=max(400, 32 * len(strains_ordered) + 120),
+            margin=dict(t=70, b=50, l=210, r=100),
+            xaxis=dict(title="Date", tickformat="%b %Y"),
+            coloraxis_colorbar=dict(title="Cohorts", thickness=15, x=1.01),
+        )
+
+        # ---- Temperature timeline (Gantt bars, one bar per measurement×day) ----
+        temp_df = data_store.load_temperatures()
+        if temp_df.empty:
+            temp_fig = go.Figure()
+            temp_fig.add_annotation(
+                text="No temperature data available. Re-preprocess to add it.",
+                xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False,
+            )
+        else:
+            id_cols = ["cohort_id", "strain", "datetime"]
+            melt = temp_df.melt(id_vars=id_cols, var_name="temp_type", value_name="temp_c")
+            melt["dt"] = pd.to_datetime(melt["datetime"], errors="coerce")
+            melt["date"] = melt["dt"].dt.date.astype(str)
+            melt["Strain"] = melt["strain"].str.replace("_", " ")
+
+            label_map = {
+                "start_temp_outside": "Outside (Start)",
+                "start_temp_ring":    "Ring (Start)",
+                "end_temp_outside":   "Outside (End)",
+                "end_temp_ring":      "Ring (End)",
+            }
+            melt["Type"] = melt["temp_type"].map(label_map)
+            row_order = ["Outside (Start)", "Outside (End)", "Ring (Start)", "Ring (End)"]
+
+            # Aggregate to one bar per (Type, date): mean temp, per-cohort details
+            agg_temp = (
+                melt.groupby(["Type", "date"])
+                .agg(
+                    mean_temp=("temp_c", "mean"),
+                    temps_list=("temp_c", list),
+                    strains_list=("Strain", list),
+                )
+                .reset_index()
+            )
+            agg_temp["Start"] = pd.to_datetime(agg_temp["date"])
+            agg_temp["Finish"] = agg_temp["Start"] + pd.Timedelta(days=1)
+
+            # Build per-cohort tooltip text
+            def _fmt_temp_details(row):
+                parts = []
+                for t, s in zip(row["temps_list"], row["strains_list"]):
+                    parts.append(f"{t:.1f}\u00b0C ({s})")
+                return " | ".join(parts)
+
+            agg_temp["Cohort temps"] = agg_temp.apply(_fmt_temp_details, axis=1)
+            agg_temp["Mean temp (\u00b0C)"] = agg_temp["mean_temp"].round(1)
+
+            temp_fig = px.timeline(
+                agg_temp.sort_values("Type"),
+                x_start="Start",
+                x_end="Finish",
+                y="Type",
+                color="mean_temp",
+                color_continuous_scale="RdYlBu_r",
+                hover_data={
+                    "Mean temp (\u00b0C)": True,
+                    "Cohort temps": True,
+                    "mean_temp": False,
+                    "Start": False,
+                    "Finish": False,
+                    "date": False,
+                },
+                labels={"mean_temp": "Temp (\u00b0C)"},
+            )
+            temp_fig.update_yaxes(
+                autorange="reversed",
+                categoryorder="array",
+                categoryarray=row_order,
+            )
+            temp_fig.update_traces(marker_line=dict(width=1, color="rgba(120,120,120,0.5)"))
+            temp_fig.update_layout(
+                title="Temperature Timeline (each bar = one day; colour = mean temp)",
+                template="plotly_white",
+                height=300,
+                margin=dict(t=60, b=50, l=160, r=100),
+                xaxis=dict(title="Date", tickformat="%b %Y"),
+                coloraxis_colorbar=dict(title="\u00b0C", thickness=15, x=1.01),
+            )
+
+        return table_data, table_columns, gantt_fig, temp_fig
+
     # ---- Acclimation baseline callbacks ----
     @app.callback(
         Output("acclim-stats-text", "children"),
@@ -235,7 +437,6 @@ def register_callbacks(app, data_store):
         if not strain or not cohort_id or not metric:
             return "No data selected."
 
-        from dash import html
         summary = data_store.get_acclim_summary(strain, cohort_id, metric, bool(qc_on))
         if not summary:
             return "No acclimation data available for this cohort."

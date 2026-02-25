@@ -80,12 +80,15 @@ def get_metadata(log, filepath: Path | None = None) -> dict:
     except (ValueError, TypeError):
         strain = ""
 
-    # Extract date and optionally strain from filename
+    # Extract date/time and optionally strain from filename
     date_str = ""
+    datetime_str = ""
     if filepath is not None:
         parts = filepath.stem.split("_")
         if len(parts) >= 2:
             date_str = f"{parts[0]}_{parts[1]}"
+            # Build full ISO datetime string: YYYY-MM-DDTHH:MM:SS
+            datetime_str = f"{parts[0]}T{parts[1].replace('-', ':')}"
         # If strain extraction from meta failed, get it from the folder name
         if not strain:
             strain = filepath.parent.parent.name.replace("-", "_")
@@ -93,10 +96,20 @@ def get_metadata(log, filepath: Path | None = None) -> dict:
     # Apply any manual overrides (e.g. missing 'ss' prefix in folder name)
     strain = STRAIN_NAME_OVERRIDES.get(strain, strain)
 
+    # Extract temperature fields from LOG.meta
+    temps = {}
+    for key in ["start_temp_outside", "end_temp_outside", "start_temp_ring", "end_temp_ring"]:
+        try:
+            temps[key] = float(_squeeze_scalar(meta[key]))
+        except (KeyError, TypeError, ValueError):
+            temps[key] = float("nan")
+
     return {
         "strain": strain,
         "sex": sex,
         "date": date_str,
+        "datetime": datetime_str,
+        "temps": temps,
         "cond_array": np.asarray(meta["cond_array"], dtype=np.float64),
     }
 
@@ -328,6 +341,8 @@ def process_one_file(filepath: Path, metrics: list[str] | None = None) -> dict:
         "sex": meta["sex"],
         "cohort_id": filepath.stem,
         "cohort_date": meta["date"],
+        "datetime": meta["datetime"],
+        "temps": meta["temps"],
         "n_flies": int(n_fly_data[1]) if len(n_fly_data) > 1 else int(n_fly_data[0]),
         "conditions": conditions,
         "acclim": acclim_filtered,

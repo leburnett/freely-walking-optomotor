@@ -250,16 +250,28 @@ def main():
     print(f"Summary: {len(summary_df):,} rows, {size_mb:.1f} MB")
 
     # Save metadata
-    meta = {
-        "strain": list(all_strain_cohorts.keys()),
-        "n_cohorts": [len(v) for v in all_strain_cohorts.values()],
-        "n_conditions": [len(CONDITION_NAMES)],
-    }
     meta_df = pd.DataFrame(
         [(s, len(cohorts)) for s, cohorts in all_strain_cohorts.items()],
         columns=["strain", "n_cohorts"],
     )
     meta_df.to_parquet(output_dir / "metadata.parquet", index=False)
+
+    # Save temperature data
+    print("\nSaving temperature data...")
+    temp_rows = []
+    for strain, cohort_results in all_strain_cohorts.items():
+        for cohort in cohort_results:
+            row = {
+                "cohort_id": cohort["cohort_id"],
+                "strain": strain,
+                "datetime": cohort.get("datetime", ""),
+            }
+            row.update(cohort.get("temps", {}))
+            temp_rows.append(row)
+    temp_df = pd.DataFrame(temp_rows)
+    temp_path = output_dir / "temperatures.parquet"
+    temp_df.to_parquet(temp_path, index=False)
+    print(f"Temperatures: {len(temp_df)} rows -> {temp_path.name}")
 
     print(f"\nDone. Output saved to: {output_dir}")
 

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import dash
 import dash_bootstrap_components as dbc
-from dash import dcc, html
+from dash import dash_table, dcc, html
 
 from dashboard.callbacks import register_callbacks
 from dashboard.constants import (
@@ -263,6 +263,54 @@ comparison_tab = dbc.Tab(
     ],
 )
 
+# ---- Tab 4: Metadata ----
+metadata_tab = dbc.Tab(
+    label="Metadata",
+    tab_id="tab-metadata",
+    children=[
+        html.Div([
+            html.H5("Dataset Overview", className="mb-3"),
+            dash_table.DataTable(
+                id="metadata-table",
+                columns=[],
+                data=[],
+                sort_action="native",
+                style_header={
+                    "fontWeight": "bold",
+                    "backgroundColor": "#f8f9fa",
+                    "border": "1px solid #dee2e6",
+                },
+                style_data_conditional=[
+                    {
+                        "if": {"row_index": "odd"},
+                        "backgroundColor": "#f8f9fa",
+                    }
+                ],
+                style_cell={
+                    "padding": "8px 12px",
+                    "fontSize": "14px",
+                    "fontFamily": "inherit",
+                    "border": "1px solid #dee2e6",
+                    "textAlign": "left",
+                },
+                style_table={"marginBottom": "24px"},
+            ),
+            html.Hr(),
+            html.H5("Acquisition Timeline", className="mb-3"),
+            dcc.Graph(
+                id="metadata-gantt",
+                config={"displayModeBar": True, "scrollZoom": True},
+            ),
+            html.Hr(),
+            html.H5("Temperature Timeline", className="mb-3"),
+            dcc.Graph(
+                id="metadata-temp",
+                config={"displayModeBar": True, "scrollZoom": True},
+            ),
+        ], className="p-3"),
+    ],
+)
+
 # ---- Main Layout ----
 app.layout = dbc.Container(
     [
@@ -275,9 +323,9 @@ app.layout = dbc.Container(
             dbc.Col(sidebar, width=3),
             dbc.Col(
                 dbc.Tabs(
-                    [cohort_tab, strain_tab, comparison_tab],
+                    [cohort_tab, strain_tab, comparison_tab, metadata_tab],
                     id="main-tabs",
-                    active_tab="tab-strain",
+                    active_tab="tab-metadata",
                 ),
                 width=9,
             ),

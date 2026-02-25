@@ -17,6 +17,8 @@ class DataStore:
         self._summary_df: pd.DataFrame | None = None
         self._metadata_df: pd.DataFrame | None = None
         self._per_fly_cache: dict[str, pd.DataFrame] = {}
+        self._metadata_summary_cache: pd.DataFrame | None = None
+        self._temperatures_df: pd.DataFrame | None = None
 
     @property
     def is_valid(self) -> bool:
@@ -177,6 +179,112 @@ class DataStore:
             "overall_std": float(per_fly.std()) if n > 1 else 0.0,
             "overall_sem": float(per_fly.std() / np.sqrt(n)) if n > 1 else 0.0,
         }
+
+    def get_dataset_summary(self) -> dict:
+        """Compute overall dataset summary: path, cohort count, date range, preprocessing time.
+
+        Returns dict with keys:
+            preprocessed_dir   : str  — absolute path to preprocessed directory
+            n_strains          : int  — number of strains
+            n_cohorts_total    : int  — total cohort/experiment count
+            date_min           : str | None  — earliest acquisition date (YYYY-MM-DD)
+            date_max           : str | None  — latest acquisition date (YYYY-MM-DD)
+            preprocessed_on    : str | None  — when data was last preprocessed (YYYY-MM-DD HH:MM)
+        """
+        import datetime
+
+        meta = self.load_metadata()
+        n_strains = len(meta)
+        n_cohorts_total = int(meta["n_cohorts"].sum()) if "n_cohorts" in meta.columns else 0
+
+        # Gather unique acquisition dates from cohort_id values.
+        # cohort_id format: YYYY-MM-DD_HH-MM-SS_strain_protocol_...
+        # We read only the cohort_id column from each per-fly Parquet (fast with columnar format).
+        all_dates: list[str] = []
+        for strain in meta["strain"].tolist():
+            path = self.preprocessed_dir / "per_fly" / f"{strain}.parquet"
+            if path.exists():
+                try:
+                    cid_df = pd.read_parquet(path, columns=["cohort_id"])
+                    for cid in cid_df["cohort_id"].unique():
+                        date_part = str(cid)[:10]
+                        if len(date_part) == 10 and date_part[4] == "-" and date_part[7] == "-":
+                            all_dates.append(date_part)
+                except Exception:
+                    pass
+
+        date_min = min(all_dates) if all_dates else None
+        date_max = max(all_dates) if all_dates else None
+
+        # Preprocessing timestamp — use mtime of metadata.parquet
+        meta_path = self.preprocessed_dir / "metadata.parquet"
+        preprocessed_on: str | None = None
+        if meta_path.exists():
+            ts = meta_path.stat().st_mtime
+            preprocessed_on = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M")
+
+        return {
+            "preprocessed_dir": str(self.preprocessed_dir.resolve()),
+            "n_strains": n_strains,
+            "n_cohorts_total": n_cohorts_total,
+            "date_min": date_min,
+            "date_max": date_max,
+            "preprocessed_on": preprocessed_on,
+        }
+
+    def get_metadata_summary(self) -> pd.DataFrame:
+        """Return per-cohort acquisition summary for all strains.
+
+        Columns: strain, cohort_id, date (YYYY-MM-DD), n_flies
+
+        Reads only the minimal columns needed from each per-fly Parquet
+        (columnar format makes this efficient). Result is cached.
+        """
+        if self._metadata_summary_cache is not None:
+            return self._metadata_summary_cache
+
+        meta = self.load_metadata()
+        rows = []
+
+        for strain in meta["strain"].tolist():
+            path = self.preprocessed_dir / "per_fly" / f"{strain}.parquet"
+            if not path.exists():
+                continue
+            try:
+                # Read only the columns needed to count flies per cohort
+                df = pd.read_parquet(path, columns=["cohort_id", "fly_idx", "condition", "rep"])
+                # Filter to one condition+rep so each fly is counted exactly once
+                single = df[(df["condition"] == 1) & (df["rep"] == 1)]
+                for cohort_id, group in single.groupby("cohort_id"):
+                    date_part = str(cohort_id)[:10]
+                    rows.append({
+                        "strain": strain,
+                        "cohort_id": cohort_id,
+                        "date": date_part,
+                        "n_flies": group["fly_idx"].nunique(),
+                    })
+            except Exception:
+                pass
+
+        result = pd.DataFrame(rows) if rows else pd.DataFrame(
+            columns=["strain", "cohort_id", "date", "n_flies"]
+        )
+        self._metadata_summary_cache = result
+        return result
+
+    def load_temperatures(self) -> pd.DataFrame:
+        """Load the temperature data Parquet (one row per cohort).
+
+        Columns: cohort_id, strain, datetime, start_temp_outside,
+                 end_temp_outside, start_temp_ring, end_temp_ring
+
+        Returns an empty DataFrame if the file does not yet exist
+        (i.e., data was preprocessed before temperature support was added).
+        """
+        if self._temperatures_df is None:
+            path = self.preprocessed_dir / "temperatures.parquet"
+            self._temperatures_df = pd.read_parquet(path) if path.exists() else pd.DataFrame()
+        return self._temperatures_df
 
     def compute_summary_on_the_fly(
         self,
