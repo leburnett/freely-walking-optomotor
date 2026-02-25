@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from dashboard.constants import ACCLIM_CONDITION_ID, CONDITION_NAMES, FPS, METRICS
+from dashboard.constants import ACCLIM_CONDITION_ID, CONDITION_NAMES, FPS, METRICS, STIM_ONSET_FRAME
 
 
 class DataStore:
@@ -102,6 +102,22 @@ class DataStore:
             mask &= df["qc_passed"]
 
         result = df[mask]
+
+        # Handle derived metric: move_to_centre = dist_data minus value at stimulus onset (frame 300)
+        if metric == "move_to_centre":
+            if "dist_data" not in result.columns or result.empty:
+                return pd.DataFrame()
+            result = result.copy()
+            onset_vals = (
+                result[result["frame"] == STIM_ONSET_FRAME]
+                .groupby(["fly_idx", "rep"])["dist_data"]
+                .first()
+            )
+            result["move_to_centre"] = result.apply(
+                lambda row: row["dist_data"] - onset_vals.get((row["fly_idx"], row["rep"]), np.nan),
+                axis=1,
+            )
+
         if metric in result.columns:
             return result[["fly_idx", "rep", "frame", "time_s", "qc_passed", metric]].sort_values(
                 ["fly_idx", "rep", "frame"]
@@ -191,14 +207,33 @@ class DataStore:
             mask &= df["qc_passed"]
         subset = df[mask]
 
-        if subset.empty or metric not in subset.columns:
+        # Resolve the source column: move_to_centre uses dist_data minus value at stimulus onset
+        if metric == "move_to_centre":
+            if "dist_data" not in subset.columns or subset.empty:
+                return pd.DataFrame()
+            subset = subset.copy()
+            onset_vals = (
+                subset[subset["frame"] == STIM_ONSET_FRAME]
+                .groupby(["cohort_id", "fly_idx", "rep"])["dist_data"]
+                .first()
+                .rename("_onset_val")
+                .reset_index()
+            )
+            subset = subset.merge(onset_vals, on=["cohort_id", "fly_idx", "rep"], how="left")
+            subset["move_to_centre"] = subset["dist_data"] - subset["_onset_val"]
+            subset = subset.drop(columns=["_onset_val"])
+            col = "move_to_centre"
+        else:
+            col = metric
+
+        if subset.empty or col not in subset.columns:
             return pd.DataFrame()
 
         if rep_mode == "average":
             # Average R1 and R2 per fly per frame, then compute group stats
             source = subset.groupby(
                 ["cohort_id", "fly_idx", "frame", "time_s"]
-            )[metric].mean().reset_index()
+            )[col].mean().reset_index()
         else:
             source = subset
 
@@ -207,28 +242,28 @@ class DataStore:
         time_s = frame_groups["time_s"].first()
 
         if central_tendency == "median":
-            center = frame_groups[metric].median()
+            center = frame_groups[col].median()
         else:
-            center = frame_groups[metric].mean()
+            center = frame_groups[col].mean()
 
         if dispersion == "mad":
             # Median Absolute Deviation: median(|x - median(x)|) per frame
-            med_per_frame = frame_groups[metric].median()
+            med_per_frame = frame_groups[col].median()
             source_with_med = source.merge(
                 med_per_frame.rename("_frame_median").reset_index(),
                 on="frame",
             )
             source_with_med["_abs_dev"] = np.abs(
-                source_with_med[metric] - source_with_med["_frame_median"]
+                source_with_med[col] - source_with_med["_frame_median"]
             )
             disp = source_with_med.groupby("frame")["_abs_dev"].median()
         else:
             # SEM: std / sqrt(n)
-            std = frame_groups[metric].std()
-            count = frame_groups[metric].count()
+            std = frame_groups[col].std()
+            count = frame_groups[col].count()
             disp = std / np.sqrt(count.clip(lower=1))
 
-        n_flies = frame_groups[metric].count()
+        n_flies = frame_groups[col].count()
 
         grouped = pd.DataFrame({
             "frame": time_s.index,

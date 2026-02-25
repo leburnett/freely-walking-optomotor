@@ -48,24 +48,22 @@ METRIC_LABELS = {
     "av_data": "Angular velocity (deg/s)",
     "dist_data": "Distance from centre (mm)",
     "curv_data": "Turning rate (deg/mm)",
-    "vel_data": "Velocity (mm/s)",
-    "dist_trav": "Distance travelled (mm)",
-    "heading_wrap": "Heading (rad)",
+    "move_to_centre": "Movement towards centre (mm)",
 }
 
-# Default Y-axis ranges per metric (from plot_xcond_per_strain.m lines 102-117)
-METRIC_RANGES = {
-    "fv_data": (0, 20),
-    "av_data": (-250, 250),
-    "dist_data": (20, 100),
-    "curv_data": (-250, 250),
-    "vel_data": (0, 25),
-    "dist_trav": None,
-    "heading_wrap": None,
-}
+# Metrics to store during preprocessing (move_to_centre is derived on-the-fly from dist_data)
+METRICS = ["fv_data", "av_data", "curv_data", "dist_data"]
 
-# Metrics to store during preprocessing
-METRICS = ["fv_data", "av_data", "curv_data", "dist_data", "vel_data", "dist_trav", "heading_wrap"]
+# Derived metrics computed on-the-fly (not stored in Parquet)
+DERIVED_METRICS = ["move_to_centre"]
+
+# All metrics available in the UI (stored + derived)
+ALL_METRICS = METRICS + DERIVED_METRICS
+
+# Strain name overrides (applied during preprocessing to correct folder name mismatches)
+STRAIN_NAME_OVERRIDES = {
+    "2575_LPC1_shibire_kir": "ss2575_LPC1_shibire_kir",
+}
 
 # Frame rate
 FPS = 30

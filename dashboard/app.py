@@ -13,10 +13,10 @@ from dash import dcc, html
 
 from dashboard.callbacks import register_callbacks
 from dashboard.constants import (
+    ALL_METRICS,
     CONDITION_NAMES,
     DEFAULT_DATA_DIR,
     METRIC_LABELS,
-    METRICS,
 )
 from dashboard.data_loader import DataStore
 
@@ -35,7 +35,6 @@ data_store = DataStore(default_preprocessed)
 # ---- Sidebar ----
 sidebar = dbc.Card(
     [
-        dbc.CardHeader(html.H5("Controls", className="mb-0")),
         dbc.CardBody([
             # Data path
             dbc.Label("Data Directory", className="fw-bold"),
@@ -60,7 +59,7 @@ sidebar = dbc.Card(
             dbc.Label("Metric", className="fw-bold"),
             dcc.Dropdown(
                 id="metric-dropdown",
-                options=[{"label": METRIC_LABELS[m], "value": m} for m in METRICS],
+                options=[{"label": METRIC_LABELS[m], "value": m} for m in ALL_METRICS],
                 value="fv_data",
                 className="mb-3",
                 clearable=False,
@@ -73,7 +72,7 @@ sidebar = dbc.Card(
             dbc.Switch(
                 id="qc-toggle",
                 label="Exclude low-quality flies",
-                value=False,
+                value=True,
                 className="mb-2",
             ),
             html.Small(
@@ -89,7 +88,7 @@ sidebar = dbc.Card(
                     {"label": "Interleave R1 & R2", "value": "interleave"},
                     {"label": "Average R1 & R2 per fly", "value": "average"},
                 ],
-                value="interleave",
+                value="average",
                 className="mb-3",
             ),
 

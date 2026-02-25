@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 import scipy.io as sio
 
-from dashboard.constants import BASELINE_FRAMES, METRICS, QC_MAX_MIN_DIST, QC_MIN_MEAN_FV
+from dashboard.constants import BASELINE_FRAMES, METRICS, QC_MAX_MIN_DIST, QC_MIN_MEAN_FV, STRAIN_NAME_OVERRIDES
 
 
 def _squeeze_scalar(val):
@@ -89,6 +89,9 @@ def get_metadata(log, filepath: Path | None = None) -> dict:
         # If strain extraction from meta failed, get it from the folder name
         if not strain:
             strain = filepath.parent.parent.name.replace("-", "_")
+
+    # Apply any manual overrides (e.g. missing 'ss' prefix in folder name)
+    strain = STRAIN_NAME_OVERRIDES.get(strain, strain)
 
     return {
         "strain": strain,

@@ -9,11 +9,11 @@ from dash import Input, Output, State, callback_context, no_update
 from dashboard.constants import (
     CONDITION_COLORS,
     CONDITION_NAMES,
+    DERIVED_METRICS,
     DIRECTION_CHANGE_FRAME,
     DOWNSAMPLE_FACTOR,
     FPS,
     METRIC_LABELS,
-    METRIC_RANGES,
     METRICS,
     STIM_OFFSET_FRAME,
     STIM_ONSET_FRAME,
@@ -21,7 +21,7 @@ from dashboard.constants import (
 )
 
 
-def _add_stim_markers(fig, y_range, row=None, col=None, n_conditions=12):
+def _add_stim_markers(fig, row=None, col=None, n_conditions=12):
     """Add vertical lines for stimulus onset, direction change, and offset."""
     kwargs = {}
     if row is not None:
@@ -99,7 +99,8 @@ def register_callbacks(app, data_store):
 
         strains = data_store.get_strains()
         options = [{"label": s.replace("_", " "), "value": s} for s in strains]
-        default = strains[0] if strains else None
+        preferred = "jfrc100_es_shibire_kir"
+        default = preferred if preferred in strains else (strains[0] if strains else None)
         return options, default, f"Loaded {len(strains)} strains from {preprocessed_dir.name}"
 
     # ---- Tab 1: Update cohort dropdown when strain changes ----
@@ -300,10 +301,6 @@ def register_callbacks(app, data_store):
         for trace in _make_trace(x, y_mean, y_sem, "rgb(100,100,100)", "Acclim mean"):
             fig.add_trace(trace)
 
-        y_range = METRIC_RANGES.get(metric)
-        if y_range:
-            fig.update_yaxes(range=list(y_range))
-
         fig.update_layout(
             title="Acclimation Baseline (pre-stimulus dark)",
             xaxis_title="Time (s)",
@@ -351,11 +348,7 @@ def _cohort_single_condition(strain, cohort_id, cond_n, metric, apply_qc, store,
     for trace in _make_trace(x, y_center, y_disp, color, trace_name):
         fig.add_trace(trace)
 
-    # Stimulus markers
-    y_range = METRIC_RANGES.get(metric)
-    if y_range:
-        fig.update_yaxes(range=list(y_range))
-    _add_stim_markers(fig, y_range)
+    _add_stim_markers(fig)
 
     # Acclimation baseline reference line
     acclim_summary = store.get_acclim_summary(strain, cohort_id, metric, apply_qc)
@@ -402,10 +395,6 @@ def _cohort_all_conditions(strain, cohort_id, metric, apply_qc, store,
         for trace in _make_trace(x, y_center, y_disp, color, CONDITION_NAMES[cond_n], show_legend=False):
             fig.add_trace(trace, row=cond_n, col=1)
 
-        y_range = METRIC_RANGES.get(metric)
-        if y_range:
-            fig.update_yaxes(range=list(y_range), row=cond_n, col=1)
-
         # N-flies annotation
         n_unique = df["fly_idx"].nunique()
         fig.add_annotation(
@@ -428,24 +417,42 @@ def _cohort_all_conditions(strain, cohort_id, metric, apply_qc, store,
 
 def _compute_cohort_stats(df, metric, central_tendency="mean", dispersion="sem"):
     """Compute per-frame central tendency and dispersion from cohort data."""
+    # For move_to_centre: if dist_data is present, compute it; otherwise it's already pre-computed
+    if metric == "move_to_centre" and "dist_data" in df.columns:
+        onset_vals = (
+            df[df["frame"] == STIM_ONSET_FRAME]
+            .groupby(["fly_idx", "rep"])["dist_data"]
+            .first()
+            .rename("_onset_val")
+            .reset_index()
+        )
+        df = df.copy().merge(onset_vals, on=["fly_idx", "rep"], how="left")
+        df["_metric"] = df["dist_data"] - df["_onset_val"]
+        col = "_metric"
+    elif metric == "move_to_centre":
+        # Already computed by get_cohort_data — use column directly
+        col = "move_to_centre"
+    else:
+        col = metric
+
     frame_groups = df.groupby("time_s")
 
     if central_tendency == "median":
-        center = frame_groups[metric].median()
+        center = frame_groups[col].median()
     else:
-        center = frame_groups[metric].mean()
+        center = frame_groups[col].mean()
 
     if dispersion == "mad":
-        med_per_frame = frame_groups[metric].median()
+        med_per_frame = frame_groups[col].median()
         df_with_med = df.merge(
             med_per_frame.rename("_frame_median").reset_index(),
             on="time_s",
         )
-        df_with_med["_abs_dev"] = np.abs(df_with_med[metric] - df_with_med["_frame_median"])
+        df_with_med["_abs_dev"] = np.abs(df_with_med[col] - df_with_med["_frame_median"])
         disp = df_with_med.groupby("time_s")["_abs_dev"].median()
     else:
-        std = frame_groups[metric].std()
-        count = frame_groups[metric].count()
+        std = frame_groups[col].std()
+        count = frame_groups[col].count()
         disp = std / np.sqrt(count.clip(lower=1))
 
     x = center.index.values
@@ -455,7 +462,8 @@ def _compute_cohort_stats(df, metric, central_tendency="mean", dispersion="sem")
 def _get_summary_data(strain, cond_n, metric, apply_qc, rep_mode, use_default, store,
                       central_tendency="mean", dispersion="sem"):
     """Get central tendency / dispersion data, using pre-computed summary when possible."""
-    if use_default:
+    # Derived metrics are always computed on-the-fly (no pre-computed data available)
+    if use_default and metric not in DERIVED_METRICS:
         df = store.get_strain_summary(strain, cond_n, metric)
         if not df.empty:
             return df["time_s"].values, df["mean"].values, df["sem"].values, df["n_flies"].values
@@ -492,10 +500,6 @@ def _strain_tiled(strain, metric, apply_qc, rep_mode, use_default, store,
 
         for trace in _make_trace(x, y_mean, y_sem, color, label, show_legend=False):
             fig.add_trace(trace, row=cond_n, col=1)
-
-        y_range = METRIC_RANGES.get(metric)
-        if y_range:
-            fig.update_yaxes(range=list(y_range), row=cond_n, col=1)
 
         # N-flies annotation
         n = int(n_flies[0]) if len(n_flies) > 0 else 0
@@ -536,10 +540,7 @@ def _strain_overlaid(strain, metric, apply_qc, rep_mode, use_default, store,
         for trace in _make_trace(x, y_mean, y_sem, color, label):
             fig.add_trace(trace)
 
-    y_range = METRIC_RANGES.get(metric)
-    if y_range:
-        fig.update_yaxes(range=list(y_range))
-    _add_stim_markers(fig, y_range)
+    _add_stim_markers(fig)
 
     fig.update_layout(
         title=f"{strain.replace('_', ' ')} - {METRIC_LABELS.get(metric, metric)}",
@@ -573,10 +574,7 @@ def _comparison_single(cond_n, metric, selected_strains, apply_qc, rep_mode, use
         for trace in _make_trace(x, y_mean, y_sem, color, label):
             fig.add_trace(trace)
 
-    y_range = METRIC_RANGES.get(metric)
-    if y_range:
-        fig.update_yaxes(range=list(y_range))
-    _add_stim_markers(fig, y_range)
+    _add_stim_markers(fig)
 
     cond_name = CONDITION_NAMES.get(cond_n, f"Condition {cond_n}")
     fig.update_layout(
@@ -627,10 +625,6 @@ def _comparison_grid(metric, selected_strains, apply_qc, rep_mode, use_default, 
 
             for trace in _make_trace(x, y_mean, y_sem, color, label, show_legend=show_legend):
                 fig.add_trace(trace, row=row, col=col)
-
-        y_range = METRIC_RANGES.get(metric)
-        if y_range:
-            fig.update_yaxes(range=list(y_range), row=row, col=col)
 
         # N-flies annotation per subplot
         if n_labels:
