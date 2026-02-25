@@ -8,14 +8,11 @@
 %   matlab -batch "run('generate_example_figs.m')"
 
 %% Setup paths
-REPO_ROOT = '/Users/burnettl/Documents/GitHub/freely-walking-optomotor';
-PROJECT_ROOT = '/Users/burnettl/Documents/Projects/oaky_cokey';
+REPO_ROOT = fileparts(fileparts(fileparts(mfilename('fullpath'))));  % training_guide -> docs -> repo root
+run(fullfile(REPO_ROOT, 'setup_path.m'));
+cfg = get_config();
+PROJECT_ROOT = cfg.project_root;
 SAVE_DIR = fullfile(REPO_ROOT, 'docs', 'training_guide', 'example_figs');
-
-% Add all required paths
-addpath(genpath(fullfile(REPO_ROOT, 'processing_functions')));
-addpath(genpath(fullfile(REPO_ROOT, 'plotting_functions')));
-addpath(genpath(fullfile(REPO_ROOT, 'misc')));
 
 if ~isfolder(SAVE_DIR)
     mkdir(SAVE_DIR);

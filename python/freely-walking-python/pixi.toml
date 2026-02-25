@@ -7,8 +7,8 @@ platforms = ["osx-arm64"]
 version = "0.1.0"
 
 [tasks]
-dashboard = { cmd = "python -m dashboard.app", cwd = "../.." }
-preprocess = { cmd = "python -m dashboard.preprocess", cwd = "../.." }
+dashboard = { cmd = "python -m dashboard.app", cwd = "../../src/python" }
+preprocess = { cmd = "python -m dashboard.preprocess", cwd = "../../src/python" }
 
 [dependencies]
 numpy = ">=2.2.6,<3"

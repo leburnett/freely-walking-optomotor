@@ -2,13 +2,11 @@
 % Fix: regenerate only the failed figures from Part 3.
 
 %% Setup paths
-REPO_ROOT = '/Users/burnettl/Documents/GitHub/freely-walking-optomotor';
-PROJECT_ROOT = '/Users/burnettl/Documents/Projects/oaky_cokey';
+REPO_ROOT = fileparts(fileparts(fileparts(mfilename('fullpath'))));  % training_guide -> docs -> repo root
+run(fullfile(REPO_ROOT, 'setup_path.m'));
+cfg = get_config();
+PROJECT_ROOT = cfg.project_root;
 SAVE_DIR = fullfile(REPO_ROOT, 'docs', 'training_guide', 'example_figs');
-
-addpath(genpath(fullfile(REPO_ROOT, 'processing_functions')));
-addpath(genpath(fullfile(REPO_ROOT, 'plotting_functions')));
-addpath(genpath(fullfile(REPO_ROOT, 'misc')));
 
 %% Load protocol_27 data
 protocol_dir_27 = fullfile(PROJECT_ROOT, 'results', 'protocol_27');

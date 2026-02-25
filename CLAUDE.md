@@ -8,11 +8,43 @@ This repository contains MATLAB code for running freely-walking optomotor experi
 
 ### Key Directories
 
-- **`protocols/`** - MATLAB scripts (35 files) that define experimental sessions with timing, stimuli, and data logging
-- **`patterns/Patterns_optomotor/`** - MATLAB `.mat` files (63 files) containing LED pattern data for visual stimuli
-- **`script_to_make_patterns/`** - MATLAB scripts for generating new pattern files
-- **`docs_generator/`** - Python package for generating Quarto documentation pages
-- **`python/freely-walking-python/`** - Python environment managed with pixi
+```
+freely-walking-optomotor/
+├── config/                          # Path config — edit paths here
+│   ├── get_config.m                 # MATLAB: cfg = get_config()
+│   └── config.py                    # Python: from config.config import ...
+├── setup_path.m                     # Run once per MATLAB session
+├── src/
+│   ├── matlab/
+│   │   ├── processing/              # process_freely_walking_data.m (KEY entry point)
+│   │   │   └── functions/           # 39+ processing helpers
+│   │   ├── plotting/                # make_overview.m, plot_line_*.m, etc.
+│   │   │   └── functions/           # 76+ plotting helpers
+│   │   ├── analysis/                # 22 ad-hoc analysis scripts
+│   │   ├── tracking/                # batch_track_ufmf.m, calibration.mat
+│   │   ├── patterns/
+│   │   │   ├── Patterns_optomotor/  # 63 .mat LED pattern files
+│   │   │   └── make_patterns/       # scripts to generate new patterns
+│   │   ├── protocols/               # 49 experimental protocol scripts
+│   │   ├── model/                   # 4 behavioral model scripts
+│   │   └── shared/                  # external_functions/ (viridis, fdr_bh, etc.)
+│   ├── python/
+│   │   ├── dashboard/               # Dash web dashboard
+│   │   └── docs_generator/          # Quarto documentation generator
+│   └── automation/
+│       ├── daily_processing/        # daily_processing.py, reprocessing_script.py
+│       ├── monitor_and_track/       # monitor_and_track.py
+│       └── monitor_and_copy/        # monitor_and_copy.py
+├── python/freely-walking-python/    # pixi env — DO NOT MOVE
+│   └── pixi.toml
+└── docs/
+    └── training_guide/              # example figure generation scripts
+```
+
+- **`config/get_config.m`** — single edit point for all MATLAB path configuration
+- **`config/config.py`** — single edit point for all Python path configuration
+- **`setup_path.m`** — run from MATLAB once per session (or add to `startup.m`)
+- **`python/freely-walking-python/`** — Python environment managed with pixi (do not move; has baked-in abs paths)
 
 ### Related Repository
 
@@ -20,6 +52,47 @@ Documentation is published to a separate Quarto website:
 - **Location:** `/Users/burnettl/Documents/GitHub/reiser-documentation`
 - **Hosted at:** GitHub Pages
 - **Structure:** Uses Quarto static site generator with MkDocs Material-like theme
+
+## Path Configuration
+
+All hardcoded paths have been replaced with a single config file per language.
+
+### MATLAB
+
+Edit `config/get_config.m` — change only `cfg.project_root`:
+```matlab
+cfg = get_config();
+% cfg.project_root   — data/results root (edit for each computer)
+% cfg.repo_root      — auto-detected repo root
+% cfg.data_tracked   — tracked data
+% cfg.data_processed — processed data
+% cfg.results        — results folder
+% cfg.figures        — figures folder
+% cfg.patterns       — Patterns_optomotor/ directory
+% cfg.calibration_file — tracking calibration .mat
+```
+
+Run `setup_path.m` once per MATLAB session (or add to `startup.m`) to add all `src/matlab/` subdirectories to the MATLAB path.
+
+### Python
+
+Edit `config/config.py` — change only `PROJECT_ROOT`. Import in scripts:
+```python
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))  # adjust depth to reach repo root
+from config.config import DATA_TRACKED, RESULTS_PATH, NETWORK_TRACKED, REPO_ROOT
+```
+
+### Dashboard
+
+```bash
+cd python/freely-walking-python
+pixi run dashboard     # starts Dash app (cwd → src/python/)
+pixi run preprocess    # preprocesses .mat → Parquet
+```
+
+---
 
 ## Pattern File Structure
 
@@ -97,7 +170,7 @@ all_conditions = [
 
 ## Documentation Generator
 
-The `docs_generator/` package converts patterns and protocols into Quarto documentation pages.
+The `src/python/docs_generator/` package converts patterns and protocols into Quarto documentation pages.
 
 ### Files
 
@@ -127,19 +200,19 @@ cd /Users/burnettl/Documents/GitHub/freely-walking-optomotor
 
 # Generate all pattern documentation (images + .qmd pages)
 pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
-    python docs_generator/generate_pattern_docs.py
+    python src/python/docs_generator/generate_pattern_docs.py
 
 # Generate single pattern
 pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
-    python docs_generator/generate_pattern_docs.py "Pattern_09_optomotor_16pixel_binary.mat"
+    python src/python/docs_generator/generate_pattern_docs.py "Pattern_09_optomotor_16pixel_binary.mat"
 
 # Generate all protocol documentation
 pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
-    python docs_generator/generate_protocol_docs.py
+    python src/python/docs_generator/generate_protocol_docs.py
 
 # Generate single protocol
 pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
-    python docs_generator/generate_protocol_docs.py "protocol_27.m"
+    python src/python/docs_generator/generate_protocol_docs.py "protocol_27.m"
 ```
 
 ### Output Locations
@@ -343,13 +416,13 @@ If Markdown tables don't render properly, check for:
 
 ### New Pattern
 
-1. Create `.mat` file in `patterns/Patterns_optomotor/`
+1. Create `.mat` file in `src/matlab/patterns/Patterns_optomotor/`
 2. Run `generate_pattern_docs.py` with the new file
 3. Page auto-appears via link in patterns index table
 
 ### New Protocol
 
-1. Create `.m` file in `protocols/`
+1. Create `.m` file in `src/matlab/protocols/`
 2. Run `generate_protocol_docs.py` with the new file
 3. Add entry to the Protocol Overview table in `freely_walking_protocols_index.qmd`
 

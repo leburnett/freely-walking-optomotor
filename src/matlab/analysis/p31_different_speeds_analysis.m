@@ -1,0 +1,90 @@
+% P31_DIFFERENT_SPEEDS_ANALYSIS - Analyze optomotor responses at different speeds
+%
+% SCRIPT CONTENTS:
+%   - Section 1: Load DATA and generate experiment data struct
+%   - Section 2: Plot tuning curves comparing strains (errorbar plots)
+%   - Section 3: Generate timeseries plots for different speed conditions
+%
+% DESCRIPTION:
+%   This script analyzes Protocol 31 data which tests optomotor responses
+%   at different stimulus speeds. It generates tuning curves showing how
+%   behavioral metrics (angular velocity, distance change) vary with
+%   stimulus speed, and compares responses between different fly strains.
+%
+% PROTOCOL 31 CONDITIONS:
+%   - Multiple stimulus speeds (60, 120, 240, 480 deg/s)
+%   - Two spatial frequencies (15 deg and 60 deg gratings)
+%   - Flicker control condition
+%
+% REQUIREMENTS:
+%   - DATA struct from comb_data_across_cohorts_cond
+%   - Functions: generate_exp_data_struct, plot_errorbar_tuning_diff_speeds,
+%     plot_timeseries_diff_speeds
+%
+% DATA TYPES ANALYZED:
+%   - av_data: angular velocity
+%   - fv_data: forward velocity
+%   - dist_data: distance from center
+%   - dist_data_delta: change in distance from center
+%   - curv_data: path curvature (turning rate)
+%
+% See also: comb_data_across_cohorts_cond, plot_errorbar_tuning_diff_speeds,
+%           plot_timeseries_diff_speeds
+
+cfg = get_config();
+protocol_dir = fullfile(cfg.results, 'protocol_31');
+cd(protocol_dir);
+
+DATA = comb_data_across_cohorts_cond(protocol_dir);
+exp_data = generate_exp_data_struct(DATA);
+
+%% Plot both strains on top of each other.
+
+% strains = {"jfrc100_es_shibire_kir", "ss00297_Dm4_shibire_kir"};
+% strains = {"jfrc100_es_shibire_kir", "ss02360_Dm4_shibire_kir"};
+% strains = {"jfrc100_es_shibire_kir", "ss00326_Pm2ab_shibire_kir"};
+strains = {"jfrc100_es_shibire_kir", "ss324_t4t5_shibire_kir"};
+% strains = {"jfrc100_es_shibire_kir", "l1l4_jfrc100_shibire_kir"};
+% strains = {"jfrc100_es_shibire_kir"};
+data_types = {'av_data', 'dist_data_delta'};
+
+close all
+for dt = 1:numel(data_types)
+    data_type = data_types{dt};
+    figure
+    for st = 1:numel(strains)
+        strain = strains{st};
+        f3 = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type);
+    end 
+    if data_type == "gain"
+        ylim([-0.2 1])
+    end 
+    f = gcf;
+    f.Position = [125   643   261   221];
+end 
+
+
+% For AV plot
+% hold on
+% plot([1, 2,3,4,5], [0, 60, 120, 240, 480], '--', 'Color', [0.2 0.2 0.2], 'LineWidth', 1.2)
+% plot(2, 60, 'k.', 'MarkerSize', 18)
+% plot(3, 120, 'k.', 'MarkerSize', 18)
+% plot(4, 240, 'k.', 'MarkerSize', 18)
+
+% plot(5, 480, 'k.', 'MarkerSize', 18)
+
+
+%% timeseries for different speed experiments
+
+strain = "jfrc100_es_shibire_kir";
+% strain = "ss00297_Dm4_shibire_kir";
+data_types = {'av_data', 'fv_data', 'dist_data', 'dist_data_delta', 'curv_data'};
+plot_sem = 0;
+
+for d = 1:5
+
+    data_type = data_types{d};
+    figure
+    f4 = plot_timeseries_diff_speeds(DATA, strain, data_type, plot_sem);
+    % f3 = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type);
+end
