@@ -6,13 +6,13 @@ function tracking_log = batch_track_ufmf(date_folder)
     % date_folder = 'C:\Users\burnettl\Documents\oakey-cokey\DATA\00_unprocessed\1111_11_11\protocol_25\jfrc100_es_shibire_kir\F\15_44_35';
     
     cd(date_folder)
-    % folder_parts = strsplit(date_folder, '\'); % \ if running manually in matlab, / if running automatically through python
-   
-    if contains(date_folder, '/') % Python
-        folder_parts = strsplit(date_folder, '/');
-    elseif contains(date_folder, '\') % MATLAB
-        folder_parts = strsplit(date_folder, '\');
-    end 
+    % Split path on the correct separator depending on OS:
+    % Mac/Linux uses '/', Windows uses '\'
+    if contains(date_folder, '/')
+        folder_parts = strsplit(date_folder, '/');   % Mac / Linux
+    elseif contains(date_folder, '\')
+        folder_parts = strsplit(date_folder, '\');   % Windows
+    end
     
     % disp(folder_parts);
     % disp(length(folder_parts));
