@@ -183,6 +183,7 @@ cohort_tab = dbc.Tab(
                 ]),
             ], className="mb-3"),
             dcc.Graph(id="cohort-plot", config={"displayModeBar": True, "scrollZoom": True}),
+            dcc.Graph(id="cohort-boxchart", config={"displayModeBar": False}),
         ], className="p-3"),
     ],
 )
@@ -197,7 +198,7 @@ strain_controls = dbc.Row([
                 {"label": "Tiled (one per condition)", "value": "tiled"},
                 {"label": "Overlaid (all on one plot)", "value": "overlaid"},
             ],
-            value="tiled",
+            value="overlaid",
             inline=True,
         ),
     ]),
@@ -210,6 +211,7 @@ strain_tab = dbc.Tab(
         html.Div([
             strain_controls,
             dcc.Graph(id="strain-plot", config={"displayModeBar": True, "scrollZoom": True}),
+            dcc.Graph(id="strain-boxchart", config={"displayModeBar": False}),
         ], className="p-3"),
     ],
 )
@@ -259,6 +261,7 @@ comparison_tab = dbc.Tab(
             comparison_controls,
             comparison_strains,
             dcc.Graph(id="comparison-plot", config={"displayModeBar": True, "scrollZoom": True}),
+            dcc.Graph(id="comparison-boxchart", config={"displayModeBar": False}),
         ], className="p-3"),
     ],
 )

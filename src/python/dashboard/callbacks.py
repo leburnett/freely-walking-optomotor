@@ -251,6 +251,187 @@ def register_callbacks(app, data_store):
         default = ["jfrc100_es_shibire_kir"] if "jfrc100_es_shibire_kir" in values else []
         return options, default
 
+    # ---- Tab 1: Cohort Violin Plot ----
+    @app.callback(
+        Output("cohort-boxchart", "figure"),
+        Output("cohort-boxchart", "style"),
+        Input("strain-dropdown", "value"),
+        Input("cohort-dropdown", "value"),
+        Input("condition-dropdown", "value"),
+        Input("metric-dropdown", "value"),
+        Input("qc-toggle", "value"),
+        Input("central-tendency-toggle", "value"),
+        Input("dispersion-toggle", "value"),
+    )
+    def update_cohort_boxchart(strain, cohort_id, condition, metric, qc_on,
+                               central_tendency, dispersion):
+        if not strain or not cohort_id or not metric:
+            return go.Figure(), {}
+
+        apply_qc = bool(qc_on)
+        fig = go.Figure()
+        ylabel = BOXCHART_YLABEL.get(metric, METRIC_LABELS.get(metric, metric))
+        means = []  # (name, mean_value, color) for annotations
+
+        if condition == "all":
+            for cond_n in range(1, len(CONDITION_NAMES) + 1):
+                df = data_store.get_cohort_data(strain, cohort_id, cond_n, metric,
+                                                qc_only=apply_qc)
+                if df.empty:
+                    continue
+                values = _compute_per_fly_boxchart_values(df, metric, rep_mode="interleave")
+                if len(values) == 0:
+                    continue
+                color = CONDITION_COLORS[cond_n - 1]
+                fig.add_trace(_make_boxchart_trace(values, color, CONDITION_NAMES[cond_n]))
+                means.append((CONDITION_NAMES[cond_n], float(np.mean(values)), color))
+            plot_style = {}
+        else:
+            cond_n = int(condition)
+            df = data_store.get_cohort_data(strain, cohort_id, cond_n, metric,
+                                            qc_only=apply_qc)
+            if not df.empty:
+                values = _compute_per_fly_boxchart_values(df, metric, rep_mode="interleave")
+                if len(values) > 0:
+                    color = CONDITION_COLORS[cond_n - 1]
+                    fig.add_trace(_make_boxchart_trace(values, color, CONDITION_NAMES[cond_n]))
+                    means.append((CONDITION_NAMES[cond_n], float(np.mean(values)), color))
+            plot_style = {"width": "20%"}
+
+        for name, mean_val, color in means:
+            fig.add_annotation(
+                x=name, xref="x", y=1.0, yref="paper",
+                text=f"{mean_val:.1f}", showarrow=False,
+                font=dict(size=10, color=color), yanchor="bottom",
+            )
+
+        fig.update_layout(
+            yaxis_title=ylabel,
+            template="plotly_white",
+            height=350,
+            showlegend=False,
+            margin=dict(t=40, b=80, l=60, r=20),
+            xaxis=dict(tickangle=-30),
+        )
+        return fig, plot_style
+
+    # ---- Tab 2: Strain Violin Plot ----
+    @app.callback(
+        Output("strain-boxchart", "figure"),
+        Input("strain-dropdown", "value"),
+        Input("metric-dropdown", "value"),
+        Input("qc-toggle", "value"),
+        Input("rep-toggle", "value"),
+        Input("strain-view-mode", "value"),
+        Input("central-tendency-toggle", "value"),
+        Input("dispersion-toggle", "value"),
+    )
+    def update_strain_boxchart(strain, metric, qc_on, rep_mode, view_mode,
+                               central_tendency, dispersion):
+        if not strain or not metric:
+            return go.Figure()
+
+        apply_qc = bool(qc_on)
+        fig = go.Figure()
+        ylabel = BOXCHART_YLABEL.get(metric, METRIC_LABELS.get(metric, metric))
+        means = []
+
+        for cond_n in range(1, len(CONDITION_NAMES) + 1):
+            df = _get_fly_data_for_boxchart(data_store, strain, cond_n, metric, apply_qc)
+            if df.empty:
+                continue
+            values = _compute_per_fly_boxchart_values(df, metric, rep_mode=rep_mode)
+            if len(values) == 0:
+                continue
+            color = CONDITION_COLORS[cond_n - 1]
+            fig.add_trace(_make_boxchart_trace(values, color, CONDITION_NAMES[cond_n]))
+            means.append((CONDITION_NAMES[cond_n], float(np.mean(values)), color))
+
+        for name, mean_val, color in means:
+            fig.add_annotation(
+                x=name, xref="x", y=1.0, yref="paper",
+                text=f"{mean_val:.1f}", showarrow=False,
+                font=dict(size=10, color=color), yanchor="bottom",
+            )
+
+        fig.update_layout(
+            yaxis_title=ylabel,
+            template="plotly_white",
+            height=350,
+            showlegend=False,
+            margin=dict(t=40, b=80, l=60, r=20),
+            xaxis=dict(tickangle=-30),
+        )
+        return fig
+
+    # ---- Tab 3: Cross-Strain Comparison Violin Plot ----
+    @app.callback(
+        Output("comparison-boxchart", "figure"),
+        Output("comparison-boxchart", "style"),
+        Input("comparison-condition-dropdown", "value"),
+        Input("metric-dropdown", "value"),
+        Input("comparison-strains", "value"),
+        Input("qc-toggle", "value"),
+        Input("rep-toggle", "value"),
+        Input("comparison-view-mode", "value"),
+        Input("central-tendency-toggle", "value"),
+        Input("dispersion-toggle", "value"),
+    )
+    def update_comparison_boxchart(condition, metric, selected_strains, qc_on, rep_mode,
+                                   view_mode, central_tendency, dispersion):
+        if view_mode == "grid":
+            empty = go.Figure()
+            empty.add_annotation(
+                text="Switch to 'Single condition' view to see the summary violin plot.",
+                xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False,
+                font=dict(size=13, color="grey"),
+            )
+            return empty, {"display": "none"}
+
+        if not metric or not selected_strains or not condition:
+            return go.Figure(), {"display": "none"}
+
+        apply_qc = bool(qc_on)
+        cond_n = int(condition)
+        fig = go.Figure()
+        ylabel = BOXCHART_YLABEL.get(metric, METRIC_LABELS.get(metric, metric))
+        means = []
+        n_with_data = 0
+
+        for i, strain in enumerate(selected_strains):
+            df = _get_fly_data_for_boxchart(data_store, strain, cond_n, metric, apply_qc)
+            if df.empty:
+                continue
+            values = _compute_per_fly_boxchart_values(df, metric, rep_mode=rep_mode)
+            if len(values) == 0:
+                continue
+            color = STRAIN_COLORS[i % len(STRAIN_COLORS)]
+            label = strain.replace("_", " ")
+            fig.add_trace(_make_boxchart_trace(values, color, label))
+            means.append((label, float(np.mean(values)), color))
+            n_with_data += 1
+
+        for name, mean_val, color in means:
+            fig.add_annotation(
+                x=name, xref="x", y=1.0, yref="paper",
+                text=f"{mean_val:.1f}", showarrow=False,
+                font=dict(size=10, color=color), yanchor="bottom",
+            )
+
+        # Expand width progressively: ~20% per strain, capped at 100%
+        width_pct = min(100, max(20, n_with_data * 20))
+        plot_style = {"display": "block", "width": f"{width_pct}%"}
+
+        fig.update_layout(
+            yaxis_title=ylabel,
+            template="plotly_white",
+            height=350,
+            showlegend=False,
+            margin=dict(t=40, b=80, l=60, r=20),
+            xaxis=dict(tickangle=-30),
+        )
+        return fig, plot_style
+
     # ---- Tab 4: Metadata ----
     @app.callback(
         Output("metadata-table", "data"),
@@ -628,7 +809,7 @@ def _compute_cohort_stats(df, metric, central_tendency="mean", dispersion="sem")
             .reset_index()
         )
         df = df.copy().merge(onset_vals, on=["fly_idx", "rep"], how="left")
-        df["_metric"] = df["dist_data"] - df["_onset_val"]
+        df["_metric"] = df["_onset_val"] - df["dist_data"]
         col = "_metric"
     elif metric == "move_to_centre":
         # Already computed by get_cohort_data — use column directly
@@ -658,6 +839,152 @@ def _compute_cohort_stats(df, metric, central_tendency="mean", dispersion="sem")
 
     x = center.index.values
     return x, center.values, disp.values
+
+
+# Y-axis labels for boxchart plots
+BOXCHART_YLABEL = {
+    "fv_data":        "Mean forward velocity (mm/s)",
+    "av_data":        "Mean angular velocity (deg/s)",
+    "curv_data":      "Mean turning rate (deg/mm)",
+    "dist_data":      "Min distance from centre (mm)",
+    "move_to_centre": "Mean movement towards centre, last 1s (mm)",
+}
+
+
+def _make_boxchart_trace(values, color, name):
+    """Create a go.Violin trace with scatter overlay."""
+    r, g, b = _parse_rgb(color)
+    return go.Violin(
+        y=values,
+        name=name,
+        marker=dict(
+            color="white",
+            size=5,
+            opacity=0.8,
+            line=dict(color=color, width=1),
+        ),
+        line=dict(color=color),
+        fillcolor=f"rgba({r},{g},{b},0.4)",
+        points="all",
+        jitter=0.4,
+        pointpos=0,
+        box_visible=True,
+        meanline_visible=False,
+        showlegend=False,
+    )
+
+
+def _compute_per_fly_boxchart_values(df, metric, rep_mode="interleave"):
+    """Compute one scalar summary value per fly for a boxchart.
+
+    Parameters
+    ----------
+    df : DataFrame with columns including fly_idx, rep (optional), frame, and <metric>
+         (already filtered to the desired condition/QC; metric column must be present)
+    metric : which metric column to summarise
+    rep_mode : "interleave" (R1 and R2 treated as separate data points) or
+               "average" (R1 & R2 averaged per fly before computing summary)
+
+    Returns
+    -------
+    numpy array of per-fly summary values (one per fly or per fly×rep).
+
+    Summary statistic used per metric:
+    - fv_data: mean across full stimulus period (frames 300–1199)
+    - av_data, curv_data: mean with second half (frames 750–1199) sign-inverted
+    - dist_data: minimum during second half (frames 750–1199)
+    - move_to_centre: maximum during second half (frames 750–1199)
+    """
+    stim = df[
+        (df["frame"] >= STIM_ONSET_FRAME) & (df["frame"] < STIM_OFFSET_FRAME)
+    ].copy()
+
+    if stim.empty:
+        return np.array([])
+
+    col = metric
+
+    # Apply metric-specific transformation
+    if metric in ("av_data", "curv_data"):
+        stim["_val"] = stim[col].where(
+            stim["frame"] < DIRECTION_CHANGE_FRAME,
+            -stim[col],
+        )
+        col = "_val"
+    else:
+        stim["_val"] = stim[col]
+        col = "_val"
+
+    # Determine grouping columns
+    has_cohort = "cohort_id" in stim.columns
+    if rep_mode == "average":
+        avg_cols = (["cohort_id", "fly_idx", "frame"] if has_cohort
+                    else ["fly_idx", "frame"])
+        stim = stim.groupby(avg_cols)[col].mean().reset_index()
+        group_cols = ["cohort_id", "fly_idx"] if has_cohort else ["fly_idx"]
+    else:
+        group_cols = (["cohort_id", "fly_idx", "rep"] if has_cohort and "rep" in stim.columns
+                      else ["fly_idx", "rep"] if "rep" in stim.columns
+                      else ["fly_idx"])
+
+    # Compute summary per fly
+    if metric == "dist_data":
+        second_half = stim[stim["frame"] >= DIRECTION_CHANGE_FRAME]
+        if second_half.empty:
+            return np.array([])
+        per_fly = second_half.groupby(group_cols)[col].min()
+    elif metric == "move_to_centre":
+        # Mean during the last 1s of the stimulus (frames 1170–1199) to capture steady-state response
+        last_1s_start = STIM_OFFSET_FRAME - FPS  # 1200 - 30 = 1170
+        last_1s = stim[stim["frame"] >= last_1s_start]
+        if last_1s.empty:
+            return np.array([])
+        per_fly = last_1s.groupby(group_cols)[col].mean()
+    else:
+        per_fly = stim.groupby(group_cols)[col].mean()
+
+    return per_fly.dropna().values
+
+
+def _get_fly_data_for_boxchart(store, strain, cond_n, metric, apply_qc):
+    """Load and filter per-fly data for a single condition, computing move_to_centre if needed.
+
+    Returns a DataFrame with columns [cohort_id, fly_idx, rep, frame, <metric>],
+    or an empty DataFrame if no data is available.
+    """
+    df = store.load_per_fly(strain)
+    if df.empty:
+        return pd.DataFrame()
+
+    mask = df["condition"] == cond_n
+    if apply_qc:
+        mask &= df["qc_passed"]
+    subset = df[mask]
+
+    if subset.empty:
+        return pd.DataFrame()
+
+    if metric == "move_to_centre":
+        if "dist_data" not in subset.columns:
+            return pd.DataFrame()
+        subset = subset.copy()
+        onset_vals = (
+            subset[subset["frame"] == STIM_ONSET_FRAME]
+            .groupby(["cohort_id", "fly_idx", "rep"])["dist_data"]
+            .first()
+            .rename("_onset_val")
+            .reset_index()
+        )
+        subset = subset.merge(onset_vals, on=["cohort_id", "fly_idx", "rep"], how="left")
+        subset["move_to_centre"] = subset["_onset_val"] - subset["dist_data"]
+        cols = ["cohort_id", "fly_idx", "rep", "frame", "move_to_centre"]
+        return subset[cols].reset_index(drop=True)
+
+    if metric not in subset.columns:
+        return pd.DataFrame()
+
+    cols = ["cohort_id", "fly_idx", "rep", "frame", metric]
+    return subset[cols].reset_index(drop=True)
 
 
 def _get_summary_data(strain, cond_n, metric, apply_qc, rep_mode, use_default, store,

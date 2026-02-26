@@ -105,7 +105,7 @@ class DataStore:
 
         result = df[mask]
 
-        # Handle derived metric: move_to_centre = dist_data minus value at stimulus onset (frame 300)
+        # Handle derived metric: move_to_centre = dist_at_onset minus dist_data (positive = towards centre)
         if metric == "move_to_centre":
             if "dist_data" not in result.columns or result.empty:
                 return pd.DataFrame()
@@ -116,7 +116,7 @@ class DataStore:
                 .first()
             )
             result["move_to_centre"] = result.apply(
-                lambda row: row["dist_data"] - onset_vals.get((row["fly_idx"], row["rep"]), np.nan),
+                lambda row: onset_vals.get((row["fly_idx"], row["rep"]), np.nan) - row["dist_data"],
                 axis=1,
             )
 
@@ -315,7 +315,7 @@ class DataStore:
             mask &= df["qc_passed"]
         subset = df[mask]
 
-        # Resolve the source column: move_to_centre uses dist_data minus value at stimulus onset
+        # Resolve the source column: move_to_centre = dist_at_onset minus dist_data (positive = towards centre)
         if metric == "move_to_centre":
             if "dist_data" not in subset.columns or subset.empty:
                 return pd.DataFrame()
@@ -328,7 +328,7 @@ class DataStore:
                 .reset_index()
             )
             subset = subset.merge(onset_vals, on=["cohort_id", "fly_idx", "rep"], how="left")
-            subset["move_to_centre"] = subset["dist_data"] - subset["_onset_val"]
+            subset["move_to_centre"] = subset["_onset_val"] - subset["dist_data"]
             subset = subset.drop(columns=["_onset_val"])
             col = "move_to_centre"
         else:
