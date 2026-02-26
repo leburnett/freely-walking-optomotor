@@ -9,6 +9,8 @@ function canvas = combine_stimulus_and_frame(frame, im, f, trx)
 
     % Adds 2s trajectories onto the behavioural video frame. 
 
+    % Requires "bresenham.m" function
+
     %% Initial variables 
 
     % Output size of the video (pixels)
