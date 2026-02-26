@@ -1,0 +1,108 @@
+function plot_val_heatmap_condition(target_mean_all, plot_x, multi, strain_names)
+
+    % Add here if changing the sign for reverse phi and centring:
+    % Rows 7&8 = reverse phi, cols 8:17
+    % Cols 18-23 = centring. 
+    % diff_array2(:,18:23) = diff_array2(:, 18:23)*-1;
+    % diff_array2(7:8,8:17) = diff_array2(7:8, 8:17)*-1;    
+
+    % Initialize RGB image
+    [m, n] = size(target_mean_all);
+    heatmap_rgb = ones(m, n, 3); % Start with white background
+    
+    % Loop through each element
+    for i = 1:m
+        for j = 1:n
+            p_val = target_mean_all(i,j);
+            heatmap_rgb(i,j,:) = [p_val, p_val, p_val]; % Red fades with p
+        end
+    end
+    
+    if ~multi
+        figure
+        subplot(1, 40, 1:39)
+    end 
+
+    % Display the heatmap
+    image(heatmap_rgb);
+    
+    cond_titles = strain_names;
+    cond_titles = strrep(cond_titles, '_', '-');
+    cond_titles = strrep(cond_titles, '-shibire-kir', '');
+
+    n_conditions = numel(cond_titles);
+    yticks(1:n_conditions)
+    yticklabels(cond_titles)
+
+    % Boundaries between metric categories.
+    hold on; 
+    plot([7.5 7.5], [0 n_conditions+1], 'k-', 'LineWidth', 1.2);
+    plot([10.5 10.5], [0 n_conditions+1], 'k-', 'LineWidth', 1.2);
+    plot([13.5 13.5], [0 n_conditions+1], 'k-', 'LineWidth', 1.2);
+    plot([16.5 16.5], [0 n_conditions+1], 'k-', 'LineWidth', 1.2);
+    plot([19.5 19.5], [0 n_conditions+1], 'k-', 'LineWidth', 1.2);
+
+    if plot_x
+        % Xlabels for metric names
+        xticks(1:24)
+        xticklabels({...
+            'fv-10s-b4', ...
+            'fv-stim', ...
+            'fv-3s-start', ...
+            'fv-3s-stop', ...
+            'fv-change-3s-start', ...
+            'fv-change-3s-swap', ...
+            'fv-change-3s-stop', ... % 7
+            'av-stim', ...
+            'av-5s-CW', ...
+            'av-5s-CCW', ... % 10
+            'turning-stim', ...
+            'turning-5s-CW', ...
+            'turning-5s-CCW', ... % 13
+            'dist-abs-start'...
+            'dist-abs-end', ...
+            'dist-abs-int', ... % 16
+            'dist-rel-10'...
+            'dist-rel-end', ...
+            'dist-rel-int', ... % 19
+            'centring-stim', ...
+            'centring-3s', ...
+            'centring-CW', ...
+            'centring-CCW', ...
+            'centring-5s-int', ...
+            })
+        % xtickangle(90)
+    else
+        xticks(1:24)
+        xticklabels({''})
+    end
+
+    ax = gca;
+    ax.FontSize = 5;
+    ax.LineWidth = 0.5;
+
+    if ~multi
+        % Add colour bar
+        subplot(1, 40, 40)
+       
+        c_array(:, 1 , :) = [...
+            1 0 0; ...
+            1 0.2 0.2; ...
+            1 0.4 0.4; ...
+            1 0.6 0.6; ...
+            1 0.8 0.8; ...
+            1 1 1; ...
+            0.8 0.8 1; ...
+            0.6 0.6 1; ...
+            0.4 0.4 1; ...
+            0.2 0.2 1; ...
+            0 0 1;...
+            ];
+    
+        imagesc(c_array);
+        axis off
+    end 
+
+
+
+end 

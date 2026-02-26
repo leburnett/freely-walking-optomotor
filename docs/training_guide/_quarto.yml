@@ -1,0 +1,23 @@
+project:
+  type: default
+  output-dir: _output
+
+format:
+  pdf:
+    documentclass: article
+    papersize: letter
+    fontsize: 11pt
+    geometry:
+      - margin=1in
+    mainfont: "Helvetica"
+    sansfont: "Helvetica"
+    monofont: "Courier"
+    pdf-engine: lualatex
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    colorlinks: true
+    linkcolor: blue
+    urlcolor: blue
+    fig-pos: "H"
+    keep-tex: false
