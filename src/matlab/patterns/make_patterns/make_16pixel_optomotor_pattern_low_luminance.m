@@ -1,5 +1,5 @@
 % Make lower luminance grating patterns
-% Using 'gs_val' = 3 rather than 'gs_val' = 1.
+% Using 'gs_val' = 3, ON = 1.
 
 pattern.x_num = 192; % Number of frames - if moving by 1 pixel per frame. 
 pattern.y_num = 1; % frames of Y
@@ -13,7 +13,7 @@ Pats = zeros(3, 192, pattern.x_num, pattern.y_num);
 % Initialise the first frame. Here it is an 16 pixel by 16 pixel stripe
 % pattern.
 off_value = 0;
-on_value = 3; % max = 7; 
+on_value = 1; % max = 7; 
 off_bar_pixels = ones(1,16)*off_value;
 on_bar_pixels = ones(1,16)*on_value;
 
@@ -30,7 +30,7 @@ pattern.Panel_map = fliplr(flipud(reshape(A, 3, 24)));
 pattern.BitMapIndex = process_panel_map(pattern);
 pattern.data = make_pattern_vector(pattern);
 directory_name = 'C:\MatlabRoot\Patterns\patterns_oaky\';
-str = [directory_name '\Pattern_64_optomotor_16pixel_gs_val-3_on-3_off-0.mat']; 	% name must begin with ‘Pattern_’
+str = [directory_name '\Pattern_69_optomotor_16pixel_gs_val-3_on-3_off-0.mat']; 	% name must begin with ‘Pattern_’
 save(str, 'pattern');
 
 
