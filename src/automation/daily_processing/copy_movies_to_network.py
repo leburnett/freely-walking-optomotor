@@ -49,7 +49,7 @@ def sync_videos_and_log_missing(local_root, network_root, log_path):
 if __name__ == "__main__":
     import sys
     from pathlib import Path
-    sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
     from config.config import DATA_PROCESSED, NETWORK_PROCESSED, PROJECT_ROOT
 
     local_root = str(DATA_PROCESSED)

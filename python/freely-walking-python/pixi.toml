@@ -9,6 +9,8 @@ version = "0.1.0"
 [tasks]
 dashboard = { cmd = "python -m dashboard.app", cwd = "../../src/python" }
 preprocess = { cmd = "python -m dashboard.preprocess", cwd = "../../src/python" }
+gen-pattern-docs = { cmd = "python -m docs_generator.generate_pattern_docs", cwd = "../../src/python" }
+gen-protocol-docs = { cmd = "python -m docs_generator.generate_protocol_docs", cwd = "../../src/python" }
 
 [dependencies]
 numpy = ">=2.2.6,<3"

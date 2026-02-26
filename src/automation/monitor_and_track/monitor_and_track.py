@@ -6,8 +6,8 @@ import subprocess
 import shutil
 from pathlib import Path
 
-# Load project-wide config (repo root is 3 levels up: monitor_and_track -> automation -> src -> repo)
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+# Load project-wide config (repo root is 4 levels up: monitor_and_track -> automation -> src -> repo)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from config.config import (
     DATA_UNPROCESSED, DATA_TRACKED,
     NETWORK_UNPROCESSED, NETWORK_TRACKED, NETWORK_PROCESSED,

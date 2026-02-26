@@ -2,63 +2,91 @@
 
 Code to run and analyze freely-walking optomotor behavior experiments in the cylindrical G3 LED arena. Developed for the Reiser Lab at HHMI Janelia Research Campus.
 
-First developed for HMS, summer 2024 and later used for the oaky-cokey screen with AD, autumn 2024 - summer 2025.
+First developed for and with Hannah-Marie Santos, summer 2024 and later used for the freely-walking optomotor "oaky-cokey" screen with Aparna Dev, autumn 2024 - summer 2025. Grace Biondi joined the team in summer 2025 and led the eye painting experiments.
 
 ## Repository Structure
 
 ```
 freely-walking-optomotor/
 │
-├── protocols/                    # MATLAB scripts defining experimental sessions
-│   └── *.m                       # Protocol files (timing, stimuli, data logging)
+├── config/                          # Centralized path configuration
+│   ├── get_config.m                 # MATLAB: cfg = get_config()
+│   └── config.py                    # Python: from config.config import ...
 │
-├── patterns/
-│   └── Patterns_optomotor/       # LED pattern files (.mat) for visual stimuli
+├── setup_path.m                     # Run once per MATLAB session to add src/matlab/ to path
 │
-├── script_to_make_patterns/      # Scripts for generating new pattern files
-│   ├── pattern_tools/            # Utility functions for pattern creation
-│   └── *.m                       # Pattern generation scripts
-│
-├── processing_functions/         # Data processing pipeline
-│   ├── process_freely_walking_data.m   # Main entry point for processing
-│   ├── process_data_features.m         # Process individual experiments
-│   └── functions/                # Helper functions
-│       ├── combine_data_one_cohort.m   # Combine metrics for one cohort
-│       ├── comb_data_across_cohorts_cond.m  # Combine across experiments
-│       ├── calculate_viewing_distance.m
-│       ├── calculate_three_point_velocity.m
-│       ├── gaussian_conv.m
-│       ├── bin_data.m
-│       └── ...
-│
-├── plotting_functions/           # Visualization tools
-│   ├── plot_overview_*.m         # Overview/summary plots
-│   └── functions/                # Helper functions
-│       ├── plot_trajectory.m
-│       ├── make_scatter_bar.m
-│       ├── plot_boxchart_metrics_xcond.m
-│       └── ...
-│
-├── analysis_scripts/             # Analysis workflows
-│   ├── p31_different_speeds_analysis.m
-│   ├── p30_different_contrasts_analysis.m
-│   ├── analyse_phototaxis_polar.m
-│   ├── convex_hull_analysis.m
-│   ├── positional_effects_on_behaviour.m
-│   └── ...
-│
-├── docs_generator/               # Documentation generation (Python)
-│   ├── config.py
-│   ├── pattern_visualizer.py
-│   ├── protocol_parser.py
-│   ├── generate_pattern_docs.py
-│   ├── generate_protocol_docs.py
-│   └── templates/
+├── src/
+│   ├── matlab/
+│   │   ├── processing/              # Data processing pipeline
+│   │   │   ├── process_freely_walking_data.m   # Main entry point
+│   │   │   └── functions/           # Processing helper functions
+│   │   │
+│   │   ├── plotting/                # Visualization tools
+│   │   │   ├── make_overview.m      # Overview/summary plots
+│   │   │   ├── plot_line_*.m        # Line plots
+│   │   │   └── functions/           # Plotting helper functions
+│   │   │
+│   │   ├── analysis/                # Ad-hoc analysis scripts
+│   │   │
+│   │   ├── tracking/                # FlyTracker integration
+│   │   │   ├── batch_track_ufmf.m   # Batch tracking script
+│   │   │   └── calibration.mat      # Tracking calibration data
+│   │   │
+│   │   ├── patterns/
+│   │   │   ├── Patterns_optomotor/  # LED pattern files (.mat)
+│   │   │   └── make_patterns/       # Scripts to generate new patterns
+│   │   │
+│   │   ├── protocols/               # Experimental protocol scripts (.m)
+│   │   │
+│   │   ├── model/                   # Behavioral model scripts
+│   │   │
+│   │   └── shared/                  # External functions (viridis, fdr_bh, etc.)
+│   │
+│   ├── python/
+│   │   ├── dashboard/               # Dash web dashboard
+│   │   └── docs_generator/          # Quarto documentation generator
+│   │
+│   └── automation/
+│       ├── daily_processing/        # Automated daily data processing
+│       ├── monitor_and_track/       # FlyTracker monitoring service
+│       └── monitor_and_copy/        # File transfer monitoring service
 │
 ├── python/
-│   └── freely-walking-python/    # Python environment (pixi-managed)
+│   └── freely-walking-python/       # pixi environment (DO NOT MOVE)
+│       └── pixi.toml
 │
-└── CLAUDE.md                     # Context for Claude Code sessions
+├── docs/
+│   └── training_guide/              # Example figure generation scripts
+│
+├── data_review/                     # Data review notebooks
+│
+└── CLAUDE.md                        # Context for Claude Code sessions
+```
+
+## Setup
+
+### MATLAB
+
+1. Edit `config/get_config.m` — set `cfg.project_root` to your data root directory
+2. Run `setup_path.m` once per MATLAB session (or add to `startup.m`)
+
+```matlab
+% setup_path.m adds all src/matlab/ subdirectories to the MATLAB path
+setup_path
+
+% All scripts then use:
+cfg = get_config();
+% cfg.project_root, cfg.data_tracked, cfg.data_processed, cfg.results, etc.
+```
+
+### Python
+
+1. Edit `config/config.py` — set `PROJECT_ROOT` to your data root directory
+2. Install the pixi environment:
+
+```bash
+cd python/freely-walking-python
+pixi install
 ```
 
 ## Workflow
@@ -66,12 +94,12 @@ freely-walking-optomotor/
 ### 1. Pattern Creation
 Generate LED pattern files for visual stimuli:
 ```matlab
-cd script_to_make_patterns
-% Run pattern generation scripts (e.g., make_reverse_phi_4bit.m)
+% Pattern scripts are in src/matlab/patterns/make_patterns/
+% Generated .mat files go to src/matlab/patterns/Patterns_optomotor/
 ```
 
 ### 2. Protocol Design
-Define experimental protocols in `protocols/`:
+Define experimental protocols in `src/matlab/protocols/`:
 - Timing parameters (acclimation, trial duration, intervals)
 - Pattern assignments for each condition
 - Condition matrix with stimulus parameters
@@ -80,19 +108,16 @@ Define experimental protocols in `protocols/`:
 Experiments are run using the G3 arena control system. Raw video is recorded and tracked using FlyTracker.
 
 ### 4. Automatic Processing (Janelia setup)
-Data is automatically processed via:
-- `monitor_and_copy` - transfers files
-- `monitor_and_track` - runs FlyTracker
-- `daily_processing` - initial processing
+Data is automatically processed via scripts in `src/automation/`:
+- `monitor_and_copy/` - transfers files from acquisition machine to network
+- `monitor_and_track/` - runs FlyTracker on new data
+- `daily_processing/` - runs the processing pipeline on new data
 
 ### 5. Data Processing
 Process tracked data to extract behavioral metrics:
 ```matlab
 % Process all experiments from a single day
 process_freely_walking_data("2024_09_24")
-
-% Or process individually
-process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_str, false)
 ```
 
 **Key processing steps:**
@@ -111,7 +136,8 @@ process_data_features(PROJECT_ROOT, path_to_folder, save_folder, date_str, false
 ### 6. Combine Data Across Experiments
 Create the `DATA` struct combining all experiments:
 ```matlab
-protocol_dir = '/path/to/results/protocol_27';
+cfg = get_config();
+protocol_dir = fullfile(cfg.results, 'protocol_27');
 DATA = comb_data_across_cohorts_cond(protocol_dir);
 ```
 
@@ -121,7 +147,7 @@ DATA.(strain).(sex)(cohort_idx).(condition).(data_type)
 ```
 
 ### 7. Analysis
-Run analysis scripts from `analysis_scripts/`:
+Run analysis scripts from `src/matlab/analysis/`:
 ```matlab
 % Speed tuning analysis (Protocol 31)
 p31_different_speeds_analysis
@@ -131,23 +157,42 @@ p30_different_contrasts_analysis
 
 % Phototaxis analysis
 analyse_phototaxis_polar
-
-% Compare conditions across groups
-plot_compare_conditions_per_group
 ```
 
 ### 8. Generate Documentation
-Generate Quarto documentation pages:
+Generate Quarto documentation pages for the companion documentation site:
 ```bash
 cd /path/to/freely-walking-optomotor
 
-# Generate pattern documentation
+# Generate all pattern documentation
 pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
-    python docs_generator/generate_pattern_docs.py
+    python src/python/docs_generator/generate_pattern_docs.py
 
-# Generate protocol documentation
+# Generate a single pattern
 pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
-    python docs_generator/generate_protocol_docs.py
+    python src/python/docs_generator/generate_pattern_docs.py "Pattern_09_optomotor_16pixel_binary.mat"
+
+# Generate all protocol documentation
+pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
+    python src/python/docs_generator/generate_protocol_docs.py
+
+# Generate a single protocol
+pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
+    python src/python/docs_generator/generate_protocol_docs.py "protocol_27.m"
+```
+
+Or using pixi tasks:
+```bash
+cd python/freely-walking-python
+pixi run gen-pattern-docs
+pixi run gen-protocol-docs
+```
+
+### 9. Dashboard
+```bash
+cd python/freely-walking-python
+pixi run preprocess    # Preprocess .mat files to Parquet
+pixi run dashboard     # Start the Dash web dashboard
 ```
 
 ## Key Data Types
@@ -167,7 +212,7 @@ pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
 ## Arena Parameters
 
 - **Display:** Cylindrical LED arena with 72 panels
-- **Resolution:** 3 rows × 192 columns
+- **Resolution:** 3 rows x 192 columns
 - **Arena radius:** ~119 mm
 - **Frame rate:** 30 fps
 - **Pixels per mm:** 4.1691
@@ -179,11 +224,10 @@ pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
 - Image Processing Toolbox
 - Circular Statistics Toolbox (for phototaxis analysis)
 
-### Python (for documentation)
-Managed with pixi:
+### Python (managed with pixi)
 - numpy, pandas, scipy
 - matplotlib, pillow, imageio
-- jinja2
+- jinja2, dash, plotly
 
 ## Protocol Naming Convention
 
