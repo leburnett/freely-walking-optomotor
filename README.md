@@ -13,52 +13,49 @@ freely-walking-optomotor/
 │   ├── get_config.m                 # MATLAB: cfg = get_config()
 │   └── config.py                    # Python: from config.config import ...
 │
-├── setup_path.m                     # Run once per MATLAB session to add src/matlab/ to path
+├── setup_path.m                     # Run once per MATLAB session to add src/ to path
 │
-├── src/
-│   ├── matlab/
-│   │   ├── processing/              # Data processing pipeline
-│   │   │   ├── process_freely_walking_data.m   # Main entry point
-│   │   │   └── functions/           # Processing helper functions
-│   │   │
-│   │   ├── plotting/                # Visualization tools
-│   │   │   ├── make_overview.m      # Overview/summary plots
-│   │   │   ├── plot_line_*.m        # Line plots
-│   │   │   └── functions/           # Plotting helper functions
-│   │   │
-│   │   ├── analysis/                # Ad-hoc analysis scripts
-│   │   │
-│   │   ├── tracking/                # FlyTracker integration
-│   │   │   ├── batch_track_ufmf.m   # Batch tracking script
-│   │   │   └── calibration.mat      # Tracking calibration data
-│   │   │
-│   │   ├── patterns/
-│   │   │   ├── Patterns_optomotor/  # LED pattern files (.mat)
-│   │   │   └── make_patterns/       # Scripts to generate new patterns
-│   │   │
-│   │   ├── protocols/               # Experimental protocol scripts (.m)
-│   │   │
-│   │   ├── model/                   # Behavioral model scripts
-│   │   │
-│   │   └── shared/                  # External functions (viridis, fdr_bh, etc.)
+├── src/                             # MATLAB source code
+│   ├── processing/                  # Data processing pipeline
+│   │   ├── process_freely_walking_data.m   # Main entry point
+│   │   └── functions/               # Processing helper functions
 │   │
-│   ├── python/
-│   │   ├── dashboard/               # Dash web dashboard
-│   │   └── docs_generator/          # Quarto documentation generator
+│   ├── plotting/                    # Visualization tools
+│   │   ├── make_overview.m          # Overview/summary plots
+│   │   ├── plot_line_*.m            # Line plots
+│   │   └── functions/               # Plotting helper functions
 │   │
-│   └── automation/
+│   ├── analysis/                    # Ad-hoc analysis scripts
+│   │
+│   ├── tracking/                    # FlyTracker integration
+│   │   ├── batch_track_ufmf.m       # Batch tracking script
+│   │   └── calibration.mat          # Tracking calibration data
+│   │
+│   ├── patterns/
+│   │   ├── Patterns_optomotor/      # LED pattern files (.mat)
+│   │   └── make_patterns/           # Scripts to generate new patterns
+│   │
+│   ├── protocols/                   # Experimental protocol scripts (.m)
+│   │
+│   ├── model/                       # Behavioral model scripts
+│   │
+│   ├── shared/                      # External functions (viridis, fdr_bh, etc.)
+│   │
+│   └── data_review/                 # Data review notebooks
+│
+├── python/
+│   ├── freely-walking-python/       # pixi environment (DO NOT MOVE)
+│   │   ├── pixi.toml               # Dependencies and task definitions
+│   │   ├── dashboard/              # Dash web dashboard
+│   │   └── docs_generator/         # Quarto documentation generator
+│   │
+│   └── automation/                  # Automated processing scripts
 │       ├── daily_processing/        # Automated daily data processing
 │       ├── monitor_and_track/       # FlyTracker monitoring service
 │       └── monitor_and_copy/        # File transfer monitoring service
 │
-├── python/
-│   └── freely-walking-python/       # pixi environment (DO NOT MOVE)
-│       └── pixi.toml
-│
 ├── docs/
 │   └── training_guide/              # Example figure generation scripts
-│
-├── data_review/                     # Data review notebooks
 │
 └── CLAUDE.md                        # Context for Claude Code sessions
 ```
@@ -71,7 +68,7 @@ freely-walking-optomotor/
 2. Run `setup_path.m` once per MATLAB session (or add to `startup.m`)
 
 ```matlab
-% setup_path.m adds all src/matlab/ subdirectories to the MATLAB path
+% setup_path.m adds all src/ subdirectories to the MATLAB path
 setup_path
 
 % All scripts then use:
@@ -94,12 +91,12 @@ pixi install
 ### 1. Pattern Creation
 Generate LED pattern files for visual stimuli:
 ```matlab
-% Pattern scripts are in src/matlab/patterns/make_patterns/
-% Generated .mat files go to src/matlab/patterns/Patterns_optomotor/
+% Pattern scripts are in src/patterns/make_patterns/
+% Generated .mat files go to src/patterns/Patterns_optomotor/
 ```
 
 ### 2. Protocol Design
-Define experimental protocols in `src/matlab/protocols/`:
+Define experimental protocols in `src/protocols/`:
 - Timing parameters (acclimation, trial duration, intervals)
 - Pattern assignments for each condition
 - Condition matrix with stimulus parameters
@@ -108,7 +105,7 @@ Define experimental protocols in `src/matlab/protocols/`:
 Experiments are run using the G3 arena control system. Raw video is recorded and tracked using FlyTracker.
 
 ### 4. Automatic Processing (Janelia setup)
-Data is automatically processed via scripts in `src/automation/`:
+Data is automatically processed via scripts in `python/automation/`:
 - `monitor_and_copy/` - transfers files from acquisition machine to network
 - `monitor_and_track/` - runs FlyTracker on new data
 - `daily_processing/` - runs the processing pipeline on new data
@@ -147,7 +144,7 @@ DATA.(strain).(sex)(cohort_idx).(condition).(data_type)
 ```
 
 ### 7. Analysis
-Run analysis scripts from `src/matlab/analysis/`:
+Run analysis scripts from `src/analysis/`:
 ```matlab
 % Speed tuning analysis (Protocol 31)
 p31_different_speeds_analysis
@@ -161,27 +158,6 @@ analyse_phototaxis_polar
 
 ### 8. Generate Documentation
 Generate Quarto documentation pages for the companion documentation site:
-```bash
-cd /path/to/freely-walking-optomotor
-
-# Generate all pattern documentation
-pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
-    python src/python/docs_generator/generate_pattern_docs.py
-
-# Generate a single pattern
-pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
-    python src/python/docs_generator/generate_pattern_docs.py "Pattern_09_optomotor_16pixel_binary.mat"
-
-# Generate all protocol documentation
-pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
-    python src/python/docs_generator/generate_protocol_docs.py
-
-# Generate a single protocol
-pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
-    python src/python/docs_generator/generate_protocol_docs.py "protocol_27.m"
-```
-
-Or using pixi tasks:
 ```bash
 cd python/freely-walking-python
 pixi run gen-pattern-docs

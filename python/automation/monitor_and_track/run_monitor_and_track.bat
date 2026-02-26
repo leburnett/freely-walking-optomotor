@@ -5,7 +5,7 @@ REM Set path to Python interpreter
 set "PYTHON_EXE=C:\Users\burnettl\AppData\Local\Programs\Python\Python313\python.exe"
 
 REM Set path to Python script
-set "SCRIPT_PATH=C:\Users\burnettl\Documents\GitHub\freely-walking-optomotor\src\automation\monitor_and_track\monitor_and_track.py"
+set "SCRIPT_PATH=C:\Users\burnettl\Documents\GitHub\freely-walking-optomotor\python\automation\monitor_and_track\monitor_and_track.py"
 
 REM Set log directory
 set "LOG_DIR=C:\Users\burnettl\Documents\oakey-cokey\monitor_and_track_logs"

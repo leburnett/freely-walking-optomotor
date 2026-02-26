@@ -7,7 +7,7 @@ from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-# Load project-wide config (repo root is 4 levels up: monitor_and_copy -> automation -> src -> repo)
+# Load project-wide config (repo root is 4 levels up: monitor_and_copy -> automation -> python -> repo)
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from config.config import SOURCE_ROOT, NETWORK_UNPROCESSED
 

@@ -1,10 +1,8 @@
 """Preprocess .mat result files into Parquet format for the dashboard.
 
 Usage:
-    pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
-        python -m dashboard.preprocess \
-        --data-dir /path/to/results/protocol_27 \
-        --output-dir /path/to/results/protocol_27_preprocessed
+    cd python/freely-walking-python
+    pixi run preprocess
 
 If --output-dir is omitted, defaults to {data-dir}_preprocessed/.
 """

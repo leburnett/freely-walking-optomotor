@@ -14,29 +14,29 @@ freely-walking-optomotor/
 │   ├── get_config.m                 # MATLAB: cfg = get_config()
 │   └── config.py                    # Python: from config.config import ...
 ├── setup_path.m                     # Run once per MATLAB session
-├── src/
-│   ├── matlab/
-│   │   ├── processing/              # process_freely_walking_data.m (KEY entry point)
-│   │   │   └── functions/           # 39+ processing helpers
-│   │   ├── plotting/                # make_overview.m, plot_line_*.m, etc.
-│   │   │   └── functions/           # 76+ plotting helpers
-│   │   ├── analysis/                # 22 ad-hoc analysis scripts
-│   │   ├── tracking/                # batch_track_ufmf.m, calibration.mat
-│   │   ├── patterns/
-│   │   │   ├── Patterns_optomotor/  # 63 .mat LED pattern files
-│   │   │   └── make_patterns/       # scripts to generate new patterns
-│   │   ├── protocols/               # 49 experimental protocol scripts
-│   │   ├── model/                   # 4 behavioral model scripts
-│   │   └── shared/                  # external_functions/ (viridis, fdr_bh, etc.)
-│   ├── python/
-│   │   ├── dashboard/               # Dash web dashboard
-│   │   └── docs_generator/          # Quarto documentation generator
+├── src/                             # MATLAB source code
+│   ├── processing/                  # process_freely_walking_data.m (KEY entry point)
+│   │   └── functions/               # 39+ processing helpers
+│   ├── plotting/                    # make_overview.m, plot_line_*.m, etc.
+│   │   └── functions/               # 76+ plotting helpers
+│   ├── analysis/                    # 22 ad-hoc analysis scripts
+│   ├── tracking/                    # batch_track_ufmf.m, calibration.mat
+│   ├── patterns/
+│   │   ├── Patterns_optomotor/      # 63 .mat LED pattern files
+│   │   └── make_patterns/           # scripts to generate new patterns
+│   ├── protocols/                   # 49 experimental protocol scripts
+│   ├── model/                       # 4 behavioral model scripts
+│   ├── shared/                      # external_functions/ (viridis, fdr_bh, etc.)
+│   └── data_review/                 # Data review notebooks
+├── python/
+│   ├── freely-walking-python/       # pixi env — DO NOT MOVE
+│   │   ├── pixi.toml
+│   │   ├── dashboard/              # Dash web dashboard
+│   │   └── docs_generator/         # Quarto documentation generator
 │   └── automation/
 │       ├── daily_processing/        # daily_processing.py, reprocessing_script.py
 │       ├── monitor_and_track/       # monitor_and_track.py
 │       └── monitor_and_copy/        # monitor_and_copy.py
-├── python/freely-walking-python/    # pixi env — DO NOT MOVE
-│   └── pixi.toml
 └── docs/
     └── training_guide/              # example figure generation scripts
 ```
@@ -44,7 +44,7 @@ freely-walking-optomotor/
 - **`config/get_config.m`** — single edit point for all MATLAB path configuration
 - **`config/config.py`** — single edit point for all Python path configuration
 - **`setup_path.m`** — run from MATLAB once per session (or add to `startup.m`)
-- **`python/freely-walking-python/`** — Python environment managed with pixi (do not move; has baked-in abs paths)
+- **`python/freely-walking-python/`** — Python environment managed with pixi (do not move)
 
 ### Related Repository
 
@@ -72,7 +72,7 @@ cfg = get_config();
 % cfg.calibration_file — tracking calibration .mat
 ```
 
-Run `setup_path.m` once per MATLAB session (or add to `startup.m`) to add all `src/matlab/` subdirectories to the MATLAB path.
+Run `setup_path.m` once per MATLAB session (or add to `startup.m`) to add all `src/` subdirectories to the MATLAB path.
 
 ### Python
 
@@ -88,7 +88,7 @@ from config.config import DATA_TRACKED, RESULTS_PATH, NETWORK_TRACKED, REPO_ROOT
 
 ```bash
 cd python/freely-walking-python
-pixi run dashboard     # starts Dash app (cwd → src/python/)
+pixi run dashboard     # starts Dash app
 pixi run preprocess    # preprocesses .mat → Parquet
 ```
 
@@ -170,7 +170,7 @@ all_conditions = [
 
 ## Documentation Generator
 
-The `src/python/docs_generator/` package converts patterns and protocols into Quarto documentation pages.
+The `python/freely-walking-python/docs_generator/` package converts patterns and protocols into Quarto documentation pages.
 
 ### Files
 
@@ -196,23 +196,13 @@ The `protocol_parser.py` extracts:
 ### Usage
 
 ```bash
-cd /Users/burnettl/Documents/GitHub/freely-walking-optomotor
+cd python/freely-walking-python
 
 # Generate all pattern documentation (images + .qmd pages)
-pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
-    python src/python/docs_generator/generate_pattern_docs.py
-
-# Generate single pattern
-pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
-    python src/python/docs_generator/generate_pattern_docs.py "Pattern_09_optomotor_16pixel_binary.mat"
+pixi run gen-pattern-docs
 
 # Generate all protocol documentation
-pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
-    python src/python/docs_generator/generate_protocol_docs.py
-
-# Generate single protocol
-pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
-    python src/python/docs_generator/generate_protocol_docs.py "protocol_27.m"
+pixi run gen-protocol-docs
 ```
 
 ### Output Locations
@@ -416,13 +406,13 @@ If Markdown tables don't render properly, check for:
 
 ### New Pattern
 
-1. Create `.mat` file in `src/matlab/patterns/Patterns_optomotor/`
+1. Create `.mat` file in `src/patterns/Patterns_optomotor/`
 2. Run `generate_pattern_docs.py` with the new file
 3. Page auto-appears via link in patterns index table
 
 ### New Protocol
 
-1. Create `.m` file in `src/matlab/protocols/`
+1. Create `.m` file in `src/protocols/`
 2. Run `generate_protocol_docs.py` with the new file
 3. Add entry to the Protocol Overview table in `freely_walking_protocols_index.qmd`
 

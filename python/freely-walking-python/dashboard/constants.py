@@ -6,7 +6,7 @@ the MATLAB plotting code (plot_xcond_per_strain.m, get_ylb_from_data_type.m).
 import sys
 from pathlib import Path
 
-# Load project-wide config (repo root is 4 levels up: dashboard -> python -> src -> repo)
+# Load project-wide config (repo root is 4 levels up: dashboard -> freely-walking-python -> python -> repo)
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from config.config import RESULTS_PATH
 

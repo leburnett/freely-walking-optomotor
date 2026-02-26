@@ -38,7 +38,7 @@ function cfg = get_config()
     cfg.figures          = fullfile(cfg.project_root, 'figures');
 
     % Repo asset paths (derived from repo_root)
-    cfg.patterns = fullfile(cfg.repo_root, 'src', 'matlab', 'patterns', 'Patterns_optomotor');
-    cfg.calibration_file = fullfile(cfg.repo_root, 'src', 'matlab', 'tracking', 'calibration.mat');
+    cfg.patterns = fullfile(cfg.repo_root, 'src', 'patterns', 'Patterns_optomotor');
+    cfg.calibration_file = fullfile(cfg.repo_root, 'src', 'tracking', 'calibration.mat');
 
 end

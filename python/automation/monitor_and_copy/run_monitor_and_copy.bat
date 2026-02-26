@@ -5,7 +5,7 @@ REM Path to Python interpreter
 set PYTHON_EXE=C:\Users\labadmin\AppData\Local\Programs\Python\Python313\python.exe
 
 REM Path to your Python script
-set SCRIPT_PATH=C:\Users\labadmin\Documents\GitHub\freely-walking-optomotor\monitor_and_copy_folder\monitor_and_copy.py
+set SCRIPT_PATH=C:\Users\labadmin\Documents\GitHub\freely-walking-optomotor\python\automation\monitor_and_copy\monitor_and_copy.py
 
 REM Set working directory to script folder
 cd /d "%~dp0"

@@ -13,15 +13,15 @@
 REPO_ROOT = fileparts(mfilename('fullpath'));
 
 addpath(genpath(fullfile(REPO_ROOT, 'config')));
-addpath(genpath(fullfile(REPO_ROOT, 'src', 'matlab', 'processing')));
-addpath(genpath(fullfile(REPO_ROOT, 'src', 'matlab', 'plotting')));
-addpath(genpath(fullfile(REPO_ROOT, 'src', 'matlab', 'tracking')));
-addpath(genpath(fullfile(REPO_ROOT, 'src', 'matlab', 'analysis')));
-addpath(genpath(fullfile(REPO_ROOT, 'src', 'matlab', 'model')));
-addpath(genpath(fullfile(REPO_ROOT, 'src', 'matlab', 'shared')));
-addpath(genpath(fullfile(REPO_ROOT, 'src', 'matlab', 'patterns', 'make_patterns')));
+addpath(genpath(fullfile(REPO_ROOT, 'src', 'processing')));
+addpath(genpath(fullfile(REPO_ROOT, 'src', 'plotting')));
+addpath(genpath(fullfile(REPO_ROOT, 'src', 'tracking')));
+addpath(genpath(fullfile(REPO_ROOT, 'src', 'analysis')));
+addpath(genpath(fullfile(REPO_ROOT, 'src', 'model')));
+addpath(genpath(fullfile(REPO_ROOT, 'src', 'shared')));
+addpath(genpath(fullfile(REPO_ROOT, 'src', 'patterns', 'make_patterns')));
 
-% Note: src/matlab/protocols/ is intentionally excluded from the path.
+% Note: src/protocols/ is intentionally excluded from the path.
 % Protocol files are run-scripts, not callable functions.
 
 disp('MATLAB path configured for freely-walking-optomotor.')

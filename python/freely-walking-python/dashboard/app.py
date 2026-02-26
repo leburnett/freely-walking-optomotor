@@ -1,8 +1,8 @@
 """Freely-walking optomotor experiment data dashboard.
 
 Usage:
-    pixi run -e default --manifest-path python/freely-walking-python/pixi.toml \
-        python -m dashboard.app
+    cd python/freely-walking-python
+    pixi run dashboard
 """
 
 from pathlib import Path

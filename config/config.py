@@ -38,5 +38,5 @@ NETWORK_FIGS        = NETWORK_ROOT + r"\exp_figures\overview_figs"
 SOURCE_ROOT = r"C:\MatlabRoot\FreeWalkOptomotor\data"
 
 # Repo asset paths
-PATTERNS_DIR  = REPO_ROOT / "src" / "matlab" / "patterns" / "Patterns_optomotor"
-PROTOCOLS_DIR = REPO_ROOT / "src" / "matlab" / "protocols"
+PATTERNS_DIR  = REPO_ROOT / "src" / "patterns" / "Patterns_optomotor"
+PROTOCOLS_DIR = REPO_ROOT / "src" / "protocols"
