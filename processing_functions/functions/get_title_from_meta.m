@@ -171,6 +171,20 @@ function title_str = get_title_from_meta(cond_meta)
             pattern_str = "60deg-gratings-gsval1-1-0-0-75-shift";
         case 73
             pattern_str = "60deg-gratings-gsval1-1-0--0-75-shift";
+        case 74 
+            pattern_str = "60deg-gratings-gsval1-thirdA";
+        case 75 
+            pattern_str = "60deg-gratings-gsval1-thirdB";
+        case 76 
+            pattern_str = "60deg-gratings-gsval1-thirdC";
+        case 77 
+            pattern_str = "60deg-gratings-gsval1-half";
+        case 78
+            pattern_str = "60deg-gratings-gsval1-half-2x";
+        case 79 
+            pattern_str = "60deg-gratings-gsval1-half-3x";
+        case 80
+            pattern_str = "gratings-gsval1-4Hz-half-30-60";
     end    
 
     switch interval_pattern
