@@ -1,0 +1,29 @@
+[project]
+authors = ["leburnett <leburnett3@gmail.com>"]
+channels = ["conda-forge"]
+description = "Add a short description here"
+name = "freely-walking-python"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+dashboard = { cmd = "python -m dashboard.app", cwd = "." }
+preprocess = { cmd = "python -m dashboard.preprocess", cwd = "." }
+gen-pattern-docs = { cmd = "python -m docs_generator.generate_pattern_docs", cwd = "." }
+gen-protocol-docs = { cmd = "python -m docs_generator.generate_protocol_docs", cwd = "." }
+
+[dependencies]
+numpy = ">=2.2.6,<3"
+pandas = ">=2.2.3,<3"
+plotly = ">=6.1.2,<7"
+python = ">=3.13.3,<3.14"
+notebook = ">=7.4.3,<8"
+scipy = ">=1.15.2,<2"
+matplotlib = ">=3.8.0,<4"
+pillow = ">=10.0.0,<11"
+imageio = ">=2.33.0,<3"
+jinja2 = ">=3.1.0,<4"
+watchdog = ">=4.0.0,<6"
+dash = ">=2.18.0,<3"
+dash-bootstrap-components = ">=1.6.0,<2"
+pyarrow = ">=15.0.0,<19"
