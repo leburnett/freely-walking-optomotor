@@ -172,6 +172,16 @@ def register_callbacks(app, data_store):
             return _cohort_single_condition(strain, cohort_id, cond_n, metric, apply_qc, data_store,
                                             central_tendency, dispersion)
 
+    # ---- Tab 2: Show/hide condition dropdown for One Condition mode ----
+    @app.callback(
+        Output("strain-condition-col", "style"),
+        Input("strain-view-mode", "value"),
+    )
+    def toggle_strain_condition_visibility(view_mode):
+        if view_mode == "one_condition":
+            return {"display": "block"}
+        return {"display": "none"}
+
     # ---- Tab 2: Strain Aggregate View ----
     @app.callback(
         Output("strain-plot", "figure"),
@@ -180,10 +190,11 @@ def register_callbacks(app, data_store):
         Input("qc-toggle", "value"),
         Input("rep-toggle", "value"),
         Input("strain-view-mode", "value"),
+        Input("strain-condition-dropdown", "value"),
         Input("central-tendency-toggle", "value"),
         Input("dispersion-toggle", "value"),
     )
-    def update_strain_plot(strain, metric, qc_on, rep_mode, view_mode,
+    def update_strain_plot(strain, metric, qc_on, rep_mode, view_mode, condition,
                            central_tendency, dispersion):
         if not strain or not metric:
             return go.Figure()
@@ -199,6 +210,11 @@ def register_callbacks(app, data_store):
         if view_mode == "tiled":
             return _strain_tiled(strain, metric, apply_qc, rep_mode, use_default, data_store,
                                  central_tendency, dispersion)
+        elif view_mode == "one_condition":
+            if not condition:
+                return go.Figure()
+            return _strain_one_condition(strain, int(condition), metric, apply_qc, data_store,
+                                         central_tendency, dispersion)
         else:
             return _strain_overlaid(strain, metric, apply_qc, rep_mode, use_default, data_store,
                                     central_tendency, dispersion)
@@ -318,34 +334,58 @@ def register_callbacks(app, data_store):
     # ---- Tab 2: Strain Violin Plot ----
     @app.callback(
         Output("strain-boxchart", "figure"),
+        Output("strain-boxchart", "style"),
         Input("strain-dropdown", "value"),
         Input("metric-dropdown", "value"),
         Input("qc-toggle", "value"),
         Input("rep-toggle", "value"),
         Input("strain-view-mode", "value"),
+        Input("strain-condition-dropdown", "value"),
         Input("central-tendency-toggle", "value"),
         Input("dispersion-toggle", "value"),
     )
-    def update_strain_boxchart(strain, metric, qc_on, rep_mode, view_mode,
+    def update_strain_boxchart(strain, metric, qc_on, rep_mode, view_mode, condition,
                                central_tendency, dispersion):
         if not strain or not metric:
-            return go.Figure()
+            return go.Figure(), {}
 
         apply_qc = bool(qc_on)
         fig = go.Figure()
         ylabel = BOXCHART_YLABEL.get(metric, METRIC_LABELS.get(metric, metric))
         means = []
 
-        for cond_n in range(1, len(CONDITION_NAMES) + 1):
-            df = _get_fly_data_for_boxchart(data_store, strain, cond_n, metric, apply_qc)
-            if df.empty:
-                continue
-            values = _compute_per_fly_boxchart_values(df, metric, rep_mode=rep_mode)
-            if len(values) == 0:
-                continue
-            color = CONDITION_COLORS[cond_n - 1]
-            fig.add_trace(_make_boxchart_trace(values, color, CONDITION_NAMES[cond_n]))
-            means.append((CONDITION_NAMES[cond_n], float(np.mean(values)), color))
+        if view_mode == "one_condition":
+            if not condition:
+                return go.Figure(), {}
+            cond_n = int(condition)
+            cohorts = data_store.get_cohorts_for_strain(strain)
+            n_with_data = 0
+            for i, cohort_id in enumerate(cohorts):
+                df = data_store.get_cohort_data(strain, cohort_id, cond_n, metric,
+                                                qc_only=apply_qc)
+                if df.empty:
+                    continue
+                values = _compute_per_fly_boxchart_values(df, metric, rep_mode="interleave")
+                if len(values) == 0:
+                    continue
+                color = STRAIN_COLORS[i % len(STRAIN_COLORS)]
+                label = cohort_id[:19]
+                fig.add_trace(_make_boxchart_trace(values, color, label))
+                means.append((label, float(np.mean(values)), color))
+                n_with_data += 1
+            plot_style = {}
+        else:
+            for cond_n in range(1, len(CONDITION_NAMES) + 1):
+                df = _get_fly_data_for_boxchart(data_store, strain, cond_n, metric, apply_qc)
+                if df.empty:
+                    continue
+                values = _compute_per_fly_boxchart_values(df, metric, rep_mode=rep_mode)
+                if len(values) == 0:
+                    continue
+                color = CONDITION_COLORS[cond_n - 1]
+                fig.add_trace(_make_boxchart_trace(values, color, CONDITION_NAMES[cond_n]))
+                means.append((CONDITION_NAMES[cond_n], float(np.mean(values)), color))
+            plot_style = {}
 
         for name, mean_val, color in means:
             fig.add_annotation(
@@ -362,7 +402,7 @@ def register_callbacks(app, data_store):
             margin=dict(t=40, b=80, l=60, r=20),
             xaxis=dict(tickangle=-30),
         )
-        return fig
+        return fig, plot_style
 
     # ---- Tab 3: Cross-Strain Comparison Violin Plot ----
     @app.callback(
@@ -824,7 +864,9 @@ def _compute_cohort_stats(df, metric, central_tendency="mean", dispersion="sem")
     else:
         center = frame_groups[col].mean()
 
-    if dispersion == "mad":
+    if dispersion == "none":
+        disp = center * 0
+    elif dispersion == "mad":
         med_per_frame = frame_groups[col].median()
         df_with_med = df.merge(
             med_per_frame.rename("_frame_median").reset_index(),
@@ -1072,6 +1114,41 @@ def _strain_overlaid(strain, metric, apply_qc, rep_mode, use_default, store,
 
     fig.update_layout(
         title=f"{strain.replace('_', ' ')} - {METRIC_LABELS.get(metric, metric)}",
+        xaxis_title="Time (s)",
+        yaxis_title=METRIC_LABELS.get(metric, metric),
+        template="plotly_white",
+        height=550,
+        legend=dict(font=dict(size=10)),
+        margin=dict(t=50, b=50, l=60, r=20),
+    )
+    return fig
+
+
+def _strain_one_condition(strain, cond_n, metric, apply_qc, store,
+                          central_tendency="mean", dispersion="sem"):
+    """One condition: mean ± dispersion per cohort as separate traces."""
+    cohorts = store.get_cohorts_for_strain(strain)
+    fig = go.Figure()
+
+    for i, cohort_id in enumerate(cohorts):
+        df = store.get_cohort_data(strain, cohort_id, cond_n, metric, qc_only=apply_qc)
+        if df.empty:
+            continue
+
+        x, y_center, y_disp = _compute_cohort_stats(df, metric, central_tendency, dispersion)
+        n_flies = df["fly_idx"].nunique()
+
+        color = STRAIN_COLORS[i % len(STRAIN_COLORS)]
+        label = f"{cohort_id[:19]} (n={n_flies})"
+
+        for trace in _make_trace(x, y_center, y_disp, color, label):
+            fig.add_trace(trace)
+
+    _add_stim_markers(fig)
+
+    cond_name = CONDITION_NAMES.get(cond_n, f"Condition {cond_n}")
+    fig.update_layout(
+        title=f"{strain.replace('_', ' ')} — {cond_name} — {METRIC_LABELS.get(metric, metric)}",
         xaxis_title="Time (s)",
         yaxis_title=METRIC_LABELS.get(metric, metric),
         template="plotly_white",

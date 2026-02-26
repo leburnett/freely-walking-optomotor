@@ -354,7 +354,9 @@ class DataStore:
         else:
             center = frame_groups[col].mean()
 
-        if dispersion == "mad":
+        if dispersion == "none":
+            disp = pd.Series(np.zeros(len(center)), index=center.index)
+        elif dispersion == "mad":
             # Median Absolute Deviation: median(|x - median(x)|) per frame
             med_per_frame = frame_groups[col].median()
             source_with_med = source.merge(

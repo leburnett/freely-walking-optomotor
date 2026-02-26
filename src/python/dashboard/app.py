@@ -113,6 +113,7 @@ sidebar = dbc.Card(
                 options=[
                     {"label": "SEM", "value": "sem"},
                     {"label": "MAD", "value": "mad"},
+                    {"label": "None", "value": "none"},
                 ],
                 value="sem",
                 className="mb-3",
@@ -197,11 +198,30 @@ strain_controls = dbc.Row([
             options=[
                 {"label": "Tiled (one per condition)", "value": "tiled"},
                 {"label": "Overlaid (all on one plot)", "value": "overlaid"},
+                {"label": "One Condition (all cohorts)", "value": "one_condition"},
             ],
             value="overlaid",
             inline=True,
         ),
-    ]),
+    ], width=8),
+    dbc.Col([
+        html.Div(
+            [
+                dbc.Label("Condition"),
+                dcc.Dropdown(
+                    id="strain-condition-dropdown",
+                    options=[
+                        {"label": f"{n}. {name}", "value": str(n)}
+                        for n, name in CONDITION_NAMES.items()
+                    ],
+                    value="1",
+                    clearable=False,
+                ),
+            ],
+            id="strain-condition-col",
+            style={"display": "none"},
+        ),
+    ], width=4),
 ], className="mb-3")
 
 strain_tab = dbc.Tab(
