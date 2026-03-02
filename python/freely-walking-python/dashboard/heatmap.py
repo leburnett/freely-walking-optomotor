@@ -49,32 +49,28 @@ def _smooth(arr: np.ndarray, window: int = _SMOOTH_WINDOW) -> np.ndarray:
     return np.convolve(arr, kernel, mode="same")
 
 
-def compute_fly_metrics(
+def _compute_fv_curv_metrics(
     frames: np.ndarray,
     fv: np.ndarray,
     curv: np.ndarray,
-    dist: np.ndarray,
 ) -> np.ndarray:
-    """Compute 6 scalar metrics for a single fly/condition.
+    """Compute FV and turning metrics (indices 0-3) for one fly.
 
-    Parameters
-    ----------
-    frames : raw frame numbers (multiples of DOWNSAMPLE_FACTOR)
-    fv, curv, dist : metric arrays aligned with *frames*
+    These metrics use mean(), so averaging reps before computing is
+    equivalent to the MATLAB approach (compute per rep, then average).
 
-    Returns
-    -------
-    np.ndarray of shape (6,) — one value per HEATMAP_METRICS entry.
-    NaN for any metric that cannot be computed.
+    Returns np.ndarray of shape (4,).
     """
-    result = np.full(6, np.nan)
+    result = np.full(4, np.nan)
 
     # 1. Avg FV (stimulus): mean fv for frames 300-1200
+    # MATLAB: welch_ttest_for_rng(cond_data, ..., 300:1200)
     m = _frame_mask(frames, _STIM_START, _STIM_END)
     if m.any():
         result[0] = np.nanmean(fv[m])
 
-    # 2. ΔFV at onset: normalized change
+    # 2. ΔFV at onset: normalized change (post-pre)/(post+pre)
+    # MATLAB: welch_ttest_for_change(..., 210:300, 300:390, "norm")
     pre = _frame_mask(frames, _ONSET_PRE_START, _ONSET_PRE_END - 1)  # 210:299
     post = _frame_mask(frames, _ONSET_POST_START, _ONSET_POST_END - 1)  # 300:389
     if pre.any() and post.any():
@@ -85,6 +81,7 @@ def compute_fly_metrics(
             result[1] = (mean_post - mean_pre) / denom
 
     # 3 & 4. Turning metrics: smooth curv, flip sign for second half
+    # MATLAB: movmean per row, then flip 762:1210, then welch_ttest_for_rng
     smoothed = _smooth(curv.copy())
     flip_mask = _frame_mask(frames, _FLIP_START, _FLIP_END)
     smoothed[flip_mask] = -smoothed[flip_mask]
@@ -99,22 +96,43 @@ def compute_fly_metrics(
     if early_mask.any():
         result[3] = np.nanmean(smoothed[early_mask])
 
-    # 5 & 6. Movement towards centre: inverted baseline-subtract
-    # (positive = movement toward centre)
+    return result
+
+
+def _compute_dist_metric_per_rep(
+    frames: np.ndarray,
+    dist: np.ndarray,
+) -> np.ndarray:
+    """Compute distance metrics for a single rep.
+
+    MATLAB approach (welch_ttest_for_rng_min): find min() per rep in
+    the frame range, THEN average across reps. So this function returns
+    the per-rep min values that will be averaged later.
+
+    Returns np.ndarray of shape (2,) — [min_delta_10s, min_delta_end].
+    """
+    result = np.full(2, np.nan)
+
+    # Baseline-subtract: dist_data_delta = dist_data - dist_data(:, 300)
+    # MATLAB: cond_data = cond_data - cond_data(:, 300)
     baseline_mask = frames == _STIM_START  # frame 300
-    if baseline_mask.any():
-        baseline_val = dist[baseline_mask][0]
-        movement = baseline_val - dist  # flip sign: toward centre is positive
+    if not baseline_mask.any():
+        return result
 
-        # 5. Movement towards centre (10s): max in frames 570-600
-        m10 = _frame_mask(frames, _DIST_10S_START, _DIST_10S_END)
-        if m10.any():
-            result[4] = np.nanmax(movement[m10])
+    baseline_val = dist[baseline_mask][0]
+    dist_delta = dist - baseline_val  # negative = toward centre
 
-        # 6. Movement towards centre (end): max in frames 1170-1200
-        mend = _frame_mask(frames, _DIST_END_START, _DIST_END_END)
-        if mend.any():
-            result[5] = np.nanmax(movement[mend])
+    # 5. Movement towards centre (10s): min of delta in frames 570-600
+    # MATLAB: welch_ttest_for_rng_min(cond_data_delta, ..., 570:600)
+    m10 = _frame_mask(frames, _DIST_10S_START, _DIST_10S_END)
+    if m10.any():
+        result[0] = np.nanmin(dist_delta[m10])
+
+    # 6. Movement towards centre (end): min of delta in frames 1170-1200
+    # MATLAB: welch_ttest_for_rng_min(cond_data_delta, ..., 1170:1200)
+    mend = _frame_mask(frames, _DIST_END_START, _DIST_END_END)
+    if mend.any():
+        result[1] = np.nanmin(dist_delta[mend])
 
     return result
 
@@ -128,8 +146,13 @@ def _collect_strain_metrics(
 ) -> np.ndarray:
     """Compute per-fly metric array for one strain/condition.
 
-    Returns shape (n_flies, 6). If rep_mode == "average", R1 and R2 are
-    averaged per fly before metric computation.
+    Returns shape (n_flies, 6).
+
+    Matches the MATLAB pipeline:
+    - Metrics 0-3 (FV, turning): mean_every_two_rows then mean per fly
+      (equivalent to averaging reps first, then computing mean).
+    - Metrics 4-5 (distance): min per rep first, then average across reps
+      per fly (welch_ttest_for_rng_min.m).
     """
     df = store.load_per_fly(strain)
     if df.empty:
@@ -143,43 +166,58 @@ def _collect_strain_metrics(
     if subset.empty:
         return np.empty((0, 6))
 
-    if rep_mode == "average":
-        # Average R1 & R2 per fly per frame (group by cohort+fly to keep flies distinct)
-        grouped = (
-            subset.groupby(["cohort_id", "fly_idx", "frame"])[["fv_data", "curv_data", "dist_data"]]
-            .mean()
-            .reset_index()
-        )
-        fly_keys = sorted(grouped.groupby(["cohort_id", "fly_idx"]).groups.keys())
-        metrics = []
-        for cohort_id, fly_idx in fly_keys:
-            fly_df = grouped[
-                (grouped["cohort_id"] == cohort_id) & (grouped["fly_idx"] == fly_idx)
-            ].sort_values("frame")
-            metrics.append(compute_fly_metrics(
-                fly_df["frame"].values,
-                fly_df["fv_data"].values,
-                fly_df["curv_data"].values,
-                fly_df["dist_data"].values,
-            ))
-    else:
-        # Treat each rep as independent (group by cohort+fly+rep)
-        fly_reps = sorted(subset.groupby(["cohort_id", "fly_idx", "rep"]).groups.keys())
-        metrics = []
-        for cohort_id, fly_idx, rep in fly_reps:
-            fly_df = subset[
-                (subset["cohort_id"] == cohort_id)
-                & (subset["fly_idx"] == fly_idx)
-                & (subset["rep"] == rep)
-            ].sort_values("frame")
-            metrics.append(compute_fly_metrics(
-                fly_df["frame"].values,
-                fly_df["fv_data"].values,
-                fly_df["curv_data"].values,
-                fly_df["dist_data"].values,
-            ))
+    # --- FV & curv metrics (0-3): average reps first, then compute ---
+    # For mean-based metrics, averaging reps before computing is equivalent
+    # to the MATLAB approach (compute per rep, then average).
+    avg_reps = (
+        subset.groupby(["cohort_id", "fly_idx", "frame"])[["fv_data", "curv_data"]]
+        .mean()
+        .reset_index()
+    )
 
-    return np.array(metrics) if metrics else np.empty((0, 6))
+    # --- Distance metrics (4-5): min per rep, then average across reps ---
+    # MATLAB: min(d') per rep, then mean_every_two_rows
+    # Must compute per-rep first.
+
+    # Build per-fly results using efficient groupby iteration
+    fly_keys = sorted(
+        avg_reps.groupby(["cohort_id", "fly_idx"]).groups.keys()
+    )
+
+    metrics = np.full((len(fly_keys), 6), np.nan)
+
+    for i, (cohort_id, fly_idx) in enumerate(fly_keys):
+        # FV + curv metrics from rep-averaged data
+        fly_avg = avg_reps[
+            (avg_reps["cohort_id"] == cohort_id) & (avg_reps["fly_idx"] == fly_idx)
+        ].sort_values("frame")
+
+        fv_curv = _compute_fv_curv_metrics(
+            fly_avg["frame"].values,
+            fly_avg["fv_data"].values,
+            fly_avg["curv_data"].values,
+        )
+        metrics[i, :4] = fv_curv
+
+        # Distance metrics: compute per rep, then average
+        fly_reps = subset[
+            (subset["cohort_id"] == cohort_id) & (subset["fly_idx"] == fly_idx)
+        ]
+        rep_ids = sorted(fly_reps["rep"].unique())
+        rep_dist_vals = []
+        for rep_id in rep_ids:
+            rep_df = fly_reps[fly_reps["rep"] == rep_id].sort_values("frame")
+            rep_dist = _compute_dist_metric_per_rep(
+                rep_df["frame"].values,
+                rep_df["dist_data"].values,
+            )
+            rep_dist_vals.append(rep_dist)
+
+        if rep_dist_vals:
+            # Average min values across reps (MATLAB: mean_every_two_rows)
+            metrics[i, 4:6] = np.nanmean(rep_dist_vals, axis=0)
+
+    return metrics
 
 
 def benjamini_yekutieli_fdr(pvalues: np.ndarray, q: float = FDR_Q) -> np.ndarray:

@@ -899,6 +899,7 @@ def register_callbacks(app, data_store):
         )
         from dashboard.constants import CONTROL_STRAIN, HEATMAP_METRICS
         import dash_bootstrap_components as dbc
+        import traceback
 
         empty_ts = go.Figure()
         empty_violin = go.Figure()
@@ -909,6 +910,36 @@ def register_callbacks(app, data_store):
                 xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False,
             )
             return empty_ts, empty_violin, ""
+
+        try:
+            return _heatmap_drilldown_inner(
+                click_data, cache, qc_on, rep_mode,
+                data_store, empty_ts, empty_violin,
+            )
+        except Exception:
+            import sys
+            traceback.print_exc(file=sys.stderr)
+            err_fig = go.Figure()
+            err_fig.add_annotation(
+                text="Error computing drill-down. Check server logs.",
+                xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False,
+                font=dict(color="red"),
+            )
+            return err_fig, empty_violin, html.Div(
+                "An error occurred while computing statistics.",
+                className="text-danger",
+            )
+
+    def _heatmap_drilldown_inner(
+        click_data, cache, qc_on, rep_mode,
+        data_store, empty_ts, empty_violin,
+    ):
+        from dashboard.heatmap import (
+            _smooth, _frame_mask, _FLIP_START, _FLIP_END, _STIM_START,
+            compute_drilldown_stats,
+        )
+        from dashboard.constants import CONTROL_STRAIN, HEATMAP_METRICS
+        import dash_bootstrap_components as dbc
 
         # Extract clicked cell coordinates
         point = click_data["points"][0]
@@ -990,21 +1021,25 @@ def register_callbacks(app, data_store):
 
             if rep_mode == "average":
                 grouped = (
-                    subset.groupby(["fly_idx", "frame"])[[raw_col]]
+                    subset.groupby(["cohort_id", "fly_idx", "frame"])[[raw_col]]
                     .mean()
                     .reset_index()
                 )
             else:
-                grouped = subset[["fly_idx", "rep", "frame", raw_col]].copy()
+                grouped = subset[["cohort_id", "fly_idx", "rep", "frame", raw_col]].copy()
 
-            # Apply transform per fly
-            fly_ids = sorted(grouped["fly_idx"].unique())
+            # Apply transform per fly (group by cohort+fly to keep flies distinct)
+            fly_keys = sorted(
+                grouped.groupby(["cohort_id", "fly_idx"]).groups.keys()
+            )
             all_frames = sorted(grouped["frame"].unique())
             time_s = np.array(all_frames) / FPS
             per_fly_vals = []
 
-            for fid in fly_ids:
-                fly_df = grouped[grouped["fly_idx"] == fid].sort_values("frame")
+            for cid, fid in fly_keys:
+                fly_df = grouped[
+                    (grouped["cohort_id"] == cid) & (grouped["fly_idx"] == fid)
+                ].sort_values("frame")
                 vals = fly_df[raw_col].values
                 frames = fly_df["frame"].values
 
