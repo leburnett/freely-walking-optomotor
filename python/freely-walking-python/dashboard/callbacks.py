@@ -774,6 +774,288 @@ def register_callbacks(app, data_store):
         )
         return fig
 
+    # ---- Tab 5: Summary Heatmap ----
+    @app.callback(
+        Output("heatmap-main", "figure"),
+        Output("heatmap-cache", "data"),
+        Input("heatmap-condition", "value"),
+        Input("qc-toggle", "value"),
+        Input("rep-toggle", "value"),
+    )
+    def update_heatmap(condition_val, qc_on, rep_mode):
+        from dashboard.heatmap import compute_heatmap_data
+        from dashboard.constants import HEATMAP_METRICS, CONTROL_STRAIN
+
+        empty_fig = go.Figure()
+        empty_fig.add_annotation(
+            text="Select a condition to generate the heatmap.",
+            xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False,
+        )
+
+        if not data_store.is_valid or not condition_val:
+            return empty_fig, None
+
+        condition_id = int(condition_val)
+        apply_qc = bool(qc_on)
+
+        result = compute_heatmap_data(
+            data_store, condition_id,
+            apply_qc=apply_qc, rep_mode=rep_mode,
+        )
+
+        z = result["z_matrix"]
+        p = result["p_matrix"]
+        strains = result["strain_list"]
+        metrics = result["metric_names"]
+        direction = result["direction"]
+
+        if len(strains) == 0:
+            return empty_fig, None
+
+        # Build hover text
+        hover_text = []
+        for i, strain in enumerate(strains):
+            row_text = []
+            for j, metric in enumerate(metrics):
+                p_val = p[i, j]
+                d = direction[i, j]
+                d_label = "higher" if d > 0 else "lower" if d < 0 else "n/a"
+                if np.isnan(p_val):
+                    row_text.append(f"{strain}<br>{metric}<br>p = N/A")
+                else:
+                    row_text.append(
+                        f"{strain}<br>{metric}<br>p = {p_val:.2e}<br>{d_label} than control"
+                    )
+            hover_text.append(row_text)
+
+        # Pretty strain labels
+        strain_labels = [s.replace("_", " ") for s in strains]
+
+        fig = go.Figure(data=go.Heatmap(
+            z=z,
+            x=metrics,
+            y=strain_labels,
+            colorscale="RdBu_r",
+            zmid=0,
+            zmin=-1,
+            zmax=1,
+            text=hover_text,
+            hovertemplate="%{text}<extra></extra>",
+            colorbar=dict(
+                title="Direction",
+                tickvals=[-1, -0.5, 0, 0.5, 1],
+                ticktext=["Target < Ctrl", "", "n.s.", "", "Target > Ctrl"],
+                thickness=15,
+            ),
+        ))
+
+        cond_name = CONDITION_NAMES.get(condition_id, f"Condition {condition_id}")
+        ctrl_label = CONTROL_STRAIN.replace("_", " ")
+        fig.update_layout(
+            title=f"Statistical Comparison vs {ctrl_label} — {cond_name}",
+            template="plotly_white",
+            height=max(400, 30 * len(strains) + 150),
+            margin=dict(t=70, b=80, l=220, r=80),
+            xaxis=dict(tickangle=30, side="bottom"),
+        )
+
+        # Serialise per-fly data for drill-down (convert numpy arrays to lists)
+        cache_data = {
+            "condition_id": condition_id,
+            "strain_list": strains,
+            "metric_names": metrics,
+            "per_fly": {s: result["per_fly_data"][s].tolist() for s in [CONTROL_STRAIN] + strains},
+        }
+
+        return fig, cache_data
+
+    @app.callback(
+        Output("heatmap-timeseries", "figure"),
+        Output("heatmap-violin", "figure"),
+        Input("heatmap-main", "clickData"),
+        State("heatmap-cache", "data"),
+        State("qc-toggle", "value"),
+        State("rep-toggle", "value"),
+    )
+    def update_heatmap_drilldown(click_data, cache, qc_on, rep_mode):
+        from dashboard.heatmap import _smooth, _frame_mask, _FLIP_START, _FLIP_END, _STIM_START
+        from dashboard.constants import CONTROL_STRAIN, HEATMAP_METRICS
+
+        empty_ts = go.Figure()
+        empty_violin = go.Figure()
+
+        if not click_data or not cache:
+            empty_ts.add_annotation(
+                text="Click a cell in the heatmap to see details.",
+                xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False,
+            )
+            return empty_ts, empty_violin
+
+        # Extract clicked cell coordinates
+        point = click_data["points"][0]
+        metric_idx = point["x"]  # metric name (string from x-axis)
+        strain_label = point["y"]  # strain label with spaces
+
+        # Map back to strain name (underscores)
+        strain = None
+        for s in cache["strain_list"]:
+            if s.replace("_", " ") == strain_label:
+                strain = s
+                break
+        if strain is None:
+            return empty_ts, empty_violin
+
+        # Map metric name to index
+        metrics = cache["metric_names"]
+        if metric_idx in metrics:
+            m_idx = metrics.index(metric_idx)
+        else:
+            return empty_ts, empty_violin
+
+        condition_id = cache["condition_id"]
+        apply_qc = bool(qc_on)
+
+        # Determine which raw time series to show based on metric type
+        # Metrics 0-1: FV-based → show fv_data
+        # Metrics 2-3: Turning-based → show curv_data (smoothed+flipped)
+        # Metrics 4-5: Distance-based → show movement towards centre (inverted dist)
+        if m_idx <= 1:
+            raw_col = "fv_data"
+            y_label = "Forward velocity (mm/s)"
+            transform = "none"
+        elif m_idx <= 3:
+            raw_col = "curv_data"
+            y_label = "Turning rate (smoothed, sign-flipped; deg/mm)"
+            transform = "smooth_flip"
+        else:
+            raw_col = "dist_data"
+            y_label = "Movement towards centre (mm)"
+            transform = "invert_baseline"
+
+        # Load time series for control and clicked strain
+        ctrl_color = "rgb(55,126,184)"
+        test_color = "rgb(228,26,28)"
+
+        ts_fig = go.Figure()
+
+        for strain_name, color, label in [
+            (CONTROL_STRAIN, ctrl_color, CONTROL_STRAIN.replace("_", " ")),
+            (strain, test_color, strain.replace("_", " ")),
+        ]:
+            df = data_store.load_per_fly(strain_name)
+            if df.empty:
+                continue
+            mask = df["condition"] == condition_id
+            if apply_qc:
+                mask &= df["qc_passed"]
+            subset = df[mask]
+            if subset.empty:
+                continue
+
+            if rep_mode == "average":
+                grouped = (
+                    subset.groupby(["fly_idx", "frame"])[[raw_col]]
+                    .mean()
+                    .reset_index()
+                )
+            else:
+                grouped = subset[["fly_idx", "rep", "frame", raw_col]].copy()
+
+            # Apply transform per fly
+            fly_ids = sorted(grouped["fly_idx"].unique())
+            all_frames = sorted(grouped["frame"].unique())
+            time_s = np.array(all_frames) / FPS
+            per_fly_vals = []
+
+            for fid in fly_ids:
+                fly_df = grouped[grouped["fly_idx"] == fid].sort_values("frame")
+                vals = fly_df[raw_col].values
+                frames = fly_df["frame"].values
+
+                if transform == "smooth_flip":
+                    vals = _smooth(vals.copy())
+                    flip = _frame_mask(frames, _FLIP_START, _FLIP_END)
+                    vals[flip] = -vals[flip]
+                elif transform == "invert_baseline":
+                    bl_mask = frames == _STIM_START
+                    if bl_mask.any():
+                        vals = vals[bl_mask][0] - vals
+                    else:
+                        vals = -vals  # fallback
+
+                per_fly_vals.append(vals)
+
+            if not per_fly_vals:
+                continue
+
+            # Align to common frame grid (some flies may have different frame counts)
+            min_len = min(len(v) for v in per_fly_vals)
+            arr = np.array([v[:min_len] for v in per_fly_vals])
+            t = time_s[:min_len]
+
+            y_mean = np.nanmean(arr, axis=0)
+            y_sem = np.nanstd(arr, axis=0) / np.sqrt(arr.shape[0])
+
+            for trace in _make_trace(t, y_mean, y_sem, color, label):
+                ts_fig.add_trace(trace)
+
+        _add_stim_markers(ts_fig)
+
+        cond_name = CONDITION_NAMES.get(condition_id, f"Condition {condition_id}")
+        ts_fig.update_layout(
+            title=f"{metric_idx} — {cond_name}",
+            xaxis_title="Time (s)",
+            yaxis_title=y_label,
+            template="plotly_white",
+            height=400,
+            margin=dict(t=50, b=50, l=60, r=20),
+        )
+
+        # ---- Violin plot: per-fly scalar distributions ----
+        violin_fig = go.Figure()
+        ctrl_fly_data = np.array(cache["per_fly"].get(CONTROL_STRAIN, []))
+        test_fly_data = np.array(cache["per_fly"].get(strain, []))
+
+        for fly_data, label, color in [
+            (ctrl_fly_data, CONTROL_STRAIN.replace("_", " "), ctrl_color),
+            (test_fly_data, strain.replace("_", " "), test_color),
+        ]:
+            if fly_data.size == 0:
+                continue
+            vals = fly_data[:, m_idx]
+            valid = vals[~np.isnan(vals)]
+            if len(valid) == 0:
+                continue
+            r, g, b = _parse_rgb(color)
+            violin_fig.add_trace(go.Violin(
+                y=valid,
+                name=label,
+                marker=dict(
+                    color="white",
+                    size=5,
+                    opacity=0.8,
+                    line=dict(color=color, width=1),
+                ),
+                line=dict(color=color),
+                fillcolor=f"rgba({r},{g},{b},0.4)",
+                points="all",
+                jitter=0.3,
+                pointpos=0,
+                box_visible=True,
+                meanline_visible=True,
+            ))
+
+        violin_fig.update_layout(
+            title=f"{metric_idx} — per-fly distributions",
+            yaxis_title=metric_idx,
+            template="plotly_white",
+            height=400,
+            margin=dict(t=50, b=50, l=60, r=20),
+            showlegend=False,
+        )
+
+        return ts_fig, violin_fig
+
 
 # ---- Helper functions for building plots ----
 

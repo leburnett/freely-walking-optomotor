@@ -338,6 +338,49 @@ metadata_tab = dbc.Tab(
     ],
 )
 
+# ---- Tab 5: Summary Heatmap ----
+heatmap_tab = dbc.Tab(
+    label="Summary Heatmap",
+    tab_id="tab-heatmap",
+    children=[
+        html.Div([
+            dbc.Row([
+                dbc.Col([
+                    dbc.Label("Condition"),
+                    dcc.Dropdown(
+                        id="heatmap-condition",
+                        options=[
+                            {"label": f"{n}. {name}", "value": str(n)}
+                            for n, name in CONDITION_NAMES.items()
+                        ],
+                        value="1",
+                        clearable=False,
+                    ),
+                ], width=4),
+            ], className="mb-3"),
+            dcc.Loading(
+                dcc.Graph(
+                    id="heatmap-main",
+                    config={"displayModeBar": True},
+                ),
+                type="circle",
+            ),
+            html.Hr(),
+            dbc.Row([
+                dbc.Col(
+                    dcc.Graph(id="heatmap-timeseries", config={"displayModeBar": True}),
+                    width=7,
+                ),
+                dbc.Col(
+                    dcc.Graph(id="heatmap-violin", config={"displayModeBar": True}),
+                    width=5,
+                ),
+            ]),
+            dcc.Store(id="heatmap-cache"),
+        ], className="p-3"),
+    ],
+)
+
 # ---- Main Layout ----
 app.layout = dbc.Container(
     [
@@ -350,7 +393,7 @@ app.layout = dbc.Container(
             dbc.Col(sidebar, width=3),
             dbc.Col(
                 dbc.Tabs(
-                    [metadata_tab, cohort_tab, strain_tab, comparison_tab],
+                    [metadata_tab, cohort_tab, strain_tab, comparison_tab, heatmap_tab],
                     id="main-tabs",
                     active_tab="tab-metadata",
                 ),

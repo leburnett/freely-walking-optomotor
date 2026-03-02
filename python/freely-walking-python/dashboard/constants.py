@@ -98,6 +98,22 @@ QC_MAX_MIN_DIST = 110.0    # mm - exclude flies never closer than this to center
 # Default data directory (derived from config)
 DEFAULT_DATA_DIR = str(RESULTS_PATH / "protocol_27")
 
+# Summary heatmap metrics (replicating MATLAB make_summary_heat_maps_p27)
+HEATMAP_METRICS = [
+    "Avg FV (stimulus)",
+    "\u0394FV at onset",
+    "Avg Turning (stimulus)",
+    "Early Turning (CW)",
+    "Movement towards centre (10s)",
+    "Movement towards centre (end)",
+]
+
+# Control strain for heatmap comparisons
+CONTROL_STRAIN = "jfrc100_es_shibire_kir"
+
+# FDR correction threshold (Benjamini-Yekutieli, q-value)
+FDR_Q = 0.001
+
 # Strain colors for cross-strain comparison (distinct palette)
 STRAIN_COLORS = [
     "rgb(55,126,184)",    # blue
