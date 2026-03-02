@@ -805,6 +805,7 @@ def register_callbacks(app, data_store):
 
         z = result["z_matrix"]
         p = result["p_matrix"]
+        rejected = result["rejected"]
         strains = result["strain_list"]
         metrics = result["metric_names"]
         direction = result["direction"]
@@ -820,11 +821,12 @@ def register_callbacks(app, data_store):
                 p_val = p[i, j]
                 d = direction[i, j]
                 d_label = "higher" if d > 0 else "lower" if d < 0 else "n/a"
+                fdr_label = "sig. (FDR)" if rejected[i, j] else "n.s. (FDR)"
                 if np.isnan(p_val):
                     row_text.append(f"{strain}<br>{metric}<br>p = N/A")
                 else:
                     row_text.append(
-                        f"{strain}<br>{metric}<br>p = {p_val:.2e}<br>{d_label} than control"
+                        f"{strain}<br>{metric}<br>p = {p_val:.2e} [{fdr_label}]<br>{d_label} than control"
                     )
             hover_text.append(row_text)
 

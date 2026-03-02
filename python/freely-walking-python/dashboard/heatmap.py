@@ -218,19 +218,21 @@ def benjamini_yekutieli_fdr(pvalues: np.ndarray, q: float = FDR_Q) -> np.ndarray
     return rejected
 
 
-def _pvalue_to_intensity(p: float, rejected: bool) -> float:
-    """Map a p-value to a 0-1 intensity level (5 discrete steps)."""
-    if not rejected or np.isnan(p):
-        return 0.0  # not significant → white
-    if p <= 0.0001:
-        return 1.0
-    if p <= 0.001:
-        return 0.75
-    if p <= 0.01:
-        return 0.5
-    if p <= 0.05:
-        return 0.25
-    return 0.0
+def _pvalue_to_intensity(p: float) -> float:
+    """Map a p-value to a 0–1 intensity using continuous -log10 scaling.
+
+    Mapping: p >= 0.05 → 0 (white), p = 1e-8 or smaller → 1 (fully saturated).
+    Intermediate values scale linearly on -log10: -log10(0.05) ≈ 1.3 to -log10(1e-8) = 8.
+    """
+    if np.isnan(p) or p >= 0.05:
+        return 0.0
+    # Clamp to avoid log(0)
+    p_clamped = max(p, 1e-12)
+    neg_log = -np.log10(p_clamped)
+    # Linear scale: -log10(0.05)≈1.3 maps to 0, -log10(1e-8)=8 maps to 1
+    lo, hi = 1.3, 8.0
+    intensity = (neg_log - lo) / (hi - lo)
+    return float(np.clip(intensity, 0.0, 1.0))
 
 
 def compute_heatmap_data(
@@ -285,16 +287,17 @@ def compute_heatmap_data(
     rejected = benjamini_yekutieli_fdr(all_p, q=FDR_Q)
     rejected = rejected.reshape(p_matrix.shape)
 
-    # Build z_matrix: direction * intensity
+    # Build z_matrix: direction * continuous intensity from -log10(p)
     z_matrix = np.zeros_like(p_matrix)
     for i in range(n_strains):
         for j in range(n_metrics):
-            intensity = _pvalue_to_intensity(p_matrix[i, j], rejected[i, j])
+            intensity = _pvalue_to_intensity(p_matrix[i, j])
             z_matrix[i, j] = direction[i, j] * intensity
 
     return {
         "z_matrix": z_matrix,
         "p_matrix": p_matrix,
+        "rejected": rejected,
         "strain_list": test_strains,
         "metric_names": HEATMAP_METRICS,
         "per_fly_data": per_fly_data,
