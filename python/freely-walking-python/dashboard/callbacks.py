@@ -476,6 +476,8 @@ def register_callbacks(app, data_store):
     @app.callback(
         Output("metadata-table", "data"),
         Output("metadata-table", "columns"),
+        Output("metadata-flies-bar", "figure"),
+        Output("metadata-cohorts-bar", "figure"),
         Output("metadata-gantt", "figure"),
         Output("metadata-temp", "figure"),
         Input("data-path-input", "value"),
@@ -488,11 +490,11 @@ def register_callbacks(app, data_store):
         )
 
         if not data_store.is_valid:
-            return [], [], empty_fig, empty_fig
+            return [], [], empty_fig, empty_fig, empty_fig, empty_fig
 
         df = data_store.get_metadata_summary()
         if df.empty:
-            return [], [], empty_fig, empty_fig
+            return [], [], empty_fig, empty_fig, empty_fig, empty_fig
 
         # ---- Summary table (per-strain aggregation) ----
         summary = (
@@ -644,7 +646,45 @@ def register_callbacks(app, data_store):
                 coloraxis_colorbar=dict(title="\u00b0C", thickness=15, x=1.01),
             )
 
-        return table_data, table_columns, gantt_fig, temp_fig
+        # ---- Bar charts: flies per strain and cohorts per strain ----
+        bar_color = "rgb(70, 130, 180)"  # steel blue
+        sorted_summary = summary.sort_values("Strain")
+
+        flies_bar = go.Figure(go.Bar(
+            x=sorted_summary["Strain"],
+            y=sorted_summary["Total_Flies"],
+            text=sorted_summary["Total_Flies"],
+            textposition="outside",
+            marker=dict(color=bar_color, opacity=0.4, line=dict(width=0.8, color=bar_color)),
+        ))
+        flies_bar.update_layout(
+            title="Total Flies per Strain",
+            yaxis_title="Number of flies",
+            template="plotly_white",
+            showlegend=False,
+            height=350,
+            margin=dict(t=40, b=120, l=60, r=20),
+            xaxis=dict(tickangle=45),
+        )
+
+        cohorts_bar = go.Figure(go.Bar(
+            x=sorted_summary["Strain"],
+            y=sorted_summary["Cohorts"],
+            text=sorted_summary["Cohorts"],
+            textposition="outside",
+            marker=dict(color=bar_color, opacity=0.4, line=dict(width=0.8, color=bar_color)),
+        ))
+        cohorts_bar.update_layout(
+            title="Cohorts per Strain",
+            yaxis_title="Number of cohorts",
+            template="plotly_white",
+            showlegend=False,
+            height=350,
+            margin=dict(t=40, b=120, l=60, r=20),
+            xaxis=dict(tickangle=45),
+        )
+
+        return table_data, table_columns, flies_bar, cohorts_bar, gantt_fig, temp_fig
 
     # ---- Acclimation baseline callbacks ----
     @app.callback(

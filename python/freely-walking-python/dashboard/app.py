@@ -318,6 +318,10 @@ metadata_tab = dbc.Tab(
                 },
                 style_table={"marginBottom": "24px"},
             ),
+            dbc.Row([
+                dbc.Col(dcc.Graph(id="metadata-flies-bar"), width=6),
+                dbc.Col(dcc.Graph(id="metadata-cohorts-bar"), width=6),
+            ], className="mb-3"),
             html.Hr(),
             html.H5("Acquisition Timeline", className="mb-3"),
             dcc.Graph(
@@ -346,7 +350,7 @@ app.layout = dbc.Container(
             dbc.Col(sidebar, width=3),
             dbc.Col(
                 dbc.Tabs(
-                    [cohort_tab, strain_tab, comparison_tab, metadata_tab],
+                    [metadata_tab, cohort_tab, strain_tab, comparison_tab],
                     id="main-tabs",
                     active_tab="tab-metadata",
                 ),
