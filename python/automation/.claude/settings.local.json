@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs wc -l)",
+      "Bash(MACHINE_ROLE=acquisition python -c \"from config.config import MACHINE_ROLE, PROJECT_ROOT, SOURCE_ROOT, LOG_DIR, PIPELINE_REGISTRY; print\\(f''Role: {MACHINE_ROLE}''\\); print\\(f''Project: {PROJECT_ROOT}''\\); print\\(f''Source: {SOURCE_ROOT}''\\); print\\(f''Log dir: {LOG_DIR}''\\); print\\(f''Registry: {PIPELINE_REGISTRY}''\\)\")",
+      "Bash(MACHINE_ROLE=processing python -c \"from config.config import MACHINE_ROLE, PROJECT_ROOT, SOURCE_ROOT, LOG_DIR; print\\(f''Role: {MACHINE_ROLE}''\\); print\\(f''Project: {PROJECT_ROOT}''\\); print\\(f''Source: {SOURCE_ROOT}''\\); print\\(f''Log dir: {LOG_DIR}''\\)\")",
+      "Bash(MACHINE_ROLE=acquisition python -c \":*)",
+      "Bash(MACHINE_ROLE=processing python -c \":*)",
+      "Bash(MACHINE_ROLE=acquisition python generate_batch_files.py)",
+      "Bash(MACHINE_ROLE=processing python monitor_and_track/monitor_and_track.py --help)",
+      "Bash(MACHINE_ROLE=processing python daily_processing/daily_processing.py --help)"
+    ]
+  }
+}

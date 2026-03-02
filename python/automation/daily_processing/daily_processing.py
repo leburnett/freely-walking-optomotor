@@ -1,13 +1,21 @@
-import os
-import re
-import sys
-import shutil
-import subprocess
-import logging
-from pathlib import Path
-from datetime import datetime
+"""
+Process tracked experiment data using MATLAB and sync results to network.
 
-# Load project-wide config (repo root is 4 levels up: daily_processing -> automation -> python -> repo)
+Scans DATA_TRACKED for date folders, runs MATLAB process_freely_walking_data,
+copies results and figures to the network, and moves folders to processed.
+
+Usage:
+    python daily_processing.py                          # Process new dates only
+    python daily_processing.py --reprocess              # Reprocess all dates
+    python daily_processing.py 2025_03_01 2025_03_02    # Process specific dates
+"""
+
+import argparse
+import os
+import sys
+from pathlib import Path
+
+# Load project-wide config
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from config.config import (
     DATA_TRACKED, DATA_PROCESSED,
@@ -17,14 +25,17 @@ from config.config import (
     REPO_ROOT,
 )
 
-# Configure logging
-logging.basicConfig(
-    filename="daily_process_runner.log",
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+# Shared utilities
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from shared.logging_config import setup_logging
+from shared.file_ops import list_date_folders, move_folder, copy_files_by_extension
+from shared.matlab import run_matlab
+from shared.status import update_stage, read_status, record_error
+from shared.registry import update_registry
 
-# Path aliases used throughout this script
+logger = setup_logging("daily_processing")
+
+# Path aliases
 LOCAL_TRACKED        = str(DATA_TRACKED)
 LOCAL_PROCESSED      = str(DATA_PROCESSED)
 RESULTS_PATH         = str(_RESULTS_PATH)
@@ -35,32 +46,9 @@ NETWORK_FIGS_ROOT    = NETWORK_FIGS
 
 MATLAB_FUNCTION = "process_freely_walking_data"
 
-def list_date_folders(path):
-    """
-    Creates list of all date folders in specified folder
-    
-    Arguments:
-        path {string} - full path for folder that contains date_folders
-    
-    Return:
-        [] {list} - list of date folders at specified path
-    """
-    return [
-        name for name in os.listdir(path)
-        if os.path.isdir(os.path.join(path, name)) and re.match(r'^\d{4}_\d{2}_\d{2}$', name)
-    ]
 
 def has_results_for_date(date_folder_name):
-    """
-    Check if any result files exist that start with the given date (converted to dash format).
-    
-    Arguments:
-        date_folder_name {string} - individual date folder correlated with experiments
-    
-    Return:
-        {bool} - whether the results files exist for that date (whether the date has already been processed)
-    """
-    
+    """Check if any result files exist for the given date (converted to dash format)."""
     dash_date = date_folder_name.replace("_", "-")
     for root, _, files in os.walk(RESULTS_PATH):
         for file in files:
@@ -68,195 +56,174 @@ def has_results_for_date(date_folder_name):
                 return True
     return False
 
+
 def count_results_for_date(date_str):
-    """
-    Counts how many results files exist for given experiment date
-    
-    Arguments: 
-        date_str {string} - experiment, date folder name
-    
-    Return:
-        count {int} - number of results files with the date string in name (results files all start with the date string) 
-    """
+    """Count how many result files exist for the given date."""
     dash_date = date_str.replace("_", "-")
     count = 0
     for root, _, files in os.walk(RESULTS_PATH):
-        # logging.info(f"counting results for date")
         count += sum(1 for f in files if f.startswith(dash_date))
     return count
 
-def copy_results_to_network(local_results_root, network_results_root, date_string_with_dashes):
-    """
-    Copy .mat files generated for a given date while preserving folder structure. Files copied to network drive location. 
-    
-    Arguments:
-        local_results_root {string} - origin; full file path location for results files (on local drive)
-        network_results_root {string} - destination; full file path location for results files (on network drive)
-        date_string_with_dashes {string} - experiment, date folder name
-        
-    Return:
-        copied_files {int} - count of figure files copied to destination
-    """
-    copied_files = 0
-    for dirpath, _, filenames in os.walk(local_results_root):
-        for file in filenames:
-            if file.endswith(".mat") and date_string_with_dashes in file:
-                src_file = os.path.join(dirpath, file)
-
-                # Reconstruct relative path to preserve structure
-                rel_path = os.path.relpath(src_file, local_results_root)
-                dest_file = os.path.join(network_results_root, rel_path)
-
-                # Ensure destination directory exists
-                os.makedirs(os.path.dirname(dest_file), exist_ok=True)
-
-                # Copy file
-                shutil.copy2(src_file, dest_file)
-                copied_files += 1
-
-    return copied_files
-
-def copy_figs_to_network(local_figs_root, network_figs_root, date_string_with_dashes):
-    """
-    Copy figure (pdf or png) files generated for a given date while preserving folder structure.
-    
-    Arguments:
-        local_figs_root {string} - origin; full file path location for figure files (on local drive)
-        network_figs_root {string} - destination; full file path location for figure files (on network drive)
-        date_string_with_dashes {string} - experiment, date folder name
-    
-    Return:
-        copied_files {int} - count of figure files copied to destination   
-    """
-    copied_files = 0
-    for dirpath, _, filenames in os.walk(local_figs_root):
-        for file in filenames:
-            if file.endswith((".pdf", ".png")) and date_string_with_dashes in file:
-                src_file = os.path.join(dirpath, file)
-
-                # Reconstruct relative path to preserve structure
-                rel_path = os.path.relpath(src_file, local_figs_root)
-                dest_file = os.path.join(network_figs_root, rel_path)
-
-                # Ensure destination directory exists
-                os.makedirs(os.path.dirname(dest_file), exist_ok=True)
-
-                # Copy file
-                shutil.copy2(src_file, dest_file)
-                copied_files += 1
-
-    return copied_files
 
 def run_matlab_function(date_str):
-    """
-    Runs specified matlab function using command line function. 
-    
-    Arguments:
-        date_str {string} - name of date folder that is passed as an argument to the matlab function
-        
-    Return:
-        {bool} - TRUE if matlab function runs successfully, FALSE if matlab error
-    """
-    try:
-        setup_path = str(REPO_ROOT / 'setup_path.m').replace('\\', '/')
-        cmd = f'matlab -batch "run(\'{setup_path}\'); {MATLAB_FUNCTION}(\'{date_str}\')"'
-        logging.info(f"Running MATLAB command: {cmd}")
-        subprocess.run(cmd, shell=True, check=True)
-        logging.info(f"Successfully ran MATLAB function for {date_str}")
-        return True
-    except subprocess.CalledProcessError as e:
-        logging.error(f"MATLAB ERROR for {date_str}: {e}")
-        return False
+    """Run the MATLAB processing function for a given date.
 
-def move_folder(source_root, dest_root, folder_name):
+    Returns:
+        Tuple of (success: bool, stderr: str).
     """
-    Moves entire folder, preserving the folder structure, from one location to another.
-    
-    Arguments:
-        source_root {string} - origin, file path location
-        dest_root {string} - destination, file path location
-        folder_name {string} - name of folder to move
+    setup_path = str(REPO_ROOT / "setup_path.m").replace("\\", "/")
+    success, stdout, stderr = run_matlab(
+        MATLAB_FUNCTION, date_str, setup_path=setup_path,
+    )
+    return success, stderr
 
-    * WARNING: if the date folder already exists in the destination folder, this function will create a nested 
-    structure and place the moved date folder within the existing date folder. *
-    """
-    src = os.path.join(source_root, folder_name)
-    dst = os.path.join(dest_root, folder_name)
-    if os.path.exists(src):
-        os.makedirs(dest_root, exist_ok=True)
-        try:
-            shutil.move(src, dst)
-            logging.info(f"Moved {src} -> {dst}")
-        except Exception as e:
-            logging.error(f"Error moving {src} -> {dst}: {e}")
-    else:
-        logging.warning(f"Source folder not found: {src}")
 
 def copy_mp4s_to_network(local_date_root, network_date_root, date_folder):
-    """
-    Copy all .mp4 files from local date folder to network date folder, preserving structure.
-    Mp4s are in a nested folder structure within experiment folders (organized per time folder)
-    
-    Arguments:
-        local_date_root {string} - origin, file path location
-        network_date_root {string} - 
-        date_folder {string} - 
-    """
+    """Copy all .mp4 files from local date folder to network, preserving structure."""
     local_root = os.path.join(local_date_root, date_folder)
     network_root = os.path.join(network_date_root, date_folder)
-    copied = 0
+    return copy_files_by_extension(local_root, network_root, (".mp4",))
 
-    for dirpath, _, filenames in os.walk(local_root):
-        for file in filenames:
-            if file.lower().endswith(".mp4"):
-                src_file = os.path.join(dirpath, file)
-                rel_path = os.path.relpath(src_file, local_root)
-                dst_file = os.path.join(network_root, rel_path)
 
-                os.makedirs(os.path.dirname(dst_file), exist_ok=True)
-                shutil.copy2(src_file, dst_file)
-                copied += 1
+def update_experiment_statuses(date_str, stage, status="complete", **extra_fields):
+    """Update pipeline_status.json for all experiments under a date folder.
 
-    logging.info(f"Copied {copied} .mp4 files for {date_folder} to network 2_processed")
-    return copied
+    Walks through the date folder hierarchy to find experiment time folders
+    and updates their status files.
+    """
+    # Check processed first, then tracked
+    for base in [LOCAL_PROCESSED, LOCAL_TRACKED]:
+        date_path = os.path.join(base, date_str)
+        if os.path.isdir(date_path):
+            break
+    else:
+        return
+
+    for root, dirs, files in os.walk(date_path):
+        if "pipeline_status.json" in files:
+            update_stage(root, stage, status=status, **extra_fields)
+            updated = read_status(root)
+            if updated:
+                update_registry(updated)
+
+
+def process_date(date_str, reprocess=False):
+    """Process a single date folder through the full pipeline.
+
+    Args:
+        date_str: Date folder name (YYYY_MM_DD).
+        reprocess: If True, skip the has_results check and overwrite on move.
+
+    Returns:
+        True if processing succeeded.
+    """
+    logger.info(f"{'Reprocessing' if reprocess else 'Processing'} date folder: {date_str}")
+
+    success, stderr = run_matlab_function(date_str)
+
+    if not success:
+        logger.error(f"MATLAB failed for {date_str}")
+        # Record error in experiment status files
+        date_path = os.path.join(LOCAL_TRACKED, date_str)
+        if os.path.isdir(date_path):
+            for root, dirs, files in os.walk(date_path):
+                if "pipeline_status.json" in files:
+                    record_error(
+                        root, "processed",
+                        f"MATLAB {MATLAB_FUNCTION} failed",
+                        details=stderr,
+                    )
+                    updated = read_status(root)
+                    if updated:
+                        update_registry(updated)
+        return False
+
+    if not has_results_for_date(date_str):
+        logger.warning(f"No results found for {date_str}, skipping move.")
+        return False
+
+    result_count = count_results_for_date(date_str)
+    logger.info(f"Found {result_count} result files for {date_str}")
+
+    # Copy results to network
+    dash_date = date_str.replace("_", "-")
+    results_copied = copy_files_by_extension(
+        LOCAL_RESULTS_ROOT, NETWORK_RESULTS_ROOT, (".mat",),
+        filename_filter=dash_date,
+    )
+    logger.info(f"Copied {results_copied} .mat files for {dash_date} to exp_results")
+
+    # Copy figures to network
+    figs_copied = copy_files_by_extension(
+        LOCAL_FIGS_ROOT, NETWORK_FIGS_ROOT, (".pdf", ".png"),
+        filename_filter=dash_date,
+    )
+    logger.info(f"Copied {figs_copied} figure files for {dash_date} to exp_figures")
+
+    # Move local folder: tracked -> processed
+    src_local = os.path.join(LOCAL_TRACKED, date_str)
+    dst_local = os.path.join(LOCAL_PROCESSED, date_str)
+    move_folder(src_local, dst_local, overwrite=reprocess)
+
+    # Move network folder: tracked -> processed
+    src_network = os.path.join(NETWORK_TRACKED, date_str)
+    dst_network = os.path.join(NETWORK_PROCESSED, date_str)
+    move_folder(src_network, dst_network, overwrite=reprocess)
+
+    # Copy MP4 videos to network
+    videos_copied = copy_mp4s_to_network(LOCAL_PROCESSED, NETWORK_PROCESSED, date_str)
+    logger.info(f"Copied {videos_copied} .mp4 files for {date_str} to network")
+
+    # Update pipeline status for all experiments in this date
+    update_experiment_statuses(
+        date_str, "processed",
+        results_count=result_count, figures_count=figs_copied,
+    )
+    update_experiment_statuses(
+        date_str, "synced_to_network",
+        results_copied=results_copied, figures_copied=figs_copied,
+        videos_copied=videos_copied,
+    )
+
+    return True
 
 
 def main():
-    tracked_dates = list_date_folders(LOCAL_TRACKED)
-    processed_dates = set(list_date_folders(LOCAL_PROCESSED))
+    parser = argparse.ArgumentParser(
+        description="Process tracked experiment data and sync to network.",
+    )
+    parser.add_argument(
+        "--reprocess", action="store_true",
+        help="Reprocess all dates in tracked, ignoring existing results.",
+    )
+    parser.add_argument(
+        "dates", nargs="*",
+        help="Specific date folders to process (default: all in tracked).",
+    )
+    args = parser.parse_args()
 
-    for date_str in tracked_dates:
-        if date_str not in processed_dates:
-            logging.info(f"Processing date folder: {date_str}")
-            success = run_matlab_function(date_str)
+    if args.dates:
+        dates_to_process = args.dates
+    else:
+        dates_to_process = list_date_folders(LOCAL_TRACKED)
 
-            if success and has_results_for_date(date_str):
-                result_count = count_results_for_date(date_str)
-                logging.info(f"Found {result_count} result files for {date_str}")
+    if not args.reprocess:
+        # Filter out dates already in the processed folder
+        processed_dates = set(list_date_folders(LOCAL_PROCESSED))
+        dates_to_process = [d for d in dates_to_process if d not in processed_dates]
 
-                # Copy results to exp_results
-                dash_date = date_str.replace("_", "-")
-                copied_count = copy_results_to_network(LOCAL_RESULTS_ROOT, NETWORK_RESULTS_ROOT, dash_date)
-                logging.info(f"Copied {copied_count} .mat files for {dash_date} to exp_results")
+    if not dates_to_process:
+        logger.info("No dates to process.")
+        return
 
-                # Copy figs to exp_figures
-                dash_date = date_str.replace("_", "-")
-                copied_count = copy_figs_to_network(LOCAL_FIGS_ROOT, NETWORK_FIGS_ROOT, dash_date)
-                logging.info(f"Copied {copied_count} .PDF or .PNG files for {dash_date} to exp_figures")
+    logger.info(f"Dates to process: {dates_to_process}")
 
-                # Move local folder
-                move_folder(LOCAL_TRACKED, LOCAL_PROCESSED, date_str)
+    for date_str in dates_to_process:
+        process_date(date_str, reprocess=args.reprocess)
 
-                # Move network folder
-                move_folder(NETWORK_TRACKED, NETWORK_PROCESSED, date_str)
-
-                # Copy MP4 videos from local to network, nested time folder structure
-                copy_mp4s_to_network(LOCAL_PROCESSED, NETWORK_PROCESSED, date_str)
-                
-            else:
-                logging.warning(f"No results found for {date_str}, skipping move.")
 
 if __name__ == "__main__":
-    logging.info("===== Daily Processing Script Started =====")
+    logger.info("===== Daily Processing Script Started =====")
     main()
-    logging.info("===== Daily Processing Script Finished =====")
+    logger.info("===== Daily Processing Script Finished =====")
