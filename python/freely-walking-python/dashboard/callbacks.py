@@ -833,14 +833,25 @@ def register_callbacks(app, data_store):
         # Pretty strain labels
         strain_labels = [s.replace("_", " ") for s in strains]
 
+        # Custom colorscale with guaranteed pure white at midpoint
+        custom_rdbu = [
+            [0.0, "rgb(5,10,172)"],
+            [0.25, "rgb(106,137,247)"],
+            [0.5, "rgb(255,255,255)"],
+            [0.75, "rgb(220,100,80)"],
+            [1.0, "rgb(178,10,28)"],
+        ]
+
         fig = go.Figure(data=go.Heatmap(
             z=z,
             x=metrics,
             y=strain_labels,
-            colorscale="RdBu_r",
+            colorscale=custom_rdbu,
             zmid=0,
             zmin=-1,
             zmax=1,
+            xgap=1,
+            ygap=1,
             text=hover_text,
             hovertemplate="%{text}<extra></extra>",
             colorbar=dict(
@@ -859,6 +870,7 @@ def register_callbacks(app, data_store):
             height=max(400, 30 * len(strains) + 150),
             margin=dict(t=70, b=80, l=220, r=80),
             xaxis=dict(tickangle=30, side="bottom"),
+            plot_bgcolor="rgb(220,220,220)",
         )
 
         # Serialise per-fly data for drill-down (convert numpy arrays to lists)
@@ -874,14 +886,19 @@ def register_callbacks(app, data_store):
     @app.callback(
         Output("heatmap-timeseries", "figure"),
         Output("heatmap-violin", "figure"),
+        Output("heatmap-stats", "children"),
         Input("heatmap-main", "clickData"),
         State("heatmap-cache", "data"),
         State("qc-toggle", "value"),
         State("rep-toggle", "value"),
     )
     def update_heatmap_drilldown(click_data, cache, qc_on, rep_mode):
-        from dashboard.heatmap import _smooth, _frame_mask, _FLIP_START, _FLIP_END, _STIM_START
+        from dashboard.heatmap import (
+            _smooth, _frame_mask, _FLIP_START, _FLIP_END, _STIM_START,
+            compute_drilldown_stats,
+        )
         from dashboard.constants import CONTROL_STRAIN, HEATMAP_METRICS
+        import dash_bootstrap_components as dbc
 
         empty_ts = go.Figure()
         empty_violin = go.Figure()
@@ -891,7 +908,7 @@ def register_callbacks(app, data_store):
                 text="Click a cell in the heatmap to see details.",
                 xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False,
             )
-            return empty_ts, empty_violin
+            return empty_ts, empty_violin, ""
 
         # Extract clicked cell coordinates
         point = click_data["points"][0]
@@ -905,22 +922,39 @@ def register_callbacks(app, data_store):
                 strain = s
                 break
         if strain is None:
-            return empty_ts, empty_violin
+            return empty_ts, empty_violin, ""
 
         # Map metric name to index
         metrics = cache["metric_names"]
         if metric_idx in metrics:
             m_idx = metrics.index(metric_idx)
         else:
-            return empty_ts, empty_violin
+            return empty_ts, empty_violin, ""
 
         condition_id = cache["condition_id"]
         apply_qc = bool(qc_on)
 
         # Determine which raw time series to show based on metric type
+        # Also define the frame window used for the scalar metric (for grey rectangle)
         # Metrics 0-1: FV-based → show fv_data
         # Metrics 2-3: Turning-based → show curv_data (smoothed+flipped)
         # Metrics 4-5: Distance-based → show movement towards centre (inverted dist)
+        from dashboard.heatmap import (
+            _STIM_END, _ONSET_PRE_START, _ONSET_POST_END,
+            _EARLY_TURN_START, _EARLY_TURN_END,
+            _DIST_10S_START, _DIST_10S_END,
+            _DIST_END_START, _DIST_END_END,
+        )
+        # Frame windows per metric (start_frame, end_frame)
+        _metric_windows = {
+            0: (_STIM_START, _STIM_END),        # Avg FV: 300-1200
+            1: (_ONSET_PRE_START, _ONSET_POST_END),  # ΔFV: 210-390
+            2: (_STIM_START, _STIM_END),         # Avg Turning: 300-1200
+            3: (_EARLY_TURN_START, _EARLY_TURN_END),  # Early Turning: 315-450
+            4: (_DIST_10S_START, _DIST_10S_END),  # Movement 10s: 570-600
+            5: (_DIST_END_START, _DIST_END_END),  # Movement end: 1170-1200
+        }
+
         if m_idx <= 1:
             raw_col = "fv_data"
             y_label = "Forward velocity (mm/s)"
@@ -1003,6 +1037,21 @@ def register_callbacks(app, data_store):
 
         _add_stim_markers(ts_fig)
 
+        # Add grey rectangle showing the time window used for the scalar metric
+        win = _metric_windows.get(m_idx)
+        if win:
+            win_start_s = win[0] / FPS
+            win_end_s = win[1] / FPS
+            ts_fig.add_vrect(
+                x0=win_start_s, x1=win_end_s,
+                fillcolor="rgba(200,200,200,0.2)",
+                layer="below",
+                line_width=0,
+                annotation_text="metric window",
+                annotation_position="top left",
+                annotation_font=dict(size=9, color="grey"),
+            )
+
         cond_name = CONDITION_NAMES.get(condition_id, f"Condition {condition_id}")
         ts_fig.update_layout(
             title=f"{metric_idx} — {cond_name}",
@@ -1047,16 +1096,184 @@ def register_callbacks(app, data_store):
                 meanline_visible=True,
             ))
 
+        # Add invisible traces for the legend to explain line types
+        violin_fig.add_trace(go.Scatter(
+            x=[None], y=[None], mode="lines",
+            line=dict(color="black", width=1.5, dash="solid"),
+            name="Median",
+        ))
+        violin_fig.add_trace(go.Scatter(
+            x=[None], y=[None], mode="lines",
+            line=dict(color="black", width=1.5, dash="dash"),
+            name="Mean",
+        ))
+
         violin_fig.update_layout(
             title=f"{metric_idx} — per-fly distributions",
             yaxis_title=metric_idx,
             template="plotly_white",
             height=400,
             margin=dict(t=50, b=50, l=60, r=20),
-            showlegend=False,
+            showlegend=True,
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1,
+                font=dict(size=10),
+            ),
         )
 
-        return ts_fig, violin_fig
+        # ---- Statistical tests ----
+        stats_div = ""
+        ctrl_vals_clean = ctrl_fly_data[:, m_idx] if ctrl_fly_data.size else np.array([])
+        test_vals_clean = test_fly_data[:, m_idx] if test_fly_data.size else np.array([])
+        ctrl_vals_clean = ctrl_vals_clean[~np.isnan(ctrl_vals_clean)]
+        test_vals_clean = test_vals_clean[~np.isnan(test_vals_clean)]
+
+        if len(ctrl_vals_clean) >= 2 and len(test_vals_clean) >= 2:
+            stat_results = compute_drilldown_stats(ctrl_vals_clean, test_vals_clean)
+
+            # Tooltip descriptions for each test
+            _test_tooltips = {
+                "Shapiro-Wilk (control)": (
+                    "Tests whether the control group data is normally distributed. "
+                    "p < 0.05 suggests non-normality. Assumes independent observations."
+                ),
+                "Shapiro-Wilk (test strain)": (
+                    "Tests whether the test strain data is normally distributed. "
+                    "p < 0.05 suggests non-normality. Assumes independent observations."
+                ),
+                "Levene's test": (
+                    "Tests equality of variances between groups. "
+                    "p < 0.05 suggests unequal variances. "
+                    "Does not assume normality (uses median-based method)."
+                ),
+                "Welch's t-test": (
+                    "Compares group means (parametric). Used when both groups pass "
+                    "normality. Does not assume equal variances. "
+                    "Assumes independent observations."
+                ),
+                "Mann-Whitney U": (
+                    "Non-parametric rank-based test comparing group medians/distributions. "
+                    "Used when normality is violated. "
+                    "Assumes independent observations and similar distribution shapes."
+                ),
+                "Kolmogorov-Smirnov": (
+                    "Tests whether two samples come from the same distribution. "
+                    "Sensitive to differences in shape, spread, and location. "
+                    "Non-parametric; no distributional assumptions."
+                ),
+                "Cohen's d": (
+                    "Standardised mean difference (parametric effect size). "
+                    "|d| < 0.2 negligible, 0.2-0.5 small, 0.5-0.8 medium, > 0.8 large."
+                ),
+                "Rank-biserial r": (
+                    "Non-parametric effect size based on Mann-Whitney U. "
+                    "|r| < 0.1 negligible, 0.1-0.3 small, 0.3-0.5 medium, > 0.5 large."
+                ),
+            }
+
+            # Build HTML table rows with dbc.Tooltip for each test name
+            table_rows = []
+            tooltip_components = []
+            for idx_t, t in enumerate(stat_results["tests"]):
+                p = t["pvalue"]
+                sig = p < 0.05
+                sig_marker = " *" if sig else ""
+                p_style = {"fontWeight": "bold", "color": "#d32f2f"} if sig else {}
+                tooltip_text = _test_tooltips.get(t["name"], "")
+                span_id = f"stat-test-name-{idx_t}"
+                name_cell = html.Td(
+                    html.Span(
+                        t["name"],
+                        id=span_id,
+                        style={
+                            "borderBottom": "1px dotted #999",
+                            "cursor": "pointer",
+                        } if tooltip_text else {},
+                    )
+                )
+                if tooltip_text:
+                    tooltip_components.append(
+                        dbc.Tooltip(
+                            tooltip_text,
+                            target=span_id,
+                            placement="top",
+                        )
+                    )
+                table_rows.append(html.Tr([
+                    name_cell,
+                    html.Td(f"{t['stat']:.4f}"),
+                    html.Td(f"{p:.2e}{sig_marker}", style=p_style),
+                    html.Td(t["note"]),
+                ]))
+
+            # Effect size row
+            es = stat_results["effect_size"]
+            if es:
+                es_tooltip_text = _test_tooltips.get(es["name"], "")
+                es_span_id = "stat-test-name-es"
+                table_rows.append(html.Tr([
+                    html.Td(
+                        html.Span(
+                            es["name"],
+                            id=es_span_id,
+                            style={
+                                "fontStyle": "italic",
+                                "borderBottom": "1px dotted #999",
+                                "cursor": "pointer",
+                            } if es_tooltip_text else {"fontStyle": "italic"},
+                        )
+                    ),
+                    html.Td(f"{es['value']:.3f}"),
+                    html.Td(""),
+                    html.Td(es["interpretation"]),
+                ], className="table-secondary"))
+                if es_tooltip_text:
+                    tooltip_components.append(
+                        dbc.Tooltip(
+                            es_tooltip_text,
+                            target=es_span_id,
+                            placement="top",
+                        )
+                    )
+
+            ctrl_label = CONTROL_STRAIN.replace("_", " ")
+            test_label = strain.replace("_", " ")
+            stats_div = html.Div([
+                html.H6(
+                    f"Statistical Tests — {metric_idx} "
+                    f"(n_ctrl={stat_results['n_control']}, n_test={stat_results['n_test']})",
+                    className="mb-2",
+                ),
+                html.Small(
+                    f"Control: {ctrl_label} vs Test: {test_label}",
+                    className="text-muted d-block mb-2",
+                ),
+                dbc.Table([
+                    html.Thead(html.Tr([
+                        html.Th("Test"),
+                        html.Th("Statistic"),
+                        html.Th("p-value"),
+                        html.Th("Note"),
+                    ])),
+                    html.Tbody(table_rows),
+                ], bordered=True, size="sm", striped=True, className="mt-2"),
+                html.Small(
+                    "* significant at p < 0.05. "
+                    "Normality assessed with Shapiro-Wilk; "
+                    "if both groups normal → Welch's t-test, otherwise → Mann-Whitney U. "
+                    "KS test assesses distributional equality. "
+                    "Effect size: Cohen's d (parametric) or rank-biserial r (non-parametric).",
+                    className="text-muted",
+                ),
+                # Tooltip components (must be in the layout to render)
+                *tooltip_components,
+            ], className="mt-3")
+
+        return ts_fig, violin_fig, stats_div
 
 
 # ---- Helper functions for building plots ----

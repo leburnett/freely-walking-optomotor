@@ -144,16 +144,18 @@ def _collect_strain_metrics(
         return np.empty((0, 6))
 
     if rep_mode == "average":
-        # Average R1 & R2 per fly per frame
+        # Average R1 & R2 per fly per frame (group by cohort+fly to keep flies distinct)
         grouped = (
-            subset.groupby(["fly_idx", "frame"])[["fv_data", "curv_data", "dist_data"]]
+            subset.groupby(["cohort_id", "fly_idx", "frame"])[["fv_data", "curv_data", "dist_data"]]
             .mean()
             .reset_index()
         )
-        fly_ids = sorted(grouped["fly_idx"].unique())
+        fly_keys = sorted(grouped.groupby(["cohort_id", "fly_idx"]).groups.keys())
         metrics = []
-        for fly_idx in fly_ids:
-            fly_df = grouped[grouped["fly_idx"] == fly_idx].sort_values("frame")
+        for cohort_id, fly_idx in fly_keys:
+            fly_df = grouped[
+                (grouped["cohort_id"] == cohort_id) & (grouped["fly_idx"] == fly_idx)
+            ].sort_values("frame")
             metrics.append(compute_fly_metrics(
                 fly_df["frame"].values,
                 fly_df["fv_data"].values,
@@ -161,11 +163,15 @@ def _collect_strain_metrics(
                 fly_df["dist_data"].values,
             ))
     else:
-        # Treat each rep as independent
-        fly_reps = sorted(subset.groupby(["fly_idx", "rep"]).groups.keys())
+        # Treat each rep as independent (group by cohort+fly+rep)
+        fly_reps = sorted(subset.groupby(["cohort_id", "fly_idx", "rep"]).groups.keys())
         metrics = []
-        for fly_idx, rep in fly_reps:
-            fly_df = subset[(subset["fly_idx"] == fly_idx) & (subset["rep"] == rep)].sort_values("frame")
+        for cohort_id, fly_idx, rep in fly_reps:
+            fly_df = subset[
+                (subset["cohort_id"] == cohort_id)
+                & (subset["fly_idx"] == fly_idx)
+                & (subset["rep"] == rep)
+            ].sort_values("frame")
             metrics.append(compute_fly_metrics(
                 fly_df["frame"].values,
                 fly_df["fv_data"].values,
@@ -252,9 +258,10 @@ def compute_heatmap_data(
         control_data : np.ndarray — (n_control_flies, 6)
         direction    : np.ndarray (n_strains, 6) — +1 or -1 (target vs control)
     """
-    strains = store.get_strains()
-    # Exclude control strain from rows
-    test_strains = [s for s in strains if s != CONTROL_STRAIN]
+    from dashboard.constants import HEATMAP_STRAIN_ORDER
+    available = set(store.get_strains())
+    # Use custom order, filtering to available strains only
+    test_strains = [s for s in HEATMAP_STRAIN_ORDER if s in available]
 
     # Compute control metrics
     control_metrics = _collect_strain_metrics(store, CONTROL_STRAIN, condition_id, apply_qc, rep_mode)
@@ -304,3 +311,129 @@ def compute_heatmap_data(
         "control_data": control_metrics,
         "direction": direction,
     }
+
+
+def compute_drilldown_stats(
+    control_vals: np.ndarray,
+    test_vals: np.ndarray,
+) -> dict:
+    """Run comprehensive statistical tests comparing test vs control.
+
+    Parameters
+    ----------
+    control_vals, test_vals : 1-D arrays of per-fly scalar metric values
+        (NaN-free).
+
+    Returns
+    -------
+    dict with keys:
+        n_control, n_test : sample sizes
+        tests : list of dicts, each with name, stat, pvalue, note
+        chosen_test : dict (the primary location test)
+        effect_size : dict with name, value, interpretation
+    """
+    result = {
+        "n_control": len(control_vals),
+        "n_test": len(test_vals),
+        "tests": [],
+        "chosen_test": None,
+        "effect_size": None,
+    }
+
+    # 1. Normality: Shapiro-Wilk on each group (requires n >= 3)
+    ctrl_normal = True
+    test_normal = True
+
+    if len(control_vals) >= 3:
+        sw_ctrl = stats.shapiro(control_vals)
+        ctrl_normal = sw_ctrl.pvalue > 0.05
+        result["tests"].append({
+            "name": "Shapiro-Wilk (control)",
+            "stat": float(sw_ctrl.statistic),
+            "pvalue": float(sw_ctrl.pvalue),
+            "note": "normal" if ctrl_normal else "non-normal",
+        })
+
+    if len(test_vals) >= 3:
+        sw_test = stats.shapiro(test_vals)
+        test_normal = sw_test.pvalue > 0.05
+        result["tests"].append({
+            "name": "Shapiro-Wilk (test strain)",
+            "stat": float(sw_test.statistic),
+            "pvalue": float(sw_test.pvalue),
+            "note": "normal" if test_normal else "non-normal",
+        })
+
+    # 2. Equal variances: Levene's test
+    lev = stats.levene(control_vals, test_vals)
+    equal_var = lev.pvalue > 0.05
+    result["tests"].append({
+        "name": "Levene's test",
+        "stat": float(lev.statistic),
+        "pvalue": float(lev.pvalue),
+        "note": "equal variance" if equal_var else "unequal variance",
+    })
+
+    # 3. Primary comparison: parametric or non-parametric
+    both_normal = ctrl_normal and test_normal
+
+    if both_normal:
+        # Welch's t-test (robust to unequal variance)
+        tt = stats.ttest_ind(test_vals, control_vals, equal_var=False)
+        chosen = {
+            "name": "Welch's t-test",
+            "stat": float(tt.statistic),
+            "pvalue": float(tt.pvalue),
+            "note": "parametric (both groups normal)",
+        }
+    else:
+        # Mann-Whitney U
+        mw = stats.mannwhitneyu(test_vals, control_vals, alternative="two-sided")
+        chosen = {
+            "name": "Mann-Whitney U",
+            "stat": float(mw.statistic),
+            "pvalue": float(mw.pvalue),
+            "note": "non-parametric (normality violated)",
+        }
+
+    result["tests"].append(chosen)
+    result["chosen_test"] = chosen
+
+    # 4. Distribution equality: Kolmogorov-Smirnov 2-sample
+    ks = stats.ks_2samp(test_vals, control_vals)
+    result["tests"].append({
+        "name": "Kolmogorov-Smirnov",
+        "stat": float(ks.statistic),
+        "pvalue": float(ks.pvalue),
+        "note": "distribution equality",
+    })
+
+    # 5. Effect size
+    n1, n2 = len(control_vals), len(test_vals)
+    if both_normal:
+        # Cohen's d (pooled SD)
+        pooled_std = np.sqrt(
+            ((n1 - 1) * np.var(control_vals, ddof=1)
+             + (n2 - 1) * np.var(test_vals, ddof=1)) / (n1 + n2 - 2)
+        )
+        d = (np.mean(test_vals) - np.mean(control_vals)) / pooled_std if pooled_std > 0 else 0.0
+        interp = (
+            "negligible" if abs(d) < 0.2 else
+            "small" if abs(d) < 0.5 else
+            "medium" if abs(d) < 0.8 else
+            "large"
+        )
+        result["effect_size"] = {"name": "Cohen's d", "value": float(d), "interpretation": interp}
+    else:
+        # Rank-biserial correlation: r = 1 - 2U/(n1*n2)
+        mw = stats.mannwhitneyu(test_vals, control_vals, alternative="two-sided")
+        r_rb = 1 - (2 * mw.statistic) / (n1 * n2)
+        interp = (
+            "negligible" if abs(r_rb) < 0.1 else
+            "small" if abs(r_rb) < 0.3 else
+            "medium" if abs(r_rb) < 0.5 else
+            "large"
+        )
+        result["effect_size"] = {"name": "Rank-biserial r", "value": float(r_rb), "interpretation": interp}
+
+    return result

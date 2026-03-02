@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dashboard",
+      "runtimeExecutable": "/Users/burnettl/Documents/GitHub/freely-walking-optomotor/python/freely-walking-python/.pixi/envs/default/bin/python",
+      "runtimeArgs": ["-m", "dashboard.app"],
+      "port": 8050,
+      "cwd": "/Users/burnettl/Documents/GitHub/freely-walking-optomotor/python/freely-walking-python"
+    }
+  ]
+}

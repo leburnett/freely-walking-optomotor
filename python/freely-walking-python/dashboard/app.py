@@ -358,12 +358,18 @@ heatmap_tab = dbc.Tab(
                     ),
                 ], width=4),
             ], className="mb-3"),
-            dcc.Loading(
-                dcc.Graph(
-                    id="heatmap-main",
-                    config={"displayModeBar": True},
+            dbc.Row(
+                dbc.Col(
+                    dcc.Loading(
+                        dcc.Graph(
+                            id="heatmap-main",
+                            config={"displayModeBar": True},
+                        ),
+                        type="circle",
+                    ),
+                    width=10,
                 ),
-                type="circle",
+                justify="center",
             ),
             html.Hr(),
             dbc.Row([
@@ -376,6 +382,8 @@ heatmap_tab = dbc.Tab(
                     width=5,
                 ),
             ]),
+            html.Hr(),
+            html.Div(id="heatmap-stats"),
             dcc.Store(id="heatmap-cache"),
         ], className="p-3"),
     ],
