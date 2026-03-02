@@ -23,7 +23,7 @@ function cfg = get_config()
     %% === EDIT THIS LINE FOR YOUR COMPUTER ===
     % cfg.project_root = '/Users/burnettl/Documents/Projects/oaky_cokey';
     % Windows example:
-    cfg.project_root = 'C:\Users\labadmin\Documents\freely-walking-optomotory';
+    cfg.project_root = 'C:\Users\labadmin\Documents\freely-walking-optomotor';
 
     %% === DO NOT EDIT BELOW THIS LINE ===
 
