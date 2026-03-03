@@ -45,6 +45,7 @@ from python.automation.shared.registry import generate_status_page
 from python.automation.shared.status import (
     PIPELINE_STAGES,
     STATUS_FILENAME,
+    _get_machine_role,
     init_status,
     read_status,
     update_stage,
@@ -523,11 +524,15 @@ def process_one_experiment(exp, network_results_index, local_results_index, args
         # Infer pipeline stage
         stage = infer_stage(folder_path, metadata, network_results_index, local_results_index)
 
-        # Compute cross-reference flags
+        # Compute cross-reference flags, tagged by machine role
         date = metadata.get("date", "")
         time_str = metadata.get("time", "")
         has_local = (date, time_str) in local_results_index if local_results_index else False
         has_network = (date, time_str) in network_results_index
+
+        machine_role = _get_machine_role()
+        has_local_acq = has_local and machine_role == "acquisition"
+        has_local_proc = has_local and machine_role == "processing"
 
         if args.dry_run:
             return {
@@ -535,7 +540,8 @@ def process_one_experiment(exp, network_results_index, local_results_index, args
                 "folder": folder_path,
                 "metadata": metadata,
                 "inferred_stage": stage,
-                "has_local_results": has_local,
+                "has_local_results_acquisition": has_local_acq,
+                "has_local_results_processing": has_local_proc,
                 "has_network_results": has_network,
             }
 
@@ -573,7 +579,8 @@ def process_one_experiment(exp, network_results_index, local_results_index, args
             "folder": folder_path,
             "metadata": metadata,
             "inferred_stage": stage,
-            "has_local_results": has_local,
+            "has_local_results_acquisition": has_local_acq,
+            "has_local_results_processing": has_local_proc,
             "has_network_results": has_network,
         }
 
@@ -590,13 +597,22 @@ def process_one_experiment(exp, network_results_index, local_results_index, args
 # Global registry writing
 # ---------------------------------------------------------------------------
 
+def _merge_cross_ref(target, source):
+    """OR cross-reference boolean flags from source into target."""
+    for field in (
+        "has_local_results_acquisition",
+        "has_local_results_processing",
+        "has_network_results",
+    ):
+        target[field] = target.get(field, False) or source.get(field, False)
+
+
 def write_global_registry(results, output_registry):
     """Write all experiment statuses to the global registry.
 
     Deduplicates by (date, time) key, keeping the entry with the highest
-    pipeline stage. This handles the case where the same experiment is
-    found in multiple scan paths (e.g., both network unprocessed and
-    network processed).
+    pipeline stage. Merges with the existing registry so that running
+    backfill on one machine preserves entries written by the other machine.
 
     Args:
         results: List of result dicts from process_one_experiment.
@@ -622,13 +638,15 @@ def write_global_registry(results, output_registry):
                 f"{meta.get('strain', '')}_{meta.get('protocol', '')}_{meta.get('sex', '')}"
             ),
             "date": date,
+            "time": time_str,
             "protocol": meta.get("protocol", ""),
             "strain": meta.get("strain", ""),
             "sex": meta.get("sex", ""),
             "current_stage": r.get("inferred_stage", ""),
             "last_updated": datetime.now().isoformat(timespec="seconds"),
             "has_errors": False,
-            "has_local_results": r.get("has_local_results", False),
+            "has_local_results_acquisition": r.get("has_local_results_acquisition", False),
+            "has_local_results_processing": r.get("has_local_results_processing", False),
             "has_network_results": r.get("has_network_results", False),
         }
 
@@ -639,23 +657,35 @@ def write_global_registry(results, output_registry):
 
             # Keep the higher-stage entry; merge cross-reference flags
             if new_prio > existing_prio:
-                entry["has_local_results"] = (
-                    entry["has_local_results"] or existing["has_local_results"]
-                )
-                entry["has_network_results"] = (
-                    entry["has_network_results"] or existing["has_network_results"]
-                )
+                _merge_cross_ref(entry, existing)
                 best[dedup_key] = entry
             else:
-                # Keep existing but merge flags
-                existing["has_local_results"] = (
-                    existing["has_local_results"] or entry["has_local_results"]
-                )
-                existing["has_network_results"] = (
-                    existing["has_network_results"] or entry["has_network_results"]
-                )
+                _merge_cross_ref(existing, entry)
         else:
             best[dedup_key] = entry
+
+    # Merge with existing registry (preserves entries from the other machine)
+    if os.path.exists(output_registry):
+        try:
+            with open(output_registry, "r") as f:
+                old_registry = json.load(f)
+            old_count = 0
+            for exp in old_registry.get("experiments", []):
+                key = (exp.get("date", ""), exp.get("time", ""))
+                if key == ("", ""):
+                    continue  # Skip entries without date/time
+                if key not in best:
+                    best[key] = exp  # Preserve entry from other machine's run
+                    old_count += 1
+                else:
+                    # Entry exists in both — merge cross-reference flags
+                    _merge_cross_ref(best[key], exp)
+            if old_count:
+                logger.info(
+                    f"Merged {old_count} existing entries from previous registry"
+                )
+        except (json.JSONDecodeError, OSError) as e:
+            logger.warning(f"Could not read existing registry for merge: {e}")
 
     experiments = list(best.values())
 
@@ -820,6 +850,22 @@ def main():
                 "Could not import PIPELINE_REGISTRY from config. "
                 f"Using local file: {args.output_registry}"
             )
+
+    # Check machine role for local results tagging
+    machine_role = _get_machine_role()
+    if machine_role not in ("acquisition", "processing"):
+        logger.warning(
+            f"MACHINE_ROLE is '{machine_role}'; local results cannot be attributed "
+            "to a specific machine. Set MACHINE_ROLE environment variable to "
+            "'acquisition' or 'processing'."
+        )
+        print(
+            f"WARNING: MACHINE_ROLE='{machine_role}'. "
+            "Local results will not be tagged to a specific machine.\n"
+            "  Set with: setx MACHINE_ROLE acquisition  (or processing)\n"
+        )
+    else:
+        print(f"Machine role: {machine_role}\n")
 
     # Resolve local results path
     if args.local_results_path is None:

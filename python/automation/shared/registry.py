@@ -77,7 +77,11 @@ def update_registry(experiment_status):
     for i, exp in enumerate(experiments):
         if exp.get("experiment_id") == exp_id:
             # Preserve cross-reference fields if not in the new summary
-            for field in ("has_local_results", "has_network_results"):
+            for field in (
+                "has_local_results_acquisition",
+                "has_local_results_processing",
+                "has_network_results",
+            ):
                 if field not in summary and field in exp:
                     summary[field] = exp[field]
             experiments[i] = summary
@@ -174,7 +178,8 @@ def _build_html(experiments, last_updated, stage_counts, error_count):
     summary_html = " ".join(summary_items)
 
     # Cross-reference counts
-    local_count = sum(1 for e in experiments if e.get("has_local_results"))
+    local_acq_count = sum(1 for e in experiments if e.get("has_local_results_acquisition"))
+    local_proc_count = sum(1 for e in experiments if e.get("has_local_results_processing"))
     network_count = sum(1 for e in experiments if e.get("has_network_results"))
 
     # Embed experiment data as JS for stacked bar charts
@@ -193,9 +198,11 @@ def _build_html(experiments, last_updated, stage_counts, error_count):
         has_errors = exp.get("has_errors", False)
         error_indicator = ' <span class="error-dot">&#9679;</span>' if has_errors else ""
         stage_label = stage.replace("_", " ").title()
-        has_local = exp.get("has_local_results", False)
+        has_local_acq = exp.get("has_local_results_acquisition", False)
+        has_local_proc = exp.get("has_local_results_processing", False)
         has_network = exp.get("has_network_results", False)
-        local_indicator = "&#10003;" if has_local else ""
+        local_acq_ind = "&#10003;" if has_local_acq else ""
+        local_proc_ind = "&#10003;" if has_local_proc else ""
         network_indicator = "&#10003;" if has_network else ""
 
         rows.append(f"""        <tr>
@@ -203,7 +210,8 @@ def _build_html(experiments, last_updated, stage_counts, error_count):
             <td>{exp.get('protocol', '')}</td>
             <td>{exp.get('strain', '')}</td>
             <td><span class="badge" style="background-color:{color}">{stage_label}</span>{error_indicator}</td>
-            <td class="check-cell">{local_indicator}</td>
+            <td class="check-cell">{local_acq_ind}</td>
+            <td class="check-cell">{local_proc_ind}</td>
             <td class="check-cell">{network_indicator}</td>
             <td>{exp.get('last_updated', '')}</td>
         </tr>""")
@@ -280,8 +288,9 @@ def _build_html(experiments, last_updated, stage_counts, error_count):
         <span class="total">Total: {total}</span>
         {summary_html}
         {"<span class='badge error-count'>Errors: " + str(error_count) + "</span>" if error_count else ""}
-        {"<span class='badge' style='background-color:#495057'>Local results: " + str(local_count) + "</span>" if local_count else ""}
-        {"<span class='badge' style='background-color:#495057'>Network results: " + str(network_count) + "</span>" if network_count else ""}
+        {"<span class='badge' style='background-color:#495057'>Local-Acq: " + str(local_acq_count) + "</span>" if local_acq_count else ""}
+        {"<span class='badge' style='background-color:#495057'>Local-Proc: " + str(local_proc_count) + "</span>" if local_proc_count else ""}
+        {"<span class='badge' style='background-color:#495057'>Network: " + str(network_count) + "</span>" if network_count else ""}
     </div>
 
     <details class="pipeline-info" open>
@@ -405,9 +414,10 @@ def _build_html(experiments, last_updated, stage_counts, error_count):
                 <th onclick="sortTable(1)">Protocol</th>
                 <th onclick="sortTable(2)">Strain</th>
                 <th onclick="sortTable(3)">Stage</th>
-                <th onclick="sortTable(4)" title="Result file exists in local results folder">Local</th>
-                <th onclick="sortTable(5)" title="Result file exists in network exp_results">Network</th>
-                <th onclick="sortTable(6)">Last Updated</th>
+                <th onclick="sortTable(4)" title="Result file exists on acquisition machine">Local-Acq</th>
+                <th onclick="sortTable(5)" title="Result file exists on processing machine">Local-Proc</th>
+                <th onclick="sortTable(6)" title="Result file exists in network exp_results">Network</th>
+                <th onclick="sortTable(7)">Last Updated</th>
             </tr>
         </thead>
         <tbody>
