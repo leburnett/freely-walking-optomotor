@@ -32,6 +32,13 @@ app.title = "Freely-Walking Optomotor Dashboard"
 default_preprocessed = Path(DEFAULT_DATA_DIR).parent / f"{Path(DEFAULT_DATA_DIR).name}_preprocessed"
 data_store = DataStore(default_preprocessed)
 
+# Pre-load all strain data into memory for fast interactive use.
+# This trades a longer startup (~20-30s) for near-instant interactions.
+if data_store.is_valid:
+    print("Pre-loading all strain data into memory...")
+    data_store.warm_cache()
+    print("Data loaded. Starting server.")
+
 # ---- Sidebar ----
 sidebar = dbc.Card(
     [

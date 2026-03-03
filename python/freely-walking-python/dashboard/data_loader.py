@@ -19,6 +19,23 @@ class DataStore:
         self._per_fly_cache: dict[str, pd.DataFrame] = {}
         self._metadata_summary_cache: pd.DataFrame | None = None
         self._temperatures_df: pd.DataFrame | None = None
+        self._summary_variants: dict[str, pd.DataFrame] = {}  # keyed by "qc{0|1}_rep{mode}"
+
+    def warm_cache(self):
+        """Pre-load all per-fly Parquets into memory for fast interactive use.
+
+        Call at startup to eliminate first-access latency (~0.3-0.4s per strain).
+        Total memory usage is ~1.5 GB for all strains.
+        """
+        import time
+        meta = self.load_metadata()
+        strains = meta["strain"].tolist()
+        t0 = time.time()
+        for i, strain in enumerate(strains, 1):
+            self.load_per_fly(strain)
+            print(f"  [{i}/{len(strains)}] {strain}")
+        elapsed = time.time() - t0
+        print(f"  All {len(strains)} strains loaded in {elapsed:.1f}s")
 
     @property
     def is_valid(self) -> bool:
@@ -73,6 +90,44 @@ class DataStore:
         df = self.load_summary()
         mask = (df["strain"] == strain) & (df["condition"] == condition) & (df["metric"] == metric)
         return df[mask].sort_values("frame").reset_index(drop=True)
+
+    def get_summary_for_settings(
+        self,
+        strain: str,
+        condition: int,
+        metric: str,
+        apply_qc: bool = False,
+        rep_mode: str = "interleave",
+        central_tendency: str = "mean",
+        dispersion: str = "sem",
+    ) -> pd.DataFrame | None:
+        """Look up pre-computed summary for any QC/rep/stat combination.
+
+        Returns DataFrame with columns: frame, time_s, mean, sem, n_flies
+        (column names kept as 'mean'/'sem' for backward compatibility).
+        Returns None if the pre-computed file doesn't exist (caller should
+        fall back to compute_summary_on_the_fly).
+        """
+        key = f"qc{int(apply_qc)}_rep{rep_mode}"
+        if key not in self._summary_variants:
+            path = self.preprocessed_dir / f"strain_summary_{key}.parquet"
+            if path.exists():
+                self._summary_variants[key] = pd.read_parquet(path)
+            else:
+                return None
+        df = self._summary_variants[key]
+        mask = (df["strain"] == strain) & (df["condition"] == condition) & (df["metric"] == metric)
+        subset = df[mask]
+        if subset.empty:
+            return pd.DataFrame(columns=["frame", "time_s", "mean", "sem", "n_flies"])
+        # Select the requested central tendency and dispersion columns
+        col_center = central_tendency  # "mean" or "median"
+        col_disp = dispersion if dispersion != "none" else "sem"  # fallback
+        result = subset[["frame", "time_s", col_center, col_disp, "n_flies"]].copy()
+        result.columns = ["frame", "time_s", "mean", "sem", "n_flies"]
+        if dispersion == "none":
+            result["sem"] = 0.0
+        return result.sort_values("frame").reset_index(drop=True)
 
     def get_cohort_data(
         self,

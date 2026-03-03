@@ -35,6 +35,15 @@ _SMOOTH_WINDOW = 15  # moving-average window for turning metrics
 _FLIP_START = 762  # start of sign-flip region (second half of stimulus)
 _FLIP_END = 1210
 
+# Module-level cache for heatmap results, keyed by (condition_id, apply_qc, rep_mode).
+# Avoids re-computing 17 strains × 96 t-tests when switching between conditions.
+_heatmap_cache: dict[tuple, dict] = {}
+
+
+def invalidate_heatmap_cache():
+    """Clear the heatmap cache (call when data path changes)."""
+    _heatmap_cache.clear()
+
 
 def _frame_mask(frames: np.ndarray, start: int, end: int) -> np.ndarray:
     """Boolean mask for frames in [start, end] (inclusive)."""
@@ -261,6 +270,9 @@ def compute_heatmap_data(
 ) -> dict:
     """Compute full heatmap data for one condition.
 
+    Results are cached by (condition_id, apply_qc, rep_mode) so switching
+    between previously viewed conditions is instant.
+
     Returns dict with keys:
         z_matrix     : np.ndarray (n_strains, 6) — signed intensity values [-1, 1]
         p_matrix     : np.ndarray (n_strains, 6) — raw p-values
@@ -270,6 +282,10 @@ def compute_heatmap_data(
         control_data : np.ndarray — (n_control_flies, 6)
         direction    : np.ndarray (n_strains, 6) — +1 or -1 (target vs control)
     """
+    cache_key = (condition_id, apply_qc, rep_mode)
+    if cache_key in _heatmap_cache:
+        return _heatmap_cache[cache_key]
+
     from dashboard.constants import HEATMAP_STRAIN_ORDER
     available = set(store.get_strains())
     # Use custom order, filtering to available strains only
@@ -332,7 +348,7 @@ def compute_heatmap_data(
             label = "no data" if n == 0 else f"{n} fly"
             warnings.append(f"{strain.replace('_', ' ')}: {label}")
 
-    return {
+    result = {
         "z_matrix": z_matrix,
         "p_matrix": p_matrix,
         "rejected": rejected,
@@ -344,6 +360,8 @@ def compute_heatmap_data(
         "n_flies_per_strain": n_flies_per_strain,
         "warnings": warnings,
     }
+    _heatmap_cache[cache_key] = result
+    return result
 
 
 def compute_drilldown_stats(

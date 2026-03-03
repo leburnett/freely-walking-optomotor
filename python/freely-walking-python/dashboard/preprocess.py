@@ -150,10 +150,13 @@ def build_summary_dataframe(
                 frame_indices = np.arange(0, n_frames, downsample)
 
                 mean_vals = np.nanmean(cond_data, axis=0)
+                median_vals = np.nanmedian(cond_data, axis=0)
                 n_valid = np.sum(~np.isnan(cond_data), axis=0)
-                sem_vals = np.nanstd(cond_data, axis=0) / np.sqrt(
-                    np.maximum(n_valid, 1)
-                )
+                std_vals = np.nanstd(cond_data, axis=0)
+                sem_vals = std_vals / np.sqrt(np.maximum(n_valid, 1))
+                # MAD: median(|x - median(x)|) per frame
+                med_broadcast = np.nanmedian(cond_data, axis=0, keepdims=True)
+                mad_vals = np.nanmedian(np.abs(cond_data - med_broadcast), axis=0)
 
                 for fi in frame_indices:
                     rows.append({
@@ -164,7 +167,9 @@ def build_summary_dataframe(
                         "frame": int(fi),
                         "time_s": round(fi / FPS, 3),
                         "mean": float(mean_vals[fi]),
+                        "median": float(median_vals[fi]),
                         "sem": float(sem_vals[fi]),
+                        "mad": float(mad_vals[fi]),
                         "n_flies": int(n_valid[fi]),
                         "n_cohorts": len(cohort_results),
                     })
@@ -246,13 +251,30 @@ def main():
         size_mb = out_path.stat().st_size / 1e6
         print(f"  {strain}: {n_rows:,} rows, {size_mb:.1f} MB")
 
-    # Build and save summary
-    print("\nBuilding strain summary...")
+    # Build and save summary (default: no QC, interleave reps)
+    print("\nBuilding strain summaries...")
     summary_df = build_summary_dataframe(all_strain_cohorts)
     summary_path = output_dir / "strain_summary.parquet"
     summary_df.to_parquet(summary_path, index=False)
     size_mb = summary_path.stat().st_size / 1e6
-    print(f"Summary: {len(summary_df):,} rows, {size_mb:.1f} MB")
+    print(f"  Default (no QC, interleave): {len(summary_df):,} rows, {size_mb:.1f} MB")
+
+    # Pre-compute summaries for all QC × rep combinations so the
+    # dashboard can serve any setting without on-the-fly recomputation.
+    SUMMARY_COMBOS = [
+        {"apply_qc": False, "rep_mode": "interleave"},
+        {"apply_qc": True,  "rep_mode": "interleave"},
+        {"apply_qc": False, "rep_mode": "average"},
+        {"apply_qc": True,  "rep_mode": "average"},
+    ]
+    for combo in SUMMARY_COMBOS:
+        key = f"qc{int(combo['apply_qc'])}_rep{combo['rep_mode']}"
+        print(f"  Building {key}...")
+        df = build_summary_dataframe(all_strain_cohorts, **combo)
+        path = output_dir / f"strain_summary_{key}.parquet"
+        df.to_parquet(path, index=False)
+        size_mb = path.stat().st_size / 1e6
+        print(f"  {key}: {len(df):,} rows, {size_mb:.1f} MB")
 
     # Save metadata
     meta_df = pd.DataFrame(

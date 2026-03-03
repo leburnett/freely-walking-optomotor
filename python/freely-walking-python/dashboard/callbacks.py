@@ -6,6 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from dash import Input, Output, State, callback_context, html, no_update
+from dash.exceptions import PreventUpdate
 
 from dashboard.constants import (
     CONDITION_COLORS,
@@ -93,8 +94,10 @@ def register_callbacks(app, data_store):
         if not preprocessed_dir.exists():
             return [], None, f"Preprocessed data not found at {preprocessed_dir}. Run preprocess.py first."
 
-        # Update the global data store
+        # Update the global data store and invalidate caches
         data_store.__init__(preprocessed_dir)
+        from dashboard.heatmap import invalidate_heatmap_cache
+        invalidate_heatmap_cache()
         if not data_store.is_valid:
             return [], None, "Invalid preprocessed directory."
 
@@ -156,9 +159,12 @@ def register_callbacks(app, data_store):
         Input("qc-toggle", "value"),
         Input("central-tendency-toggle", "value"),
         Input("dispersion-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
     def update_cohort_plot(strain, cohort_id, condition, metric, qc_on,
-                           central_tendency, dispersion):
+                           central_tendency, dispersion, active_tab):
+        if active_tab != "tab-cohort":
+            raise PreventUpdate
         if not strain or not cohort_id or not metric:
             return go.Figure()
 
@@ -193,9 +199,12 @@ def register_callbacks(app, data_store):
         Input("strain-condition-dropdown", "value"),
         Input("central-tendency-toggle", "value"),
         Input("dispersion-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
     def update_strain_plot(strain, metric, qc_on, rep_mode, view_mode, condition,
-                           central_tendency, dispersion):
+                           central_tendency, dispersion, active_tab):
+        if active_tab != "tab-strain":
+            raise PreventUpdate
         if not strain or not metric:
             return go.Figure()
 
@@ -230,9 +239,12 @@ def register_callbacks(app, data_store):
         Input("comparison-view-mode", "value"),
         Input("central-tendency-toggle", "value"),
         Input("dispersion-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
     def update_comparison_plot(condition, metric, selected_strains, qc_on, rep_mode, view_mode,
-                               central_tendency, dispersion):
+                               central_tendency, dispersion, active_tab):
+        if active_tab != "tab-comparison":
+            raise PreventUpdate
         if not metric or not selected_strains:
             return go.Figure()
 
@@ -278,9 +290,12 @@ def register_callbacks(app, data_store):
         Input("qc-toggle", "value"),
         Input("central-tendency-toggle", "value"),
         Input("dispersion-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
     def update_cohort_boxchart(strain, cohort_id, condition, metric, qc_on,
-                               central_tendency, dispersion):
+                               central_tendency, dispersion, active_tab):
+        if active_tab != "tab-cohort":
+            raise PreventUpdate
         if not strain or not cohort_id or not metric:
             return go.Figure(), {}
 
@@ -343,9 +358,12 @@ def register_callbacks(app, data_store):
         Input("strain-condition-dropdown", "value"),
         Input("central-tendency-toggle", "value"),
         Input("dispersion-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
     def update_strain_boxchart(strain, metric, qc_on, rep_mode, view_mode, condition,
-                               central_tendency, dispersion):
+                               central_tendency, dispersion, active_tab):
+        if active_tab != "tab-strain":
+            raise PreventUpdate
         if not strain or not metric:
             return go.Figure(), {}
 
@@ -416,9 +434,12 @@ def register_callbacks(app, data_store):
         Input("comparison-view-mode", "value"),
         Input("central-tendency-toggle", "value"),
         Input("dispersion-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
     def update_comparison_boxchart(condition, metric, selected_strains, qc_on, rep_mode,
-                                   view_mode, central_tendency, dispersion):
+                                   view_mode, central_tendency, dispersion, active_tab):
+        if active_tab != "tab-comparison":
+            raise PreventUpdate
         if view_mode == "grid":
             empty = go.Figure()
             empty.add_annotation(
@@ -481,9 +502,12 @@ def register_callbacks(app, data_store):
         Output("metadata-gantt", "figure"),
         Output("metadata-temp", "figure"),
         Input("strain-dropdown", "options"),
+        Input("main-tabs", "active_tab"),
         State("data-path-input", "value"),
     )
-    def update_metadata_tab(strain_options, data_path):
+    def update_metadata_tab(strain_options, active_tab, data_path):
+        if active_tab != "tab-metadata":
+            raise PreventUpdate
         empty_fig = go.Figure()
         empty_fig.add_annotation(
             text="Enter a data path to load metadata.",
@@ -694,8 +718,11 @@ def register_callbacks(app, data_store):
         Input("cohort-dropdown", "value"),
         Input("metric-dropdown", "value"),
         Input("qc-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
-    def update_acclim_stats(strain, cohort_id, metric, qc_on):
+    def update_acclim_stats(strain, cohort_id, metric, qc_on, active_tab):
+        if active_tab != "tab-cohort":
+            raise PreventUpdate
         if not strain or not cohort_id or not metric:
             return "No data selected."
 
@@ -727,8 +754,11 @@ def register_callbacks(app, data_store):
         Input("cohort-dropdown", "value"),
         Input("metric-dropdown", "value"),
         Input("qc-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
-    def update_acclim_plot(is_open, strain, cohort_id, metric, qc_on):
+    def update_acclim_plot(is_open, strain, cohort_id, metric, qc_on, active_tab):
+        if active_tab != "tab-cohort":
+            raise PreventUpdate
         if not is_open or not strain or not cohort_id or not metric:
             return go.Figure()
 
@@ -782,8 +812,11 @@ def register_callbacks(app, data_store):
         Input("heatmap-condition", "value"),
         Input("qc-toggle", "value"),
         Input("rep-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
-    def update_heatmap(condition_val, qc_on, rep_mode):
+    def update_heatmap(condition_val, qc_on, rep_mode, active_tab):
+        if active_tab != "tab-heatmap":
+            raise PreventUpdate
         from dashboard.heatmap import compute_heatmap_data
         from dashboard.constants import HEATMAP_METRICS, CONTROL_STRAIN
 
@@ -1660,11 +1693,14 @@ def _get_summary_data(strain, cond_n, metric, apply_qc, rep_mode, use_default, s
     """Get central tendency / dispersion data, using pre-computed summary when possible."""
     # Derived metrics are always computed on-the-fly (no pre-computed data available)
     if metric not in DERIVED_METRICS:
-        # Fast path 1: no QC, interleave, mean, SEM (original pre-computed summary)
-        if use_default:
-            df = store.get_strain_summary(strain, cond_n, metric)
-            if not df.empty:
-                return df["time_s"].values, df["mean"].values, df["sem"].values, df["n_flies"].values
+        # Try pre-computed summary for the exact QC/rep/stat combination
+        df = store.get_summary_for_settings(
+            strain, cond_n, metric,
+            apply_qc=apply_qc, rep_mode=rep_mode,
+            central_tendency=central_tendency, dispersion=dispersion,
+        )
+        if df is not None and not df.empty:
+            return df["time_s"].values, df["mean"].values, df["sem"].values, df["n_flies"].values
 
     # Fall back to on-the-fly computation
     df = store.compute_summary_on_the_fly(
