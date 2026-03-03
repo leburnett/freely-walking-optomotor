@@ -67,7 +67,7 @@ sidebar = dbc.Card(
             dcc.Dropdown(
                 id="metric-dropdown",
                 options=[{"label": METRIC_LABELS[m], "value": m} for m in ALL_METRICS],
-                value="fv_data",
+                value="av_data",
                 className="mb-3",
                 clearable=False,
             ),
@@ -145,7 +145,7 @@ cohort_controls = dbc.Row([
                 [{"label": "All conditions", "value": "all"}]
                 + [{"label": f"{n}. {name}", "value": str(n)} for n, name in CONDITION_NAMES.items()]
             ),
-            value="all",
+            value="1",
             clearable=False,
         ),
     ], width=6),
@@ -245,6 +245,7 @@ strain_tab = dbc.Tab(
                 type="circle",
             ),
             dcc.Graph(id="strain-boxchart", config={"displayModeBar": False}),
+            html.Div(id="cohort-stats-panel"),
         ], className="p-3"),
     ],
 )

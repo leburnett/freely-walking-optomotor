@@ -350,6 +350,7 @@ def register_callbacks(app, data_store):
     @app.callback(
         Output("strain-boxchart", "figure"),
         Output("strain-boxchart", "style"),
+        Output("cohort-stats-panel", "children"),
         Input("strain-dropdown", "value"),
         Input("metric-dropdown", "value"),
         Input("qc-toggle", "value"),
@@ -365,7 +366,7 @@ def register_callbacks(app, data_store):
         if active_tab != "tab-strain":
             raise PreventUpdate
         if not strain or not metric:
-            return go.Figure(), {}
+            return go.Figure(), {}, ""
 
         apply_qc = bool(qc_on)
         fig = go.Figure()
@@ -374,24 +375,35 @@ def register_callbacks(app, data_store):
 
         if view_mode == "one_condition":
             if not condition:
-                return go.Figure(), {}
+                return go.Figure(), {}, ""
             cond_n = int(condition)
             cohorts = data_store.get_cohorts_for_strain(strain)
             n_with_data = 0
+            cohort_fly_values = {}   # label -> per-fly scalar array
             for i, cohort_id in enumerate(cohorts):
                 df = data_store.get_cohort_data(strain, cohort_id, cond_n, metric,
                                                 qc_only=apply_qc)
                 if df.empty:
                     continue
-                values = _compute_per_fly_boxchart_values(df, metric, rep_mode="interleave")
+                values = _compute_per_fly_boxchart_values(df, metric, rep_mode=rep_mode)
                 if len(values) == 0:
                     continue
                 color = STRAIN_COLORS[i % len(STRAIN_COLORS)]
                 label = cohort_id[:19]
                 fig.add_trace(_make_boxchart_trace(values, color, label))
                 means.append((label, float(np.mean(values)), color))
+                cohort_fly_values[label] = values
                 n_with_data += 1
             plot_style = {}
+
+            # Compute cohort consistency statistics and build panel
+            from dashboard.cohort_stats import compute_cohort_consistency_stats
+            if len(cohort_fly_values) >= 2:
+                stats_result = compute_cohort_consistency_stats(cohort_fly_values)
+                stats_panel = _build_cohort_stats_panel(stats_result, metric)
+                _add_cohort_flags_to_figure(fig, stats_result)
+            else:
+                stats_panel = ""
         else:
             for cond_n in range(1, len(CONDITION_NAMES) + 1):
                 df = _get_fly_data_for_boxchart(data_store, strain, cond_n, metric, apply_qc)
@@ -404,6 +416,7 @@ def register_callbacks(app, data_store):
                 fig.add_trace(_make_boxchart_trace(values, color, CONDITION_NAMES[cond_n]))
                 means.append((CONDITION_NAMES[cond_n], float(np.mean(values)), color))
             plot_style = {}
+            stats_panel = ""
 
         for name, mean_val, color in means:
             fig.add_annotation(
@@ -412,15 +425,17 @@ def register_callbacks(app, data_store):
                 font=dict(size=10, color=color), yanchor="bottom",
             )
 
+        # Extra top margin when cohort flags are present (⚠ annotation above means)
+        top_margin = 55 if (view_mode == "one_condition" and stats_panel) else 40
         fig.update_layout(
             yaxis_title=ylabel,
             template="plotly_white",
             height=350,
             showlegend=False,
-            margin=dict(t=40, b=80, l=60, r=20),
+            margin=dict(t=top_margin, b=80, l=60, r=20),
             xaxis=dict(tickangle=-30),
         )
-        return fig, plot_style
+        return fig, plot_style, stats_panel
 
     # ---- Tab 3: Cross-Strain Comparison Violin Plot ----
     @app.callback(
@@ -1919,3 +1934,141 @@ def _comparison_grid(metric, selected_strains, apply_qc, rep_mode, use_default, 
         margin=dict(t=60, b=30, l=60, r=20),
     )
     return fig
+
+
+# ---------------------------------------------------------------------------
+# Cohort consistency helpers (used by update_strain_boxchart one_condition)
+# ---------------------------------------------------------------------------
+
+
+def _add_cohort_flags_to_figure(fig, stats_result):
+    """Add red '!' annotations above flagged cohort violins."""
+    for pc in stats_result["per_cohort"]:
+        if not pc["flagged"]:
+            continue
+        reasons = []
+        if pc["flagged_mean"]:
+            reasons.append("mean")
+        if pc["flagged_spread"]:
+            reasons.append("spread")
+        reason_text = " & ".join(reasons)
+
+        fig.add_annotation(
+            x=pc["cohort_id"],
+            y=1.08,
+            yref="paper",
+            xref="x",
+            text="<b>\u26a0</b>",
+            showarrow=False,
+            font=dict(size=16, color="rgb(220,50,50)"),
+            yanchor="bottom",
+            hovertext=f"Outlier cohort ({reason_text})",
+        )
+
+
+def _build_cohort_stats_panel(stats_result, metric):
+    """Build a dash-bootstrap-components card showing cohort consistency stats."""
+    import dash_bootstrap_components as dbc
+    import math
+
+    ylabel = BOXCHART_YLABEL.get(metric, METRIC_LABELS.get(metric, metric))
+
+    # Per-cohort table rows
+    table_rows = []
+    for pc in stats_result["per_cohort"]:
+        flag_text = ""
+        if pc["flagged_mean"] and pc["flagged_spread"]:
+            flag_text = "mean & spread"
+        elif pc["flagged_mean"]:
+            flag_text = "mean"
+        elif pc["flagged_spread"]:
+            flag_text = "spread"
+
+        row_class = "table-warning" if pc["flagged"] else ""
+
+        # Format values safely (handle NaN)
+        def _fmt(val, decimals=2):
+            if val is None or (isinstance(val, float) and math.isnan(val)):
+                return "—"
+            return f"{val:.{decimals}f}"
+
+        table_rows.append(html.Tr([
+            html.Td(pc["cohort_id"]),
+            html.Td(str(pc["n_flies"])),
+            html.Td(_fmt(pc["median"])),
+            html.Td(_fmt(pc["mean"])),
+            html.Td(_fmt(pc["iqr"])),
+            html.Td(_fmt(pc["mean_zscore"], 1)),
+            html.Td(_fmt(pc["spread_zscore"], 1)),
+            html.Td(
+                html.Span(flag_text, style={"color": "#d32f2f", "fontWeight": "bold"})
+                if pc["flagged"] else ""
+            ),
+        ], className=row_class))
+
+    # Overall metrics
+    kw = stats_result["kruskal_wallis"]
+    if kw:
+        kw_text = f"p = {kw['pvalue']:.2e}"
+        kw_sig = kw["pvalue"] < 0.05
+    else:
+        kw_text = "N/A"
+        kw_sig = False
+    kw_style = {"fontWeight": "bold", "color": "#d32f2f"} if kw_sig else {}
+
+    eta = stats_result["eta_squared"]
+    if eta is not None:
+        if eta < 0.01:
+            eta_interp = "negligible"
+        elif eta < 0.06:
+            eta_interp = "small"
+        elif eta < 0.14:
+            eta_interp = "moderate"
+        else:
+            eta_interp = "large"
+        eta_text = f"{eta:.3f} ({eta_interp})"
+    else:
+        eta_text = "N/A"
+
+    return dbc.Card([
+        dbc.CardHeader(
+            html.H6("Cohort Consistency Analysis", className="mb-0"),
+        ),
+        dbc.CardBody([
+            # Summary line
+            html.Div([
+                html.Span(
+                    f"{stats_result['n_cohorts']} cohorts, "
+                    f"{stats_result['n_total_flies']} total flies",
+                    className="fw-bold",
+                ),
+                html.Span(" | Kruskal-Wallis: ", className="ms-2"),
+                html.Span(kw_text, style=kw_style),
+                html.Span(f" | Eta-squared: {eta_text}", className="ms-2"),
+            ], className="mb-3"),
+
+            # Per-cohort table
+            dbc.Table([
+                html.Thead(html.Tr([
+                    html.Th("Cohort"),
+                    html.Th("n"),
+                    html.Th("Median"),
+                    html.Th("Mean"),
+                    html.Th("IQR"),
+                    html.Th("Mean Z"),
+                    html.Th("Spread Z"),
+                    html.Th("Flag"),
+                ])),
+                html.Tbody(table_rows),
+            ], bordered=True, size="sm", striped=True, hover=True, className="mt-2"),
+
+            # Explanatory note
+            html.Small(
+                "Modified Z-scores > 2.5 flag cohorts with atypical mean or spread "
+                "(MAD-based). Kruskal-Wallis tests whether any cohort differs from the "
+                "group. Eta-squared estimates the fraction of variance attributable to "
+                "cohort differences.",
+                className="text-muted",
+            ),
+        ]),
+    ], className="mt-3")
