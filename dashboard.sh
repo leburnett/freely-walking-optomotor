@@ -21,5 +21,15 @@ else
         sleep 0.5
     fi
     echo "Starting dashboard on http://localhost:8050 …"
+    # Open browser once server is ready (background)
+    (
+        for i in $(seq 1 30); do
+            sleep 1
+            if curl -s -o /dev/null http://localhost:8050/ 2>/dev/null; then
+                open "http://localhost:8050/"
+                break
+            fi
+        done
+    ) &
     pixi run -e default --manifest-path "$PIXI_DIR/pixi.toml" dashboard
 fi
