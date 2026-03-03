@@ -304,6 +304,11 @@ def compute_heatmap_data(
                 p_matrix[i, j] = p_val
                 direction[i, j] = 1.0 if np.mean(test_valid) > np.mean(ctrl_valid) else -1.0
 
+    # Flip direction for distance metrics (indices 4-5): more negative =
+    # more movement towards centre, which should display as red (positive).
+    direction[:, 4] = -direction[:, 4]
+    direction[:, 5] = -direction[:, 5]
+
     # FDR correction across all tests
     all_p = p_matrix.ravel()
     rejected = benjamini_yekutieli_fdr(all_p, q=FDR_Q)
