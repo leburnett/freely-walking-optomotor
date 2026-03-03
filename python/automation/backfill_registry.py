@@ -146,9 +146,14 @@ def extract_metadata(folder_path, scan_root):
     """Extract experiment metadata from folder path and/or LOG file.
 
     Tries multiple strategies in order:
-    1. Parse hierarchical path (date/protocol/strain/sex/time/)
-    2. Parse LOG*.mat file for metadata struct
+    1. Parse LOG*.mat file for metadata struct (most reliable, Oct 2024+)
+    2. Parse hierarchical path (date/protocol/strain/sex/time/) — exact 5 levels
     3. Fall back to extracting what we can from path components
+
+    LOG files are tried first because they contain authoritative metadata
+    from the experiment itself, whereas path parsing can fail when the
+    folder hierarchy has unexpected extra levels (e.g., sub-strain
+    directories or duplicate date folders).
 
     Args:
         folder_path: Full path to the experiment time folder.
@@ -157,13 +162,13 @@ def extract_metadata(folder_path, scan_root):
     Returns:
         Dict with keys: date, protocol, strain, sex, time.
     """
-    # Strategy 1: Try hierarchical path parsing
-    meta = parse_experiment_path(folder_path, scan_root)
+    # Strategy 1: Try to get metadata from the LOG*.mat file (most reliable)
+    meta = _extract_metadata_from_log(folder_path)
     if meta is not None:
         return meta
 
-    # Strategy 2: Try to get metadata from the LOG*.mat file
-    meta = _extract_metadata_from_log(folder_path)
+    # Strategy 2: Try hierarchical path parsing (exact 5-level match only)
+    meta = parse_experiment_path(folder_path, scan_root)
     if meta is not None:
         return meta
 
@@ -264,10 +269,31 @@ def _find_date_in_path(folder_path):
     return None
 
 
+def _is_time_folder(name):
+    """Check if a folder name looks like a time string (HH_MM_SS)."""
+    return bool(re.match(r"^\d{2}_\d{2}_\d{2}$", name))
+
+
+def _is_sex_value(name):
+    """Check if a string looks like a valid sex value."""
+    return name.upper() in ("F", "M", "NAN")
+
+
+def _is_date_folder(name):
+    """Check if a folder name looks like a date (YYYY_MM_DD)."""
+    return bool(re.match(r"^\d{4}_\d{2}_\d{2}$", name))
+
+
 def _extract_metadata_from_path_fallback(folder_path, scan_root):
     """Best-effort metadata extraction from folder path components.
 
-    Handles partial hierarchical paths and truly flat structures.
+    Handles partial hierarchical paths, flat structures, and paths with
+    extra levels (e.g., sub-strain directories or duplicate date folders).
+
+    For 6+ part paths, parses from the END of the path since the last
+    component (time) and second-to-last (sex) have predictable formats.
+    This avoids the field-shift bug where extra intermediate directories
+    cause dates to be assigned as protocols or protocols as strains.
     """
     rel = os.path.relpath(folder_path, scan_root).replace("\\", "/")
     parts = rel.split("/")
@@ -275,25 +301,88 @@ def _extract_metadata_from_path_fallback(folder_path, scan_root):
     time_folder = parts[-1] if parts else "unknown"
     date_folder = _find_date_in_path(folder_path) or "unknown"
 
-    if len(parts) >= 5:
+    if len(parts) >= 6:
+        # 6+ parts: likely has extra level (sub-strain, duplicate date, etc.)
+        # Parse from the end where the structure is most predictable:
+        #   ... / date / protocol / strain / [extra...] / sex / time
+        # OR: ... / [extra...] / date / protocol / strain / sex / time
+        #
+        # Strategy: find time (last), sex (second-to-last if valid),
+        # then date (first YYYY_MM_DD), then assign remaining parts.
+        time_str = parts[-1]
+        sex = "unknown"
+        remaining_end = -1  # Index up to which we've consumed from the end
+
+        if _is_sex_value(parts[-2]):
+            sex = parts[-2]
+            remaining_end = -2
+        else:
+            remaining_end = -1
+
+        # Find the date among remaining parts
+        date_idx = None
+        for i in range(len(parts) + remaining_end):
+            if _is_date_folder(parts[i]):
+                date_idx = i
+                break
+
+        if date_idx is not None:
+            date_val = parts[date_idx]
+            # Everything between date and the consumed end = protocol, strain, [extras]
+            middle = parts[date_idx + 1 : len(parts) + remaining_end]
+            if len(middle) >= 2:
+                return {
+                    "date": date_val,
+                    "protocol": middle[0],
+                    "strain": middle[1],
+                    "sex": sex,
+                    "time": time_str,
+                }
+            elif len(middle) == 1:
+                return {
+                    "date": date_val,
+                    "protocol": middle[0],
+                    "strain": "unknown",
+                    "sex": sex,
+                    "time": time_str,
+                }
+            else:
+                return {
+                    "date": date_val,
+                    "protocol": "unknown",
+                    "strain": "unknown",
+                    "sex": sex,
+                    "time": time_str,
+                }
+
+        # No date found in path — fall through to generic handling
+        return {
+            "date": date_folder,
+            "protocol": "unknown",
+            "strain": "unknown",
+            "sex": "unknown",
+            "time": time_folder,
+        }
+
+    elif len(parts) == 5:
         # Full hierarchy: date/protocol/strain/sex/time
         return {
             "date": parts[0], "protocol": parts[1], "strain": parts[2],
             "sex": parts[3], "time": parts[4],
         }
-    elif len(parts) >= 4:
+    elif len(parts) == 4:
         # Partial hierarchy: date/protocol/strain/time (missing sex)
         return {
             "date": parts[0], "protocol": parts[1], "strain": parts[2],
             "sex": "unknown", "time": parts[3],
         }
-    elif len(parts) >= 3:
+    elif len(parts) == 3:
         # date/Protocol_vXX/time or date/protocol_XX/time
         return {
             "date": parts[0], "protocol": parts[1], "strain": "unknown",
             "sex": "unknown", "time": parts[2],
         }
-    elif len(parts) >= 2:
+    elif len(parts) == 2:
         # Flat: date/time
         return {
             "date": parts[0], "protocol": "unknown", "strain": "unknown",
@@ -355,7 +444,7 @@ def build_results_index(results_path):
 # Stage inference
 # ---------------------------------------------------------------------------
 
-def infer_stage(folder_path, metadata, results_index):
+def infer_stage(folder_path, metadata, network_results_index, local_results_index=None):
     """Determine the highest completed pipeline stage for an experiment.
 
     Checks in descending priority order (highest stage first).
@@ -363,7 +452,8 @@ def infer_stage(folder_path, metadata, results_index):
     Args:
         folder_path: Path to the experiment time folder.
         metadata: Dict with date, protocol, strain, sex, time.
-        results_index: Dict from build_results_index().
+        network_results_index: Dict from build_results_index() for network exp_results.
+        local_results_index: Dict from build_results_index() for local results (optional).
 
     Returns:
         String stage name from PIPELINE_STAGES.
@@ -371,9 +461,13 @@ def infer_stage(folder_path, metadata, results_index):
     date = metadata.get("date", "")
     time_str = metadata.get("time", "")
 
-    # Check: synced_to_network — matching result file in exp_results
-    if (date, time_str) in results_index:
+    # Check: synced_to_network — matching result file in network exp_results
+    if (date, time_str) in network_results_index:
         return "synced_to_network"
+
+    # Check: processed — matching result file in local results
+    if local_results_index and (date, time_str) in local_results_index:
+        return "processed"
 
     # Check: processed — folder is under a *processed* path
     path_lower = folder_path.lower().replace("\\", "/")
@@ -401,12 +495,13 @@ def infer_stage(folder_path, metadata, results_index):
 # Per-experiment processing
 # ---------------------------------------------------------------------------
 
-def process_one_experiment(exp, results_index, args):
+def process_one_experiment(exp, network_results_index, local_results_index, args):
     """Process a single experiment: extract metadata, infer stage, write status.
 
     Args:
         exp: Dict with folder_path and scan_root.
-        results_index: Lookup from build_results_index().
+        network_results_index: Lookup from build_results_index() for network exp_results.
+        local_results_index: Lookup from build_results_index() for local results.
         args: Parsed CLI arguments.
 
     Returns:
@@ -426,7 +521,13 @@ def process_one_experiment(exp, results_index, args):
         metadata = extract_metadata(folder_path, scan_root)
 
         # Infer pipeline stage
-        stage = infer_stage(folder_path, metadata, results_index)
+        stage = infer_stage(folder_path, metadata, network_results_index, local_results_index)
+
+        # Compute cross-reference flags
+        date = metadata.get("date", "")
+        time_str = metadata.get("time", "")
+        has_local = (date, time_str) in local_results_index if local_results_index else False
+        has_network = (date, time_str) in network_results_index
 
         if args.dry_run:
             return {
@@ -434,6 +535,8 @@ def process_one_experiment(exp, results_index, args):
                 "folder": folder_path,
                 "metadata": metadata,
                 "inferred_stage": stage,
+                "has_local_results": has_local,
+                "has_network_results": has_network,
             }
 
         # Write pipeline_status.json
@@ -470,6 +573,8 @@ def process_one_experiment(exp, results_index, args):
             "folder": folder_path,
             "metadata": metadata,
             "inferred_stage": stage,
+            "has_local_results": has_local,
+            "has_network_results": has_network,
         }
 
     except Exception as e:
@@ -488,29 +593,79 @@ def process_one_experiment(exp, results_index, args):
 def write_global_registry(results, output_registry):
     """Write all experiment statuses to the global registry.
 
+    Deduplicates by (date, time) key, keeping the entry with the highest
+    pipeline stage. This handles the case where the same experiment is
+    found in multiple scan paths (e.g., both network unprocessed and
+    network processed).
+
     Args:
         results: List of result dicts from process_one_experiment.
         output_registry: Path to the output registry JSON file.
     """
-    experiments = []
+    # Stage priority for deduplication (higher = further along pipeline)
+    stage_priority = {s: i for i, s in enumerate(PIPELINE_STAGES)}
+
+    # Deduplicate by (date, time), keeping the highest-stage entry
+    best = {}  # (date, time) -> entry dict
     for r in results:
         if r is None or r.get("status") not in ("written",):
             continue
 
         meta = r.get("metadata", {})
-        experiments.append({
+        date = meta.get("date", "")
+        time_str = meta.get("time", "")
+        dedup_key = (date, time_str)
+
+        entry = {
             "experiment_id": (
-                f"{meta.get('date', '')}_{meta.get('time', '')}_"
+                f"{date}_{time_str}_"
                 f"{meta.get('strain', '')}_{meta.get('protocol', '')}_{meta.get('sex', '')}"
             ),
-            "date": meta.get("date", ""),
+            "date": date,
             "protocol": meta.get("protocol", ""),
             "strain": meta.get("strain", ""),
             "sex": meta.get("sex", ""),
             "current_stage": r.get("inferred_stage", ""),
             "last_updated": datetime.now().isoformat(timespec="seconds"),
             "has_errors": False,
-        })
+            "has_local_results": r.get("has_local_results", False),
+            "has_network_results": r.get("has_network_results", False),
+        }
+
+        if dedup_key in best:
+            existing = best[dedup_key]
+            existing_prio = stage_priority.get(existing["current_stage"], -1)
+            new_prio = stage_priority.get(entry["current_stage"], -1)
+
+            # Keep the higher-stage entry; merge cross-reference flags
+            if new_prio > existing_prio:
+                entry["has_local_results"] = (
+                    entry["has_local_results"] or existing["has_local_results"]
+                )
+                entry["has_network_results"] = (
+                    entry["has_network_results"] or existing["has_network_results"]
+                )
+                best[dedup_key] = entry
+            else:
+                # Keep existing but merge flags
+                existing["has_local_results"] = (
+                    existing["has_local_results"] or entry["has_local_results"]
+                )
+                existing["has_network_results"] = (
+                    existing["has_network_results"] or entry["has_network_results"]
+                )
+        else:
+            best[dedup_key] = entry
+
+    experiments = list(best.values())
+
+    # Log deduplication stats
+    total_written = sum(1 for r in results if r and r.get("status") == "written")
+    if total_written > len(experiments):
+        logger.info(
+            f"Deduplicated {total_written} entries to {len(experiments)} "
+            f"unique experiments (removed {total_written - len(experiments)} duplicates)"
+        )
 
     registry_data = {
         "last_updated": datetime.now().isoformat(timespec="seconds"),
@@ -636,6 +791,11 @@ Examples:
         help="Skip folders that already have a pipeline_status.json.",
     )
     parser.add_argument(
+        "--local-results-path",
+        default=None,
+        help="Path to local results folder for cross-referencing (default: from config RESULTS_PATH).",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Report what would be written without writing anything.",
@@ -661,6 +821,17 @@ def main():
                 f"Using local file: {args.output_registry}"
             )
 
+    # Resolve local results path
+    if args.local_results_path is None:
+        try:
+            from config.config import RESULTS_PATH
+            args.local_results_path = str(RESULTS_PATH)
+        except Exception:
+            args.local_results_path = None
+            logger.warning(
+                "Could not import RESULTS_PATH from config; local results checking disabled"
+            )
+
     # Resolve scan paths
     scan_paths = args.scan_paths if args.scan_paths else ALL_SCAN_PATHS
 
@@ -669,10 +840,16 @@ def main():
     logger.info(f"Output registry: {args.output_registry}")
     logger.info(f"Workers: {args.workers}, skip_existing: {args.skip_existing}, dry_run: {args.dry_run}")
 
-    # Build results index for cross-referencing
-    print("Building results index from exp_results...")
-    results_index = build_results_index(args.results_path)
-    print(f"  Found {len(results_index)} result files indexed\n")
+    # Build results indexes for cross-referencing
+    print("Building results index from network exp_results...")
+    network_results_index = build_results_index(args.results_path)
+    print(f"  Found {len(network_results_index)} result files on network\n")
+
+    local_results_index = {}
+    if args.local_results_path:
+        print("Building results index from local results...")
+        local_results_index = build_results_index(args.local_results_path)
+        print(f"  Found {len(local_results_index)} result files locally\n")
 
     # Discover all experiments
     print("Discovering experiments...")
@@ -698,12 +875,12 @@ def main():
         for i, exp in enumerate(all_experiments, 1):
             if i % 50 == 0 or i == len(all_experiments):
                 print(f"  Progress: {i}/{len(all_experiments)}")
-            result = process_one_experiment(exp, results_index, args)
+            result = process_one_experiment(exp, network_results_index, local_results_index, args)
             results.append(result)
     else:
         with ThreadPoolExecutor(max_workers=args.workers) as pool:
             futures = {
-                pool.submit(process_one_experiment, exp, results_index, args): exp
+                pool.submit(process_one_experiment, exp, network_results_index, local_results_index, args): exp
                 for exp in all_experiments
             }
             done = 0

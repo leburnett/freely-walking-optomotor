@@ -35,7 +35,7 @@ if MACHINE_ROLE == "acquisition":
 elif MACHINE_ROLE == "processing":
     PROJECT_ROOT = Path(r"C:\Users\labadmin\Documents\freely-walking-optomotor")
     SOURCE_ROOT = None  # Not used on processing machine
-    PYTHON_EXE = Path(r"C:\Users\labadmin\AppData\Local\Programs\Python\Python313\python.exe")
+    PYTHON_EXE = Path(r"C:\Users\labadmin\AppData\Local\Python\pythoncore-3.14-64\python.exe")
 
 else:
     raise RuntimeError(

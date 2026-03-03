@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs cat)",
+      "Bash(python -c \"import py_compile; py_compile.compile\\(''python/automation/backfill_registry.py'', doraise=True\\); print\\(''backfill_registry.py: OK''\\)\")",
+      "Bash(\"C:/Users/labadmin/AppData/Local/Programs/Python/Python313/python.exe\" -c \"import py_compile; py_compile.compile\\(r''C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor\\\\python\\\\automation\\\\backfill_registry.py'', doraise=True\\); print\\(''backfill_registry.py: OK''\\)\")",
+      "Bash(\"/c/Users/labadmin/AppData/Local/Programs/Python/Python313/python.exe\" -c \"import py_compile; py_compile.compile\\(r''C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor\\\\python\\\\automation\\\\backfill_registry.py'', doraise=True\\); print\\(''backfill_registry.py: OK''\\)\")",
+      "Bash(py -3 -c \"import py_compile; py_compile.compile\\(r''C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor\\\\python\\\\automation\\\\backfill_registry.py'', doraise=True\\); print\\(''backfill_registry.py: OK''\\)\")",
+      "Bash(cmd.exe /c \"py -3 -c \"\"import py_compile; py_compile.compile\\(r''C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor\\\\python\\\\automation\\\\backfill_registry.py'', doraise=True\\); print\\(''backfill_registry.py: OK''\\)\"\"\")",
+      "Bash(cmd.exe /c \"py -3 -c \"\"import py_compile; py_compile.compile\\(r''C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor\\\\python\\\\automation\\\\backfill_registry.py'', doraise=True\\); print\\(''OK1''\\)\"\" && py -3 -c \"\"import py_compile; py_compile.compile\\(r''C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor\\\\python\\\\automation\\\\shared\\\\registry.py'', doraise=True\\); print\\(''OK2''\\)\"\"\")",
+      "Bash(cmd.exe //c 'py -3 -c \"\"import py_compile; py_compile.compile\\(r\\\\\"\"C:\\\\\\\\Users\\\\\\\\labadmin\\\\\\\\Documents\\\\\\\\GitHub\\\\\\\\freely-walking-optomotor\\\\\\\\python\\\\\\\\automation\\\\\\\\backfill_registry.py\\\\\"\", doraise=True\\); print\\(\\\\\"\"backfill OK\\\\\"\"\\)\"\"')",
+      "Bash(where.exe python)",
+      "Bash(where.exe python3)",
+      "Bash(/c/Users/labadmin/AppData/Local/Microsoft/WindowsApps/python3.exe -c \"import py_compile; py_compile.compile\\(r''C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor\\\\python\\\\automation\\\\backfill_registry.py'', doraise=True\\); print\\(''backfill_registry.py: OK''\\)\")",
+      "Bash(python3 -c \":*)"
+    ]
+  }
+}

@@ -152,7 +152,11 @@ def cleanup_empty_parents(path, stop_at):
 def parse_experiment_path(folder_path, base_path):
     """Parse experiment metadata from the folder path hierarchy.
 
-    Expects: {base}/{date}/{protocol}/{strain}/{sex}/{time}/
+    Expects exactly: {base}/{date}/{protocol}/{strain}/{sex}/{time}/
+
+    Only matches the 5-level hierarchy. Returns None for shorter or longer
+    paths so that callers can fall back to LOG file parsing or other
+    strategies (avoids field mis-alignment with 6+ level paths).
 
     Args:
         folder_path: Full path to the experiment time folder.
@@ -160,12 +164,12 @@ def parse_experiment_path(folder_path, base_path):
 
     Returns:
         Dict with keys: date, protocol, strain, sex, time.
-        Returns None if the path doesn't match expected structure.
+        Returns None if the path doesn't match the exact 5-level structure.
     """
     try:
         rel = os.path.relpath(folder_path, base_path)
         parts = rel.replace("\\", "/").split("/")
-        if len(parts) >= 5:
+        if len(parts) == 5:
             return {
                 "date": parts[0],
                 "protocol": parts[1],

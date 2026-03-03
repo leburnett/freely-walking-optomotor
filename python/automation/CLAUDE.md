@@ -179,6 +179,14 @@ Aggregates all experiment statuses into one JSON file on the network drive, and 
 - synced_to_network: teal
 - errors: red
 
+**HTML status page features:**
+- Pipeline stage description table (collapsible, default open)
+- CSS flowchart diagram showing pipeline flow and machine assignments
+- Sortable/filterable experiment table with color-coded stage badges
+- "Local" and "Network" checkmark columns showing whether result files exist in each location
+- Summary badges with total counts per stage and cross-reference counts
+- `update_registry()` preserves `has_local_results`/`has_network_results` fields when live pipeline scripts upsert entries
+
 ### `logging_config.py` — Centralized Logging
 
 Replaces per-script `logging.basicConfig()` with rotating file handlers.
@@ -331,7 +339,8 @@ python backfill_registry.py --all --output-registry pipeline_status.json
 **Arguments:**
 - `--scan-paths <path> [<path>...]` -- directories to scan (mutually exclusive with --all)
 - `--all` -- scan all known data locations (hardcoded list in script)
-- `--results-path <path>` -- exp_results path for cross-referencing (default: network)
+- `--results-path <path>` -- network exp_results path for cross-referencing (default: network)
+- `--local-results-path <path>` -- local results path for cross-referencing (default: from config RESULTS_PATH)
 - `--output-registry <path>` -- where to write global registry (default: from config)
 - `--workers <n>` -- parallel workers (default: 4)
 - `--skip-existing` -- skip folders that already have pipeline_status.json
@@ -340,11 +349,20 @@ python backfill_registry.py --all --output-registry pipeline_status.json
 ### Stage Inference Logic
 
 For each experiment folder, checks (highest first):
-1. Matching `*_data.mat` in `exp_results/` -> `synced_to_network`
-2. Folder path contains "processed" -> `processed`
-3. `trx.mat` exists inside recording subfolder -> `tracked`
-4. Folder is on network drive -> `copied_to_network`
-5. Folder has basic experiment files -> `acquired`
+1. Matching `*_data.mat` in network `exp_results/` -> `synced_to_network`
+2. Matching `*_data.mat` in local `results/` -> `processed`
+3. Folder path contains "processed" -> `processed`
+4. `trx.mat` exists inside recording subfolder -> `tracked`
+5. Folder is on network drive -> `copied_to_network`
+6. Folder has basic experiment files -> `acquired`
+
+### Cross-Reference Fields
+
+The backfill also computes two boolean fields per experiment:
+- `has_local_results` -- whether a matching `*_data.mat` exists in the local results folder (`RESULTS_PATH`)
+- `has_network_results` -- whether a matching `*_data.mat` exists in the network results folder (`NETWORK_RESULTS`)
+
+These are stored in the global registry and displayed as checkmark columns in the HTML status page.
 
 ### Metadata Extraction
 
