@@ -122,11 +122,16 @@ def build_per_fly_dataframe(
 def build_summary_dataframe(
     all_strain_cohorts: dict[str, list[dict]],
     downsample: int = DOWNSAMPLE_FACTOR,
+    rep_mode: str = "interleave",
+    apply_qc: bool = False,
 ) -> pd.DataFrame:
     """Build strain-level summary (mean + SEM) for all strains and conditions.
 
-    Uses the "interleave" rep mode (matching current MATLAB behavior).
-    No QC filtering applied (matching current MATLAB behavior).
+    Parameters
+    ----------
+    rep_mode : "interleave" treats R1 and R2 as separate observations;
+               "average" averages R1 and R2 per fly first.
+    apply_qc : if True, exclude flies that failed quality control.
     """
     rows = []
 
@@ -135,7 +140,7 @@ def build_summary_dataframe(
             for metric in METRICS:
                 cond_data = combine_cohorts_for_condition(
                     cohort_results, cond_n, metric,
-                    rep_mode="interleave", apply_qc=False,
+                    rep_mode=rep_mode, apply_qc=apply_qc,
                 )
                 if cond_data.size == 0:
                     continue
@@ -234,7 +239,9 @@ def main():
             print(f"  WARNING: No data for {strain}, skipping")
             continue
         out_path = per_fly_dir / f"{strain}.parquet"
-        df.to_parquet(out_path, index=False)
+        # Sort by condition for efficient PyArrow row-group filtering
+        df = df.sort_values(["condition", "cohort_id", "fly_idx", "rep", "frame"])
+        df.to_parquet(out_path, index=False, row_group_size=50_000)
         n_rows = len(df)
         size_mb = out_path.stat().st_size / 1e6
         print(f"  {strain}: {n_rows:,} rows, {size_mb:.1f} MB")

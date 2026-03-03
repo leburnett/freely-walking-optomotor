@@ -480,9 +480,10 @@ def register_callbacks(app, data_store):
         Output("metadata-cohorts-bar", "figure"),
         Output("metadata-gantt", "figure"),
         Output("metadata-temp", "figure"),
-        Input("data-path-input", "value"),
+        Input("strain-dropdown", "options"),
+        State("data-path-input", "value"),
     )
-    def update_metadata_tab(data_path):
+    def update_metadata_tab(strain_options, data_path):
         empty_fig = go.Figure()
         empty_fig.add_annotation(
             text="Enter a data path to load metadata.",
@@ -809,13 +810,18 @@ def register_callbacks(app, data_store):
         strains = result["strain_list"]
         metrics = result["metric_names"]
         direction = result["direction"]
+        n_flies = result.get("n_flies_per_strain", {})
+        warnings = result.get("warnings", [])
 
         if len(strains) == 0:
             return empty_fig, None
 
+        ctrl_n = n_flies.get(CONTROL_STRAIN, 0)
+
         # Build hover text
         hover_text = []
         for i, strain in enumerate(strains):
+            strain_n = n_flies.get(strain, 0)
             row_text = []
             for j, metric in enumerate(metrics):
                 p_val = p[i, j]
@@ -823,10 +829,20 @@ def register_callbacks(app, data_store):
                 d_label = "higher" if d > 0 else "lower" if d < 0 else "n/a"
                 fdr_label = "sig. (FDR)" if rejected[i, j] else "n.s. (FDR)"
                 if np.isnan(p_val):
-                    row_text.append(f"{strain}<br>{metric}<br>p = N/A")
+                    # Show why: insufficient data
+                    reason = []
+                    if ctrl_n < 2:
+                        reason.append(f"control: {ctrl_n} flies")
+                    if strain_n < 2:
+                        reason.append(f"test: {strain_n} flies")
+                    reason_str = " / ".join(reason) if reason else "insufficient data"
+                    row_text.append(
+                        f"{strain}<br>{metric}<br>No test ({reason_str})"
+                    )
                 else:
                     row_text.append(
-                        f"{strain}<br>{metric}<br>p = {p_val:.2e} [{fdr_label}]<br>{d_label} than control"
+                        f"{strain}<br>{metric}<br>p = {p_val:.2e} [{fdr_label}]"
+                        f"<br>{d_label} than control (n={strain_n} vs {ctrl_n})"
                     )
             hover_text.append(row_text)
 
@@ -864,14 +880,27 @@ def register_callbacks(app, data_store):
 
         cond_name = CONDITION_NAMES.get(condition_id, f"Condition {condition_id}")
         ctrl_label = CONTROL_STRAIN.replace("_", " ")
+        bottom_margin = 80
+        if warnings:
+            bottom_margin = 80 + 14 * len(warnings)
         fig.update_layout(
             title=f"Statistical Comparison vs {ctrl_label} — {cond_name}",
             template="plotly_white",
-            height=max(400, 30 * len(strains) + 150),
-            margin=dict(t=70, b=80, l=220, r=80),
+            height=max(400, 30 * len(strains) + 150 + (14 * len(warnings) if warnings else 0)),
+            margin=dict(t=70, b=bottom_margin, l=220, r=80),
             xaxis=dict(tickangle=30, side="bottom"),
             plot_bgcolor="rgb(220,220,220)",
         )
+
+        if warnings:
+            fig.add_annotation(
+                text="Insufficient data: " + "; ".join(warnings),
+                xref="paper", yref="paper",
+                x=0, y=-0.15,
+                showarrow=False,
+                font=dict(size=10, color="grey"),
+                xanchor="left",
+            )
 
         # Serialise per-fly data for drill-down (convert numpy arrays to lists)
         cache_data = {
@@ -1012,10 +1041,9 @@ def register_callbacks(app, data_store):
             df = data_store.load_per_fly(strain_name)
             if df.empty:
                 continue
-            mask = df["condition"] == condition_id
+            subset = df[df["condition"] == condition_id]
             if apply_qc:
-                mask &= df["qc_passed"]
-            subset = df[mask]
+                subset = subset[subset["qc_passed"]]
             if subset.empty:
                 continue
 
@@ -1070,6 +1098,13 @@ def register_callbacks(app, data_store):
             for trace in _make_trace(t, y_mean, y_sem, color, label):
                 ts_fig.add_trace(trace)
 
+        if not ts_fig.data:
+            ts_fig.add_annotation(
+                text="No data available for this condition after filtering.",
+                xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False,
+                font=dict(color="grey"),
+            )
+
         _add_stim_markers(ts_fig)
 
         # Add grey rectangle showing the time window used for the scalar metric
@@ -1099,8 +1134,8 @@ def register_callbacks(app, data_store):
 
         # ---- Violin plot: per-fly scalar distributions ----
         violin_fig = go.Figure()
-        ctrl_fly_data = np.array(cache["per_fly"].get(CONTROL_STRAIN, []))
-        test_fly_data = np.array(cache["per_fly"].get(strain, []))
+        ctrl_fly_data = np.array(cache["per_fly"].get(CONTROL_STRAIN, []), dtype=float)
+        test_fly_data = np.array(cache["per_fly"].get(strain, []), dtype=float)
 
         for fly_data, label, color in [
             (ctrl_fly_data, CONTROL_STRAIN.replace("_", " "), ctrl_color),
@@ -1162,12 +1197,27 @@ def register_callbacks(app, data_store):
 
         # ---- Statistical tests ----
         stats_div = ""
-        ctrl_vals_clean = ctrl_fly_data[:, m_idx] if ctrl_fly_data.size else np.array([])
-        test_vals_clean = test_fly_data[:, m_idx] if test_fly_data.size else np.array([])
+        ctrl_vals_clean = ctrl_fly_data[:, m_idx] if ctrl_fly_data.size else np.array([], dtype=float)
+        test_vals_clean = test_fly_data[:, m_idx] if test_fly_data.size else np.array([], dtype=float)
         ctrl_vals_clean = ctrl_vals_clean[~np.isnan(ctrl_vals_clean)]
         test_vals_clean = test_vals_clean[~np.isnan(test_vals_clean)]
 
-        if len(ctrl_vals_clean) >= 2 and len(test_vals_clean) >= 2:
+        if len(ctrl_vals_clean) < 2 or len(test_vals_clean) < 2:
+            reasons = []
+            if len(ctrl_vals_clean) < 2:
+                reasons.append(f"control: {len(ctrl_vals_clean)} flies")
+            if len(test_vals_clean) < 2:
+                reasons.append(f"test strain: {len(test_vals_clean)} flies")
+            stats_div = html.Div([
+                html.H6("Statistical Tests", className="mb-2"),
+                html.P(
+                    f"Insufficient data for statistical comparison ({', '.join(reasons)}). "
+                    "At least 2 flies per group are required.",
+                    className="text-muted",
+                ),
+            ], className="mt-3")
+
+        elif len(ctrl_vals_clean) >= 2 and len(test_vals_clean) >= 2:
             stat_results = compute_drilldown_stats(ctrl_vals_clean, test_vals_clean)
 
             # Tooltip descriptions for each test
@@ -1609,10 +1659,13 @@ def _get_summary_data(strain, cond_n, metric, apply_qc, rep_mode, use_default, s
                       central_tendency="mean", dispersion="sem"):
     """Get central tendency / dispersion data, using pre-computed summary when possible."""
     # Derived metrics are always computed on-the-fly (no pre-computed data available)
-    if use_default and metric not in DERIVED_METRICS:
-        df = store.get_strain_summary(strain, cond_n, metric)
-        if not df.empty:
-            return df["time_s"].values, df["mean"].values, df["sem"].values, df["n_flies"].values
+    if metric not in DERIVED_METRICS:
+        # Fast path 1: no QC, interleave, mean, SEM (original pre-computed summary)
+        if use_default:
+            df = store.get_strain_summary(strain, cond_n, metric)
+            if not df.empty:
+                return df["time_s"].values, df["mean"].values, df["sem"].values, df["n_flies"].values
+
     # Fall back to on-the-fly computation
     df = store.compute_summary_on_the_fly(
         strain, cond_n, metric, rep_mode, apply_qc,

@@ -154,67 +154,41 @@ def _collect_strain_metrics(
     - Metrics 4-5 (distance): min per rep first, then average across reps
       per fly (welch_ttest_for_rng_min.m).
     """
+    # Load full per-fly data (cached by DataStore), then filter in memory
     df = store.load_per_fly(strain)
     if df.empty:
         return np.empty((0, 6))
 
-    mask = df["condition"] == condition_id
+    subset = df[df["condition"] == condition_id]
     if apply_qc:
-        mask &= df["qc_passed"]
-    subset = df[mask]
-
+        subset = subset[subset["qc_passed"]]
     if subset.empty:
         return np.empty((0, 6))
 
-    # --- FV & curv metrics (0-3): average reps first, then compute ---
-    # For mean-based metrics, averaging reps before computing is equivalent
-    # to the MATLAB approach (compute per rep, then average).
-    avg_reps = (
-        subset.groupby(["cohort_id", "fly_idx", "frame"])[["fv_data", "curv_data"]]
-        .mean()
-        .reset_index()
-    )
-
-    # --- Distance metrics (4-5): min per rep, then average across reps ---
-    # MATLAB: min(d') per rep, then mean_every_two_rows
-    # Must compute per-rep first.
-
-    # Build per-fly results using efficient groupby iteration
-    fly_keys = sorted(
-        avg_reps.groupby(["cohort_id", "fly_idx"]).groups.keys()
-    )
-
+    # Single-pass: group by fly, compute all 6 metrics per fly
+    fly_groups = subset.groupby(["cohort_id", "fly_idx"])
+    fly_keys = sorted(fly_groups.groups.keys())
     metrics = np.full((len(fly_keys), 6), np.nan)
 
-    for i, (cohort_id, fly_idx) in enumerate(fly_keys):
-        # FV + curv metrics from rep-averaged data
-        fly_avg = avg_reps[
-            (avg_reps["cohort_id"] == cohort_id) & (avg_reps["fly_idx"] == fly_idx)
-        ].sort_values("frame")
+    for i, key in enumerate(fly_keys):
+        fly_df = fly_groups.get_group(key)
 
-        fv_curv = _compute_fv_curv_metrics(
-            fly_avg["frame"].values,
-            fly_avg["fv_data"].values,
-            fly_avg["curv_data"].values,
+        # FV & curv: average across reps, then compute metrics 0-3
+        avg = fly_df.groupby("frame")[["fv_data", "curv_data"]].mean()
+        avg = avg.sort_index()
+        frames = avg.index.values
+        metrics[i, :4] = _compute_fv_curv_metrics(
+            frames, avg["fv_data"].values, avg["curv_data"].values,
         )
-        metrics[i, :4] = fv_curv
 
-        # Distance metrics: compute per rep, then average
-        fly_reps = subset[
-            (subset["cohort_id"] == cohort_id) & (subset["fly_idx"] == fly_idx)
-        ]
-        rep_ids = sorted(fly_reps["rep"].unique())
+        # Distance: compute per rep first (min), then average across reps
         rep_dist_vals = []
-        for rep_id in rep_ids:
-            rep_df = fly_reps[fly_reps["rep"] == rep_id].sort_values("frame")
-            rep_dist = _compute_dist_metric_per_rep(
-                rep_df["frame"].values,
-                rep_df["dist_data"].values,
-            )
-            rep_dist_vals.append(rep_dist)
-
+        for _rep_id, rep_df in fly_df.groupby("rep"):
+            rep_df = rep_df.sort_values("frame")
+            rep_dist_vals.append(_compute_dist_metric_per_rep(
+                rep_df["frame"].values, rep_df["dist_data"].values,
+            ))
         if rep_dist_vals:
-            # Average min values across reps (MATLAB: mean_every_two_rows)
             metrics[i, 4:6] = np.nanmean(rep_dist_vals, axis=0)
 
     return metrics
@@ -310,10 +284,13 @@ def compute_heatmap_data(
     n_strains = len(test_strains)
     p_matrix = np.full((n_strains, n_metrics), np.nan)
     direction = np.zeros((n_strains, n_metrics))
+    n_flies_per_strain = {}  # track fly counts for warnings
+    n_flies_per_strain[CONTROL_STRAIN] = control_metrics.shape[0]
 
     for i, strain in enumerate(test_strains):
         strain_metrics = _collect_strain_metrics(store, strain, condition_id, apply_qc, rep_mode)
         per_fly_data[strain] = strain_metrics
+        n_flies_per_strain[strain] = strain_metrics.shape[0]
 
         for j in range(n_metrics):
             ctrl_vals = control_metrics[:, j]
@@ -339,6 +316,17 @@ def compute_heatmap_data(
             intensity = _pvalue_to_intensity(p_matrix[i, j])
             z_matrix[i, j] = direction[i, j] * intensity
 
+    # Build warnings for strains with insufficient data
+    warnings = []
+    ctrl_n = n_flies_per_strain.get(CONTROL_STRAIN, 0)
+    if ctrl_n < 2:
+        warnings.append(f"Control ({CONTROL_STRAIN}): {ctrl_n} flies")
+    for strain in test_strains:
+        n = n_flies_per_strain.get(strain, 0)
+        if n < 2:
+            label = "no data" if n == 0 else f"{n} fly"
+            warnings.append(f"{strain.replace('_', ' ')}: {label}")
+
     return {
         "z_matrix": z_matrix,
         "p_matrix": p_matrix,
@@ -348,6 +336,8 @@ def compute_heatmap_data(
         "per_fly_data": per_fly_data,
         "control_data": control_metrics,
         "direction": direction,
+        "n_flies_per_strain": n_flies_per_strain,
+        "warnings": warnings,
     }
 
 

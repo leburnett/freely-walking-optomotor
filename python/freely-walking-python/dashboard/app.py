@@ -183,7 +183,10 @@ cohort_tab = dbc.Tab(
                     ),
                 ]),
             ], className="mb-3"),
-            dcc.Graph(id="cohort-plot", config={"displayModeBar": True, "scrollZoom": True}),
+            dcc.Loading(
+                dcc.Graph(id="cohort-plot", config={"displayModeBar": True, "scrollZoom": True}),
+                type="circle",
+            ),
             dcc.Graph(id="cohort-boxchart", config={"displayModeBar": False}),
         ], className="p-3"),
     ],
@@ -230,7 +233,10 @@ strain_tab = dbc.Tab(
     children=[
         html.Div([
             strain_controls,
-            dcc.Graph(id="strain-plot", config={"displayModeBar": True, "scrollZoom": True}),
+            dcc.Loading(
+                dcc.Graph(id="strain-plot", config={"displayModeBar": True, "scrollZoom": True}),
+                type="circle",
+            ),
             dcc.Graph(id="strain-boxchart", config={"displayModeBar": False}),
         ], className="p-3"),
     ],
@@ -280,7 +286,10 @@ comparison_tab = dbc.Tab(
         html.Div([
             comparison_controls,
             comparison_strains,
-            dcc.Graph(id="comparison-plot", config={"displayModeBar": True, "scrollZoom": True}),
+            dcc.Loading(
+                dcc.Graph(id="comparison-plot", config={"displayModeBar": True, "scrollZoom": True}),
+                type="circle",
+            ),
             dcc.Graph(id="comparison-boxchart", config={"displayModeBar": False}),
         ], className="p-3"),
     ],
