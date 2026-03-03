@@ -1177,6 +1177,10 @@ def register_callbacks(app, data_store):
             if fly_data.size == 0:
                 continue
             vals = fly_data[:, m_idx]
+            # Distance metrics are stored as negative (dist - baseline);
+            # negate so positive = movement towards centre, matching the timeseries.
+            if m_idx >= 4:
+                vals = -vals
             valid = vals[~np.isnan(vals)]
             if len(valid) == 0:
                 continue
