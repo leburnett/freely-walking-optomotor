@@ -23,7 +23,14 @@
       "Bash(cmd /c \"dir /b /ad \"\"\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\data\\\\2_processed\\\\2025_06_09\"\"\")",
       "Bash(cmd /c \"dir /b /ad /s \"\"\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\data\\\\2_processed\\\\2025_06_09\"\"\")",
       "Bash(cmd /c \"if exist \"\"\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\data\\\\2_processed\\\\2025_06_09\"\" \\(echo EXISTS\\) else \\(echo NOT FOUND\\)\")",
-      "Bash(powershell -Command \"Test-Path ''\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\data\\\\2_processed\\\\2025_06_09''\")"
+      "Bash(powershell -Command \"Test-Path ''\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\data\\\\2_processed\\\\2025_06_09''\")",
+      "Bash(python pythonautomationbackfill_registry.py --all)",
+      "Bash(python -c \"import os; path = r''\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\pipeline_status.html''; print\\(f''Exists: {os.path.exists\\(path\\)}, Size: {os.path.getsize\\(path\\)} bytes''\\)\")",
+      "Bash(python -c \"import os; d = r''\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey''; files = [f for f in os.listdir\\(d\\) if f.startswith\\(''pipeline_status''\\)]; print\\(files\\)\")",
+      "Bash(dir \"\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\pipeline_status*\")",
+      "Bash(cmd /c \"dir \\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\pipeline_status*\")",
+      "Bash(cmd /c \"dir /b \\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\pipeline_status*\")",
+      "Bash(ls -la pipeline_status*)"
     ]
   }
 }

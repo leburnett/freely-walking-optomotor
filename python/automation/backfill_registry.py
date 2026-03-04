@@ -12,8 +12,11 @@ Usage examples:
     # Scan network processed data
     python backfill_registry.py --scan-paths "\\\\prfs.hhmi.org\\reiserlab\\oaky-cokey\\data\\2_processed"
 
-    # Scan all known locations
+    # Scan all known locations (output goes to group drive by default)
     python backfill_registry.py --all
+
+    # Group drive unavailable — save output files locally instead
+    python backfill_registry.py --all --output-dir "C:\\Users\\labadmin\\Desktop"
 
     # Scan with explicit results cross-reference
     python backfill_registry.py --scan-paths "F:\\oakey-cokey\\DATA\\02_processed" \\
@@ -919,6 +922,7 @@ Examples:
   %(prog)s --scan-paths "D:\\FreeWalkOptomotor\\data" --dry-run
   %(prog)s --scan-paths "\\\\prfs.hhmi.org\\reiserlab\\oaky-cokey\\data\\2_processed"
   %(prog)s --all --dry-run
+  %(prog)s --all --output-dir "C:\\Users\\labadmin\\Desktop"  # group drive unavailable
         """,
     )
 
@@ -942,7 +946,16 @@ Examples:
     parser.add_argument(
         "--output-registry",
         default=None,
-        help="Where to write the global registry JSON (default: from config).",
+        help="Full path to the global registry JSON file (default: from config, on group drive).",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default=None,
+        help=(
+            "Override directory for all output files (registry JSON, HTML, "
+            "excluded TXT). Use when the group drive is unavailable. "
+            "The standard filenames are used inside this directory."
+        ),
     )
     parser.add_argument(
         "--workers",
@@ -975,16 +988,48 @@ def main():
     args = parse_args()
 
     # Resolve output registry path
-    if args.output_registry is None:
+    #
+    # Priority: --output-registry > --output-dir > config (group drive).
+    # The default target is always the network group drive. If that drive
+    # is not reachable the user must supply --output-dir (or --output-registry)
+    # so that output files are never silently written to a local fallback.
+    if args.output_registry is not None:
+        # Explicit full path — use as-is
+        pass
+    elif args.output_dir is not None:
+        # Directory override — use standard filename inside that directory
+        args.output_registry = os.path.join(args.output_dir, "pipeline_status.json")
+    else:
+        # Default: group drive via config
         try:
             from config.config import PIPELINE_REGISTRY
             args.output_registry = str(PIPELINE_REGISTRY)
         except Exception:
-            args.output_registry = "pipeline_status.json"
-            logger.warning(
-                "Could not import PIPELINE_REGISTRY from config. "
-                f"Using local file: {args.output_registry}"
+            print(
+                "ERROR: Could not determine the default output path from config.\n"
+                "Use --output-dir <path> to specify where output files should be saved.\n"
             )
+            sys.exit(1)
+
+    # Verify the output directory is accessible
+    output_dir = os.path.dirname(args.output_registry) or "."
+    if not os.path.isdir(output_dir):
+        # Check whether this looks like the network group drive
+        is_network = output_dir.lower().replace("\\", "/").startswith("//prfs")
+        if is_network:
+            print(
+                f"ERROR: Group drive is not accessible: {output_dir}\n\n"
+                "Output files are only generated on the group drive by default.\n"
+                "If the group drive is unavailable, use --output-dir to specify\n"
+                "an alternative location:\n\n"
+                f"  python backfill_registry.py --all --output-dir <path>\n"
+            )
+        else:
+            print(
+                f"ERROR: Output directory does not exist: {output_dir}\n"
+                "Please create it first or choose a different location.\n"
+            )
+        sys.exit(1)
 
     # Check machine role for local results tagging
     machine_role = _get_machine_role()
@@ -1101,9 +1146,13 @@ def main():
         except Exception as e:
             logger.error(f"Error generating status page: {e}")
 
-        print(f"\nGlobal registry: {args.output_registry}")
+        out_dir = os.path.dirname(args.output_registry) or "."
+        print(f"\nOutput directory: {out_dir}")
+        print(f"  Registry:  {args.output_registry}")
         html_path = args.output_registry.replace(".json", ".html")
-        print(f"HTML status page: {html_path}")
+        print(f"  HTML page: {html_path}")
+        txt_path = args.output_registry.replace(".json", "_excluded.txt")
+        print(f"  Excluded:  {txt_path}")
 
     # Print summary
     print_summary(results)
