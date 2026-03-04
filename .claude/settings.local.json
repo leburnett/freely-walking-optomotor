@@ -12,7 +12,18 @@
       "Bash(where.exe python)",
       "Bash(where.exe python3)",
       "Bash(/c/Users/labadmin/AppData/Local/Microsoft/WindowsApps/python3.exe -c \"import py_compile; py_compile.compile\\(r''C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor\\\\python\\\\automation\\\\backfill_registry.py'', doraise=True\\); print\\(''backfill_registry.py: OK''\\)\")",
-      "Bash(python3 -c \":*)"
+      "Bash(python3 -c \":*)",
+      "Bash(python python/automation/backfill_registry.py --all --dry-run)",
+      "Bash(python python/automation/backfill_registry.py --all)",
+      "Bash(python -c \"import json; data=json.load\\(open\\(r''\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\pipeline_status.json''\\)\\); e=data[''experiments''][0]; print\\(json.dumps\\(e, indent=2\\)\\)\")",
+      "Bash(python -c \"import json; data=json.load\\(open\\(''\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\pipeline_status.json''\\)\\); e=data[''experiments''][0]; print\\(json.dumps\\(e, indent=2\\)\\)\")",
+      "Bash(python -c \":*)",
+      "Bash(python -c \"import json, sys; sys.path.insert\\(0, r''C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor''\\); from config.config import PIPELINE_REGISTRY; data = json.load\\(open\\(str\\(PIPELINE_REGISTRY\\)\\)\\); e = data[''experiments''][0]; print\\(json.dumps\\(e, indent=2\\)\\)\")",
+      "Bash(dir \"\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\data\\\\2_processed\\\\2025_06_09\")",
+      "Bash(cmd /c \"dir /b /ad \"\"\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\data\\\\2_processed\\\\2025_06_09\"\"\")",
+      "Bash(cmd /c \"dir /b /ad /s \"\"\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\data\\\\2_processed\\\\2025_06_09\"\"\")",
+      "Bash(cmd /c \"if exist \"\"\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\data\\\\2_processed\\\\2025_06_09\"\" \\(echo EXISTS\\) else \\(echo NOT FOUND\\)\")",
+      "Bash(powershell -Command \"Test-Path ''\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\data\\\\2_processed\\\\2025_06_09''\")"
     ]
   }
 }

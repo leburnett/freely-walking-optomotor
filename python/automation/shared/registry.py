@@ -78,6 +78,9 @@ def update_registry(experiment_status):
         if exp.get("experiment_id") == exp_id:
             # Preserve cross-reference fields if not in the new summary
             for field in (
+                "has_data_local_acquisition",
+                "has_data_local_processing",
+                "has_data_network",
                 "has_local_results_acquisition",
                 "has_local_results_processing",
                 "has_network_results",
@@ -106,10 +109,37 @@ def get_all_experiments(registry_path=None):
     return data.get("experiments", [])
 
 
+_LOCATION_FIELDS = (
+    "has_data_local_acquisition",
+    "has_data_local_processing",
+    "has_data_network",
+    "has_local_results_acquisition",
+    "has_local_results_processing",
+    "has_network_results",
+)
+
+
+def _is_unresolved(exp):
+    """Return True if an experiment has no useful metadata.
+
+    An experiment is considered unresolved when both protocol and strain
+    are unknown/empty AND none of the location booleans are set.  These
+    are typically legacy entries merged from an older registry that can
+    no longer be matched to a real experiment folder.
+    """
+    proto = exp.get("protocol", "") or ""
+    strain = exp.get("strain", "") or ""
+    if proto not in ("unknown", "") or strain not in ("unknown", ""):
+        return False
+    return not any(exp.get(f, False) for f in _LOCATION_FIELDS)
+
+
 def generate_status_page(registry_path=None):
     """Generate a static HTML status page from the pipeline registry.
 
     Writes pipeline_status.html next to the registry JSON file.
+    Experiments with no useful metadata are excluded from the HTML
+    table and written to a companion *_excluded.txt* file instead.
 
     Args:
         registry_path: Path to the registry JSON. If None, auto-detected.
@@ -118,10 +148,25 @@ def generate_status_page(registry_path=None):
         registry_path = _get_registry_path()
 
     data = _read_registry(registry_path)
-    experiments = data.get("experiments", [])
+    all_experiments = data.get("experiments", [])
     last_updated = data.get("last_updated", "Never")
 
-    # Count experiments by stage
+    # Separate resolved from unresolved experiments
+    experiments = []
+    excluded = []
+    for exp in all_experiments:
+        if _is_unresolved(exp):
+            excluded.append(exp)
+        else:
+            experiments.append(exp)
+
+    if excluded:
+        logger.info(
+            f"Excluding {len(excluded)} unresolved experiments from HTML "
+            f"(no protocol/strain/location data)"
+        )
+
+    # Count experiments by stage (only resolved ones)
     stage_counts = {}
     error_count = 0
     for exp in experiments:
@@ -131,7 +176,8 @@ def generate_status_page(registry_path=None):
             error_count += 1
 
     # Build HTML
-    html = _build_html(experiments, last_updated, stage_counts, error_count)
+    html = _build_html(experiments, last_updated, stage_counts, error_count,
+                       excluded_count=len(excluded))
 
     # Write next to the registry
     html_path = registry_path.replace(".json", ".html")
@@ -141,6 +187,32 @@ def generate_status_page(registry_path=None):
         logger.info(f"Status page generated: {html_path}")
     except OSError as e:
         logger.error(f"Error writing status page: {e}")
+
+    # Write excluded experiments to a txt file
+    if excluded:
+        txt_path = registry_path.replace(".json", "_excluded.txt")
+        try:
+            with open(txt_path, "w", encoding="utf-8") as f:
+                f.write(f"# Excluded experiments — {len(excluded)} entries\n")
+                f.write(f"# Generated: {last_updated}\n")
+                f.write(f"# These experiments have no protocol/strain metadata\n")
+                f.write(f"# and no location data. They are legacy entries from\n")
+                f.write(f"# older registry runs.\n")
+                f.write("#\n")
+                f.write(f"# {'Date':<14} {'Time':<12} {'Stage':<22} Experiment ID\n")
+                f.write(f"# {'-'*13} {'-'*11} {'-'*21} {'-'*40}\n")
+                for exp in sorted(excluded, key=lambda e: (
+                    e.get("date", ""), e.get("time", "")
+                )):
+                    f.write(
+                        f"  {exp.get('date', ''):<14}"
+                        f" {exp.get('time', ''):<12}"
+                        f" {exp.get('current_stage', ''):<22}"
+                        f" {exp.get('experiment_id', '')}\n"
+                    )
+            logger.info(f"Excluded experiments written to: {txt_path}")
+        except OSError as e:
+            logger.error(f"Error writing excluded file: {e}")
 
 
 def _stage_color(stage):
@@ -155,7 +227,8 @@ def _stage_color(stage):
     return colors.get(stage, "#ffc107")
 
 
-def _build_html(experiments, last_updated, stage_counts, error_count):
+def _build_html(experiments, last_updated, stage_counts, error_count,
+                excluded_count=0):
     """Build the full HTML page string."""
     # Sort experiments by date descending, then time
     experiments_sorted = sorted(
@@ -177,20 +250,26 @@ def _build_html(experiments, last_updated, stage_counts, error_count):
 
     summary_html = " ".join(summary_items)
 
-    # Cross-reference counts
-    local_acq_count = sum(1 for e in experiments if e.get("has_local_results_acquisition"))
-    local_proc_count = sum(1 for e in experiments if e.get("has_local_results_processing"))
-    network_count = sum(1 for e in experiments if e.get("has_network_results"))
+    # Cross-reference counts — data folders
+    data_acq_count = sum(1 for e in experiments if e.get("has_data_local_acquisition"))
+    data_proc_count = sum(1 for e in experiments if e.get("has_data_local_processing"))
+    data_net_count = sum(1 for e in experiments if e.get("has_data_network"))
+    # Cross-reference counts — results files
+    res_acq_count = sum(1 for e in experiments if e.get("has_local_results_acquisition"))
+    res_proc_count = sum(1 for e in experiments if e.get("has_local_results_processing"))
+    res_net_count = sum(1 for e in experiments if e.get("has_network_results"))
 
-    # Embed experiment data as JS for stacked bar charts
+    # Embed experiment data as JS for charts
     js_data = json.dumps([
         {"stage": e.get("current_stage", "unknown") or "unknown",
          "protocol": e.get("protocol", ""),
-         "strain": e.get("strain", "")}
+         "strain": e.get("strain", ""),
+         "date": e.get("date", ""),
+         "time": e.get("time", "")}
         for e in experiments
     ], separators=(",", ":"))
 
-    # Table rows (Sex column removed)
+    # Table rows
     rows = []
     for exp in experiments_sorted:
         stage = exp.get("current_stage", "unknown") or "unknown"
@@ -198,21 +277,28 @@ def _build_html(experiments, last_updated, stage_counts, error_count):
         has_errors = exp.get("has_errors", False)
         error_indicator = ' <span class="error-dot">&#9679;</span>' if has_errors else ""
         stage_label = stage.replace("_", " ").title()
-        has_local_acq = exp.get("has_local_results_acquisition", False)
-        has_local_proc = exp.get("has_local_results_processing", False)
-        has_network = exp.get("has_network_results", False)
-        local_acq_ind = "&#10003;" if has_local_acq else ""
-        local_proc_ind = "&#10003;" if has_local_proc else ""
-        network_indicator = "&#10003;" if has_network else ""
+
+        # Data folder location indicators
+        d_acq = "&#10003;" if exp.get("has_data_local_acquisition") else ""
+        d_proc = "&#10003;" if exp.get("has_data_local_processing") else ""
+        d_net = "&#10003;" if exp.get("has_data_network") else ""
+
+        # Results file location indicators
+        r_acq = "&#10003;" if exp.get("has_local_results_acquisition") else ""
+        r_proc = "&#10003;" if exp.get("has_local_results_processing") else ""
+        r_net = "&#10003;" if exp.get("has_network_results") else ""
 
         rows.append(f"""        <tr>
             <td>{exp.get('date', '')}</td>
             <td>{exp.get('protocol', '')}</td>
             <td>{exp.get('strain', '')}</td>
             <td><span class="badge" style="background-color:{color}">{stage_label}</span>{error_indicator}</td>
-            <td class="check-cell">{local_acq_ind}</td>
-            <td class="check-cell">{local_proc_ind}</td>
-            <td class="check-cell">{network_indicator}</td>
+            <td class="check-cell">{d_acq}</td>
+            <td class="check-cell">{d_proc}</td>
+            <td class="check-cell">{d_net}</td>
+            <td class="check-cell">{r_acq}</td>
+            <td class="check-cell">{r_proc}</td>
+            <td class="check-cell">{r_net}</td>
             <td>{exp.get('last_updated', '')}</td>
         </tr>""")
 
@@ -278,6 +364,10 @@ def _build_html(experiments, last_updated, stage_counts, error_count):
         .stacked-bar-segment:last-child {{ border-radius: 0 3px 3px 0; }}
         .stacked-bar-segment:only-child {{ border-radius: 3px; }}
         .stacked-bar-count {{ width: 36px; text-align: right; font-weight: 600; color: #212529; flex-shrink: 0; }}
+        /* Timeline chart */
+        .timeline-container {{ overflow-x: auto; position: relative; margin-top: 8px; }}
+        .timeline-container canvas {{ display: block; }}
+        .timeline-tooltip {{ display: none; position: absolute; background: #212529; color: white; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; pointer-events: none; white-space: nowrap; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }}
     </style>
 </head>
 <body>
@@ -288,9 +378,13 @@ def _build_html(experiments, last_updated, stage_counts, error_count):
         <span class="total">Total: {total}</span>
         {summary_html}
         {"<span class='badge error-count'>Errors: " + str(error_count) + "</span>" if error_count else ""}
-        {"<span class='badge' style='background-color:#495057'>Local-Acq: " + str(local_acq_count) + "</span>" if local_acq_count else ""}
-        {"<span class='badge' style='background-color:#495057'>Local-Proc: " + str(local_proc_count) + "</span>" if local_proc_count else ""}
-        {"<span class='badge' style='background-color:#495057'>Network: " + str(network_count) + "</span>" if network_count else ""}
+        {"<span class='badge' style='background-color:#495057'>Data-Acq: " + str(data_acq_count) + "</span>" if data_acq_count else ""}
+        {"<span class='badge' style='background-color:#495057'>Data-Proc: " + str(data_proc_count) + "</span>" if data_proc_count else ""}
+        {"<span class='badge' style='background-color:#495057'>Data-Net: " + str(data_net_count) + "</span>" if data_net_count else ""}
+        {"<span class='badge' style='background-color:#6f42c1'>Res-Acq: " + str(res_acq_count) + "</span>" if res_acq_count else ""}
+        {"<span class='badge' style='background-color:#6f42c1'>Res-Proc: " + str(res_proc_count) + "</span>" if res_proc_count else ""}
+        {"<span class='badge' style='background-color:#6f42c1'>Res-Net: " + str(res_net_count) + "</span>" if res_net_count else ""}
+        {"<span class='badge' style='background-color:#adb5bd' title='Legacy entries with no metadata — see pipeline_status_excluded.txt'>Excluded: " + str(excluded_count) + "</span>" if excluded_count else ""}
     </div>
 
     <details class="pipeline-info" open>
@@ -403,6 +497,15 @@ def _build_html(experiments, last_updated, stage_counts, error_count):
         <div class="stacked-chart" id="stacked-strain"></div>
     </details>
 
+    <details class="pipeline-info">
+        <summary><strong>Experiment Timeline</strong></summary>
+        <div class="chart-legend" id="chart-legend-timeline"></div>
+        <div class="timeline-container" id="timeline-container">
+            <canvas id="timeline-canvas"></canvas>
+            <div id="timeline-tooltip" class="timeline-tooltip"></div>
+        </div>
+    </details>
+
     <div class="filter-row">
         <input type="text" id="filter" placeholder="Filter by date, strain, protocol..." oninput="filterTable()">
     </div>
@@ -414,10 +517,13 @@ def _build_html(experiments, last_updated, stage_counts, error_count):
                 <th onclick="sortTable(1)">Protocol</th>
                 <th onclick="sortTable(2)">Strain</th>
                 <th onclick="sortTable(3)">Stage</th>
-                <th onclick="sortTable(4)" title="Result file exists on acquisition machine">Local-Acq</th>
-                <th onclick="sortTable(5)" title="Result file exists on processing machine">Local-Proc</th>
-                <th onclick="sortTable(6)" title="Result file exists in network exp_results">Network</th>
-                <th onclick="sortTable(7)">Last Updated</th>
+                <th onclick="sortTable(4)" title="Experiment data folder on acquisition machine">Data Acq</th>
+                <th onclick="sortTable(5)" title="Experiment data folder on processing machine">Data Proc</th>
+                <th onclick="sortTable(6)" title="Experiment data folder on network drive">Data Net</th>
+                <th onclick="sortTable(7)" title="Results file on acquisition machine">Res Acq</th>
+                <th onclick="sortTable(8)" title="Results file on processing machine">Res Proc</th>
+                <th onclick="sortTable(9)" title="Results file in network exp_results">Res Net</th>
+                <th onclick="sortTable(10)">Last Updated</th>
             </tr>
         </thead>
         <tbody>
@@ -447,8 +553,8 @@ def _build_html(experiments, last_updated, stage_counts, error_count):
     // Clean up known metadata issues for chart display:
     //  - Protocols that look like dates (YYYY_MM_DD) -> "unknown"
     //  - Strains that look like protocol names -> "unknown"
-    const datePattern = /^\d{{4}}_\d{{2}}_\d{{2}}$/;
-    const protoPattern = /^protocol_\d+$|^Protocol_v\d+$/i;
+    const datePattern = /^\\d{{4}}_\\d{{2}}_\\d{{2}}$/;
+    const protoPattern = /^protocol_\\d+$|^Protocol_v\\d+$/i;
     expData.forEach(e => {{
         if (datePattern.test(e.protocol)) e.protocol = 'unknown';
         if (protoPattern.test(e.strain)) e.strain = 'unknown';
@@ -505,7 +611,7 @@ def _build_html(experiments, last_updated, stage_counts, error_count):
         const sorted = Object.entries(groups).map(([name, stageCnts]) => {{
             const total = Object.values(stageCnts).reduce((a, b) => a + b, 0);
             return {{ name, stageCnts, total }};
-        }}).sort((a, b) => b.total - a.total);
+        }}).sort((a, b) => b.name.localeCompare(a.name));
 
         const container = document.getElementById(containerId);
         let html = '';
@@ -535,11 +641,194 @@ def _build_html(experiments, last_updated, stage_counts, error_count):
         container.innerHTML = html;
     }}
 
+    // ---- Timeline scatter chart (equally spaced, day boundaries) ----
+    function buildTimeline() {{
+        const canvas = document.getElementById('timeline-canvas');
+        const container = document.getElementById('timeline-container');
+        const tooltip = document.getElementById('timeline-tooltip');
+        if (!canvas || !container) return;
+
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+
+        // Parse dates and build point array
+        const points = [];
+        expData.forEach(e => {{
+            if (!e.date || !e.time) return;
+            const dp = e.date.split('_');
+            const tp = e.time.split('_');
+            if (dp.length !== 3 || tp.length !== 3) return;
+            const dt = new Date(+dp[0], +dp[1]-1, +dp[2], +tp[0], +tp[1], +tp[2]);
+            if (isNaN(dt.getTime())) return;
+            const stageIdx = stageOrder.indexOf(e.stage);
+            if (stageIdx < 0) return;
+            points.push({{
+                ts: dt.getTime(), date: dt, dateKey: e.date,
+                stage: e.stage, stageIdx: stageIdx,
+                protocol: e.protocol || 'unknown',
+                strain: e.strain || 'unknown'
+            }});
+        }});
+        if (points.length === 0) return;
+
+        // Sort oldest → newest
+        points.sort((a, b) => a.ts - b.ts);
+
+        // Layout constants
+        const marginLeft = 130;
+        const marginRight = 20;
+        const marginTop = 20;
+        const marginBottom = 55;
+        const rowH = 36;
+        const numStages = stageOrder.length;
+        const chartH = marginTop + numStages * rowH + marginBottom;
+        const colW = Math.max(6, Math.min(12, 3000 / points.length));
+        const chartW = Math.max(container.clientWidth,
+                                marginLeft + points.length * colW + marginRight);
+
+        // Set canvas size (CSS pixels); use dpr for crisp rendering
+        canvas.style.width = chartW + 'px';
+        canvas.style.height = chartH + 'px';
+        canvas.width = Math.round(chartW * dpr);
+        canvas.height = Math.round(chartH * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // Scales: equally spaced on x, stage rows on y
+        function xPos(i) {{ return marginLeft + (i + 0.5) * colW; }}
+        function yPos(stageIdx) {{
+            return marginTop + (numStages - 1 - stageIdx) * rowH + rowH / 2;
+        }}
+
+        // Alternating row backgrounds
+        for (let r = 0; r < numStages; r++) {{
+            const y = marginTop + r * rowH;
+            ctx.fillStyle = r % 2 === 0 ? '#f8f9fa' : '#ffffff';
+            ctx.fillRect(marginLeft, y, chartW - marginLeft - marginRight, rowH);
+        }}
+
+        // Horizontal grid lines
+        ctx.strokeStyle = '#e9ecef';
+        ctx.lineWidth = 1;
+        for (let r = 0; r <= numStages; r++) {{
+            const y = marginTop + r * rowH;
+            ctx.beginPath();
+            ctx.moveTo(marginLeft, y);
+            ctx.lineTo(chartW - marginRight, y);
+            ctx.stroke();
+        }}
+
+        // Day-boundary vertical lines + date labels
+        ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.textBaseline = 'top';
+        let prevDateKey = null;
+        const dayStarts = [];  // {{idx, dateKey}}
+        for (let i = 0; i < points.length; i++) {{
+            if (points[i].dateKey !== prevDateKey) {{
+                dayStarts.push({{ idx: i, dateKey: points[i].dateKey }});
+                prevDateKey = points[i].dateKey;
+            }}
+        }}
+        dayStarts.forEach((ds, di) => {{
+            const x = marginLeft + ds.idx * colW;
+            // Light grey vertical line at day boundary
+            ctx.strokeStyle = '#dee2e6';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x, marginTop);
+            ctx.lineTo(x, chartH - marginBottom);
+            ctx.stroke();
+            // Date label (show every Nth label to avoid overlap)
+            const labelEvery = Math.max(1, Math.ceil(dayStarts.length / 30));
+            if (di % labelEvery === 0) {{
+                const labelDate = ds.dateKey.replace(/_/g, '-');
+                ctx.fillStyle = '#6c757d';
+                ctx.textAlign = 'left';
+                ctx.save();
+                ctx.translate(x + 2, chartH - marginBottom + 4);
+                ctx.rotate(Math.PI / 4);
+                ctx.fillText(labelDate, 0, 0);
+                ctx.restore();
+            }}
+        }});
+
+        // Y-axis labels (stage names)
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.font = '12px -apple-system, BlinkMacSystemFont, sans-serif';
+        for (let s = 0; s < numStages; s++) {{
+            const label = stageLabels[stageOrder[s]] || stageOrder[s];
+            ctx.fillStyle = stageColors[stageOrder[s]] || '#6c757d';
+            ctx.fillText(label, marginLeft - 10, yPos(s));
+        }}
+
+        // Draw markers — store CSS-pixel positions for tooltip hit-testing
+        const radius = Math.max(3, Math.min(5, colW * 0.4));
+        const stored = [];  // {{cx, cy, pt}}
+        points.forEach((p, i) => {{
+            const cx = xPos(i);
+            const cy = yPos(p.stageIdx);
+            const color = stageColors[p.stage] || '#ffc107';
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            stored.push({{ cx, cy, pt: p }});
+        }});
+
+        // Tooltip: mouse coords → CSS pixels (accounting for scroll)
+        const hitR = radius + 3;
+        canvas.addEventListener('mousemove', function(evt) {{
+            const rect = canvas.getBoundingClientRect();
+            // Scale from viewport to CSS-pixel coordinate space
+            const scaleX = chartW / rect.width;
+            const scaleY = chartH / rect.height;
+            const mx = (evt.clientX - rect.left) * scaleX;
+            const my = (evt.clientY - rect.top) * scaleY;
+
+            let found = null;
+            for (const s of stored) {{
+                const dx = mx - s.cx;
+                const dy = my - s.cy;
+                if (dx * dx + dy * dy <= hitR * hitR) {{
+                    found = s;
+                    break;
+                }}
+            }}
+
+            if (found) {{
+                const d = found.pt.date;
+                const ds = d.getFullYear() + '-' +
+                    String(d.getMonth()+1).padStart(2,'0') + '-' +
+                    String(d.getDate()).padStart(2,'0') + ' ' +
+                    String(d.getHours()).padStart(2,'0') + ':' +
+                    String(d.getMinutes()).padStart(2,'0');
+                const sl = stageLabels[found.pt.stage] || found.pt.stage;
+                tooltip.innerHTML =
+                    '<strong>' + ds + '</strong><br>' +
+                    'Protocol: ' + found.pt.protocol + '<br>' +
+                    'Strain: ' + found.pt.strain + '<br>' +
+                    'Stage: ' + sl;
+                tooltip.style.display = 'block';
+                // Position relative to the scrollable container
+                const cRect = container.getBoundingClientRect();
+                tooltip.style.left = (evt.clientX - cRect.left + container.scrollLeft + 12) + 'px';
+                tooltip.style.top  = (evt.clientY - cRect.top + 0) + 'px';
+            }} else {{
+                tooltip.style.display = 'none';
+            }}
+        }});
+        canvas.addEventListener('mouseleave', function() {{
+            tooltip.style.display = 'none';
+        }});
+    }}
+
     // Build charts on page load
     buildLegend('chart-legend-proto');
     buildLegend('chart-legend-strain');
+    buildLegend('chart-legend-timeline');
     buildStackedChart('stacked-protocol', 'protocol');
     buildStackedChart('stacked-strain', 'strain');
+    buildTimeline();
     </script>
 </body>
 </html>"""

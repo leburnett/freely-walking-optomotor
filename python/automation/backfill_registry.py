@@ -67,6 +67,18 @@ ALL_SCAN_PATHS = [
 DEFAULT_RESULTS_PATH = r"\\prfs.hhmi.org\reiserlab\oaky-cokey\exp_results"
 
 
+def _classify_scan_root(scan_root):
+    """Classify a scan root as 'network' or 'local'.
+
+    Network paths start with ``\\\\prfs`` (UNC) or ``//prfs``.
+    Everything else is considered local.
+    """
+    path_lower = scan_root.lower().replace("\\", "/")
+    if path_lower.startswith("//prfs"):
+        return "network"
+    return "local"
+
+
 # ---------------------------------------------------------------------------
 # Experiment discovery
 # ---------------------------------------------------------------------------
@@ -400,6 +412,39 @@ def _extract_metadata_from_path_fallback(folder_path, scan_root):
 # Results index (for cross-referencing exp_results)
 # ---------------------------------------------------------------------------
 
+def _parse_results_filename(fname):
+    """Extract metadata from a results filename.
+
+    Pattern: YYYY-MM-DD_HH-MM-SS_strain_protocol_sex_data.mat
+
+    The strain may contain underscores so we locate the protocol name
+    (protocol_XX or Protocol_vX) by regex and split around it.
+
+    Returns:
+        Dict with strain, protocol, sex — or None if parsing fails.
+    """
+    match = re.match(
+        r"^(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})_(.+)_data\.mat$",
+        fname,
+    )
+    if not match:
+        return None
+
+    _, _, rest = match.groups()
+
+    # Find protocol name within rest (e.g. "NorpA_plus_plus_protocol_27_F")
+    proto_match = re.search(r"(protocol_\d+|Protocol_v\d+)", rest, re.IGNORECASE)
+    if not proto_match:
+        return None
+
+    strain = rest[: proto_match.start()].rstrip("_")
+    after_proto = rest[proto_match.end() :].lstrip("_")
+    protocol = proto_match.group(1)
+    sex = after_proto if after_proto else "unknown"
+
+    return {"strain": strain, "protocol": protocol, "sex": sex}
+
+
 def build_results_index(results_path):
     """Build a lookup index from exp_results *_data.mat files.
 
@@ -413,7 +458,9 @@ def build_results_index(results_path):
         results_path: Path to the exp_results directory.
 
     Returns:
-        Dict mapping (date_underscores, time_underscores) to the result file path.
+        Dict mapping (date_underscores, time_underscores) to a dict with
+        'path' and optionally 'strain', 'protocol', 'sex' parsed from
+        the filename.
     """
     index = {}
 
@@ -434,7 +481,12 @@ def build_results_index(results_path):
                     date_hyphens, time_hyphens, _ = match.groups()
                     date_key = date_hyphens.replace("-", "_")
                     time_key = time_hyphens.replace("-", "_")
-                    index[(date_key, time_key)] = os.path.join(dirpath, fname)
+                    entry = {"path": os.path.join(dirpath, fname)}
+                    # Parse metadata from filename
+                    meta = _parse_results_filename(fname)
+                    if meta:
+                        entry.update(meta)
+                    index[(date_key, time_key)] = entry
                     count += 1
 
     logger.info(f"Built results index: {count} entries from {results_path}")
@@ -534,12 +586,21 @@ def process_one_experiment(exp, network_results_index, local_results_index, args
         has_local_acq = has_local and machine_role == "acquisition"
         has_local_proc = has_local and machine_role == "processing"
 
+        # Experiment DATA folder location (based on which scan path it was found in)
+        location = _classify_scan_root(scan_root)
+        has_data_network = (location == "network")
+        has_data_local_acq = (location == "local" and machine_role == "acquisition")
+        has_data_local_proc = (location == "local" and machine_role == "processing")
+
         if args.dry_run:
             return {
                 "status": "dry_run",
                 "folder": folder_path,
                 "metadata": metadata,
                 "inferred_stage": stage,
+                "has_data_local_acquisition": has_data_local_acq,
+                "has_data_local_processing": has_data_local_proc,
+                "has_data_network": has_data_network,
                 "has_local_results_acquisition": has_local_acq,
                 "has_local_results_processing": has_local_proc,
                 "has_network_results": has_network,
@@ -579,6 +640,9 @@ def process_one_experiment(exp, network_results_index, local_results_index, args
             "folder": folder_path,
             "metadata": metadata,
             "inferred_stage": stage,
+            "has_data_local_acquisition": has_data_local_acq,
+            "has_data_local_processing": has_data_local_proc,
+            "has_data_network": has_data_network,
             "has_local_results_acquisition": has_local_acq,
             "has_local_results_processing": has_local_proc,
             "has_network_results": has_network,
@@ -600,6 +664,9 @@ def process_one_experiment(exp, network_results_index, local_results_index, args
 def _merge_cross_ref(target, source):
     """OR cross-reference boolean flags from source into target."""
     for field in (
+        "has_data_local_acquisition",
+        "has_data_local_processing",
+        "has_data_network",
         "has_local_results_acquisition",
         "has_local_results_processing",
         "has_network_results",
@@ -607,16 +674,71 @@ def _merge_cross_ref(target, source):
         target[field] = target.get(field, False) or source.get(field, False)
 
 
-def write_global_registry(results, output_registry):
+def _fix_bad_metadata(entry, network_results_index, local_results_index):
+    """Detect and fix misaligned metadata using results filenames.
+
+    Common patterns that indicate a problem:
+    - protocol field contains a date (YYYY_MM_DD)
+    - strain field contains a protocol name (protocol_XX)
+
+    When detected, attempts to correct using parsed metadata from the
+    results filename (which is authoritative).
+    """
+    date_pat = re.compile(r"^\d{4}_\d{2}_\d{2}$")
+    proto_pat = re.compile(r"^protocol_\d+$|^Protocol_v\d+$", re.IGNORECASE)
+
+    protocol = entry.get("protocol", "")
+    strain = entry.get("strain", "")
+
+    needs_fix = False
+    if date_pat.match(protocol):
+        needs_fix = True
+    if proto_pat.match(strain):
+        needs_fix = True
+
+    if not needs_fix:
+        return False
+
+    # Try to look up correct metadata from results filename
+    key = (entry.get("date", ""), entry.get("time", ""))
+    for idx in (network_results_index, local_results_index):
+        if idx and key in idx:
+            info = idx[key]
+            if isinstance(info, dict) and "strain" in info and "protocol" in info:
+                old_proto = entry["protocol"]
+                old_strain = entry["strain"]
+                entry["protocol"] = info["protocol"]
+                entry["strain"] = info["strain"]
+                if "sex" in info and info["sex"] != "unknown":
+                    entry["sex"] = info["sex"]
+                # Rebuild experiment_id
+                entry["experiment_id"] = (
+                    f"{entry['date']}_{entry['time']}_"
+                    f"{entry['strain']}_{entry['protocol']}_{entry.get('sex', '')}"
+                )
+                logger.info(
+                    f"Fixed metadata for {key}: "
+                    f"protocol {old_proto!r}->{entry['protocol']!r}, "
+                    f"strain {old_strain!r}->{entry['strain']!r}"
+                )
+                return True
+    return False
+
+
+def write_global_registry(results, output_registry,
+                          network_results_index=None, local_results_index=None):
     """Write all experiment statuses to the global registry.
 
     Deduplicates by (date, time) key, keeping the entry with the highest
     pipeline stage. Merges with the existing registry so that running
     backfill on one machine preserves entries written by the other machine.
+    Corrects bad metadata using results filenames when available.
 
     Args:
         results: List of result dicts from process_one_experiment.
         output_registry: Path to the output registry JSON file.
+        network_results_index: Results index from network exp_results (optional).
+        local_results_index: Results index from local results (optional).
     """
     # Stage priority for deduplication (higher = further along pipeline)
     stage_priority = {s: i for i, s in enumerate(PIPELINE_STAGES)}
@@ -645,6 +767,9 @@ def write_global_registry(results, output_registry):
             "current_stage": r.get("inferred_stage", ""),
             "last_updated": datetime.now().isoformat(timespec="seconds"),
             "has_errors": False,
+            "has_data_local_acquisition": r.get("has_data_local_acquisition", False),
+            "has_data_local_processing": r.get("has_data_local_processing", False),
+            "has_data_network": r.get("has_data_network", False),
             "has_local_results_acquisition": r.get("has_local_results_acquisition", False),
             "has_local_results_processing": r.get("has_local_results_processing", False),
             "has_network_results": r.get("has_network_results", False),
@@ -686,6 +811,16 @@ def write_global_registry(results, output_registry):
                 )
         except (json.JSONDecodeError, OSError) as e:
             logger.warning(f"Could not read existing registry for merge: {e}")
+
+    # Fix bad metadata using results filenames
+    if network_results_index or local_results_index:
+        fixed = 0
+        for entry in best.values():
+            if _fix_bad_metadata(entry, network_results_index, local_results_index):
+                fixed += 1
+        if fixed:
+            logger.info(f"Corrected metadata for {fixed} experiments using results filenames")
+            print(f"  Corrected metadata for {fixed} experiments using results filenames")
 
     experiments = list(best.values())
 
@@ -879,7 +1014,22 @@ def main():
             )
 
     # Resolve scan paths
-    scan_paths = args.scan_paths if args.scan_paths else ALL_SCAN_PATHS
+    scan_paths = list(args.scan_paths) if args.scan_paths else list(ALL_SCAN_PATHS)
+
+    # Also scan local data directories (only accessible on the current machine)
+    if args.all:
+        try:
+            from config import config as config_module
+
+            for cfg_attr in ("DATA_UNPROCESSED", "DATA_TRACKED", "DATA_PROCESSED"):
+                try:
+                    path = str(getattr(config_module, cfg_attr))
+                    if path not in scan_paths:
+                        scan_paths.append(path)
+                except AttributeError:
+                    pass
+        except ImportError:
+            logger.debug("Could not import config module for local data paths")
 
     logger.info(f"Backfill starting — scan paths: {scan_paths}")
     logger.info(f"Results cross-reference: {args.results_path}")
@@ -939,7 +1089,11 @@ def main():
     # Write global registry
     if not args.dry_run:
         print("\nWriting global registry...")
-        write_global_registry(results, args.output_registry)
+        write_global_registry(
+            results, args.output_registry,
+            network_results_index=network_results_index,
+            local_results_index=local_results_index,
+        )
 
         print("Generating HTML status page...")
         try:
