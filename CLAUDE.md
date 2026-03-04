@@ -59,11 +59,11 @@ All paths are centralised in two config files (one per language). Each has a sin
 
 Three computers are involved:
 
-| Computer | Role | Editable field |
-|----------|------|----------------|
-| Acquisition rig (Windows) | Runs protocols, records video | N/A (uses fixed rig paths) |
-| Processing machine (Windows) | Automated tracking & processing | `project_root` / `PROJECT_ROOT` |
-| Analysis computer (Mac/any) | Analysis, plotting, dashboard | `project_root` / `PROJECT_ROOT` |
+| Computer | `MACHINE_ROLE` | Role | Editable field |
+|----------|---------------|------|----------------|
+| Acquisition rig (Windows) | `acquisition` | Runs protocols, records video | N/A (uses fixed rig paths) |
+| Processing machine (Windows) | `processing` | Automated tracking & processing | `project_root` / `PROJECT_ROOT` |
+| Analysis computer (Mac/any) | `analysis` | Analysis, plotting, dashboard | `project_root` / `PROJECT_ROOT` (env var) |
 
 ### MATLAB — `config/get_config.m`
 
@@ -98,7 +98,16 @@ Run `setup_path.m` once per MATLAB session (or add to `startup.m`) to add all `s
 
 ### Python — `config/config.py`
 
-Edit `PROJECT_ROOT`. Import in scripts:
+Machine-specific paths are selected via the `MACHINE_ROLE` environment variable:
+```
+setx MACHINE_ROLE acquisition   # Acquisition rig
+setx MACHINE_ROLE processing    # Processing machine
+setx MACHINE_ROLE analysis      # Analysis machine (any user's computer)
+```
+
+For **analysis** machines, `PROJECT_ROOT` can optionally be set via environment variable (`setx PROJECT_ROOT C:\path\to\data`). If not set, it defaults to a sibling directory of the repo.
+
+Import in scripts:
 ```python
 import sys
 from pathlib import Path
@@ -108,9 +117,10 @@ from config.config import DATA_TRACKED, RESULTS_PATH, NETWORK_TRACKED, REPO_ROOT
 
 Key variable groups:
 - **Local paths** (`DATA_UNPROCESSED`, `DATA_TRACKED`, `DATA_PROCESSED`, `RESULTS_PATH`, `FIGURES_PATH`) — derived from `PROJECT_ROOT`
-- **Network paths** (`NETWORK_ROOT`, `NETWORK_UNPROCESSED`, `NETWORK_TRACKED`, `NETWORK_PROCESSED`, `NETWORK_RESULTS`, `NETWORK_FIGS`) — processing machine only, UNC format
-- **Rig path** (`SOURCE_ROOT`) — acquisition rig only, used by `monitor_and_copy`
+- **Network paths** (`NETWORK_ROOT`, `NETWORK_UNPROCESSED`, `NETWORK_TRACKED`, `NETWORK_PROCESSED`, `NETWORK_RESULTS`, `NETWORK_FIGS`) — UNC format, accessible from all machines
+- **Rig path** (`SOURCE_ROOT`) — acquisition rig only, used by `monitor_and_copy`; `None` on processing and analysis machines
 - **Repo paths** (`REPO_ROOT`, `PATTERNS_DIR`, `PROTOCOLS_DIR`) — auto-detected
+- **`PYTHON_EXE`** — fixed paths on acquisition/processing; `None` on analysis (uses PATH)
 
 Note: Python uses Windows UNC format (`\\server\share`) for network paths while MATLAB uses SMB format (`smb://server/share/data/`).
 

@@ -1213,16 +1213,16 @@ def main():
 
     # Check machine role for local results tagging
     machine_role = _get_machine_role()
-    if machine_role not in ("acquisition", "processing"):
+    if machine_role not in ("acquisition", "processing", "analysis"):
         logger.warning(
             f"MACHINE_ROLE is '{machine_role}'; local results cannot be attributed "
             "to a specific machine. Set MACHINE_ROLE environment variable to "
-            "'acquisition' or 'processing'."
+            "'acquisition', 'processing', or 'analysis'."
         )
         print(
             f"WARNING: MACHINE_ROLE='{machine_role}'. "
             "Local results will not be tagged to a specific machine.\n"
-            "  Set with: setx MACHINE_ROLE acquisition  (or processing)\n"
+            "  Set with: setx MACHINE_ROLE acquisition  (or processing / analysis)\n"
         )
     else:
         print(f"Machine role: {machine_role}\n")

@@ -36,7 +36,12 @@
       "Bash(python -c \"import ast; ast.parse\\(open\\(''python/automation/backfill_registry.py''\\).read\\(\\)\\); print\\(''backfill_registry.py: OK''\\)\")",
       "Bash(python -c \"import json; f=open\\(''//prfs.hhmi.org/reiserlab/oaky-cokey/pipeline_status.json''\\); data=json.load\\(f\\); f.close\\(\\); exps=data[''experiments'']; warnings=[e for e in exps if e.get\\(''has_operator_warning''\\)]; print\\(f''Total: {len\\(exps\\)}''\\); print\\(f''Warnings: {len\\(warnings\\)}''\\); [print\\(f''  {w[\"\"date\"\"]} {w[\"\"time\"\"]} proto={w[\"\"protocol\"\"]} strain={w[\"\"strain\"\"]}''\\) for w in warnings]; prod=[e for e in exps if \\(e.get\\(''date'',''''\\) or ''''\\)>=''2024_09_25'']; test=[e for e in exps if \\(e.get\\(''date'',''''\\) or ''''\\)<''2024_09_25'']; print\\(f''Production: {len\\(prod\\)}''\\); print\\(f''Testing: {len\\(test\\)}''\\)\")",
       "Bash(python -c \"import ast; ast.parse\\(open\\(''python/automation/backfill_registry.py''\\).read\\(\\)\\); print\\(''OK''\\)\")",
-      "Bash(python -c \"import ast; ast.parse\\(open\\(''python/automation/shared/registry.py''\\).read\\(\\)\\); print\\(''OK''\\)\")"
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''python/automation/shared/registry.py''\\).read\\(\\)\\); print\\(''OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''config/config.py''\\).read\\(\\)\\); print\\(''config.py: OK''\\)\")",
+      "Bash(set \"MACHINE_ROLE=analysis\")",
+      "Bash(python -c \"from config.config import MACHINE_ROLE, PROJECT_ROOT, SOURCE_ROOT, PYTHON_EXE; print\\(f''MACHINE_ROLE: {MACHINE_ROLE}''\\); print\\(f''PROJECT_ROOT: {PROJECT_ROOT}''\\); print\\(f''SOURCE_ROOT: {SOURCE_ROOT}''\\); print\\(f''PYTHON_EXE: {PYTHON_EXE}''\\)\")",
+      "Bash(MACHINE_ROLE=analysis python -c \"from config.config import MACHINE_ROLE, PROJECT_ROOT, SOURCE_ROOT, PYTHON_EXE; print\\(f''MACHINE_ROLE: {MACHINE_ROLE}''\\); print\\(f''PROJECT_ROOT: {PROJECT_ROOT}''\\); print\\(f''SOURCE_ROOT: {SOURCE_ROOT}''\\); print\\(f''PYTHON_EXE: {PYTHON_EXE}''\\)\")",
+      "Bash(MACHINE_ROLE=analysis PROJECT_ROOT=\"C:\\\\Users\\\\someone\\\\my-data\" python -c \"from config.config import MACHINE_ROLE, PROJECT_ROOT; print\\(f''MACHINE_ROLE: {MACHINE_ROLE}''\\); print\\(f''PROJECT_ROOT: {PROJECT_ROOT}''\\)\")"
     ]
   }
 }

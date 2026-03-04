@@ -85,12 +85,18 @@ python/automation/
 
 ### Machine Detection (`config/config.py`)
 
-Both machines share the same codebase. They are distinguished by the `MACHINE_ROLE` environment variable, set once per machine:
+All machines share the same codebase. They are distinguished by the `MACHINE_ROLE` environment variable, set once per machine:
 
 ```cmd
 setx MACHINE_ROLE acquisition    # On acquisition machine (admin terminal, once)
 setx MACHINE_ROLE processing     # On processing machine (admin terminal, once)
+setx MACHINE_ROLE analysis       # On any analysis machine (admin terminal, once)
 ```
+
+Three roles are supported:
+- **`acquisition`** — the rig computer that captures raw video data
+- **`processing`** — the lab computer that runs tracking and MATLAB processing
+- **`analysis`** — any user's computer for running analysis, plotting, or the dashboard
 
 The config file (`config/config.py`) reads this variable and sets machine-specific paths:
 
@@ -103,7 +109,13 @@ if MACHINE_ROLE == "acquisition":
 elif MACHINE_ROLE == "processing":
     PROJECT_ROOT = Path(r"C:\Users\labadmin\Documents\freely-walking-optomotor")
     SOURCE_ROOT = None  # Not used on processing machine
+elif MACHINE_ROLE == "analysis":
+    PROJECT_ROOT = Path(os.environ.get("PROJECT_ROOT", ""))  # Or auto-detected default
+    SOURCE_ROOT = None   # Not used
+    PYTHON_EXE = None    # Use whatever Python is on PATH
 ```
+
+For **analysis** machines, `PROJECT_ROOT` can optionally be set via the `PROJECT_ROOT` environment variable (`setx PROJECT_ROOT C:\path\to\data`). If not set, it defaults to a sibling directory alongside the repo.
 
 ### Key Path Variables (from config.py)
 
@@ -118,7 +130,7 @@ elif MACHINE_ROLE == "processing":
 | `RESULTS_PATH` | `PROJECT_ROOT/results` |
 | `FIGURES_PATH` | `PROJECT_ROOT/figures` |
 | `LOG_DIR` | `PROJECT_ROOT/logs` |
-| `PYTHON_EXE` | Full path to Python interpreter |
+| `PYTHON_EXE` | Full path to Python interpreter (`None` on analysis machines) |
 | `NETWORK_ROOT` | `\\prfs.hhmi.org\reiserlab\oaky-cokey` |
 | `NETWORK_UNPROCESSED` | `NETWORK_ROOT\data\0_unprocessed` |
 | `NETWORK_TRACKED` | `NETWORK_ROOT\data\1_tracked` |
@@ -160,7 +172,7 @@ Each experiment's time folder contains a `pipeline_status.json` file tracking it
 }
 ```
 
-The `machine` field uses the `MACHINE_ROLE` value ("acquisition" or "processing"), not the hostname.
+The `machine` field uses the `MACHINE_ROLE` value ("acquisition", "processing", or "analysis"), not the hostname.
 
 ### `registry.py` — Global Registry + HTML Dashboard
 
@@ -410,12 +422,16 @@ The backfill script has been run on this machine (acquisition). Per-experiment `
 
 1. Set environment variable (admin terminal, once):
    ```cmd
-   setx MACHINE_ROLE acquisition   # or: setx MACHINE_ROLE processing
+   setx MACHINE_ROLE acquisition   # or: processing / analysis
+   ```
+   For analysis machines, optionally also set:
+   ```cmd
+   setx PROJECT_ROOT C:\path\to\your\data\directory
    ```
 2. Close and reopen terminal for the variable to take effect
 3. Verify: `echo %MACHINE_ROLE%` should print the role
-4. Ensure Python 3.13+ is installed at the path specified in `config.py`
-5. Ensure MATLAB is installed and on PATH
+4. Ensure Python 3.13+ is installed (acquisition/processing: path in `config.py`; analysis: any Python on PATH)
+5. Ensure MATLAB is installed and on PATH (acquisition/processing only)
 6. Ensure network drive is accessible: `dir \\prfs.hhmi.org\reiserlab\oaky-cokey`
 7. Run `python generate_batch_files.py` to create/update .bat launchers
 

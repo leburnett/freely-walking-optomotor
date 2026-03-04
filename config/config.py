@@ -6,8 +6,15 @@ environment variable. Set it once per machine:
 
     Acquisition machine:  setx MACHINE_ROLE acquisition
     Processing machine:   setx MACHINE_ROLE processing
+    Analysis machine:     setx MACHINE_ROLE analysis
+                          setx PROJECT_ROOT C:\\path\\to\\your\\data\\directory  (optional)
 
 Then restart your terminal. All other paths are derived automatically.
+
+The "analysis" role is for any machine (e.g. a personal laptop) where users
+run analysis scripts on processed .mat result files, generate plots, or open
+the Dash dashboard. Unlike the fixed lab machines, PROJECT_ROOT can vary per
+user and is optionally set via the PROJECT_ROOT environment variable.
 
 Usage:
     import sys
@@ -26,7 +33,8 @@ if not MACHINE_ROLE:
         "MACHINE_ROLE environment variable not set.\n"
         "Run one of the following in an admin terminal, then restart your terminal:\n"
         "  Acquisition machine:  setx MACHINE_ROLE acquisition\n"
-        "  Processing machine:   setx MACHINE_ROLE processing"
+        "  Processing machine:   setx MACHINE_ROLE processing\n"
+        "  Analysis machine:     setx MACHINE_ROLE analysis"
     )
 
 # === MACHINE-SPECIFIC PATHS ===
@@ -40,10 +48,25 @@ elif MACHINE_ROLE == "processing":
     SOURCE_ROOT = None  # Not used on processing machine
     PYTHON_EXE = Path(r"C:\Users\labadmin\AppData\Local\Python\pythoncore-3.14-64\python.exe")
 
+elif MACHINE_ROLE == "analysis":
+    # Analysis machines vary per user. Set PROJECT_ROOT to the directory
+    # where local data and results are stored. If not set, defaults to a
+    # "freely-walking-optomotor" folder alongside the repo's parent directory.
+    _proj = os.environ.get("PROJECT_ROOT", "")
+    if _proj:
+        PROJECT_ROOT = Path(_proj)
+    else:
+        # Default: sibling of the repo's parent directory, e.g. if repo is at
+        # C:\Users\me\Documents\GitHub\freely-walking-optomotor
+        # this becomes C:\Users\me\Documents\freely-walking-optomotor
+        PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent / "freely-walking-optomotor"
+    SOURCE_ROOT = None  # Not used on analysis machine
+    PYTHON_EXE = None   # Use whatever Python is on PATH
+
 else:
     raise RuntimeError(
         f"Unknown MACHINE_ROLE: '{MACHINE_ROLE}'. "
-        "Must be 'acquisition' or 'processing'."
+        "Must be 'acquisition', 'processing', or 'analysis'."
     )
 
 
@@ -114,4 +137,5 @@ PIPELINE_REGISTRY = NETWORK_ROOT + r"\pipeline_status.json"
 # Where BIAS saves raw video on the acquisition rig.
 # Only used by monitor_and_copy.py.
 # MATLAB equivalent: cfg.rig_data_folder in config/get_config.m
-SOURCE_ROOT = r"C:\MatlabRoot\FreeWalkOptomotor\data"
+# NOTE: SOURCE_ROOT is set in the MACHINE_ROLE branch above.
+# It is a Path object on the acquisition machine and None elsewhere.
