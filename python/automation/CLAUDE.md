@@ -381,6 +381,17 @@ Three strategies (tried in order):
 | `\\prfs.hhmi.org\...\1_tracked` | Hierarchical |
 | `\\prfs.hhmi.org\...\2_processed` | Hierarchical |
 
+### Re-running After Deleting Experiments
+
+**Important:** The backfill script merges with the existing global registry to preserve entries written by the other machine. This means if you delete experiment folders and re-run the backfill, the deleted experiments' entries will persist in the registry (carried over from the previous run's merge).
+
+To cleanly regenerate the registry after deleting experiment folders:
+
+1. Delete the existing global `pipeline_status.json` and `pipeline_status.html`
+2. Re-run the backfill: `python backfill_registry.py --all --output-dir <path>`
+
+The per-experiment `pipeline_status.json` files inside the deleted folders are automatically removed when the folders are deleted — no extra cleanup needed for those.
+
 ### Current State
 
 The backfill script has been run on this machine (acquisition). Per-experiment `pipeline_status.json` files and a global `pipeline_status.json` + `pipeline_status.html` have been generated. The HTML status page is viewable.

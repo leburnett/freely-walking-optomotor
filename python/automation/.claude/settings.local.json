@@ -42,7 +42,9 @@
       "Bash(cmd /c \"dir \\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\data\\\\2_processed\")",
       "Bash(\"C:\\\\Users\\\\labadmin\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\" -c \":*)",
       "Bash(pixi run python -c \":*)",
-      "Bash(cmd /c \"cd C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor\\\\python\\\\freely-walking-python && pixi run python -c \"\"import scipy.io as sio; import os; log_file = r''D:\\\\FreeWalkOptomotor\\\\data\\\\2025_07_11\\\\protocol_27\\\\jfrc100_es_shibire_kir\\\\F\\\\13_52_23\\\\LOG_2025_07_11_13_52_23.mat''; data = sio.loadmat\\(log_file, squeeze_me=True, simplify_cells=True\\); LOG = data[''LOG'']; meta = LOG[''meta''].item\\(\\); print\\(''Fields:'', meta.dtype.names\\); [print\\(f''  {f} = {repr\\(meta[f].item\\(\\)\\)}''\\) for f in [''func_name'', ''fly_strain'', ''fly_sex'']]\"\"\")"
+      "Bash(cmd /c \"cd C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor\\\\python\\\\freely-walking-python && pixi run python -c \"\"import scipy.io as sio; import os; log_file = r''D:\\\\FreeWalkOptomotor\\\\data\\\\2025_07_11\\\\protocol_27\\\\jfrc100_es_shibire_kir\\\\F\\\\13_52_23\\\\LOG_2025_07_11_13_52_23.mat''; data = sio.loadmat\\(log_file, squeeze_me=True, simplify_cells=True\\); LOG = data[''LOG'']; meta = LOG[''meta''].item\\(\\); print\\(''Fields:'', meta.dtype.names\\); [print\\(f''  {f} = {repr\\(meta[f].item\\(\\)\\)}''\\) for f in [''func_name'', ''fly_strain'', ''fly_sex'']]\"\"\")",
+      "Bash(sed 's/ACQUIRED: //')",
+      "Bash(python -c \":*)"
     ]
   }
 }
