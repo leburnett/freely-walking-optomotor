@@ -30,7 +30,8 @@
       "Bash(dir \"\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\pipeline_status*\")",
       "Bash(cmd /c \"dir \\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\pipeline_status*\")",
       "Bash(cmd /c \"dir /b \\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\pipeline_status*\")",
-      "Bash(ls -la pipeline_status*)"
+      "Bash(ls -la pipeline_status*)",
+      "Bash(python python/automation/backfill_registry.py --all --check-missing-logs)"
     ]
   }
 }

@@ -548,6 +548,134 @@ def infer_stage(folder_path, metadata, network_results_index, local_results_inde
 
 
 # ---------------------------------------------------------------------------
+# Missing LOG file check
+# ---------------------------------------------------------------------------
+
+def check_missing_log_files(experiments):
+    """Check which experiment folders are missing a LOG_*.mat file.
+
+    Args:
+        experiments: List of dicts from discover_experiments(),
+                     each with 'folder_path' and 'scan_root'.
+
+    Returns:
+        List of dicts for experiments missing LOG_*.mat. Each dict contains:
+        - folder_path: Full path to the experiment folder
+        - scan_root: Which scan root this was found under
+        - has_stamp_log: Whether stamp_log* exists
+        - has_rec_cam: Whether REC__cam_* exists
+        - file_count: Total number of files in the folder
+    """
+    missing = []
+    for exp in experiments:
+        folder_path = exp["folder_path"]
+        try:
+            entries = os.listdir(folder_path)
+        except OSError:
+            continue
+
+        has_log = any(
+            e.startswith("LOG_") and e.endswith(".mat") for e in entries
+        )
+        if not has_log:
+            missing.append({
+                "folder_path": folder_path,
+                "scan_root": exp["scan_root"],
+                "has_stamp_log": any(e.startswith("stamp_log") for e in entries),
+                "has_rec_cam": any(e.startswith("REC__cam_") for e in entries),
+                "file_count": len(entries),
+            })
+    return missing
+
+
+def print_missing_logs_report(missing, total_scanned, scan_paths):
+    """Print a console report of experiment folders missing LOG_*.mat.
+
+    Prints the full path of every folder that is missing a LOG file,
+    grouped by scan root for readability.
+    """
+    print(f"\n{'='*70}")
+    print("Missing LOG_*.mat Report")
+    print(f"{'='*70}")
+    print("Scan paths:")
+    for sp in scan_paths:
+        print(f"  - {sp}")
+    print(f"\nTotal experiment folders scanned: {total_scanned}")
+    print(f"Folders missing LOG_*.mat:        {len(missing)}")
+    print(f"{'='*70}")
+
+    if not missing:
+        print("\nAll experiment folders have a LOG_*.mat file.\n")
+        return
+
+    # Group by scan_root for readability
+    by_root = {}
+    for m in missing:
+        by_root.setdefault(m["scan_root"], []).append(m)
+
+    for root, items in sorted(by_root.items()):
+        print(f"\n--- {root} ({len(items)} missing) ---")
+        for item in sorted(items, key=lambda x: x["folder_path"]):
+            indicators = []
+            if item["has_stamp_log"]:
+                indicators.append("stamp_log")
+            if item["has_rec_cam"]:
+                indicators.append("REC__cam")
+            has_str = (
+                f"  [has: {', '.join(indicators)}]" if indicators
+                else "  [no marker files]"
+            )
+            print(f"  {item['folder_path']}{has_str}")
+
+    print(f"\n{'='*70}\n")
+
+
+def write_missing_logs_report(missing, total_scanned, scan_paths, output_path):
+    """Write the missing LOG_*.mat report to a text file.
+
+    Args:
+        missing: List of dicts from check_missing_log_files().
+        total_scanned: Total number of experiment folders scanned.
+        scan_paths: List of scan path strings used.
+        output_path: Full path to the output text file.
+    """
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(f"# Missing LOG_*.mat Report\n")
+        f.write(f"# Generated: {datetime.now().isoformat(timespec='seconds')}\n")
+        f.write(f"# Total scanned: {total_scanned}\n")
+        f.write(f"# Missing: {len(missing)}\n")
+        f.write(f"#\n")
+        f.write(f"# Scan paths:\n")
+        for sp in scan_paths:
+            f.write(f"#   {sp}\n")
+        f.write(f"#\n")
+
+        if not missing:
+            f.write("# All experiment folders have a LOG_*.mat file.\n")
+            return
+
+        # Group by scan_root
+        by_root = {}
+        for m in missing:
+            by_root.setdefault(m["scan_root"], []).append(m)
+
+        for root, items in sorted(by_root.items()):
+            f.write(f"\n# === {root} ({len(items)} missing) ===\n")
+            for item in sorted(items, key=lambda x: x["folder_path"]):
+                markers = []
+                if item["has_stamp_log"]:
+                    markers.append("stamp_log")
+                if item["has_rec_cam"]:
+                    markers.append("REC__cam")
+                marker_str = f"  # has: {', '.join(markers)}" if markers else ""
+                f.write(f"{item['folder_path']}{marker_str}\n")
+
+    logger.info(f"Missing LOG report written: {output_path}")
+    print(f"Report written: {output_path}")
+
+
+# ---------------------------------------------------------------------------
 # Per-experiment processing
 # ---------------------------------------------------------------------------
 
@@ -978,6 +1106,15 @@ Examples:
         action="store_true",
         help="Report what would be written without writing anything.",
     )
+    parser.add_argument(
+        "--check-missing-logs",
+        action="store_true",
+        help=(
+            "Report experiment folders missing a LOG_*.mat file. "
+            "Scans all specified paths, prints full folder paths, "
+            "and writes a report file. Skips all registry/HTML operations."
+        ),
+    )
 
     return parser.parse_args()
 
@@ -1013,23 +1150,32 @@ def main():
 
     # Verify the output directory is accessible
     output_dir = os.path.dirname(args.output_registry) or "."
-    if not os.path.isdir(output_dir):
-        # Check whether this looks like the network group drive
-        is_network = output_dir.lower().replace("\\", "/").startswith("//prfs")
-        if is_network:
+    args._output_dir_accessible = os.path.isdir(output_dir)
+    if not args._output_dir_accessible:
+        if args.check_missing_logs:
+            # Non-fatal: console output is the primary deliverable
+            logger.warning(f"Output directory not accessible: {output_dir}")
             print(
-                f"ERROR: Group drive is not accessible: {output_dir}\n\n"
-                "Output files are only generated on the group drive by default.\n"
-                "If the group drive is unavailable, use --output-dir to specify\n"
-                "an alternative location:\n\n"
-                f"  python backfill_registry.py --all --output-dir <path>\n"
+                f"WARNING: Output directory not accessible ({output_dir}).\n"
+                "Report file will not be written; console output only.\n"
             )
         else:
-            print(
-                f"ERROR: Output directory does not exist: {output_dir}\n"
-                "Please create it first or choose a different location.\n"
-            )
-        sys.exit(1)
+            # Fatal for normal backfill operations
+            is_network = output_dir.lower().replace("\\", "/").startswith("//prfs")
+            if is_network:
+                print(
+                    f"ERROR: Group drive is not accessible: {output_dir}\n\n"
+                    "Output files are only generated on the group drive by default.\n"
+                    "If the group drive is unavailable, use --output-dir to specify\n"
+                    "an alternative location:\n\n"
+                    f"  python backfill_registry.py --all --output-dir <path>\n"
+                )
+            else:
+                print(
+                    f"ERROR: Output directory does not exist: {output_dir}\n"
+                    "Please create it first or choose a different location.\n"
+                )
+            sys.exit(1)
 
     # Check machine role for local results tagging
     machine_role = _get_machine_role()
@@ -1077,20 +1223,7 @@ def main():
             logger.debug("Could not import config module for local data paths")
 
     logger.info(f"Backfill starting — scan paths: {scan_paths}")
-    logger.info(f"Results cross-reference: {args.results_path}")
     logger.info(f"Output registry: {args.output_registry}")
-    logger.info(f"Workers: {args.workers}, skip_existing: {args.skip_existing}, dry_run: {args.dry_run}")
-
-    # Build results indexes for cross-referencing
-    print("Building results index from network exp_results...")
-    network_results_index = build_results_index(args.results_path)
-    print(f"  Found {len(network_results_index)} result files on network\n")
-
-    local_results_index = {}
-    if args.local_results_path:
-        print("Building results index from local results...")
-        local_results_index = build_results_index(args.local_results_path)
-        print(f"  Found {len(local_results_index)} result files locally\n")
 
     # Discover all experiments
     print("Discovering experiments...")
@@ -1106,6 +1239,51 @@ def main():
     if not all_experiments:
         print("No experiments found. Nothing to do.")
         return
+
+    # --check-missing-logs mode: report and exit (skip all registry operations)
+    if args.check_missing_logs:
+        print(f"Checking {len(all_experiments)} experiment folders for missing LOG_*.mat...")
+        missing = check_missing_log_files(all_experiments)
+
+        # Enrich with path-based metadata for context
+        for m in missing:
+            meta = _extract_metadata_from_path_fallback(m["folder_path"], m["scan_root"])
+            m["date"] = meta.get("date", "unknown")
+            m["protocol"] = meta.get("protocol", "unknown")
+            m["strain"] = meta.get("strain", "unknown")
+
+        print_missing_logs_report(missing, len(all_experiments), scan_paths)
+
+        # Write report file if output directory is accessible
+        if args._output_dir_accessible:
+            report_path = args.output_registry.replace(
+                "pipeline_status.json", "missing_log_files.txt"
+            )
+            try:
+                write_missing_logs_report(
+                    missing, len(all_experiments), scan_paths, report_path
+                )
+            except OSError as e:
+                logger.warning(f"Could not write report file: {e}")
+                print(f"WARNING: Could not write report to {report_path}: {e}")
+        else:
+            print("(Skipping report file — output directory not accessible)")
+
+        return
+
+    # Build results indexes for cross-referencing (skipped by --check-missing-logs)
+    logger.info(f"Results cross-reference: {args.results_path}")
+    logger.info(f"Workers: {args.workers}, skip_existing: {args.skip_existing}, dry_run: {args.dry_run}")
+
+    print("Building results index from network exp_results...")
+    network_results_index = build_results_index(args.results_path)
+    print(f"  Found {len(network_results_index)} result files on network\n")
+
+    local_results_index = {}
+    if args.local_results_path:
+        print("Building results index from local results...")
+        local_results_index = build_results_index(args.local_results_path)
+        print(f"  Found {len(local_results_index)} result files locally\n")
 
     # Process experiments (parallel)
     print(f"Processing experiments ({args.workers} workers)...")
