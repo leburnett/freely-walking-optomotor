@@ -1,84 +1,104 @@
+"""
+Monitor acquisition source folder for new experiment data and copy to network.
+
+Watches SOURCE_ROOT using a filesystem observer. When a new experiment folder
+is detected and contains all required files (stamp_log, .mat, .ufmf), copies
+it to the network unprocessed folder and creates a pipeline_status.json inside.
+
+Usage:
+    python monitor_and_copy.py
+"""
+
 import os
 import sys
 import shutil
 import time
-import logging
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-# Load project-wide config (repo root is 4 levels up: monitor_and_copy -> automation -> python -> repo)
+# Load project-wide config
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from config.config import SOURCE_ROOT, NETWORK_UNPROCESSED
 
-# Setup logging
-LOG_FILE = "monitor_and_copy.log"
-logging.basicConfig(
-    filename=LOG_FILE,
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+# Shared utilities
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from shared.logging_config import setup_logging
+from shared.file_ops import is_folder_complete, parse_experiment_path
+from shared.status import init_status, update_stage, read_status
+from shared.registry import update_registry
 
-# Source and destination paths
+logger = setup_logging("monitor_and_copy")
+
 DEST_ROOT = NETWORK_UNPROCESSED
-REQUIRED_EXTENSIONS = {'.mat', '.ufmf'}
-REQUIRED_PREFIX = 'stamp_log'
-CHECK_INTERVAL = 30  # Time (seconds) to wait before checking incomplete folders again
+CHECK_INTERVAL = 30  # seconds between checking incomplete folders
 
 pending_folders = set()
+
 
 class VideoFolderHandler(FileSystemEventHandler):
     def on_created(self, event):
         if event.is_directory:
             pending_folders.add(event.src_path)
-            # logging.info(f"New folder detected: {event.src_path}")
 
     def check_pending_folders(self):
-        """Checks if pending folders now contain all required files and copies them."""
+        """Check if pending folders now contain all required files and copy them."""
         to_remove = []
         for folder_path in list(pending_folders):
-            if self.is_folder_complete(folder_path):
+            if is_folder_complete(folder_path):
+                logger.info(f"Folder complete: {folder_path}")
                 self.copy_folder(folder_path)
                 to_remove.append(folder_path)
         for folder in to_remove:
-            pending_folders.remove(folder)
-
-    def is_folder_complete(self, folder_path):
-        """Checks if a folder contains all required files."""
-        if not os.path.exists(folder_path):
-            return False
-        files = os.listdir(folder_path)
-        complete = (
-            any(f.startswith(REQUIRED_PREFIX) for f in files) and
-            any(f.endswith('.mat') for f in files) and
-            any(f.endswith('.ufmf') for f in files)
-        )
-        if complete:
-            logging.info(f"Folder complete: {folder_path}")
-        return complete
+            pending_folders.discard(folder)
 
     def copy_folder(self, folder_path):
-        """Copies the completed folder to the group drive."""
-        relative_path = os.path.relpath(folder_path, SOURCE_ROOT)
+        """Copy the completed folder to the network drive and record status."""
+        relative_path = os.path.relpath(folder_path, str(SOURCE_ROOT))
         dest_path = os.path.join(DEST_ROOT, relative_path)
+
         try:
             shutil.copytree(folder_path, dest_path, dirs_exist_ok=True)
-            logging.info(f"Copied: {folder_path} -> {dest_path}")
+            logger.info(f"Copied: {folder_path} -> {dest_path}")
         except Exception as e:
-            logging.error(f"Error copying {folder_path} to {dest_path}: {e}")
+            logger.error(f"Error copying {folder_path} to {dest_path}: {e}")
+            return
+
+        # Create pipeline_status.json in the destination folder
+        metadata = parse_experiment_path(folder_path, str(SOURCE_ROOT))
+        if metadata:
+            init_status(
+                dest_path,
+                date=metadata["date"],
+                protocol=metadata["protocol"],
+                strain=metadata["strain"],
+                sex=metadata["sex"],
+                time_str=metadata["time"],
+            )
+            update_stage(dest_path, "acquired", status="complete")
+            update_stage(dest_path, "copied_to_network", status="complete")
+            # Update global registry
+            updated = read_status(dest_path)
+            if updated:
+                update_registry(updated)
+        else:
+            logger.warning(
+                f"Could not parse experiment metadata from path: {folder_path}"
+            )
+
 
 if __name__ == "__main__":
-    logging.info("Starting folder monitoring script...")
+    logger.info("Starting folder monitoring script...")
     observer = Observer()
     event_handler = VideoFolderHandler()
-    observer.schedule(event_handler, path=SOURCE_ROOT, recursive=True)
+    observer.schedule(event_handler, path=str(SOURCE_ROOT), recursive=True)
     observer.start()
-    
+
     try:
         while True:
             event_handler.check_pending_folders()
             time.sleep(CHECK_INTERVAL)
     except KeyboardInterrupt:
-        logging.info("Script stopped by user.")
+        logger.info("Script stopped by user.")
         observer.stop()
     observer.join()

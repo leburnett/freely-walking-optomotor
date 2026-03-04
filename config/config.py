@@ -1,18 +1,13 @@
 """
 Project-wide path configuration for the freely-walking-optomotor project.
 
-Edit PROJECT_ROOT for your computer. All other paths are derived from it.
+Machine-specific paths are set automatically based on the MACHINE_ROLE
+environment variable. Set it once per machine:
 
-This config is used on three machines:
-  1. Acquisition rig (Windows) — uses SOURCE_ROOT only (monitor_and_copy)
-  2. Processing machine (Windows) — uses PROJECT_ROOT + local paths + NETWORK_* paths
-  3. Analysis computer (Mac/any) — uses PROJECT_ROOT + local paths only
+    Acquisition machine:  setx MACHINE_ROLE acquisition
+    Processing machine:   setx MACHINE_ROLE processing
 
-Only PROJECT_ROOT needs to change between machines (2) and (3).
-The NETWORK_* paths are only relevant on the processing machine.
-
-See also: config/get_config.m (MATLAB equivalent),
-          setup_path.m (adds src/ to MATLAB path)
+Then restart your terminal. All other paths are derived automatically.
 
 Usage:
     import sys
@@ -20,20 +15,36 @@ Usage:
     sys.path.insert(0, str(Path(__file__).parent.parent.parent))  # adjust to repo root
     from config.config import DATA_TRACKED, RESULTS_PATH
 """
+import os
 from pathlib import Path
 
-# ======================================================================
-# EDIT THIS FOR YOUR COMPUTER
-# ======================================================================
-# Set this to the root of your local data folder. The same folder
-# structure is used on both the processing machine and analysis
-# computers — only the root path differs.
-#
-# Processing machine (Windows):
-#   PROJECT_ROOT = Path(r"C:\Users\burnettl\Documents\oakey-cokey")
-#
-# Analysis computer (Mac):
-PROJECT_ROOT = Path("/Users/burnettl/Documents/Projects/oaky_cokey")
+# === MACHINE ROLE DETECTION ===
+MACHINE_ROLE = os.environ.get("MACHINE_ROLE", "").lower()
+
+if not MACHINE_ROLE:
+    raise RuntimeError(
+        "MACHINE_ROLE environment variable not set.\n"
+        "Run one of the following in an admin terminal, then restart your terminal:\n"
+        "  Acquisition machine:  setx MACHINE_ROLE acquisition\n"
+        "  Processing machine:   setx MACHINE_ROLE processing"
+    )
+
+# === MACHINE-SPECIFIC PATHS ===
+if MACHINE_ROLE == "acquisition":
+    PROJECT_ROOT = Path(r"C:\Users\labadmin\Documents\freely-walking-optomotor")
+    SOURCE_ROOT = Path(r"C:\MatlabRoot\FreeWalkOptomotor\data")
+    PYTHON_EXE = Path(r"C:\Users\labadmin\AppData\Local\Programs\Python\Python313\python.exe")
+
+elif MACHINE_ROLE == "processing":
+    PROJECT_ROOT = Path(r"C:\Users\labadmin\Documents\freely-walking-optomotor")
+    SOURCE_ROOT = None  # Not used on processing machine
+    PYTHON_EXE = Path(r"C:\Users\labadmin\AppData\Local\Python\pythoncore-3.14-64\python.exe")
+
+else:
+    raise RuntimeError(
+        f"Unknown MACHINE_ROLE: '{MACHINE_ROLE}'. "
+        "Must be 'acquisition' or 'processing'."
+    )
 
 
 # ======================================================================
@@ -59,6 +70,10 @@ DATA_PROCESSED   = PROJECT_ROOT / "DATA" / "02_processed"
 RESULTS_PATH     = PROJECT_ROOT / "results"
 FIGURES_PATH     = PROJECT_ROOT / "figures"
 
+# Centralized log directory
+LOG_DIR = PROJECT_ROOT / "logs"
+
+# Network paths (shared between both machines)
 # --- Repo asset paths ---
 PATTERNS_DIR  = REPO_ROOT / "src" / "patterns" / "Patterns_optomotor"
 PROTOCOLS_DIR = REPO_ROOT / "src" / "protocols"
@@ -90,6 +105,8 @@ NETWORK_PROCESSED   = NETWORK_ROOT + r"\data\2_processed"
 NETWORK_RESULTS     = NETWORK_ROOT + r"\exp_results"
 NETWORK_FIGS        = NETWORK_ROOT + r"\exp_figures\overview_figs"
 
+# Global pipeline status registry (on network drive, shared by both machines)
+PIPELINE_REGISTRY = NETWORK_ROOT + r"\pipeline_status.json"
 
 # ======================================================================
 # ACQUISITION RIG PATH (rig computer only)

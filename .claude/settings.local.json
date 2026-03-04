@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs cat)",
+      "Bash(python -c \"import py_compile; py_compile.compile\\(''python/automation/backfill_registry.py'', doraise=True\\); print\\(''backfill_registry.py: OK''\\)\")",
+      "Bash(\"C:/Users/labadmin/AppData/Local/Programs/Python/Python313/python.exe\" -c \"import py_compile; py_compile.compile\\(r''C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor\\\\python\\\\automation\\\\backfill_registry.py'', doraise=True\\); print\\(''backfill_registry.py: OK''\\)\")",
+      "Bash(\"/c/Users/labadmin/AppData/Local/Programs/Python/Python313/python.exe\" -c \"import py_compile; py_compile.compile\\(r''C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor\\\\python\\\\automation\\\\backfill_registry.py'', doraise=True\\); print\\(''backfill_registry.py: OK''\\)\")",
+      "Bash(py -3 -c \"import py_compile; py_compile.compile\\(r''C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor\\\\python\\\\automation\\\\backfill_registry.py'', doraise=True\\); print\\(''backfill_registry.py: OK''\\)\")",
+      "Bash(cmd.exe /c \"py -3 -c \"\"import py_compile; py_compile.compile\\(r''C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor\\\\python\\\\automation\\\\backfill_registry.py'', doraise=True\\); print\\(''backfill_registry.py: OK''\\)\"\"\")",
+      "Bash(cmd.exe /c \"py -3 -c \"\"import py_compile; py_compile.compile\\(r''C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor\\\\python\\\\automation\\\\backfill_registry.py'', doraise=True\\); print\\(''OK1''\\)\"\" && py -3 -c \"\"import py_compile; py_compile.compile\\(r''C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor\\\\python\\\\automation\\\\shared\\\\registry.py'', doraise=True\\); print\\(''OK2''\\)\"\"\")",
+      "Bash(cmd.exe //c 'py -3 -c \"\"import py_compile; py_compile.compile\\(r\\\\\"\"C:\\\\\\\\Users\\\\\\\\labadmin\\\\\\\\Documents\\\\\\\\GitHub\\\\\\\\freely-walking-optomotor\\\\\\\\python\\\\\\\\automation\\\\\\\\backfill_registry.py\\\\\"\", doraise=True\\); print\\(\\\\\"\"backfill OK\\\\\"\"\\)\"\"')",
+      "Bash(where.exe python)",
+      "Bash(where.exe python3)",
+      "Bash(/c/Users/labadmin/AppData/Local/Microsoft/WindowsApps/python3.exe -c \"import py_compile; py_compile.compile\\(r''C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor\\\\python\\\\automation\\\\backfill_registry.py'', doraise=True\\); print\\(''backfill_registry.py: OK''\\)\")",
+      "Bash(python3 -c \":*)",
+      "Bash(python python/automation/backfill_registry.py --all --dry-run)",
+      "Bash(python python/automation/backfill_registry.py --all)",
+      "Bash(python -c \"import json; data=json.load\\(open\\(r''\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\pipeline_status.json''\\)\\); e=data[''experiments''][0]; print\\(json.dumps\\(e, indent=2\\)\\)\")",
+      "Bash(python -c \"import json; data=json.load\\(open\\(''\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\pipeline_status.json''\\)\\); e=data[''experiments''][0]; print\\(json.dumps\\(e, indent=2\\)\\)\")",
+      "Bash(python -c \":*)",
+      "Bash(python -c \"import json, sys; sys.path.insert\\(0, r''C:\\\\Users\\\\labadmin\\\\Documents\\\\GitHub\\\\freely-walking-optomotor''\\); from config.config import PIPELINE_REGISTRY; data = json.load\\(open\\(str\\(PIPELINE_REGISTRY\\)\\)\\); e = data[''experiments''][0]; print\\(json.dumps\\(e, indent=2\\)\\)\")",
+      "Bash(dir \"\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\data\\\\2_processed\\\\2025_06_09\")",
+      "Bash(cmd /c \"dir /b /ad \"\"\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\data\\\\2_processed\\\\2025_06_09\"\"\")",
+      "Bash(cmd /c \"dir /b /ad /s \"\"\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\data\\\\2_processed\\\\2025_06_09\"\"\")",
+      "Bash(cmd /c \"if exist \"\"\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\data\\\\2_processed\\\\2025_06_09\"\" \\(echo EXISTS\\) else \\(echo NOT FOUND\\)\")",
+      "Bash(powershell -Command \"Test-Path ''\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\data\\\\2_processed\\\\2025_06_09''\")",
+      "Bash(python pythonautomationbackfill_registry.py --all)",
+      "Bash(python -c \"import os; path = r''\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\pipeline_status.html''; print\\(f''Exists: {os.path.exists\\(path\\)}, Size: {os.path.getsize\\(path\\)} bytes''\\)\")",
+      "Bash(python -c \"import os; d = r''\\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey''; files = [f for f in os.listdir\\(d\\) if f.startswith\\(''pipeline_status''\\)]; print\\(files\\)\")",
+      "Bash(dir \"\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\pipeline_status*\")",
+      "Bash(cmd /c \"dir \\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\pipeline_status*\")",
+      "Bash(cmd /c \"dir /b \\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\pipeline_status*\")",
+      "Bash(ls -la pipeline_status*)",
+      "Bash(python python/automation/backfill_registry.py --all --check-missing-logs)",
+      "Bash(python3:*)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''python/automation/backfill_registry.py''\\).read\\(\\)\\); print\\(''backfill_registry.py: OK''\\)\")",
+      "Bash(python -c \"import json; f=open\\(''//prfs.hhmi.org/reiserlab/oaky-cokey/pipeline_status.json''\\); data=json.load\\(f\\); f.close\\(\\); exps=data[''experiments'']; warnings=[e for e in exps if e.get\\(''has_operator_warning''\\)]; print\\(f''Total: {len\\(exps\\)}''\\); print\\(f''Warnings: {len\\(warnings\\)}''\\); [print\\(f''  {w[\"\"date\"\"]} {w[\"\"time\"\"]} proto={w[\"\"protocol\"\"]} strain={w[\"\"strain\"\"]}''\\) for w in warnings]; prod=[e for e in exps if \\(e.get\\(''date'',''''\\) or ''''\\)>=''2024_09_25'']; test=[e for e in exps if \\(e.get\\(''date'',''''\\) or ''''\\)<''2024_09_25'']; print\\(f''Production: {len\\(prod\\)}''\\); print\\(f''Testing: {len\\(test\\)}''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''python/automation/backfill_registry.py''\\).read\\(\\)\\); print\\(''OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''python/automation/shared/registry.py''\\).read\\(\\)\\); print\\(''OK''\\)\")"
+    ]
+  }
+}

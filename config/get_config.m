@@ -41,18 +41,10 @@ function cfg = get_config()
 %     cfg = get_config();
 %     data_path = cfg.data_tracked;
 
-    %% ====================================================================
-    %  EDIT THIS LINE FOR YOUR COMPUTER
-    %  ====================================================================
-    %  Set this to the root of your local data folder. The same folder
-    %  structure is used on both the processing machine and analysis
-    %  computers — only the root path differs.
-    %
-    %  Processing machine (Windows):
-    %    cfg.project_root = 'C:\Users\burnettl\Documents\oakey-cokey';
-    %
-    %  Analysis computer (Mac):
-    cfg.project_root = '/Users/burnettl/Documents/Projects/oaky_cokey';
+    %% === EDIT THIS LINE FOR YOUR COMPUTER ===
+    % cfg.project_root = '/Users/burnettl/Documents/Projects/oaky_cokey';
+    % Windows example:
+    cfg.project_root = 'C:\Users\labadmin\Documents\freely-walking-optomotor';
 
     %% ====================================================================
     %  ACQUISITION RIG PATHS (only used on the rig computer)
