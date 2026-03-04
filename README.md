@@ -172,10 +172,32 @@ pixi run gen-protocol-docs
 ```
 
 ### 9. Dashboard
+
+The interactive Dash dashboard visualises processed experimental data.
+
 ```bash
+# Quick start (from anywhere in the terminal):
+dash-freely              # start the dashboard (opens http://localhost:8050)
+dash-freely preprocess   # preprocess .mat files → Parquet first
+
+# Or run directly with pixi:
 cd python/freely-walking-python
 pixi run preprocess    # Preprocess .mat files to Parquet
 pixi run dashboard     # Start the Dash web dashboard
+```
+
+`dash-freely` is a shell alias for `dashboard.sh`. Set it up by adding this to `~/.zshrc` (or `~/.bashrc`):
+```bash
+alias dash-freely='~/Documents/GitHub/freely-walking-optomotor/dashboard.sh'
+```
+
+### 10. Pipeline Status Page
+
+The automation scripts generate a standalone HTML page (`pipeline_status.html`) on the network drive that shows the processing stage of every experiment. It is auto-regenerated whenever the pipeline updates an experiment's status.
+
+```bash
+# View on macOS (requires the network drive to be mounted):
+open /Volumes/reiserlab/oaky-cokey/pipeline_status.html
 ```
 
 ## Key Data Types

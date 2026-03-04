@@ -406,92 +406,6 @@ heatmap_tab = dbc.Tab(
     ],
 )
 
-# ---- Tab 6: Pipeline Status ----
-pipeline_tab = dbc.Tab(
-    label="Pipeline Status",
-    tab_id="tab-pipeline",
-    children=[
-        html.Div([
-            html.H5("Experiment Pipeline Status", className="mb-2"),
-            html.Small(
-                "Shows the processing stage of all experiments. "
-                "Data is read from the pipeline registry on the network drive.",
-                className="text-muted d-block mb-3",
-            ),
-            dbc.Row([
-                dbc.Col([
-                    dbc.Input(
-                        id="pipeline-registry-path",
-                        type="text",
-                        placeholder="Path to pipeline_status.json on network drive...",
-                        debounce=True,
-                        size="sm",
-                    ),
-                ], width=8),
-                dbc.Col([
-                    dbc.Button(
-                        "Refresh", id="pipeline-refresh-btn", color="primary", size="sm",
-                    ),
-                ], width=2),
-            ], className="mb-3"),
-            html.Div(id="pipeline-summary", className="mb-3"),
-            dash_table.DataTable(
-                id="pipeline-table",
-                columns=[
-                    {"name": "Date", "id": "date"},
-                    {"name": "Protocol", "id": "protocol"},
-                    {"name": "Strain", "id": "strain"},
-                    {"name": "Sex", "id": "sex"},
-                    {"name": "Stage", "id": "current_stage"},
-                    {"name": "Last Updated", "id": "last_updated"},
-                    {"name": "Errors", "id": "has_errors"},
-                ],
-                data=[],
-                sort_action="native",
-                filter_action="native",
-                page_size=25,
-                style_header={
-                    "fontWeight": "bold",
-                    "backgroundColor": "#f8f9fa",
-                    "border": "1px solid #dee2e6",
-                },
-                style_data_conditional=[
-                    {
-                        "if": {"filter_query": "{current_stage} = synced_to_network"},
-                        "backgroundColor": "#d1e7dd",
-                    },
-                    {
-                        "if": {"filter_query": "{current_stage} = processed"},
-                        "backgroundColor": "#d1e7dd",
-                    },
-                    {
-                        "if": {"filter_query": "{current_stage} = tracked"},
-                        "backgroundColor": "#cff4fc",
-                    },
-                    {
-                        "if": {"filter_query": "{current_stage} = copied_to_network"},
-                        "backgroundColor": "#cfe2ff",
-                    },
-                    {
-                        "if": {"filter_query": "{has_errors} = Yes"},
-                        "backgroundColor": "#f8d7da",
-                    },
-                ],
-                style_cell={
-                    "padding": "8px 12px",
-                    "fontSize": "14px",
-                    "fontFamily": "inherit",
-                    "border": "1px solid #dee2e6",
-                    "textAlign": "left",
-                },
-                style_table={"marginBottom": "24px"},
-            ),
-            # Auto-refresh every 60 seconds
-            dcc.Interval(id="pipeline-interval", interval=60_000, n_intervals=0),
-        ], className="p-3"),
-    ],
-)
-
 # ---- Main Layout ----
 app.layout = dbc.Container(
     [
@@ -504,7 +418,7 @@ app.layout = dbc.Container(
             dbc.Col(sidebar, width=3),
             dbc.Col(
                 dbc.Tabs(
-                    [metadata_tab, cohort_tab, strain_tab, comparison_tab, heatmap_tab, pipeline_tab],
+                    [metadata_tab, cohort_tab, strain_tab, comparison_tab, heatmap_tab],
                     id="main-tabs",
                     active_tab="tab-metadata",
                 ),
