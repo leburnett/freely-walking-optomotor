@@ -1,4 +1,5 @@
-function Log = present_fixation_stimulus(current_condition, all_conditions, vidobj, d)
+function Log = present_fixation_stimulus(current_condition, all_conditions, vidobj, d, verbose)
+if nargin < 5, verbose = true; end
 % For the presentation of the bar stimuli at 180 degrees apart. 
 % Only show the first frame (bar positions) for 60s. 
 
@@ -58,7 +59,7 @@ Log.which_condition = which_condition;
 idx_value = idx_value +1;
 
 %% GRATINGS INTERVAL:
-disp('Interval')
+if verbose, disp('Interval'); end
 Panel_com('set_pattern_id', interval_pattern);
 
 % Log

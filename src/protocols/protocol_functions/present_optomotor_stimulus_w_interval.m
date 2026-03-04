@@ -1,4 +1,5 @@
-function Log = present_optomotor_stimulus_w_interval(current_condition, all_conditions, vidobj, d)
+function Log = present_optomotor_stimulus_w_interval(current_condition, all_conditions, vidobj, d, verbose)
+if nargin < 5, verbose = true; end
 
 % Get temp at the start:
 [t_outside_start, t_ring_start] = get_temp_rec(d);
@@ -19,7 +20,7 @@ idx_value = 1;
 
 for tr_ind = 1:num_trials
    
-    disp(['trial number = ' num2str(tr_ind)])
+    if verbose, disp(['trial number = ' num2str(tr_ind)]); end
     Panel_com('set_pattern_id', optomotor_pattern); pause(t_pause)
 
     if tr_ind == 1
@@ -54,8 +55,8 @@ for tr_ind = 1:num_trials
 
     idx_value = idx_value+1;
 
-    % INTERVAL 
-    disp('Interval')
+    % INTERVAL
+    if verbose, disp('Interval'); end
     Panel_com('set_pattern_id', interval_pattern);
     
     % Log

@@ -1,4 +1,5 @@
-function Log = present_optomotor_stimulus_diff_contrasts(current_condition, all_conditions, vidobj, d)
+function Log = present_optomotor_stimulus_diff_contrasts(current_condition, all_conditions, vidobj, d, verbose)
+if nargin < 5, verbose = true; end
 
 % Get temp at the start:
 [t_outside_start, t_ring_start] = get_temp_rec(d);
@@ -28,7 +29,7 @@ dir_val = -1;
 
 for tr_ind = 1:num_trials
 
-    disp(['trial number = ' num2str(tr_ind)])
+    if verbose, disp(['trial number = ' num2str(tr_ind)]); end
 
     dir_val = dir_val*-1;
 
@@ -72,7 +73,7 @@ for tr_ind = 1:num_trials
 end
 
 %% Flicker pattern 
-disp('Interval')
+if verbose, disp('Interval'); end
 Panel_com('set_pattern_id', interval_pattern);
 
 % set dir_val as positive (1)

@@ -6,7 +6,8 @@ params = get_input_parameters();
 % BIAS settings:
 ip = '127.0.0.1';
 port = 5010;
-config_path = 'C:\MatlabRoot\FreeWalkOptomotor\bias_config_ufmf.json';
+cfg = get_config();
+config_path = cfg.bias_config;
 
 vidobj = SimpleBiasCameraInterface(ip, port);
 vidobj.connect();

@@ -35,6 +35,15 @@ _SMOOTH_WINDOW = 15  # moving-average window for turning metrics
 _FLIP_START = 762  # start of sign-flip region (second half of stimulus)
 _FLIP_END = 1210
 
+# Module-level cache for heatmap results, keyed by (condition_id, apply_qc, rep_mode).
+# Avoids re-computing 17 strains × 96 t-tests when switching between conditions.
+_heatmap_cache: dict[tuple, dict] = {}
+
+
+def invalidate_heatmap_cache():
+    """Clear the heatmap cache (call when data path changes)."""
+    _heatmap_cache.clear()
+
 
 def _frame_mask(frames: np.ndarray, start: int, end: int) -> np.ndarray:
     """Boolean mask for frames in [start, end] (inclusive)."""
@@ -49,32 +58,28 @@ def _smooth(arr: np.ndarray, window: int = _SMOOTH_WINDOW) -> np.ndarray:
     return np.convolve(arr, kernel, mode="same")
 
 
-def compute_fly_metrics(
+def _compute_fv_curv_metrics(
     frames: np.ndarray,
     fv: np.ndarray,
     curv: np.ndarray,
-    dist: np.ndarray,
 ) -> np.ndarray:
-    """Compute 6 scalar metrics for a single fly/condition.
+    """Compute FV and turning metrics (indices 0-3) for one fly.
 
-    Parameters
-    ----------
-    frames : raw frame numbers (multiples of DOWNSAMPLE_FACTOR)
-    fv, curv, dist : metric arrays aligned with *frames*
+    These metrics use mean(), so averaging reps before computing is
+    equivalent to the MATLAB approach (compute per rep, then average).
 
-    Returns
-    -------
-    np.ndarray of shape (6,) — one value per HEATMAP_METRICS entry.
-    NaN for any metric that cannot be computed.
+    Returns np.ndarray of shape (4,).
     """
-    result = np.full(6, np.nan)
+    result = np.full(4, np.nan)
 
     # 1. Avg FV (stimulus): mean fv for frames 300-1200
+    # MATLAB: welch_ttest_for_rng(cond_data, ..., 300:1200)
     m = _frame_mask(frames, _STIM_START, _STIM_END)
     if m.any():
         result[0] = np.nanmean(fv[m])
 
-    # 2. ΔFV at onset: normalized change
+    # 2. ΔFV at onset: normalized change (post-pre)/(post+pre)
+    # MATLAB: welch_ttest_for_change(..., 210:300, 300:390, "norm")
     pre = _frame_mask(frames, _ONSET_PRE_START, _ONSET_PRE_END - 1)  # 210:299
     post = _frame_mask(frames, _ONSET_POST_START, _ONSET_POST_END - 1)  # 300:389
     if pre.any() and post.any():
@@ -85,6 +90,7 @@ def compute_fly_metrics(
             result[1] = (mean_post - mean_pre) / denom
 
     # 3 & 4. Turning metrics: smooth curv, flip sign for second half
+    # MATLAB: movmean per row, then flip 762:1210, then welch_ttest_for_rng
     smoothed = _smooth(curv.copy())
     flip_mask = _frame_mask(frames, _FLIP_START, _FLIP_END)
     smoothed[flip_mask] = -smoothed[flip_mask]
@@ -99,22 +105,43 @@ def compute_fly_metrics(
     if early_mask.any():
         result[3] = np.nanmean(smoothed[early_mask])
 
-    # 5 & 6. Movement towards centre: inverted baseline-subtract
-    # (positive = movement toward centre)
+    return result
+
+
+def _compute_dist_metric_per_rep(
+    frames: np.ndarray,
+    dist: np.ndarray,
+) -> np.ndarray:
+    """Compute distance metrics for a single rep.
+
+    MATLAB approach (welch_ttest_for_rng_min): find min() per rep in
+    the frame range, THEN average across reps. So this function returns
+    the per-rep min values that will be averaged later.
+
+    Returns np.ndarray of shape (2,) — [min_delta_10s, min_delta_end].
+    """
+    result = np.full(2, np.nan)
+
+    # Baseline-subtract: dist_data_delta = dist_data - dist_data(:, 300)
+    # MATLAB: cond_data = cond_data - cond_data(:, 300)
     baseline_mask = frames == _STIM_START  # frame 300
-    if baseline_mask.any():
-        baseline_val = dist[baseline_mask][0]
-        movement = baseline_val - dist  # flip sign: toward centre is positive
+    if not baseline_mask.any():
+        return result
 
-        # 5. Movement towards centre (10s): max in frames 570-600
-        m10 = _frame_mask(frames, _DIST_10S_START, _DIST_10S_END)
-        if m10.any():
-            result[4] = np.nanmax(movement[m10])
+    baseline_val = dist[baseline_mask][0]
+    dist_delta = dist - baseline_val  # negative = toward centre
 
-        # 6. Movement towards centre (end): max in frames 1170-1200
-        mend = _frame_mask(frames, _DIST_END_START, _DIST_END_END)
-        if mend.any():
-            result[5] = np.nanmax(movement[mend])
+    # 5. Movement towards centre (10s): min of delta in frames 570-600
+    # MATLAB: welch_ttest_for_rng_min(cond_data_delta, ..., 570:600)
+    m10 = _frame_mask(frames, _DIST_10S_START, _DIST_10S_END)
+    if m10.any():
+        result[0] = np.nanmin(dist_delta[m10])
+
+    # 6. Movement towards centre (end): min of delta in frames 1170-1200
+    # MATLAB: welch_ttest_for_rng_min(cond_data_delta, ..., 1170:1200)
+    mend = _frame_mask(frames, _DIST_END_START, _DIST_END_END)
+    if mend.any():
+        result[1] = np.nanmin(dist_delta[mend])
 
     return result
 
@@ -128,52 +155,52 @@ def _collect_strain_metrics(
 ) -> np.ndarray:
     """Compute per-fly metric array for one strain/condition.
 
-    Returns shape (n_flies, 6). If rep_mode == "average", R1 and R2 are
-    averaged per fly before metric computation.
+    Returns shape (n_flies, 6).
+
+    Matches the MATLAB pipeline:
+    - Metrics 0-3 (FV, turning): mean_every_two_rows then mean per fly
+      (equivalent to averaging reps first, then computing mean).
+    - Metrics 4-5 (distance): min per rep first, then average across reps
+      per fly (welch_ttest_for_rng_min.m).
     """
+    # Load full per-fly data (cached by DataStore), then filter in memory
     df = store.load_per_fly(strain)
     if df.empty:
         return np.empty((0, 6))
 
-    mask = df["condition"] == condition_id
+    subset = df[df["condition"] == condition_id]
     if apply_qc:
-        mask &= df["qc_passed"]
-    subset = df[mask]
-
+        subset = subset[subset["qc_passed"]]
     if subset.empty:
         return np.empty((0, 6))
 
-    if rep_mode == "average":
-        # Average R1 & R2 per fly per frame
-        grouped = (
-            subset.groupby(["fly_idx", "frame"])[["fv_data", "curv_data", "dist_data"]]
-            .mean()
-            .reset_index()
-        )
-        fly_ids = sorted(grouped["fly_idx"].unique())
-        metrics = []
-        for fly_idx in fly_ids:
-            fly_df = grouped[grouped["fly_idx"] == fly_idx].sort_values("frame")
-            metrics.append(compute_fly_metrics(
-                fly_df["frame"].values,
-                fly_df["fv_data"].values,
-                fly_df["curv_data"].values,
-                fly_df["dist_data"].values,
-            ))
-    else:
-        # Treat each rep as independent
-        fly_reps = sorted(subset.groupby(["fly_idx", "rep"]).groups.keys())
-        metrics = []
-        for fly_idx, rep in fly_reps:
-            fly_df = subset[(subset["fly_idx"] == fly_idx) & (subset["rep"] == rep)].sort_values("frame")
-            metrics.append(compute_fly_metrics(
-                fly_df["frame"].values,
-                fly_df["fv_data"].values,
-                fly_df["curv_data"].values,
-                fly_df["dist_data"].values,
-            ))
+    # Single-pass: group by fly, compute all 6 metrics per fly
+    fly_groups = subset.groupby(["cohort_id", "fly_idx"])
+    fly_keys = sorted(fly_groups.groups.keys())
+    metrics = np.full((len(fly_keys), 6), np.nan)
 
-    return np.array(metrics) if metrics else np.empty((0, 6))
+    for i, key in enumerate(fly_keys):
+        fly_df = fly_groups.get_group(key)
+
+        # FV & curv: average across reps, then compute metrics 0-3
+        avg = fly_df.groupby("frame")[["fv_data", "curv_data"]].mean()
+        avg = avg.sort_index()
+        frames = avg.index.values
+        metrics[i, :4] = _compute_fv_curv_metrics(
+            frames, avg["fv_data"].values, avg["curv_data"].values,
+        )
+
+        # Distance: compute per rep first (min), then average across reps
+        rep_dist_vals = []
+        for _rep_id, rep_df in fly_df.groupby("rep"):
+            rep_df = rep_df.sort_values("frame")
+            rep_dist_vals.append(_compute_dist_metric_per_rep(
+                rep_df["frame"].values, rep_df["dist_data"].values,
+            ))
+        if rep_dist_vals:
+            metrics[i, 4:6] = np.nanmean(rep_dist_vals, axis=0)
+
+    return metrics
 
 
 def benjamini_yekutieli_fdr(pvalues: np.ndarray, q: float = FDR_Q) -> np.ndarray:
@@ -243,6 +270,9 @@ def compute_heatmap_data(
 ) -> dict:
     """Compute full heatmap data for one condition.
 
+    Results are cached by (condition_id, apply_qc, rep_mode) so switching
+    between previously viewed conditions is instant.
+
     Returns dict with keys:
         z_matrix     : np.ndarray (n_strains, 6) — signed intensity values [-1, 1]
         p_matrix     : np.ndarray (n_strains, 6) — raw p-values
@@ -252,9 +282,14 @@ def compute_heatmap_data(
         control_data : np.ndarray — (n_control_flies, 6)
         direction    : np.ndarray (n_strains, 6) — +1 or -1 (target vs control)
     """
-    strains = store.get_strains()
-    # Exclude control strain from rows
-    test_strains = [s for s in strains if s != CONTROL_STRAIN]
+    cache_key = (condition_id, apply_qc, rep_mode)
+    if cache_key in _heatmap_cache:
+        return _heatmap_cache[cache_key]
+
+    from dashboard.constants import HEATMAP_STRAIN_ORDER
+    available = set(store.get_strains())
+    # Use custom order, filtering to available strains only
+    test_strains = [s for s in HEATMAP_STRAIN_ORDER if s in available]
 
     # Compute control metrics
     control_metrics = _collect_strain_metrics(store, CONTROL_STRAIN, condition_id, apply_qc, rep_mode)
@@ -265,10 +300,13 @@ def compute_heatmap_data(
     n_strains = len(test_strains)
     p_matrix = np.full((n_strains, n_metrics), np.nan)
     direction = np.zeros((n_strains, n_metrics))
+    n_flies_per_strain = {}  # track fly counts for warnings
+    n_flies_per_strain[CONTROL_STRAIN] = control_metrics.shape[0]
 
     for i, strain in enumerate(test_strains):
         strain_metrics = _collect_strain_metrics(store, strain, condition_id, apply_qc, rep_mode)
         per_fly_data[strain] = strain_metrics
+        n_flies_per_strain[strain] = strain_metrics.shape[0]
 
         for j in range(n_metrics):
             ctrl_vals = control_metrics[:, j]
@@ -282,6 +320,11 @@ def compute_heatmap_data(
                 p_matrix[i, j] = p_val
                 direction[i, j] = 1.0 if np.mean(test_valid) > np.mean(ctrl_valid) else -1.0
 
+    # Flip direction for distance metrics (indices 4-5): more negative =
+    # more movement towards centre, which should display as red (positive).
+    direction[:, 4] = -direction[:, 4]
+    direction[:, 5] = -direction[:, 5]
+
     # FDR correction across all tests
     all_p = p_matrix.ravel()
     rejected = benjamini_yekutieli_fdr(all_p, q=FDR_Q)
@@ -294,7 +337,18 @@ def compute_heatmap_data(
             intensity = _pvalue_to_intensity(p_matrix[i, j])
             z_matrix[i, j] = direction[i, j] * intensity
 
-    return {
+    # Build warnings for strains with insufficient data
+    warnings = []
+    ctrl_n = n_flies_per_strain.get(CONTROL_STRAIN, 0)
+    if ctrl_n < 2:
+        warnings.append(f"Control ({CONTROL_STRAIN}): {ctrl_n} flies")
+    for strain in test_strains:
+        n = n_flies_per_strain.get(strain, 0)
+        if n < 2:
+            label = "no data" if n == 0 else f"{n} fly"
+            warnings.append(f"{strain.replace('_', ' ')}: {label}")
+
+    result = {
         "z_matrix": z_matrix,
         "p_matrix": p_matrix,
         "rejected": rejected,
@@ -303,4 +357,134 @@ def compute_heatmap_data(
         "per_fly_data": per_fly_data,
         "control_data": control_metrics,
         "direction": direction,
+        "n_flies_per_strain": n_flies_per_strain,
+        "warnings": warnings,
     }
+    _heatmap_cache[cache_key] = result
+    return result
+
+
+def compute_drilldown_stats(
+    control_vals: np.ndarray,
+    test_vals: np.ndarray,
+) -> dict:
+    """Run comprehensive statistical tests comparing test vs control.
+
+    Parameters
+    ----------
+    control_vals, test_vals : 1-D arrays of per-fly scalar metric values
+        (NaN-free).
+
+    Returns
+    -------
+    dict with keys:
+        n_control, n_test : sample sizes
+        tests : list of dicts, each with name, stat, pvalue, note
+        chosen_test : dict (the primary location test)
+        effect_size : dict with name, value, interpretation
+    """
+    result = {
+        "n_control": len(control_vals),
+        "n_test": len(test_vals),
+        "tests": [],
+        "chosen_test": None,
+        "effect_size": None,
+    }
+
+    # 1. Normality: Shapiro-Wilk on each group (requires n >= 3)
+    ctrl_normal = True
+    test_normal = True
+
+    if len(control_vals) >= 3:
+        sw_ctrl = stats.shapiro(control_vals)
+        ctrl_normal = sw_ctrl.pvalue > 0.05
+        result["tests"].append({
+            "name": "Shapiro-Wilk (control)",
+            "stat": float(sw_ctrl.statistic),
+            "pvalue": float(sw_ctrl.pvalue),
+            "note": "normal" if ctrl_normal else "non-normal",
+        })
+
+    if len(test_vals) >= 3:
+        sw_test = stats.shapiro(test_vals)
+        test_normal = sw_test.pvalue > 0.05
+        result["tests"].append({
+            "name": "Shapiro-Wilk (test strain)",
+            "stat": float(sw_test.statistic),
+            "pvalue": float(sw_test.pvalue),
+            "note": "normal" if test_normal else "non-normal",
+        })
+
+    # 2. Equal variances: Levene's test
+    lev = stats.levene(control_vals, test_vals)
+    equal_var = lev.pvalue > 0.05
+    result["tests"].append({
+        "name": "Levene's test",
+        "stat": float(lev.statistic),
+        "pvalue": float(lev.pvalue),
+        "note": "equal variance" if equal_var else "unequal variance",
+    })
+
+    # 3. Primary comparison: parametric or non-parametric
+    both_normal = ctrl_normal and test_normal
+
+    if both_normal:
+        # Welch's t-test (robust to unequal variance)
+        tt = stats.ttest_ind(test_vals, control_vals, equal_var=False)
+        chosen = {
+            "name": "Welch's t-test",
+            "stat": float(tt.statistic),
+            "pvalue": float(tt.pvalue),
+            "note": "parametric (both groups normal)",
+        }
+    else:
+        # Mann-Whitney U
+        mw = stats.mannwhitneyu(test_vals, control_vals, alternative="two-sided")
+        chosen = {
+            "name": "Mann-Whitney U",
+            "stat": float(mw.statistic),
+            "pvalue": float(mw.pvalue),
+            "note": "non-parametric (normality violated)",
+        }
+
+    result["tests"].append(chosen)
+    result["chosen_test"] = chosen
+
+    # 4. Distribution equality: Kolmogorov-Smirnov 2-sample
+    ks = stats.ks_2samp(test_vals, control_vals)
+    result["tests"].append({
+        "name": "Kolmogorov-Smirnov",
+        "stat": float(ks.statistic),
+        "pvalue": float(ks.pvalue),
+        "note": "distribution equality",
+    })
+
+    # 5. Effect size
+    n1, n2 = len(control_vals), len(test_vals)
+    if both_normal:
+        # Cohen's d (pooled SD)
+        pooled_std = np.sqrt(
+            ((n1 - 1) * np.var(control_vals, ddof=1)
+             + (n2 - 1) * np.var(test_vals, ddof=1)) / (n1 + n2 - 2)
+        )
+        d = (np.mean(test_vals) - np.mean(control_vals)) / pooled_std if pooled_std > 0 else 0.0
+        interp = (
+            "negligible" if abs(d) < 0.2 else
+            "small" if abs(d) < 0.5 else
+            "medium" if abs(d) < 0.8 else
+            "large"
+        )
+        result["effect_size"] = {"name": "Cohen's d", "value": float(d), "interpretation": interp}
+    else:
+        # Rank-biserial correlation: r = 1 - 2U/(n1*n2)
+        mw = stats.mannwhitneyu(test_vals, control_vals, alternative="two-sided")
+        r_rb = 1 - (2 * mw.statistic) / (n1 * n2)
+        interp = (
+            "negligible" if abs(r_rb) < 0.1 else
+            "small" if abs(r_rb) < 0.3 else
+            "medium" if abs(r_rb) < 0.5 else
+            "large"
+        )
+        result["effect_size"] = {"name": "Rank-biserial r", "value": float(r_rb), "interpretation": interp}
+
+    return result

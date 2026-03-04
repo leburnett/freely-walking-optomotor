@@ -55,34 +55,64 @@ Documentation is published to a separate Quarto website:
 
 ## Path Configuration
 
-All hardcoded paths have been replaced with a single config file per language.
+All paths are centralised in two config files (one per language). Each has a single editable field (`project_root` / `PROJECT_ROOT`) that you set per computer.
 
-### MATLAB
+Three computers are involved:
 
-Edit `config/get_config.m` — change only `cfg.project_root`:
+| Computer | Role | Editable field |
+|----------|------|----------------|
+| Acquisition rig (Windows) | Runs protocols, records video | N/A (uses fixed rig paths) |
+| Processing machine (Windows) | Automated tracking & processing | `project_root` / `PROJECT_ROOT` |
+| Analysis computer (Mac/any) | Analysis, plotting, dashboard | `project_root` / `PROJECT_ROOT` |
+
+### MATLAB — `config/get_config.m`
+
+Edit `cfg.project_root`. All other fields are derived or fixed:
+
 ```matlab
 cfg = get_config();
-% cfg.project_root   — data/results root (edit for each computer)
-% cfg.repo_root      — auto-detected repo root
-% cfg.data_tracked   — tracked data
-% cfg.data_processed — processed data
-% cfg.results        — results folder
-% cfg.figures        — figures folder
-% cfg.patterns       — Patterns_optomotor/ directory
-% cfg.calibration_file — tracking calibration .mat
+% --- Editable ---
+% cfg.project_root      — local data root (edit per computer)
+%
+% --- Derived from project_root ---
+% cfg.data_unprocessed  — DATA/00_unprocessed/
+% cfg.data_tracked      — DATA/01_tracked/
+% cfg.data_processed    — DATA/02_processed/
+% cfg.results           — results/
+% cfg.figures           — figures/
+%
+% --- Derived from repo_root ---
+% cfg.repo_root         — auto-detected git repo root
+% cfg.patterns          — Patterns_optomotor/ directory
+% cfg.calibration_file  — tracking calibration .mat
+%
+% --- Rig-only (fixed Windows paths) ---
+% cfg.rig_data_folder   — BIAS raw data on the rig
+% cfg.bias_config       — BIAS camera config on the rig
+%
+% --- Network drive ---
+% cfg.group_drive       — SMB path to group network drive
 ```
 
 Run `setup_path.m` once per MATLAB session (or add to `startup.m`) to add all `src/` subdirectories to the MATLAB path.
 
-### Python
+### Python — `config/config.py`
 
-Edit `config/config.py` — change only `PROJECT_ROOT`. Import in scripts:
+Edit `PROJECT_ROOT`. Import in scripts:
 ```python
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))  # adjust depth to reach repo root
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))  # adjust depth to repo root
 from config.config import DATA_TRACKED, RESULTS_PATH, NETWORK_TRACKED, REPO_ROOT
 ```
+
+Key variable groups:
+- **Local paths** (`DATA_UNPROCESSED`, `DATA_TRACKED`, `DATA_PROCESSED`, `RESULTS_PATH`, `FIGURES_PATH`) — derived from `PROJECT_ROOT`
+- **Network paths** (`NETWORK_ROOT`, `NETWORK_UNPROCESSED`, `NETWORK_TRACKED`, `NETWORK_PROCESSED`, `NETWORK_RESULTS`, `NETWORK_FIGS`) — processing machine only, UNC format
+- **Rig path** (`SOURCE_ROOT`) — acquisition rig only, used by `monitor_and_copy`
+- **Repo paths** (`REPO_ROOT`, `PATTERNS_DIR`, `PROTOCOLS_DIR`) — auto-detected
+
+Note: Python uses Windows UNC format (`\\server\share`) for network paths while MATLAB uses SMB format (`smb://server/share/data/`).
 
 ### Dashboard
 

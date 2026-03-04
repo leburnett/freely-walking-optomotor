@@ -6,6 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from dash import Input, Output, State, callback_context, html, no_update
+from dash.exceptions import PreventUpdate
 
 from dashboard.constants import (
     CONDITION_COLORS,
@@ -93,8 +94,10 @@ def register_callbacks(app, data_store):
         if not preprocessed_dir.exists():
             return [], None, f"Preprocessed data not found at {preprocessed_dir}. Run preprocess.py first."
 
-        # Update the global data store
+        # Update the global data store and invalidate caches
         data_store.__init__(preprocessed_dir)
+        from dashboard.heatmap import invalidate_heatmap_cache
+        invalidate_heatmap_cache()
         if not data_store.is_valid:
             return [], None, "Invalid preprocessed directory."
 
@@ -156,9 +159,12 @@ def register_callbacks(app, data_store):
         Input("qc-toggle", "value"),
         Input("central-tendency-toggle", "value"),
         Input("dispersion-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
     def update_cohort_plot(strain, cohort_id, condition, metric, qc_on,
-                           central_tendency, dispersion):
+                           central_tendency, dispersion, active_tab):
+        if active_tab != "tab-cohort":
+            raise PreventUpdate
         if not strain or not cohort_id or not metric:
             return go.Figure()
 
@@ -193,9 +199,12 @@ def register_callbacks(app, data_store):
         Input("strain-condition-dropdown", "value"),
         Input("central-tendency-toggle", "value"),
         Input("dispersion-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
     def update_strain_plot(strain, metric, qc_on, rep_mode, view_mode, condition,
-                           central_tendency, dispersion):
+                           central_tendency, dispersion, active_tab):
+        if active_tab != "tab-strain":
+            raise PreventUpdate
         if not strain or not metric:
             return go.Figure()
 
@@ -230,9 +239,12 @@ def register_callbacks(app, data_store):
         Input("comparison-view-mode", "value"),
         Input("central-tendency-toggle", "value"),
         Input("dispersion-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
     def update_comparison_plot(condition, metric, selected_strains, qc_on, rep_mode, view_mode,
-                               central_tendency, dispersion):
+                               central_tendency, dispersion, active_tab):
+        if active_tab != "tab-comparison":
+            raise PreventUpdate
         if not metric or not selected_strains:
             return go.Figure()
 
@@ -278,9 +290,12 @@ def register_callbacks(app, data_store):
         Input("qc-toggle", "value"),
         Input("central-tendency-toggle", "value"),
         Input("dispersion-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
     def update_cohort_boxchart(strain, cohort_id, condition, metric, qc_on,
-                               central_tendency, dispersion):
+                               central_tendency, dispersion, active_tab):
+        if active_tab != "tab-cohort":
+            raise PreventUpdate
         if not strain or not cohort_id or not metric:
             return go.Figure(), {}
 
@@ -335,6 +350,7 @@ def register_callbacks(app, data_store):
     @app.callback(
         Output("strain-boxchart", "figure"),
         Output("strain-boxchart", "style"),
+        Output("cohort-stats-panel", "children"),
         Input("strain-dropdown", "value"),
         Input("metric-dropdown", "value"),
         Input("qc-toggle", "value"),
@@ -343,11 +359,14 @@ def register_callbacks(app, data_store):
         Input("strain-condition-dropdown", "value"),
         Input("central-tendency-toggle", "value"),
         Input("dispersion-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
     def update_strain_boxchart(strain, metric, qc_on, rep_mode, view_mode, condition,
-                               central_tendency, dispersion):
+                               central_tendency, dispersion, active_tab):
+        if active_tab != "tab-strain":
+            raise PreventUpdate
         if not strain or not metric:
-            return go.Figure(), {}
+            return go.Figure(), {}, ""
 
         apply_qc = bool(qc_on)
         fig = go.Figure()
@@ -356,24 +375,35 @@ def register_callbacks(app, data_store):
 
         if view_mode == "one_condition":
             if not condition:
-                return go.Figure(), {}
+                return go.Figure(), {}, ""
             cond_n = int(condition)
             cohorts = data_store.get_cohorts_for_strain(strain)
             n_with_data = 0
+            cohort_fly_values = {}   # label -> per-fly scalar array
             for i, cohort_id in enumerate(cohorts):
                 df = data_store.get_cohort_data(strain, cohort_id, cond_n, metric,
                                                 qc_only=apply_qc)
                 if df.empty:
                     continue
-                values = _compute_per_fly_boxchart_values(df, metric, rep_mode="interleave")
+                values = _compute_per_fly_boxchart_values(df, metric, rep_mode=rep_mode)
                 if len(values) == 0:
                     continue
                 color = STRAIN_COLORS[i % len(STRAIN_COLORS)]
                 label = cohort_id[:19]
                 fig.add_trace(_make_boxchart_trace(values, color, label))
                 means.append((label, float(np.mean(values)), color))
+                cohort_fly_values[label] = values
                 n_with_data += 1
             plot_style = {}
+
+            # Compute cohort consistency statistics and build panel
+            from dashboard.cohort_stats import compute_cohort_consistency_stats
+            if len(cohort_fly_values) >= 2:
+                stats_result = compute_cohort_consistency_stats(cohort_fly_values)
+                stats_panel = _build_cohort_stats_panel(stats_result, metric)
+                _add_cohort_flags_to_figure(fig, stats_result)
+            else:
+                stats_panel = ""
         else:
             for cond_n in range(1, len(CONDITION_NAMES) + 1):
                 df = _get_fly_data_for_boxchart(data_store, strain, cond_n, metric, apply_qc)
@@ -386,6 +416,7 @@ def register_callbacks(app, data_store):
                 fig.add_trace(_make_boxchart_trace(values, color, CONDITION_NAMES[cond_n]))
                 means.append((CONDITION_NAMES[cond_n], float(np.mean(values)), color))
             plot_style = {}
+            stats_panel = ""
 
         for name, mean_val, color in means:
             fig.add_annotation(
@@ -394,15 +425,17 @@ def register_callbacks(app, data_store):
                 font=dict(size=10, color=color), yanchor="bottom",
             )
 
+        # Extra top margin when cohort flags are present (⚠ annotation above means)
+        top_margin = 55 if (view_mode == "one_condition" and stats_panel) else 40
         fig.update_layout(
             yaxis_title=ylabel,
             template="plotly_white",
             height=350,
             showlegend=False,
-            margin=dict(t=40, b=80, l=60, r=20),
+            margin=dict(t=top_margin, b=80, l=60, r=20),
             xaxis=dict(tickangle=-30),
         )
-        return fig, plot_style
+        return fig, plot_style, stats_panel
 
     # ---- Tab 3: Cross-Strain Comparison Violin Plot ----
     @app.callback(
@@ -416,9 +449,12 @@ def register_callbacks(app, data_store):
         Input("comparison-view-mode", "value"),
         Input("central-tendency-toggle", "value"),
         Input("dispersion-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
     def update_comparison_boxchart(condition, metric, selected_strains, qc_on, rep_mode,
-                                   view_mode, central_tendency, dispersion):
+                                   view_mode, central_tendency, dispersion, active_tab):
+        if active_tab != "tab-comparison":
+            raise PreventUpdate
         if view_mode == "grid":
             empty = go.Figure()
             empty.add_annotation(
@@ -480,9 +516,13 @@ def register_callbacks(app, data_store):
         Output("metadata-cohorts-bar", "figure"),
         Output("metadata-gantt", "figure"),
         Output("metadata-temp", "figure"),
-        Input("data-path-input", "value"),
+        Input("strain-dropdown", "options"),
+        Input("main-tabs", "active_tab"),
+        State("data-path-input", "value"),
     )
-    def update_metadata_tab(data_path):
+    def update_metadata_tab(strain_options, active_tab, data_path):
+        if active_tab != "tab-metadata":
+            raise PreventUpdate
         empty_fig = go.Figure()
         empty_fig.add_annotation(
             text="Enter a data path to load metadata.",
@@ -693,8 +733,11 @@ def register_callbacks(app, data_store):
         Input("cohort-dropdown", "value"),
         Input("metric-dropdown", "value"),
         Input("qc-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
-    def update_acclim_stats(strain, cohort_id, metric, qc_on):
+    def update_acclim_stats(strain, cohort_id, metric, qc_on, active_tab):
+        if active_tab != "tab-cohort":
+            raise PreventUpdate
         if not strain or not cohort_id or not metric:
             return "No data selected."
 
@@ -726,8 +769,11 @@ def register_callbacks(app, data_store):
         Input("cohort-dropdown", "value"),
         Input("metric-dropdown", "value"),
         Input("qc-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
-    def update_acclim_plot(is_open, strain, cohort_id, metric, qc_on):
+    def update_acclim_plot(is_open, strain, cohort_id, metric, qc_on, active_tab):
+        if active_tab != "tab-cohort":
+            raise PreventUpdate
         if not is_open or not strain or not cohort_id or not metric:
             return go.Figure()
 
@@ -781,8 +827,11 @@ def register_callbacks(app, data_store):
         Input("heatmap-condition", "value"),
         Input("qc-toggle", "value"),
         Input("rep-toggle", "value"),
+        Input("main-tabs", "active_tab"),
     )
-    def update_heatmap(condition_val, qc_on, rep_mode):
+    def update_heatmap(condition_val, qc_on, rep_mode, active_tab):
+        if active_tab != "tab-heatmap":
+            raise PreventUpdate
         from dashboard.heatmap import compute_heatmap_data
         from dashboard.constants import HEATMAP_METRICS, CONTROL_STRAIN
 
@@ -809,13 +858,18 @@ def register_callbacks(app, data_store):
         strains = result["strain_list"]
         metrics = result["metric_names"]
         direction = result["direction"]
+        n_flies = result.get("n_flies_per_strain", {})
+        warnings = result.get("warnings", [])
 
         if len(strains) == 0:
             return empty_fig, None
 
+        ctrl_n = n_flies.get(CONTROL_STRAIN, 0)
+
         # Build hover text
         hover_text = []
         for i, strain in enumerate(strains):
+            strain_n = n_flies.get(strain, 0)
             row_text = []
             for j, metric in enumerate(metrics):
                 p_val = p[i, j]
@@ -823,24 +877,45 @@ def register_callbacks(app, data_store):
                 d_label = "higher" if d > 0 else "lower" if d < 0 else "n/a"
                 fdr_label = "sig. (FDR)" if rejected[i, j] else "n.s. (FDR)"
                 if np.isnan(p_val):
-                    row_text.append(f"{strain}<br>{metric}<br>p = N/A")
+                    # Show why: insufficient data
+                    reason = []
+                    if ctrl_n < 2:
+                        reason.append(f"control: {ctrl_n} flies")
+                    if strain_n < 2:
+                        reason.append(f"test: {strain_n} flies")
+                    reason_str = " / ".join(reason) if reason else "insufficient data"
+                    row_text.append(
+                        f"{strain}<br>{metric}<br>No test ({reason_str})"
+                    )
                 else:
                     row_text.append(
-                        f"{strain}<br>{metric}<br>p = {p_val:.2e} [{fdr_label}]<br>{d_label} than control"
+                        f"{strain}<br>{metric}<br>p = {p_val:.2e} [{fdr_label}]"
+                        f"<br>{d_label} than control (n={strain_n} vs {ctrl_n})"
                     )
             hover_text.append(row_text)
 
         # Pretty strain labels
         strain_labels = [s.replace("_", " ") for s in strains]
 
+        # Custom colorscale with guaranteed pure white at midpoint
+        custom_rdbu = [
+            [0.0, "rgb(5,10,172)"],
+            [0.25, "rgb(106,137,247)"],
+            [0.5, "rgb(255,255,255)"],
+            [0.75, "rgb(220,100,80)"],
+            [1.0, "rgb(178,10,28)"],
+        ]
+
         fig = go.Figure(data=go.Heatmap(
             z=z,
             x=metrics,
             y=strain_labels,
-            colorscale="RdBu_r",
+            colorscale=custom_rdbu,
             zmid=0,
             zmin=-1,
             zmax=1,
+            xgap=1,
+            ygap=1,
             text=hover_text,
             hovertemplate="%{text}<extra></extra>",
             colorbar=dict(
@@ -853,13 +928,27 @@ def register_callbacks(app, data_store):
 
         cond_name = CONDITION_NAMES.get(condition_id, f"Condition {condition_id}")
         ctrl_label = CONTROL_STRAIN.replace("_", " ")
+        bottom_margin = 80
+        if warnings:
+            bottom_margin = 80 + 14 * len(warnings)
         fig.update_layout(
             title=f"Statistical Comparison vs {ctrl_label} — {cond_name}",
             template="plotly_white",
-            height=max(400, 30 * len(strains) + 150),
-            margin=dict(t=70, b=80, l=220, r=80),
+            height=max(400, 30 * len(strains) + 150 + (14 * len(warnings) if warnings else 0)),
+            margin=dict(t=70, b=bottom_margin, l=220, r=80),
             xaxis=dict(tickangle=30, side="bottom"),
+            plot_bgcolor="rgb(220,220,220)",
         )
+
+        if warnings:
+            fig.add_annotation(
+                text="Insufficient data: " + "; ".join(warnings),
+                xref="paper", yref="paper",
+                x=0, y=-0.15,
+                showarrow=False,
+                font=dict(size=10, color="grey"),
+                xanchor="left",
+            )
 
         # Serialise per-fly data for drill-down (convert numpy arrays to lists)
         cache_data = {
@@ -874,14 +963,20 @@ def register_callbacks(app, data_store):
     @app.callback(
         Output("heatmap-timeseries", "figure"),
         Output("heatmap-violin", "figure"),
+        Output("heatmap-stats", "children"),
         Input("heatmap-main", "clickData"),
         State("heatmap-cache", "data"),
         State("qc-toggle", "value"),
         State("rep-toggle", "value"),
     )
     def update_heatmap_drilldown(click_data, cache, qc_on, rep_mode):
-        from dashboard.heatmap import _smooth, _frame_mask, _FLIP_START, _FLIP_END, _STIM_START
+        from dashboard.heatmap import (
+            _smooth, _frame_mask, _FLIP_START, _FLIP_END, _STIM_START,
+            compute_drilldown_stats,
+        )
         from dashboard.constants import CONTROL_STRAIN, HEATMAP_METRICS
+        import dash_bootstrap_components as dbc
+        import traceback
 
         empty_ts = go.Figure()
         empty_violin = go.Figure()
@@ -891,7 +986,37 @@ def register_callbacks(app, data_store):
                 text="Click a cell in the heatmap to see details.",
                 xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False,
             )
-            return empty_ts, empty_violin
+            return empty_ts, empty_violin, ""
+
+        try:
+            return _heatmap_drilldown_inner(
+                click_data, cache, qc_on, rep_mode,
+                data_store, empty_ts, empty_violin,
+            )
+        except Exception:
+            import sys
+            traceback.print_exc(file=sys.stderr)
+            err_fig = go.Figure()
+            err_fig.add_annotation(
+                text="Error computing drill-down. Check server logs.",
+                xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False,
+                font=dict(color="red"),
+            )
+            return err_fig, empty_violin, html.Div(
+                "An error occurred while computing statistics.",
+                className="text-danger",
+            )
+
+    def _heatmap_drilldown_inner(
+        click_data, cache, qc_on, rep_mode,
+        data_store, empty_ts, empty_violin,
+    ):
+        from dashboard.heatmap import (
+            _smooth, _frame_mask, _FLIP_START, _FLIP_END, _STIM_START,
+            compute_drilldown_stats,
+        )
+        from dashboard.constants import CONTROL_STRAIN, HEATMAP_METRICS
+        import dash_bootstrap_components as dbc
 
         # Extract clicked cell coordinates
         point = click_data["points"][0]
@@ -905,22 +1030,39 @@ def register_callbacks(app, data_store):
                 strain = s
                 break
         if strain is None:
-            return empty_ts, empty_violin
+            return empty_ts, empty_violin, ""
 
         # Map metric name to index
         metrics = cache["metric_names"]
         if metric_idx in metrics:
             m_idx = metrics.index(metric_idx)
         else:
-            return empty_ts, empty_violin
+            return empty_ts, empty_violin, ""
 
         condition_id = cache["condition_id"]
         apply_qc = bool(qc_on)
 
         # Determine which raw time series to show based on metric type
+        # Also define the frame window used for the scalar metric (for grey rectangle)
         # Metrics 0-1: FV-based → show fv_data
         # Metrics 2-3: Turning-based → show curv_data (smoothed+flipped)
         # Metrics 4-5: Distance-based → show movement towards centre (inverted dist)
+        from dashboard.heatmap import (
+            _STIM_END, _ONSET_PRE_START, _ONSET_POST_END,
+            _EARLY_TURN_START, _EARLY_TURN_END,
+            _DIST_10S_START, _DIST_10S_END,
+            _DIST_END_START, _DIST_END_END,
+        )
+        # Frame windows per metric (start_frame, end_frame)
+        _metric_windows = {
+            0: (_STIM_START, _STIM_END),        # Avg FV: 300-1200
+            1: (_ONSET_PRE_START, _ONSET_POST_END),  # ΔFV: 210-390
+            2: (_STIM_START, _STIM_END),         # Avg Turning: 300-1200
+            3: (_EARLY_TURN_START, _EARLY_TURN_END),  # Early Turning: 315-450
+            4: (_DIST_10S_START, _DIST_10S_END),  # Movement 10s: 570-600
+            5: (_DIST_END_START, _DIST_END_END),  # Movement end: 1170-1200
+        }
+
         if m_idx <= 1:
             raw_col = "fv_data"
             y_label = "Forward velocity (mm/s)"
@@ -947,30 +1089,33 @@ def register_callbacks(app, data_store):
             df = data_store.load_per_fly(strain_name)
             if df.empty:
                 continue
-            mask = df["condition"] == condition_id
+            subset = df[df["condition"] == condition_id]
             if apply_qc:
-                mask &= df["qc_passed"]
-            subset = df[mask]
+                subset = subset[subset["qc_passed"]]
             if subset.empty:
                 continue
 
             if rep_mode == "average":
                 grouped = (
-                    subset.groupby(["fly_idx", "frame"])[[raw_col]]
+                    subset.groupby(["cohort_id", "fly_idx", "frame"])[[raw_col]]
                     .mean()
                     .reset_index()
                 )
             else:
-                grouped = subset[["fly_idx", "rep", "frame", raw_col]].copy()
+                grouped = subset[["cohort_id", "fly_idx", "rep", "frame", raw_col]].copy()
 
-            # Apply transform per fly
-            fly_ids = sorted(grouped["fly_idx"].unique())
+            # Apply transform per fly (group by cohort+fly to keep flies distinct)
+            fly_keys = sorted(
+                grouped.groupby(["cohort_id", "fly_idx"]).groups.keys()
+            )
             all_frames = sorted(grouped["frame"].unique())
             time_s = np.array(all_frames) / FPS
             per_fly_vals = []
 
-            for fid in fly_ids:
-                fly_df = grouped[grouped["fly_idx"] == fid].sort_values("frame")
+            for cid, fid in fly_keys:
+                fly_df = grouped[
+                    (grouped["cohort_id"] == cid) & (grouped["fly_idx"] == fid)
+                ].sort_values("frame")
                 vals = fly_df[raw_col].values
                 frames = fly_df["frame"].values
 
@@ -1001,7 +1146,29 @@ def register_callbacks(app, data_store):
             for trace in _make_trace(t, y_mean, y_sem, color, label):
                 ts_fig.add_trace(trace)
 
+        if not ts_fig.data:
+            ts_fig.add_annotation(
+                text="No data available for this condition after filtering.",
+                xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False,
+                font=dict(color="grey"),
+            )
+
         _add_stim_markers(ts_fig)
+
+        # Add grey rectangle showing the time window used for the scalar metric
+        win = _metric_windows.get(m_idx)
+        if win:
+            win_start_s = win[0] / FPS
+            win_end_s = win[1] / FPS
+            ts_fig.add_vrect(
+                x0=win_start_s, x1=win_end_s,
+                fillcolor="rgba(200,200,200,0.2)",
+                layer="below",
+                line_width=0,
+                annotation_text="metric window",
+                annotation_position="top left",
+                annotation_font=dict(size=9, color="grey"),
+            )
 
         cond_name = CONDITION_NAMES.get(condition_id, f"Condition {condition_id}")
         ts_fig.update_layout(
@@ -1015,8 +1182,8 @@ def register_callbacks(app, data_store):
 
         # ---- Violin plot: per-fly scalar distributions ----
         violin_fig = go.Figure()
-        ctrl_fly_data = np.array(cache["per_fly"].get(CONTROL_STRAIN, []))
-        test_fly_data = np.array(cache["per_fly"].get(strain, []))
+        ctrl_fly_data = np.array(cache["per_fly"].get(CONTROL_STRAIN, []), dtype=float)
+        test_fly_data = np.array(cache["per_fly"].get(strain, []), dtype=float)
 
         for fly_data, label, color in [
             (ctrl_fly_data, CONTROL_STRAIN.replace("_", " "), ctrl_color),
@@ -1025,6 +1192,10 @@ def register_callbacks(app, data_store):
             if fly_data.size == 0:
                 continue
             vals = fly_data[:, m_idx]
+            # Distance metrics are stored as negative (dist - baseline);
+            # negate so positive = movement towards centre, matching the timeseries.
+            if m_idx >= 4:
+                vals = -vals
             valid = vals[~np.isnan(vals)]
             if len(valid) == 0:
                 continue
@@ -1047,16 +1218,199 @@ def register_callbacks(app, data_store):
                 meanline_visible=True,
             ))
 
+        # Add invisible traces for the legend to explain line types
+        violin_fig.add_trace(go.Scatter(
+            x=[None], y=[None], mode="lines",
+            line=dict(color="black", width=1.5, dash="solid"),
+            name="Median",
+        ))
+        violin_fig.add_trace(go.Scatter(
+            x=[None], y=[None], mode="lines",
+            line=dict(color="black", width=1.5, dash="dash"),
+            name="Mean",
+        ))
+
         violin_fig.update_layout(
             title=f"{metric_idx} — per-fly distributions",
             yaxis_title=metric_idx,
             template="plotly_white",
             height=400,
             margin=dict(t=50, b=50, l=60, r=20),
-            showlegend=False,
+            showlegend=True,
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1,
+                font=dict(size=10),
+            ),
         )
 
-        return ts_fig, violin_fig
+        # ---- Statistical tests ----
+        stats_div = ""
+        ctrl_vals_clean = ctrl_fly_data[:, m_idx] if ctrl_fly_data.size else np.array([], dtype=float)
+        test_vals_clean = test_fly_data[:, m_idx] if test_fly_data.size else np.array([], dtype=float)
+        ctrl_vals_clean = ctrl_vals_clean[~np.isnan(ctrl_vals_clean)]
+        test_vals_clean = test_vals_clean[~np.isnan(test_vals_clean)]
+
+        if len(ctrl_vals_clean) < 2 or len(test_vals_clean) < 2:
+            reasons = []
+            if len(ctrl_vals_clean) < 2:
+                reasons.append(f"control: {len(ctrl_vals_clean)} flies")
+            if len(test_vals_clean) < 2:
+                reasons.append(f"test strain: {len(test_vals_clean)} flies")
+            stats_div = html.Div([
+                html.H6("Statistical Tests", className="mb-2"),
+                html.P(
+                    f"Insufficient data for statistical comparison ({', '.join(reasons)}). "
+                    "At least 2 flies per group are required.",
+                    className="text-muted",
+                ),
+            ], className="mt-3")
+
+        elif len(ctrl_vals_clean) >= 2 and len(test_vals_clean) >= 2:
+            stat_results = compute_drilldown_stats(ctrl_vals_clean, test_vals_clean)
+
+            # Tooltip descriptions for each test
+            _test_tooltips = {
+                "Shapiro-Wilk (control)": (
+                    "Tests whether the control group data is normally distributed. "
+                    "p < 0.05 suggests non-normality. Assumes independent observations."
+                ),
+                "Shapiro-Wilk (test strain)": (
+                    "Tests whether the test strain data is normally distributed. "
+                    "p < 0.05 suggests non-normality. Assumes independent observations."
+                ),
+                "Levene's test": (
+                    "Tests equality of variances between groups. "
+                    "p < 0.05 suggests unequal variances. "
+                    "Does not assume normality (uses median-based method)."
+                ),
+                "Welch's t-test": (
+                    "Compares group means (parametric). Used when both groups pass "
+                    "normality. Does not assume equal variances. "
+                    "Assumes independent observations."
+                ),
+                "Mann-Whitney U": (
+                    "Non-parametric rank-based test comparing group medians/distributions. "
+                    "Used when normality is violated. "
+                    "Assumes independent observations and similar distribution shapes."
+                ),
+                "Kolmogorov-Smirnov": (
+                    "Tests whether two samples come from the same distribution. "
+                    "Sensitive to differences in shape, spread, and location. "
+                    "Non-parametric; no distributional assumptions."
+                ),
+                "Cohen's d": (
+                    "Standardised mean difference (parametric effect size). "
+                    "|d| < 0.2 negligible, 0.2-0.5 small, 0.5-0.8 medium, > 0.8 large."
+                ),
+                "Rank-biserial r": (
+                    "Non-parametric effect size based on Mann-Whitney U. "
+                    "|r| < 0.1 negligible, 0.1-0.3 small, 0.3-0.5 medium, > 0.5 large."
+                ),
+            }
+
+            # Build HTML table rows with dbc.Tooltip for each test name
+            table_rows = []
+            tooltip_components = []
+            for idx_t, t in enumerate(stat_results["tests"]):
+                p = t["pvalue"]
+                sig = p < 0.05
+                sig_marker = " *" if sig else ""
+                p_style = {"fontWeight": "bold", "color": "#d32f2f"} if sig else {}
+                tooltip_text = _test_tooltips.get(t["name"], "")
+                span_id = f"stat-test-name-{idx_t}"
+                name_cell = html.Td(
+                    html.Span(
+                        t["name"],
+                        id=span_id,
+                        style={
+                            "borderBottom": "1px dotted #999",
+                            "cursor": "pointer",
+                        } if tooltip_text else {},
+                    )
+                )
+                if tooltip_text:
+                    tooltip_components.append(
+                        dbc.Tooltip(
+                            tooltip_text,
+                            target=span_id,
+                            placement="top",
+                        )
+                    )
+                table_rows.append(html.Tr([
+                    name_cell,
+                    html.Td(f"{t['stat']:.4f}"),
+                    html.Td(f"{p:.2e}{sig_marker}", style=p_style),
+                    html.Td(t["note"]),
+                ]))
+
+            # Effect size row
+            es = stat_results["effect_size"]
+            if es:
+                es_tooltip_text = _test_tooltips.get(es["name"], "")
+                es_span_id = "stat-test-name-es"
+                table_rows.append(html.Tr([
+                    html.Td(
+                        html.Span(
+                            es["name"],
+                            id=es_span_id,
+                            style={
+                                "fontStyle": "italic",
+                                "borderBottom": "1px dotted #999",
+                                "cursor": "pointer",
+                            } if es_tooltip_text else {"fontStyle": "italic"},
+                        )
+                    ),
+                    html.Td(f"{es['value']:.3f}"),
+                    html.Td(""),
+                    html.Td(es["interpretation"]),
+                ], className="table-secondary"))
+                if es_tooltip_text:
+                    tooltip_components.append(
+                        dbc.Tooltip(
+                            es_tooltip_text,
+                            target=es_span_id,
+                            placement="top",
+                        )
+                    )
+
+            ctrl_label = CONTROL_STRAIN.replace("_", " ")
+            test_label = strain.replace("_", " ")
+            stats_div = html.Div([
+                html.H6(
+                    f"Statistical Tests — {metric_idx} "
+                    f"(n_ctrl={stat_results['n_control']}, n_test={stat_results['n_test']})",
+                    className="mb-2",
+                ),
+                html.Small(
+                    f"Control: {ctrl_label} vs Test: {test_label}",
+                    className="text-muted d-block mb-2",
+                ),
+                dbc.Table([
+                    html.Thead(html.Tr([
+                        html.Th("Test"),
+                        html.Th("Statistic"),
+                        html.Th("p-value"),
+                        html.Th("Note"),
+                    ])),
+                    html.Tbody(table_rows),
+                ], bordered=True, size="sm", striped=True, className="mt-2"),
+                html.Small(
+                    "* significant at p < 0.05. "
+                    "Normality assessed with Shapiro-Wilk; "
+                    "if both groups normal → Welch's t-test, otherwise → Mann-Whitney U. "
+                    "KS test assesses distributional equality. "
+                    "Effect size: Cohen's d (parametric) or rank-biserial r (non-parametric).",
+                    className="text-muted",
+                ),
+                # Tooltip components (must be in the layout to render)
+                *tooltip_components,
+            ], className="mt-3")
+
+        return ts_fig, violin_fig, stats_div
 
     # ---- Tab 6: Pipeline Status ----
     @app.callback(
@@ -1445,10 +1799,16 @@ def _get_summary_data(strain, cond_n, metric, apply_qc, rep_mode, use_default, s
                       central_tendency="mean", dispersion="sem"):
     """Get central tendency / dispersion data, using pre-computed summary when possible."""
     # Derived metrics are always computed on-the-fly (no pre-computed data available)
-    if use_default and metric not in DERIVED_METRICS:
-        df = store.get_strain_summary(strain, cond_n, metric)
-        if not df.empty:
+    if metric not in DERIVED_METRICS:
+        # Try pre-computed summary for the exact QC/rep/stat combination
+        df = store.get_summary_for_settings(
+            strain, cond_n, metric,
+            apply_qc=apply_qc, rep_mode=rep_mode,
+            central_tendency=central_tendency, dispersion=dispersion,
+        )
+        if df is not None and not df.empty:
             return df["time_s"].values, df["mean"].values, df["sem"].values, df["n_flies"].values
+
     # Fall back to on-the-fly computation
     df = store.compute_summary_on_the_fly(
         strain, cond_n, metric, rep_mode, apply_qc,
@@ -1662,3 +2022,141 @@ def _comparison_grid(metric, selected_strains, apply_qc, rep_mode, use_default, 
         margin=dict(t=60, b=30, l=60, r=20),
     )
     return fig
+
+
+# ---------------------------------------------------------------------------
+# Cohort consistency helpers (used by update_strain_boxchart one_condition)
+# ---------------------------------------------------------------------------
+
+
+def _add_cohort_flags_to_figure(fig, stats_result):
+    """Add red '!' annotations above flagged cohort violins."""
+    for pc in stats_result["per_cohort"]:
+        if not pc["flagged"]:
+            continue
+        reasons = []
+        if pc["flagged_mean"]:
+            reasons.append("mean")
+        if pc["flagged_spread"]:
+            reasons.append("spread")
+        reason_text = " & ".join(reasons)
+
+        fig.add_annotation(
+            x=pc["cohort_id"],
+            y=1.08,
+            yref="paper",
+            xref="x",
+            text="<b>\u26a0</b>",
+            showarrow=False,
+            font=dict(size=16, color="rgb(220,50,50)"),
+            yanchor="bottom",
+            hovertext=f"Outlier cohort ({reason_text})",
+        )
+
+
+def _build_cohort_stats_panel(stats_result, metric):
+    """Build a dash-bootstrap-components card showing cohort consistency stats."""
+    import dash_bootstrap_components as dbc
+    import math
+
+    ylabel = BOXCHART_YLABEL.get(metric, METRIC_LABELS.get(metric, metric))
+
+    # Per-cohort table rows
+    table_rows = []
+    for pc in stats_result["per_cohort"]:
+        flag_text = ""
+        if pc["flagged_mean"] and pc["flagged_spread"]:
+            flag_text = "mean & spread"
+        elif pc["flagged_mean"]:
+            flag_text = "mean"
+        elif pc["flagged_spread"]:
+            flag_text = "spread"
+
+        row_class = "table-warning" if pc["flagged"] else ""
+
+        # Format values safely (handle NaN)
+        def _fmt(val, decimals=2):
+            if val is None or (isinstance(val, float) and math.isnan(val)):
+                return "—"
+            return f"{val:.{decimals}f}"
+
+        table_rows.append(html.Tr([
+            html.Td(pc["cohort_id"]),
+            html.Td(str(pc["n_flies"])),
+            html.Td(_fmt(pc["median"])),
+            html.Td(_fmt(pc["mean"])),
+            html.Td(_fmt(pc["iqr"])),
+            html.Td(_fmt(pc["mean_zscore"], 1)),
+            html.Td(_fmt(pc["spread_zscore"], 1)),
+            html.Td(
+                html.Span(flag_text, style={"color": "#d32f2f", "fontWeight": "bold"})
+                if pc["flagged"] else ""
+            ),
+        ], className=row_class))
+
+    # Overall metrics
+    kw = stats_result["kruskal_wallis"]
+    if kw:
+        kw_text = f"p = {kw['pvalue']:.2e}"
+        kw_sig = kw["pvalue"] < 0.05
+    else:
+        kw_text = "N/A"
+        kw_sig = False
+    kw_style = {"fontWeight": "bold", "color": "#d32f2f"} if kw_sig else {}
+
+    eta = stats_result["eta_squared"]
+    if eta is not None:
+        if eta < 0.01:
+            eta_interp = "negligible"
+        elif eta < 0.06:
+            eta_interp = "small"
+        elif eta < 0.14:
+            eta_interp = "moderate"
+        else:
+            eta_interp = "large"
+        eta_text = f"{eta:.3f} ({eta_interp})"
+    else:
+        eta_text = "N/A"
+
+    return dbc.Card([
+        dbc.CardHeader(
+            html.H6("Cohort Consistency Analysis", className="mb-0"),
+        ),
+        dbc.CardBody([
+            # Summary line
+            html.Div([
+                html.Span(
+                    f"{stats_result['n_cohorts']} cohorts, "
+                    f"{stats_result['n_total_flies']} total flies",
+                    className="fw-bold",
+                ),
+                html.Span(" | Kruskal-Wallis: ", className="ms-2"),
+                html.Span(kw_text, style=kw_style),
+                html.Span(f" | Eta-squared: {eta_text}", className="ms-2"),
+            ], className="mb-3"),
+
+            # Per-cohort table
+            dbc.Table([
+                html.Thead(html.Tr([
+                    html.Th("Cohort"),
+                    html.Th("n"),
+                    html.Th("Median"),
+                    html.Th("Mean"),
+                    html.Th("IQR"),
+                    html.Th("Mean Z"),
+                    html.Th("Spread Z"),
+                    html.Th("Flag"),
+                ])),
+                html.Tbody(table_rows),
+            ], bordered=True, size="sm", striped=True, hover=True, className="mt-2"),
+
+            # Explanatory note
+            html.Small(
+                "Modified Z-scores > 2.5 flag cohorts with atypical mean or spread "
+                "(MAD-based). Kruskal-Wallis tests whether any cohort differs from the "
+                "group. Eta-squared estimates the fraction of variance attributable to "
+                "cohort differences.",
+                className="text-muted",
+            ),
+        ]),
+    ], className="mt-3")

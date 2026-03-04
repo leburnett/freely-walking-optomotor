@@ -1,4 +1,5 @@
-function LOG = present_acclim_off(LOG, vidobj, t_pause, t_acclim, rep, d)
+function LOG = present_acclim_off(LOG, vidobj, t_pause, t_acclim, rep, d, verbose)
+if nargin < 7, verbose = true; end
 
     % Get temp at the start:
     [t_outside_start, t_ring_start] = get_temp_rec(d);
@@ -14,10 +15,10 @@ function LOG = present_acclim_off(LOG, vidobj, t_pause, t_acclim, rep, d)
         acclim_off1.start_t = vidobj.getTimeStamp().value;
         acclim_off1.start_f = vidobj.getFrameCount().value;
         
-        disp('Acclim OFF')
-        pause(t_acclim); 
-        
-        % get frame and log it 
+        if verbose, disp('Acclim OFF'); end
+        pause(t_acclim);
+
+        % get frame and log it
         acclim_off1.stop_t = vidobj.getTimeStamp().value;
         acclim_off1.stop_f = vidobj.getFrameCount().value;
 
@@ -44,10 +45,10 @@ function LOG = present_acclim_off(LOG, vidobj, t_pause, t_acclim, rep, d)
         acclim_off2.start_t = vidobj.getTimeStamp().value;
         acclim_off2.start_f = vidobj.getFrameCount().value;
         
-        disp('Acclim OFF')
-        pause(t_acclim); 
-        
-        % get frame and log it 
+        if verbose, disp('Acclim OFF'); end
+        pause(t_acclim);
+
+        % get frame and log it
         acclim_off2.stop_t = vidobj.getTimeStamp().value;
         acclim_off2.stop_f = vidobj.getFrameCount().value;
 

@@ -32,6 +32,13 @@ app.title = "Freely-Walking Optomotor Dashboard"
 default_preprocessed = Path(DEFAULT_DATA_DIR).parent / f"{Path(DEFAULT_DATA_DIR).name}_preprocessed"
 data_store = DataStore(default_preprocessed)
 
+# Pre-load all strain data into memory for fast interactive use.
+# This trades a longer startup (~20-30s) for near-instant interactions.
+if data_store.is_valid:
+    print("Pre-loading all strain data into memory...")
+    data_store.warm_cache()
+    print("Data loaded. Starting server.")
+
 # ---- Sidebar ----
 sidebar = dbc.Card(
     [
@@ -60,7 +67,7 @@ sidebar = dbc.Card(
             dcc.Dropdown(
                 id="metric-dropdown",
                 options=[{"label": METRIC_LABELS[m], "value": m} for m in ALL_METRICS],
-                value="fv_data",
+                value="av_data",
                 className="mb-3",
                 clearable=False,
             ),
@@ -138,7 +145,7 @@ cohort_controls = dbc.Row([
                 [{"label": "All conditions", "value": "all"}]
                 + [{"label": f"{n}. {name}", "value": str(n)} for n, name in CONDITION_NAMES.items()]
             ),
-            value="all",
+            value="1",
             clearable=False,
         ),
     ], width=6),
@@ -183,7 +190,10 @@ cohort_tab = dbc.Tab(
                     ),
                 ]),
             ], className="mb-3"),
-            dcc.Graph(id="cohort-plot", config={"displayModeBar": True, "scrollZoom": True}),
+            dcc.Loading(
+                dcc.Graph(id="cohort-plot", config={"displayModeBar": True, "scrollZoom": True}),
+                type="circle",
+            ),
             dcc.Graph(id="cohort-boxchart", config={"displayModeBar": False}),
         ], className="p-3"),
     ],
@@ -230,8 +240,12 @@ strain_tab = dbc.Tab(
     children=[
         html.Div([
             strain_controls,
-            dcc.Graph(id="strain-plot", config={"displayModeBar": True, "scrollZoom": True}),
+            dcc.Loading(
+                dcc.Graph(id="strain-plot", config={"displayModeBar": True, "scrollZoom": True}),
+                type="circle",
+            ),
             dcc.Graph(id="strain-boxchart", config={"displayModeBar": False}),
+            html.Div(id="cohort-stats-panel"),
         ], className="p-3"),
     ],
 )
@@ -280,7 +294,10 @@ comparison_tab = dbc.Tab(
         html.Div([
             comparison_controls,
             comparison_strains,
-            dcc.Graph(id="comparison-plot", config={"displayModeBar": True, "scrollZoom": True}),
+            dcc.Loading(
+                dcc.Graph(id="comparison-plot", config={"displayModeBar": True, "scrollZoom": True}),
+                type="circle",
+            ),
             dcc.Graph(id="comparison-boxchart", config={"displayModeBar": False}),
         ], className="p-3"),
     ],
@@ -358,12 +375,18 @@ heatmap_tab = dbc.Tab(
                     ),
                 ], width=4),
             ], className="mb-3"),
-            dcc.Loading(
-                dcc.Graph(
-                    id="heatmap-main",
-                    config={"displayModeBar": True},
+            dbc.Row(
+                dbc.Col(
+                    dcc.Loading(
+                        dcc.Graph(
+                            id="heatmap-main",
+                            config={"displayModeBar": True},
+                        ),
+                        type="circle",
+                    ),
+                    width=10,
                 ),
-                type="circle",
+                justify="center",
             ),
             html.Hr(),
             dbc.Row([
@@ -376,6 +399,8 @@ heatmap_tab = dbc.Tab(
                     width=5,
                 ),
             ]),
+            html.Hr(),
+            html.Div(id="heatmap-stats"),
             dcc.Store(id="heatmap-cache"),
         ], className="p-3"),
     ],

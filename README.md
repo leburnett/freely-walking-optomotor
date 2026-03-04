@@ -62,24 +62,31 @@ freely-walking-optomotor/
 
 ## Setup
 
-### MATLAB
+The system runs across three computers (acquisition rig, processing machine, analysis computer). Both MATLAB and Python use a single editable path that you set once per computer — all other paths are derived automatically. See the [Configuration & Paths](https://leburnett.github.io/reiser-documentation/Freely-walking/freely_walking_configuration.html) documentation page for the full setup guide.
 
-1. Edit `config/get_config.m` — set `cfg.project_root` to your data root directory
-2. Run `setup_path.m` once per MATLAB session (or add to `startup.m`)
+### 1. Configuration
 
+**MATLAB** — edit `config/get_config.m`:
 ```matlab
-% setup_path.m adds all src/ subdirectories to the MATLAB path
-setup_path
-
-% All scripts then use:
-cfg = get_config();
-% cfg.project_root, cfg.data_tracked, cfg.data_processed, cfg.results, etc.
+cfg.project_root = '/path/to/your/data/root';
 ```
 
-### Python
+**Python** — edit `config/config.py`:
+```python
+PROJECT_ROOT = Path("/path/to/your/data/root")
+```
 
-1. Edit `config/config.py` — set `PROJECT_ROOT` to your data root directory
-2. Install the pixi environment:
+Point these to the root of your local data folder, which should contain `DATA/`, `results/`, and `figures/` subdirectories.
+
+### 2. MATLAB path setup
+
+Run `setup_path.m` once per MATLAB session (or add to `startup.m`):
+```matlab
+setup_path
+cfg = get_config();
+```
+
+### 3. Python environment
 
 ```bash
 cd python/freely-walking-python

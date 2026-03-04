@@ -114,6 +114,27 @@ CONTROL_STRAIN = "jfrc100_es_shibire_kir"
 # FDR correction threshold (Benjamini-Yekutieli, q-value)
 FDR_Q = 0.001
 
+# Custom strain ordering for heatmap (top-to-bottom display order).
+# Only these strains appear in the heatmap; others are excluded.
+HEATMAP_STRAIN_ORDER = [
+    "ss2575_LPC1_shibire_kir",
+    "ss1209_DCH_VCH_shibire_kir",
+    "ss34318_Am1_shibire_kir",
+    "ss01027_H2_shibire_kir",
+    "ss26283_H1_shibire_kir",
+    "ss02594_TmY5a_shibire_kir",
+    "ss03722_Tm5Y_shibire_kir",
+    "ss00395_TmY3_shibire_kir",
+    "ss00326_Pm2ab_shibire_kir",
+    "ss00297_Dm4_shibire_kir",
+    "ss2603_TmY20_shibire_kir",
+    "ss2571_T5_shibire_kir",
+    "ss2344_T4_shibire_kir",
+    "ss324_t4t5_shibire_kir",
+    "ss00316_Mi4_shibire_kir",
+    "l1l4_jfrc100_shibire_kir",
+]
+
 # Strain colors for cross-strain comparison (distinct palette)
 STRAIN_COLORS = [
     "rgb(55,126,184)",    # blue
