@@ -5,10 +5,13 @@ Maintains a single pipeline_status.json on the network drive that aggregates
 the status of all experiments. Both machines read/write this file.
 """
 
+import csv
+import io
 import json
 import logging
 import os
 import sys
+import time as _time
 from datetime import datetime
 from pathlib import Path
 
@@ -63,6 +66,7 @@ def update_registry(experiment_status):
     summary = {
         "experiment_id": exp_id,
         "date": experiment_status.get("date", ""),
+        "time": experiment_status.get("time", ""),
         "protocol": experiment_status.get("protocol", ""),
         "strain": experiment_status.get("strain", ""),
         "sex": experiment_status.get("sex", ""),
@@ -175,9 +179,12 @@ def generate_status_page(registry_path=None):
         if exp.get("has_errors"):
             error_count += 1
 
+    # Fetch experiment notes from Google Sheet (graceful fallback)
+    notes_lookup = _fetch_notes_from_sheet()
+
     # Build HTML
     html = _build_html(experiments, last_updated, stage_counts, error_count,
-                       excluded_count=len(excluded))
+                       excluded_count=len(excluded), notes_lookup=notes_lookup)
 
     # Write next to the registry
     html_path = registry_path.replace(".json", ".html")
@@ -227,9 +234,73 @@ def _stage_color(stage):
     return colors.get(stage, "#ffc107")
 
 
+# ---------------------------------------------------------------------------
+# Google Sheet experiment notes
+# ---------------------------------------------------------------------------
+
+_notes_cache = {"data": None, "fetched_at": 0}
+_NOTES_CACHE_TTL = 300  # 5 minutes
+
+_NOTES_SHEET_URL = (
+    "https://docs.google.com/spreadsheets/d/"
+    "1IsT3YndxAy3yN8o38r5RGK4dZsEdPXe0In4-OTEcXNw/"
+    "export?format=csv&gid=35583985"
+)
+
+
+def _fetch_notes_from_sheet():
+    """Fetch experiment notes from the Google Sheet CSV export.
+
+    Returns a dict keyed by (date, time_underscores) with values being
+    dicts containing 'notes_start' and 'notes_end' strings.
+
+    Uses a 5-minute TTL cache to avoid repeated network requests.
+    Returns empty dict on any failure (no internet, sheet unavailable, etc.).
+    """
+    now = _time.time()
+    if (_notes_cache["data"] is not None
+            and (now - _notes_cache["fetched_at"]) < _NOTES_CACHE_TTL):
+        return _notes_cache["data"]
+
+    notes = {}
+    try:
+        import urllib.request
+
+        with urllib.request.urlopen(_NOTES_SHEET_URL, timeout=10) as resp:
+            text = resp.read().decode("utf-8-sig")
+
+        reader = csv.DictReader(io.StringIO(text))
+        for row in reader:
+            date = (row.get("Date") or "").strip()
+            time_hyphens = (row.get("Time") or "").strip()
+            if not date or not time_hyphens:
+                continue
+            # Normalize time: HH-MM-SS -> HH_MM_SS
+            time_underscores = time_hyphens.replace("-", "_")
+            key = (date, time_underscores)
+            notes[key] = {
+                "notes_start": (row.get("NotesStart") or "").strip(),
+                "notes_end": (row.get("NotesEnd") or "").strip(),
+            }
+
+        _notes_cache["data"] = notes
+        _notes_cache["fetched_at"] = now
+        logger.debug(f"Fetched {len(notes)} notes entries from Google Sheet")
+
+    except Exception as e:
+        logger.debug(f"Could not fetch notes from Google Sheet: {e}")
+        # Return stale cache if available, otherwise empty dict
+        if _notes_cache["data"] is not None:
+            return _notes_cache["data"]
+
+    return notes
+
+
 def _build_html(experiments, last_updated, stage_counts, error_count,
-                excluded_count=0):
+                excluded_count=0, notes_lookup=None):
     """Build the full HTML page string."""
+    if notes_lookup is None:
+        notes_lookup = {}
     # Sort experiments by date descending, then time
     experiments_sorted = sorted(
         experiments,
@@ -288,11 +359,24 @@ def _build_html(experiments, last_updated, stage_counts, error_count,
         r_proc = "&#10003;" if exp.get("has_local_results_processing") else ""
         r_net = "&#10003;" if exp.get("has_network_results") else ""
 
+        # Time display (HH_MM_SS -> HH:MM:SS)
+        time_raw = exp.get("time", "")
+        time_display = time_raw.replace("_", ":") if time_raw else ""
+
+        # Notes from Google Sheet
+        notes_key = (exp.get("date", ""), time_raw)
+        exp_notes = notes_lookup.get(notes_key, {})
+        notes_start = exp_notes.get("notes_start", "")
+        notes_end = exp_notes.get("notes_end", "")
+
         rows.append(f"""        <tr>
             <td>{exp.get('date', '')}</td>
+            <td>{time_display}</td>
             <td>{exp.get('protocol', '')}</td>
             <td>{exp.get('strain', '')}</td>
             <td><span class="badge" style="background-color:{color}">{stage_label}</span>{error_indicator}</td>
+            <td class="notes-cell" title="{notes_start}">{notes_start}</td>
+            <td class="notes-cell" title="{notes_end}">{notes_end}</td>
             <td class="check-cell">{d_acq}</td>
             <td class="check-cell">{d_proc}</td>
             <td class="check-cell">{d_net}</td>
@@ -327,6 +411,8 @@ def _build_html(experiments, last_updated, stage_counts, error_count,
         #status-table td {{ padding: 8px 14px; border-bottom: 1px solid #e9ecef; font-size: 0.85rem; }}
         #status-table tr:hover td {{ background: #f1f3f5; }}
         .check-cell {{ text-align: center; color: #198754; font-size: 1rem; }}
+        .notes-cell {{ font-size: 0.8rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
+        .notes-cell:hover {{ white-space: normal; overflow: visible; }}
         .filter-row {{ margin-bottom: 15px; }}
         .filter-row input {{ padding: 6px 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.85rem; width: 300px; }}
         /* Pipeline info sections */
@@ -514,16 +600,19 @@ def _build_html(experiments, last_updated, stage_counts, error_count,
         <thead>
             <tr>
                 <th onclick="sortTable(0)">Date</th>
-                <th onclick="sortTable(1)">Protocol</th>
-                <th onclick="sortTable(2)">Strain</th>
-                <th onclick="sortTable(3)">Stage</th>
-                <th onclick="sortTable(4)" title="Experiment data folder on acquisition machine">Data Acq</th>
-                <th onclick="sortTable(5)" title="Experiment data folder on processing machine">Data Proc</th>
-                <th onclick="sortTable(6)" title="Experiment data folder on network drive">Data Net</th>
-                <th onclick="sortTable(7)" title="Results file on acquisition machine">Res Acq</th>
-                <th onclick="sortTable(8)" title="Results file on processing machine">Res Proc</th>
-                <th onclick="sortTable(9)" title="Results file in network exp_results">Res Net</th>
-                <th onclick="sortTable(10)">Last Updated</th>
+                <th onclick="sortTable(1)">Time</th>
+                <th onclick="sortTable(2)">Protocol</th>
+                <th onclick="sortTable(3)">Strain</th>
+                <th onclick="sortTable(4)">Stage</th>
+                <th onclick="sortTable(5)">Notes Start</th>
+                <th onclick="sortTable(6)">Notes End</th>
+                <th onclick="sortTable(7)" title="Experiment data folder on acquisition machine">Data Acq</th>
+                <th onclick="sortTable(8)" title="Experiment data folder on processing machine">Data Proc</th>
+                <th onclick="sortTable(9)" title="Experiment data folder on network drive">Data Net</th>
+                <th onclick="sortTable(10)" title="Results file on acquisition machine">Res Acq</th>
+                <th onclick="sortTable(11)" title="Results file on processing machine">Res Proc</th>
+                <th onclick="sortTable(12)" title="Results file in network exp_results">Res Net</th>
+                <th onclick="sortTable(13)">Last Updated</th>
             </tr>
         </thead>
         <tbody>
