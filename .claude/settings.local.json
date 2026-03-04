@@ -31,7 +31,12 @@
       "Bash(cmd /c \"dir \\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\pipeline_status*\")",
       "Bash(cmd /c \"dir /b \\\\\\\\prfs.hhmi.org\\\\reiserlab\\\\oaky-cokey\\\\pipeline_status*\")",
       "Bash(ls -la pipeline_status*)",
-      "Bash(python python/automation/backfill_registry.py --all --check-missing-logs)"
+      "Bash(python python/automation/backfill_registry.py --all --check-missing-logs)",
+      "Bash(python3:*)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''python/automation/backfill_registry.py''\\).read\\(\\)\\); print\\(''backfill_registry.py: OK''\\)\")",
+      "Bash(python -c \"import json; f=open\\(''//prfs.hhmi.org/reiserlab/oaky-cokey/pipeline_status.json''\\); data=json.load\\(f\\); f.close\\(\\); exps=data[''experiments'']; warnings=[e for e in exps if e.get\\(''has_operator_warning''\\)]; print\\(f''Total: {len\\(exps\\)}''\\); print\\(f''Warnings: {len\\(warnings\\)}''\\); [print\\(f''  {w[\"\"date\"\"]} {w[\"\"time\"\"]} proto={w[\"\"protocol\"\"]} strain={w[\"\"strain\"\"]}''\\) for w in warnings]; prod=[e for e in exps if \\(e.get\\(''date'',''''\\) or ''''\\)>=''2024_09_25'']; test=[e for e in exps if \\(e.get\\(''date'',''''\\) or ''''\\)<''2024_09_25'']; print\\(f''Production: {len\\(prod\\)}''\\); print\\(f''Testing: {len\\(test\\)}''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''python/automation/backfill_registry.py''\\).read\\(\\)\\); print\\(''OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''python/automation/shared/registry.py''\\).read\\(\\)\\); print\\(''OK''\\)\")"
     ]
   }
 }

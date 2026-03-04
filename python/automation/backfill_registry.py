@@ -44,7 +44,7 @@ from python.automation.shared.file_ops import (
     parse_experiment_path,
 )
 from python.automation.shared.logging_config import setup_logging
-from python.automation.shared.registry import generate_status_page
+from python.automation.shared.registry import PRODUCTION_CUTOVER_DATE, generate_status_page
 from python.automation.shared.status import (
     PIPELINE_STAGES,
     STATUS_FILENAME,
@@ -723,6 +723,18 @@ def process_one_experiment(exp, network_results_index, local_results_index, args
         has_data_local_acq = (location == "local" and machine_role == "acquisition")
         has_data_local_proc = (location == "local" and machine_role == "processing")
 
+        # Operator warning: post-cutover experiments with missing metadata
+        protocol = metadata.get("protocol", "unknown")
+        strain = metadata.get("strain", "unknown")
+        has_operator_warning = False
+        if date >= PRODUCTION_CUTOVER_DATE:
+            has_log_file = any(
+                e.startswith("LOG_") and e.endswith(".mat")
+                for e in os.listdir(folder_path)
+            ) if os.path.isdir(folder_path) else False
+            if not has_log_file or protocol in ("unknown", "") or strain in ("unknown", ""):
+                has_operator_warning = True
+
         if args.dry_run:
             return {
                 "status": "dry_run",
@@ -735,6 +747,7 @@ def process_one_experiment(exp, network_results_index, local_results_index, args
                 "has_local_results_acquisition": has_local_acq,
                 "has_local_results_processing": has_local_proc,
                 "has_network_results": has_network,
+                "has_operator_warning": has_operator_warning,
             }
 
         # Write pipeline_status.json
@@ -777,6 +790,7 @@ def process_one_experiment(exp, network_results_index, local_results_index, args
             "has_local_results_acquisition": has_local_acq,
             "has_local_results_processing": has_local_proc,
             "has_network_results": has_network,
+            "has_operator_warning": has_operator_warning,
         }
 
     except Exception as e:
@@ -904,6 +918,7 @@ def write_global_registry(results, output_registry,
             "has_local_results_acquisition": r.get("has_local_results_acquisition", False),
             "has_local_results_processing": r.get("has_local_results_processing", False),
             "has_network_results": r.get("has_network_results", False),
+            "has_operator_warning": r.get("has_operator_warning", False),
         }
 
         if dedup_key in best:
@@ -952,6 +967,25 @@ def write_global_registry(results, output_registry,
         if fixed:
             logger.info(f"Corrected metadata for {fixed} experiments using results filenames")
             print(f"  Corrected metadata for {fixed} experiments using results filenames")
+
+    # Ensure has_operator_warning is set for all entries (including merged)
+    warning_count = 0
+    for entry in best.values():
+        if "has_operator_warning" not in entry:
+            date = entry.get("date", "") or ""
+            if date >= PRODUCTION_CUTOVER_DATE:
+                proto = entry.get("protocol", "") or ""
+                strain = entry.get("strain", "") or ""
+                if proto in ("unknown", "") or strain in ("unknown", ""):
+                    entry["has_operator_warning"] = True
+                    warning_count += 1
+                else:
+                    entry["has_operator_warning"] = False
+            else:
+                entry["has_operator_warning"] = False
+    if warning_count:
+        logger.info(f"Set operator warning on {warning_count} merged entries")
+        print(f"  Set operator warning on {warning_count} merged entries")
 
     experiments = list(best.values())
 

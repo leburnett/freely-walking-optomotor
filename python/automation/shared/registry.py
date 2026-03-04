@@ -17,6 +17,10 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+# Cutover date: folder naming convention changed to include structured metadata.
+# Experiments before this date are testing-phase and expected to lack metadata.
+PRODUCTION_CUTOVER_DATE = "2024_09_25"
+
 
 def _get_registry_path():
     """Return the path to the global pipeline registry."""
@@ -75,6 +79,16 @@ def update_registry(experiment_status):
         "has_errors": len(experiment_status.get("errors", [])) > 0,
     }
 
+    # Compute operator warning for live pipeline entries
+    exp_date = experiment_status.get("date", "")
+    if exp_date >= PRODUCTION_CUTOVER_DATE:
+        proto = summary.get("protocol", "") or ""
+        strn = summary.get("strain", "") or ""
+        if proto in ("unknown", "") or strn in ("unknown", ""):
+            summary["has_operator_warning"] = True
+        else:
+            summary["has_operator_warning"] = False
+
     # Upsert: replace existing or append
     experiments = data.get("experiments", [])
     found = False
@@ -88,6 +102,7 @@ def update_registry(experiment_status):
                 "has_local_results_acquisition",
                 "has_local_results_processing",
                 "has_network_results",
+                "has_operator_warning",
             ):
                 if field not in summary and field in exp:
                     summary[field] = exp[field]
@@ -298,18 +313,40 @@ def _fetch_notes_from_sheet():
 
 def _build_html(experiments, last_updated, stage_counts, error_count,
                 excluded_count=0, notes_lookup=None):
-    """Build the full HTML page string."""
+    """Build the full HTML page string.
+
+    Splits experiments into two tables:
+    - Production: experiments on or after PRODUCTION_CUTOVER_DATE
+    - Testing phase: experiments before PRODUCTION_CUTOVER_DATE (collapsed)
+
+    Adds an orange warning indicator for experiments with has_operator_warning.
+    Charts use production data only.
+    """
     if notes_lookup is None:
         notes_lookup = {}
-    # Sort experiments by date descending, then time
-    experiments_sorted = sorted(
-        experiments,
+
+    # Partition into production vs testing phase
+    production = [e for e in experiments
+                  if (e.get("date", "") or "") >= PRODUCTION_CUTOVER_DATE]
+    testing = [e for e in experiments
+               if (e.get("date", "") or "") < PRODUCTION_CUTOVER_DATE]
+
+    # Sort each group by date descending
+    production_sorted = sorted(
+        production,
+        key=lambda e: (e.get("date", ""), e.get("experiment_id", "")),
+        reverse=True,
+    )
+    testing_sorted = sorted(
+        testing,
         key=lambda e: (e.get("date", ""), e.get("experiment_id", "")),
         reverse=True,
     )
 
-    # Summary cards
+    # Summary cards (over all resolved experiments)
     total = len(experiments)
+    prod_count = len(production)
+    test_count = len(testing)
     summary_items = []
     for stage, count in sorted(stage_counts.items()):
         color = _stage_color(stage)
@@ -321,6 +358,9 @@ def _build_html(experiments, last_updated, stage_counts, error_count,
 
     summary_html = " ".join(summary_items)
 
+    # Operator warning count
+    warning_count = sum(1 for e in experiments if e.get("has_operator_warning"))
+
     # Cross-reference counts — data folders
     data_acq_count = sum(1 for e in experiments if e.get("has_data_local_acquisition"))
     data_proc_count = sum(1 for e in experiments if e.get("has_data_local_processing"))
@@ -330,51 +370,60 @@ def _build_html(experiments, last_updated, stage_counts, error_count,
     res_proc_count = sum(1 for e in experiments if e.get("has_local_results_processing"))
     res_net_count = sum(1 for e in experiments if e.get("has_network_results"))
 
-    # Embed experiment data as JS for charts
+    # Embed experiment data as JS for charts — PRODUCTION ONLY
     js_data = json.dumps([
         {"stage": e.get("current_stage", "unknown") or "unknown",
          "protocol": e.get("protocol", ""),
          "strain": e.get("strain", ""),
          "date": e.get("date", ""),
          "time": e.get("time", "")}
-        for e in experiments
+        for e in production
     ], separators=(",", ":"))
 
-    # Table rows
-    rows = []
-    for exp in experiments_sorted:
-        stage = exp.get("current_stage", "unknown") or "unknown"
-        color = _stage_color(stage)
-        has_errors = exp.get("has_errors", False)
-        error_indicator = ' <span class="error-dot">&#9679;</span>' if has_errors else ""
-        stage_label = stage.replace("_", " ").title()
+    def _build_table_rows(exp_list):
+        """Build HTML table row strings for a list of experiments."""
+        rows = []
+        for exp in exp_list:
+            stage = exp.get("current_stage", "unknown") or "unknown"
+            color = _stage_color(stage)
+            has_errors = exp.get("has_errors", False)
+            error_indicator = (
+                ' <span class="error-dot">&#9679;</span>' if has_errors else ""
+            )
+            has_warning = exp.get("has_operator_warning", False)
+            warning_indicator = (
+                ' <span class="warning-dot" title="Operator warning: '
+                'missing metadata or LOG file">&#9888;</span>'
+                if has_warning else ""
+            )
+            stage_label = stage.replace("_", " ").title()
 
-        # Data folder location indicators
-        d_acq = "&#10003;" if exp.get("has_data_local_acquisition") else ""
-        d_proc = "&#10003;" if exp.get("has_data_local_processing") else ""
-        d_net = "&#10003;" if exp.get("has_data_network") else ""
+            # Data folder location indicators
+            d_acq = "&#10003;" if exp.get("has_data_local_acquisition") else ""
+            d_proc = "&#10003;" if exp.get("has_data_local_processing") else ""
+            d_net = "&#10003;" if exp.get("has_data_network") else ""
 
-        # Results file location indicators
-        r_acq = "&#10003;" if exp.get("has_local_results_acquisition") else ""
-        r_proc = "&#10003;" if exp.get("has_local_results_processing") else ""
-        r_net = "&#10003;" if exp.get("has_network_results") else ""
+            # Results file location indicators
+            r_acq = "&#10003;" if exp.get("has_local_results_acquisition") else ""
+            r_proc = "&#10003;" if exp.get("has_local_results_processing") else ""
+            r_net = "&#10003;" if exp.get("has_network_results") else ""
 
-        # Time display (HH_MM_SS -> HH:MM:SS)
-        time_raw = exp.get("time", "")
-        time_display = time_raw.replace("_", ":") if time_raw else ""
+            # Time display (HH_MM_SS -> HH:MM:SS)
+            time_raw = exp.get("time", "")
+            time_display = time_raw.replace("_", ":") if time_raw else ""
 
-        # Notes from Google Sheet
-        notes_key = (exp.get("date", ""), time_raw)
-        exp_notes = notes_lookup.get(notes_key, {})
-        notes_start = exp_notes.get("notes_start", "")
-        notes_end = exp_notes.get("notes_end", "")
+            # Notes from Google Sheet
+            notes_key = (exp.get("date", ""), time_raw)
+            exp_notes = notes_lookup.get(notes_key, {})
+            notes_start = exp_notes.get("notes_start", "")
+            notes_end = exp_notes.get("notes_end", "")
 
-        rows.append(f"""        <tr>
+            rows.append(f"""        <tr>
             <td>{exp.get('date', '')}</td>
             <td>{time_display}</td>
             <td>{exp.get('protocol', '')}</td>
             <td>{exp.get('strain', '')}</td>
-            <td><span class="badge" style="background-color:{color}">{stage_label}</span>{error_indicator}</td>
+            <td><span class="badge" style="background-color:{color}">{stage_label}</span>{error_indicator}{warning_indicator}</td>
             <td class="notes-cell" title="{notes_start}">{notes_start}</td>
             <td class="notes-cell" title="{notes_end}">{notes_end}</td>
             <td class="check-cell">{d_acq}</td>
@@ -385,8 +434,35 @@ def _build_html(experiments, last_updated, stage_counts, error_count,
             <td class="check-cell">{r_net}</td>
             <td>{exp.get('last_updated', '')}</td>
         </tr>""")
+        return "\n".join(rows)
 
-    rows_html = "\n".join(rows)
+    production_rows_html = _build_table_rows(production_sorted)
+    testing_rows_html = _build_table_rows(testing_sorted)
+
+    # Table header HTML (shared by both tables)
+    def _table_header(table_id):
+        return f"""    <table class="status-table" id="{table_id}">
+        <thead>
+            <tr>
+                <th onclick="sortTable('{table_id}', 0)">Date</th>
+                <th onclick="sortTable('{table_id}', 1)">Time</th>
+                <th onclick="sortTable('{table_id}', 2)">Protocol</th>
+                <th onclick="sortTable('{table_id}', 3)">Strain</th>
+                <th onclick="sortTable('{table_id}', 4)">Stage</th>
+                <th onclick="sortTable('{table_id}', 5)">Notes Start</th>
+                <th onclick="sortTable('{table_id}', 6)">Notes End</th>
+                <th onclick="sortTable('{table_id}', 7)" title="Experiment data folder on acquisition machine">Data Acq</th>
+                <th onclick="sortTable('{table_id}', 8)" title="Experiment data folder on processing machine">Data Proc</th>
+                <th onclick="sortTable('{table_id}', 9)" title="Experiment data folder on network drive">Data Net</th>
+                <th onclick="sortTable('{table_id}', 10)" title="Results file on acquisition machine">Res Acq</th>
+                <th onclick="sortTable('{table_id}', 11)" title="Results file on processing machine">Res Proc</th>
+                <th onclick="sortTable('{table_id}', 12)" title="Results file in network exp_results">Res Net</th>
+                <th onclick="sortTable('{table_id}', 13)">Last Updated</th>
+            </tr>
+        </thead>"""
+
+    production_table_header = _table_header("production-table")
+    testing_table_header = _table_header("testing-table")
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -404,17 +480,20 @@ def _build_html(experiments, last_updated, stage_counts, error_count,
         .badge {{ display: inline-block; padding: 4px 10px; border-radius: 12px; color: white; font-size: 0.8rem; font-weight: 500; }}
         .error-count {{ background: #dc3545; }}
         .error-dot {{ color: #dc3545; font-size: 0.7rem; }}
-        #status-table {{ width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }}
-        #status-table thead {{ background: #212529; color: white; }}
-        #status-table th {{ padding: 10px 14px; text-align: left; font-weight: 500; font-size: 0.85rem; cursor: pointer; user-select: none; }}
-        #status-table th:hover {{ background: #343a40; }}
-        #status-table td {{ padding: 8px 14px; border-bottom: 1px solid #e9ecef; font-size: 0.85rem; }}
-        #status-table tr:hover td {{ background: #f1f3f5; }}
+        .warning-dot {{ color: #fd7e14; font-size: 0.8rem; cursor: help; }}
+        .status-table {{ width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }}
+        .status-table thead {{ background: #212529; color: white; }}
+        .status-table th {{ padding: 10px 14px; text-align: left; font-weight: 500; font-size: 0.85rem; cursor: pointer; user-select: none; }}
+        .status-table th:hover {{ background: #343a40; }}
+        .status-table td {{ padding: 8px 14px; border-bottom: 1px solid #e9ecef; font-size: 0.85rem; }}
+        .status-table tr:hover td {{ background: #f1f3f5; }}
         .check-cell {{ text-align: center; color: #198754; font-size: 1rem; }}
         .notes-cell {{ font-size: 0.8rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
         .notes-cell:hover {{ white-space: normal; overflow: visible; }}
         .filter-row {{ margin-bottom: 15px; }}
         .filter-row input {{ padding: 6px 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.85rem; width: 300px; }}
+        .section-heading {{ margin-top: 24px; margin-bottom: 8px; font-size: 1.1rem; color: #212529; }}
+        .section-heading .count {{ color: #6c757d; font-weight: 400; font-size: 0.9rem; }}
         /* Pipeline info sections */
         .pipeline-info {{ margin-bottom: 16px; background: white; border-radius: 8px; padding: 12px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }}
         .pipeline-info summary {{ cursor: pointer; font-size: 0.9rem; margin-bottom: 8px; }}
@@ -461,9 +540,10 @@ def _build_html(experiments, last_updated, stage_counts, error_count,
     <p class="subtitle">Last updated: {last_updated}</p>
 
     <div class="summary">
-        <span class="total">Total: {total}</span>
+        <span class="total">Total: {total} ({prod_count} production, {test_count} testing)</span>
         {summary_html}
         {"<span class='badge error-count'>Errors: " + str(error_count) + "</span>" if error_count else ""}
+        {"<span class='badge' style='background-color:#fd7e14'>Warnings: " + str(warning_count) + "</span>" if warning_count else ""}
         {"<span class='badge' style='background-color:#495057'>Data-Acq: " + str(data_acq_count) + "</span>" if data_acq_count else ""}
         {"<span class='badge' style='background-color:#495057'>Data-Proc: " + str(data_proc_count) + "</span>" if data_proc_count else ""}
         {"<span class='badge' style='background-color:#495057'>Data-Net: " + str(data_net_count) + "</span>" if data_net_count else ""}
@@ -572,19 +652,19 @@ def _build_html(experiments, last_updated, stage_counts, error_count,
     </details>
 
     <details class="pipeline-info">
-        <summary><strong>Experiments by Protocol</strong></summary>
+        <summary><strong>Experiments by Protocol</strong> <span style="color:#6c757d;font-size:0.8rem">(production only)</span></summary>
         <div class="chart-legend" id="chart-legend-proto"></div>
         <div class="stacked-chart" id="stacked-protocol"></div>
     </details>
 
     <details class="pipeline-info">
-        <summary><strong>Experiments by Strain</strong></summary>
+        <summary><strong>Experiments by Strain</strong> <span style="color:#6c757d;font-size:0.8rem">(production only)</span></summary>
         <div class="chart-legend" id="chart-legend-strain"></div>
         <div class="stacked-chart" id="stacked-strain"></div>
     </details>
 
     <details class="pipeline-info">
-        <summary><strong>Experiment Timeline</strong></summary>
+        <summary><strong>Experiment Timeline</strong> <span style="color:#6c757d;font-size:0.8rem">(production only)</span></summary>
         <div class="chart-legend" id="chart-legend-timeline"></div>
         <div class="timeline-container" id="timeline-container">
             <canvas id="timeline-canvas"></canvas>
@@ -592,33 +672,33 @@ def _build_html(experiments, last_updated, stage_counts, error_count,
         </div>
     </details>
 
-    <div class="filter-row">
-        <input type="text" id="filter" placeholder="Filter by date, strain, protocol..." oninput="filterTable()">
-    </div>
+    <!-- ===== Production Experiments ===== -->
+    <details class="pipeline-info" open style="margin-top:24px">
+        <summary><strong>Production Experiments</strong> <span class="count">({prod_count})</span></summary>
+        <div class="filter-row" style="margin-top:12px">
+            <input type="text" id="filter-production" placeholder="Filter production experiments..." oninput="filterTable('production-table', 'filter-production')">
+        </div>
 
-    <table id="status-table">
-        <thead>
-            <tr>
-                <th onclick="sortTable(0)">Date</th>
-                <th onclick="sortTable(1)">Time</th>
-                <th onclick="sortTable(2)">Protocol</th>
-                <th onclick="sortTable(3)">Strain</th>
-                <th onclick="sortTable(4)">Stage</th>
-                <th onclick="sortTable(5)">Notes Start</th>
-                <th onclick="sortTable(6)">Notes End</th>
-                <th onclick="sortTable(7)" title="Experiment data folder on acquisition machine">Data Acq</th>
-                <th onclick="sortTable(8)" title="Experiment data folder on processing machine">Data Proc</th>
-                <th onclick="sortTable(9)" title="Experiment data folder on network drive">Data Net</th>
-                <th onclick="sortTable(10)" title="Results file on acquisition machine">Res Acq</th>
-                <th onclick="sortTable(11)" title="Results file on processing machine">Res Proc</th>
-                <th onclick="sortTable(12)" title="Results file in network exp_results">Res Net</th>
-                <th onclick="sortTable(13)">Last Updated</th>
-            </tr>
-        </thead>
-        <tbody>
-{rows_html}
-        </tbody>
-    </table>
+{production_table_header}
+            <tbody>
+{production_rows_html}
+            </tbody>
+        </table>
+    </details>
+
+    <!-- ===== Testing Phase Experiments ===== -->
+    <details class="pipeline-info" style="margin-top:24px">
+        <summary><strong>Testing Phase Experiments</strong> <span class="count">({test_count}) &mdash; before Sep 25, 2024</span></summary>
+        <div class="filter-row" style="margin-top:12px">
+            <input type="text" id="filter-testing" placeholder="Filter testing experiments..." oninput="filterTable('testing-table', 'filter-testing')">
+        </div>
+
+{testing_table_header}
+            <tbody>
+{testing_rows_html}
+            </tbody>
+        </table>
+    </details>
 
     <script>
     const expData = {js_data};
@@ -637,7 +717,7 @@ def _build_html(experiments, last_updated, stage_counts, error_count,
         'processed': 'Processed',
         'synced_to_network': 'Synced to Network'
     }};
-    let sortDir = {{}};
+    const sortDirMap = {{}};
 
     // Clean up known metadata issues for chart display:
     //  - Protocols that look like dates (YYYY_MM_DD) -> "unknown"
@@ -651,22 +731,26 @@ def _build_html(experiments, last_updated, stage_counts, error_count,
         if (!e.strain || e.strain === '') e.strain = 'unknown';
     }});
 
-    function sortTable(col) {{
-        const table = document.getElementById('status-table');
+    function sortTable(tableId, col) {{
+        const table = document.getElementById(tableId);
+        if (!table) return;
         const tbody = table.tBodies[0];
         const rows = Array.from(tbody.rows);
-        sortDir[col] = !sortDir[col];
+        const key = tableId + '_' + col;
+        sortDirMap[key] = !sortDirMap[key];
         rows.sort((a, b) => {{
             const aText = a.cells[col].textContent.trim();
             const bText = b.cells[col].textContent.trim();
-            return sortDir[col] ? aText.localeCompare(bText) : bText.localeCompare(aText);
+            return sortDirMap[key] ? aText.localeCompare(bText) : bText.localeCompare(aText);
         }});
         rows.forEach(r => tbody.appendChild(r));
     }}
 
-    function filterTable() {{
-        const q = document.getElementById('filter').value.toLowerCase();
-        const rows = document.querySelectorAll('#status-table tbody tr');
+    function filterTable(tableId, inputId) {{
+        const q = document.getElementById(inputId).value.toLowerCase();
+        const table = document.getElementById(tableId);
+        if (!table) return;
+        const rows = table.querySelectorAll('tbody tr');
         rows.forEach(r => {{
             r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
         }});

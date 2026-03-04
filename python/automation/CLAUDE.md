@@ -166,8 +166,11 @@ The `machine` field uses the `MACHINE_ROLE` value ("acquisition" or "processing"
 
 Aggregates all experiment statuses into one JSON file on the network drive, and generates a static HTML status page.
 
+**Key constants:**
+- `PRODUCTION_CUTOVER_DATE = "2024_09_25"` -- single source of truth for the cutover date. Experiments before this date are testing-phase; experiments on or after are production. Used by both `registry.py` (HTML table split) and `backfill_registry.py` (operator warning computation).
+
 **Key functions:**
-- `update_registry(experiment_status)` -- upserts experiment entry, auto-regenerates HTML
+- `update_registry(experiment_status)` -- upserts experiment entry, auto-regenerates HTML. Computes `has_operator_warning` for production experiments.
 - `get_all_experiments(registry_path=None)` -- returns list of all experiment summaries
 - `generate_status_page(registry_path=None)` -- generates `pipeline_status.html` with sortable/filterable table
 
@@ -178,14 +181,17 @@ Aggregates all experiment statuses into one JSON file on the network drive, and 
 - processed: green
 - synced_to_network: teal
 - errors: red
+- operator warnings: orange ⚠
 
 **HTML status page features:**
 - Pipeline stage description table (collapsible, default open)
 - CSS flowchart diagram showing pipeline flow and machine assignments
-- Sortable/filterable experiment table with color-coded stage badges
+- Two separate experiment tables: **Production** (visible, ≥ Sep 25, 2024) and **Testing Phase** (collapsed, < Sep 25, 2024), each independently sortable and filterable
+- Orange ⚠ warning indicator on production experiments missing metadata or LOG .mat files
+- Charts (by Protocol, by Strain, Timeline) show production data only
 - "Local" and "Network" checkmark columns showing whether result files exist in each location
-- Summary badges with total counts per stage and cross-reference counts
-- `update_registry()` preserves `has_local_results`/`has_network_results` fields when live pipeline scripts upsert entries
+- Summary badges with total/production/testing breakdown, stage counts, and warning count
+- `update_registry()` preserves `has_local_results`/`has_network_results` and `has_operator_warning` fields when live pipeline scripts upsert entries
 
 ### `logging_config.py` — Centralized Logging
 
@@ -528,4 +534,6 @@ Experiments use a hierarchical folder structure:
 
 3. **Logging before argparse help**: `setup_logging()` runs at script startup and prints a "Script Started" log line before `--help` output. This is cosmetic only.
 
-4. **Pre-October 2024 data**: Experiments from June-September 2024 on `D:\FreeWalkOptomotor\data` have flat `date/time/` structure with no metadata in LOG files. These will always show protocol/strain/sex as "unknown" in the status system.
+4. **Pre-October 2024 data**: Experiments from June-September 2024 on `D:\FreeWalkOptomotor\data` have flat `date/time/` structure with no metadata in LOG files. These will always show protocol/strain/sex as "unknown" in the status system. These ~266 testing-phase experiments are shown in a separate collapsed table in the HTML dashboard.
+
+5. **Operator warning system**: Post-cutover experiments (≥ Sep 25, 2024) with missing LOG .mat files, unknown protocol, or unknown strain are flagged with `has_operator_warning: true` in the registry. These appear with an orange ⚠ indicator in the production table. As of early 2026, 4 such experiments have been identified.

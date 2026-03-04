@@ -338,6 +338,24 @@ The `protocol.qmd.jinja2` template uses whitespace control (`-`) to avoid blank 
 
 Without the `-`, Jinja2 adds newlines that break Markdown table rendering.
 
+## Historical Data Phases
+
+### Production Cutover: September 25, 2024
+
+On September 25, 2024, the folder naming convention changed to include structured
+metadata (date/protocol/strain/sex/time hierarchy). Experiments before this date
+are testing-phase (~266 experiments, June–Sep 2024) with flat date/time/ folders
+and expected "unknown" metadata. The cutover constant is defined in
+`python/automation/shared/registry.py` as `PRODUCTION_CUTOVER_DATE = "2024_09_25"`.
+
+The HTML status page splits experiments into two tables based on this date:
+- **Production Experiments** (≥ Sep 25, 2024): Full metadata expected. An orange ⚠
+  warning indicator flags experiments with missing metadata or missing LOG .mat files.
+- **Testing Phase Experiments** (< Sep 25, 2024): Collapsed by default. "Unknown"
+  metadata is expected and normal for these experiments.
+
+Charts (by Protocol, by Strain, Timeline) show production data only.
+
 ## Common Issues & Solutions
 
 ### Pattern Array Dimensions
