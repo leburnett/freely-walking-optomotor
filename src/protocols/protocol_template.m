@@ -178,6 +178,28 @@ all_conditions(:, 7) = (1:height(all_conditions))';
 
 num_conditions = height(all_conditions);
 
+% Optional: labels for the progress display (one per condition row).
+% If omitted, the progress display shows the pattern number instead.
+% Edit these to match your conditions above.
+condition_labels = {
+    '60 deg grating — ~4 Hz (Pattern 9)';
+    '60 deg grating — ~8 Hz (Pattern 27)';
+    '60 deg flicker — 4 Hz (Pattern 10)';
+};
+
+% Number of repetitions (each condition is presented this many times).
+n_reps = 2;
+
+% Estimate total experiment duration for the progress display.
+% This sums the timing of all phases to give a rough ETA.
+total_stim_time = 0;
+for c = 1:num_conditions
+    % Each condition: 2 directions * trial_dur + interval_dur
+    total_stim_time = total_stim_time + 2*all_conditions(c,5) + all_conditions(c,6);
+end
+t_total_est = t_acclim_start + t_flash + t_interval + ...
+              n_reps * total_stim_time + t_acclim_end;
+
 %% ========================================================================
 %  SECTION 4: SESSION INITIALIZATION
 %  ========================================================================
@@ -198,14 +220,18 @@ controller_mode = [0 0];
 %% Record starting temperature
 [t_outside_start, t_ring_start] = get_temp_rec(d);
 
+%% Start experiment timer (for progress display)
+exp_start = tic;
+
 %% Start camera recording
 vidobj.startCapture();
-disp('camera ON')
 pause(t_pause)
 
 %% Create randomized condition order
 random_order = randperm(num_conditions);
-display(random_order);
+
+print_progress(func_name, 'setup', 0, n_reps, 0, num_conditions, ...
+               exp_start, t_total_est, '');
 
 %% ========================================================================
 %  SECTION 5: STIMULUS PRESENTATION
@@ -237,12 +263,15 @@ display(random_order);
 %                                                 |   NOTE: no 'd' parameter!
 %
 %  All functions share the signature:
-%    Log = present_*(current_condition, all_conditions, vidobj, d)
+%    Log = present_*(current_condition, all_conditions, vidobj, d, verbose)
 %  except present_shifted_stimulus which omits 'd'.
+%  Pass verbose=false to suppress trial-by-trial disp() output
+%  (the progress display handles user feedback instead).
 
 %% Pre-stimulus dark acclimation
-LOG = present_acclim_off(LOG, vidobj, t_pause, t_acclim_start, 1, d);
-disp('Recording behaviour in darkness')
+print_progress(func_name, 'acclimation_start', 0, n_reps, 0, num_conditions, ...
+               exp_start, t_total_est, '');
+LOG = present_acclim_off(LOG, vidobj, t_pause, t_acclim_start, 1, d, false);
 
 %% Begin stimulus loop
 log_n = 1;
@@ -259,7 +288,8 @@ for j = [1,2]
          if j == 1 && i == 1 % Before the first condition:
 
              % % ACCLIM PATT
-            disp('Full field flashes')
+            print_progress(func_name, 'flash', 0, n_reps, 0, num_conditions, ...
+                           exp_start, t_total_est, '');
             flash_pattern = 48; % Full field ON - OFF
             flash_speed = 4; % fps
 
@@ -282,10 +312,8 @@ for j = [1,2]
             acclim_patt.stop_f = vidobj.getFrameCount().value;
 
             LOG.acclim_patt = acclim_patt;
-            disp('Flashes ended')
 
             % % Interval after flashes
-            disp('Interval')
             Panel_com('set_pattern_id', 47); % bkg pattern with 0.
             pause(t_pause);
             Panel_com('send_gain_bias', [0 0 0 0]);
@@ -308,8 +336,14 @@ for j = [1,2]
 
          end
 
-         % Display the number of the current condition
-        disp (current_condition);
+         % Update progress display for this condition
+        if current_condition <= numel(condition_labels)
+            label = condition_labels{current_condition};
+        else
+            label = sprintf('Pattern %d', all_conditions(current_condition, 1));
+        end
+        print_progress(func_name, 'stimulus', j, n_reps, i, num_conditions, ...
+                       exp_start, t_total_est, label);
 
         % --- STIMULUS ROUTING ---------------------------------------------------
         % Choose ONE of the routing patterns below and modify to suit your
@@ -317,20 +351,20 @@ for j = [1,2]
 
         % OPTION A: Simple routing (all conditions use the same function)
         % Use this when all conditions are standard gratings/flicker/reverse phi.
-        Log = present_optomotor_stimulus(current_condition, all_conditions, vidobj, d);
+        Log = present_optomotor_stimulus(current_condition, all_conditions, vidobj, d, false);
 
         % OPTION B: Mixed routing (different functions for different conditions)
         % Use this when your protocol mixes stimulus types (e.g., gratings +
         % curtains + fixation). Route by condition number.
         % if current_condition == 5 || current_condition == 6
         %     % Curtain stimuli
-        %     Log = present_optomotor_stimulus_curtain(current_condition, all_conditions, vidobj, d);
+        %     Log = present_optomotor_stimulus_curtain(current_condition, all_conditions, vidobj, d, false);
         % elseif current_condition > 10
         %     % Bar fixation stimuli
-        %     Log = present_fixation_stimulus(current_condition, all_conditions, vidobj, d);
+        %     Log = present_fixation_stimulus(current_condition, all_conditions, vidobj, d, false);
         % else
         %     % Standard gratings / flicker / reverse phi
-        %     Log = present_optomotor_stimulus(current_condition, all_conditions, vidobj, d);
+        %     Log = present_optomotor_stimulus(current_condition, all_conditions, vidobj, d, false);
         % end
         % -----------------------------------------------------------------------
 
@@ -350,11 +384,12 @@ end
 %  Do not modify this section unless changing the logging structure.
 
 %% Post-stimulus dark acclimation
-LOG = present_acclim_off(LOG, vidobj, t_pause, t_acclim_end, 2, d);
+print_progress(func_name, 'acclimation_end', 0, n_reps, 0, num_conditions, ...
+               exp_start, t_total_est, '');
+LOG = present_acclim_off(LOG, vidobj, t_pause, t_acclim_end, 2, d, false);
 
 %% Stop camera
 vidobj.stopCapture();
-disp('Camera OFF')
 
 %% Record ending temperature
 [t_outside_end, t_ring_end] = get_temp_rec(d);
@@ -373,7 +408,9 @@ LOG.meta.random_order = random_order;
 %% Save LOG.mat file
 log_fname = fullfile(exp_folder, strcat('LOG_', string(date_str), '_', t_str, '.mat'));
 save(log_fname, 'LOG');
-disp('Log saved')
+
+print_progress(func_name, 'complete', n_reps, n_reps, num_conditions, num_conditions, ...
+               exp_start, t_total_est, '');
 
 %% Notes and Google Sheets export
 prompt = "Notes at end: ";

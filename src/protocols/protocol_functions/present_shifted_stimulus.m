@@ -1,4 +1,5 @@
-function Log = present_shifted_stimulus(current_condition, all_conditions, vidobj)
+function Log = present_shifted_stimulus(current_condition, all_conditions, vidobj, verbose)
+if nargin < 4, verbose = true; end
 
 % set condition variables based on row in all conditions
  optomotor_pattern = all_conditions(current_condition, 1);
@@ -30,7 +31,7 @@ Panel_com('set_pattern_id', optomotor_pattern); pause(t_pause)
 dir_val = -1;
 for tr_ind = 1:num_trials
 
-    disp(['trial number = ' num2str(tr_ind)])
+    if verbose, disp(['trial number = ' num2str(tr_ind)]); end
 
     dir_val = dir_val*-1;
 
@@ -71,7 +72,7 @@ for tr_ind = 1:num_trials
 end
 
 %% ALL OFF inbetween 
-disp('trial number = OFF')
+if verbose, disp('trial number = OFF'); end
 Panel_com('all_off');
 
 % idx_value = idx_value+1;
