@@ -11,6 +11,7 @@ dashboard = { cmd = "python -m dashboard.app", cwd = "." }
 preprocess = { cmd = "python -m dashboard.preprocess", cwd = "." }
 gen-pattern-docs = { cmd = "python -m docs_generator.generate_pattern_docs", cwd = "." }
 gen-protocol-docs = { cmd = "python -m docs_generator.generate_protocol_docs", cwd = "." }
+tortuosity = { cmd = "python -m analysis.tortuosity_explorer", cwd = "." }
 
 [dependencies]
 numpy = ">=2.2.6,<3"

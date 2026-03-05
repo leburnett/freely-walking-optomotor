@@ -41,7 +41,20 @@
       "Bash(set \"MACHINE_ROLE=analysis\")",
       "Bash(python -c \"from config.config import MACHINE_ROLE, PROJECT_ROOT, SOURCE_ROOT, PYTHON_EXE; print\\(f''MACHINE_ROLE: {MACHINE_ROLE}''\\); print\\(f''PROJECT_ROOT: {PROJECT_ROOT}''\\); print\\(f''SOURCE_ROOT: {SOURCE_ROOT}''\\); print\\(f''PYTHON_EXE: {PYTHON_EXE}''\\)\")",
       "Bash(MACHINE_ROLE=analysis python -c \"from config.config import MACHINE_ROLE, PROJECT_ROOT, SOURCE_ROOT, PYTHON_EXE; print\\(f''MACHINE_ROLE: {MACHINE_ROLE}''\\); print\\(f''PROJECT_ROOT: {PROJECT_ROOT}''\\); print\\(f''SOURCE_ROOT: {SOURCE_ROOT}''\\); print\\(f''PYTHON_EXE: {PYTHON_EXE}''\\)\")",
-      "Bash(MACHINE_ROLE=analysis PROJECT_ROOT=\"C:\\\\Users\\\\someone\\\\my-data\" python -c \"from config.config import MACHINE_ROLE, PROJECT_ROOT; print\\(f''MACHINE_ROLE: {MACHINE_ROLE}''\\); print\\(f''PROJECT_ROOT: {PROJECT_ROOT}''\\)\")"
+      "Bash(MACHINE_ROLE=analysis PROJECT_ROOT=\"C:\\\\Users\\\\someone\\\\my-data\" python -c \"from config.config import MACHINE_ROLE, PROJECT_ROOT; print\\(f''MACHINE_ROLE: {MACHINE_ROLE}''\\); print\\(f''PROJECT_ROOT: {PROJECT_ROOT}''\\)\")",
+      "Bash(pixi run python -c \":*)",
+      "Bash(/Users/burnettl/.pixi/bin/pixi run python -c \":*)",
+      "Bash(/Users/burnettl/.pixi/bin/pixi run python analysis/_test_tortuosity.py)",
+      "Bash(/Users/burnettl/.pixi/bin/pixi run python analysis/_test_frames.py)",
+      "Bash(/Users/burnettl/.pixi/bin/pixi run python -m analysis.tortuosity_explorer)",
+      "Bash(open /Users/burnettl/Documents/Projects/oaky_cokey/figures/analysis/tortuosity_explorer_jfrc100_es_shibire_kir.html)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(/Users/burnettl/.pixi/bin/pixi run python analysis/_verify_output.py)",
+      "Bash(/Users/burnettl/.pixi/bin/pixi run tortuosity)",
+      "Bash(grep -r \"heading_data\\\\|comb_data\\\\|unwrap\" /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/processing/*.m)",
+      "Bash(ls /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/processing/*.m)",
+      "Bash(grep -l \"heading\" /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/processing/functions/*.m)",
+      "Bash(open /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/analysis/tortuosity_explorer_jfrc100_es_shibire_kir.html)"
     ]
   }
 }
