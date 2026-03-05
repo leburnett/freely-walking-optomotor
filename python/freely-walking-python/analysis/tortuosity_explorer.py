@@ -45,8 +45,8 @@ DEFAULT_STRAIN = "jfrc100_es_shibire_kir"
 WINDOW_SIZES_S = [0.5, 1.0, 2.0, 3.0, 5.0, 7.0]
 WINDOW_SIZES_F = [int(ws * FPS) for ws in WINDOW_SIZES_S]
 
-# Trajectory subplot windows (1s, 3s, 7s)
-TRAJ_WINDOWS_S = [1.0, 3.0, 7.0]
+# Trajectory subplot windows (1s, 2s, 7s)
+TRAJ_WINDOWS_S = [1.0, 2.0, 7.0]
 TRAJ_WINDOWS_F = [int(ws * FPS) for ws in TRAJ_WINDOWS_S]
 
 # Displacement threshold below which tortuosity is undefined (mm)
@@ -64,6 +64,9 @@ DIST_BIN_CENTRES = 0.5 * (DIST_BIN_EDGES[:-1] + DIST_BIN_EDGES[1:])
 ZONE_EDGES = [(0, 30), (30, 60), (60, 90), (90, ARENA_RADIUS_MM)]
 ZONE_LABELS = ["Inner (0–30 mm)", "Inner-mid (30–60 mm)", "Outer-mid (60–90 mm)", "Outer (90–119 mm)"]
 ZONE_COLORS = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"]
+
+# Default slider window (2.0s)
+_DEFAULT_WS_IDX = WINDOW_SIZES_S.index(2.0)
 
 # 2D histogram bins
 N_HIST_BINS = 50
@@ -281,15 +284,20 @@ def aggregate_all(
     # Full rotation events
     all_rotations = []
 
-    # 1D histogram data by zone and by period
+    # 1D histogram data by zone and by period (clipped, for display histograms)
     zone_tort_data = {}   # (ws_idx, zone_idx) -> list of tort values (stimulus)
     period_tort_data = {}  # (ws_idx, period) -> list of tort values
+
+    # Per-fly median tortuosity (unclipped, for statistical tests + violin)
+    fly_tort_medians = {}  # (ws_idx, zone_idx) or (ws_idx, "baseline") -> list of floats
 
     for ws_idx in range(len(WINDOW_SIZES_F)):
         for z_idx in range(len(ZONE_EDGES)):
             zone_tort_data[(ws_idx, z_idx)] = []
+            fly_tort_medians[(ws_idx, z_idx)] = []
         for period in ("baseline", "stimulus"):
             period_tort_data[(ws_idx, period)] = []
+        fly_tort_medians[(ws_idx, "baseline")] = []
 
     # Example trajectories: pick flies from different distance zones
     zone_examples = {z: [] for z in range(len(ZONE_EDGES))}
@@ -321,23 +329,27 @@ def aggregate_all(
             tort_clipped = np.clip(tort, 1.0, MAX_TORTUOSITY)
 
             # Split baseline / stimulus (exclude post-stimulus interval)
-            n_seg = len(tort_clipped)
+            n_seg = len(tort)
             stim_end = min(STIM_OFFSET_FRAME, n_seg)
             for period, sl in [
                 ("baseline", slice(0, BASELINE_FRAMES)),
                 ("stimulus", slice(BASELINE_FRAMES, stim_end)),
             ]:
-                valid = ~np.isnan(tort_clipped[sl])
-                t_vals = tort_clipped[sl][valid]
+                valid = ~np.isnan(tort[sl])
+                t_vals_raw = tort[sl][valid]           # unclipped
+                t_vals_clipped = tort_clipped[sl][valid]  # clipped for display
                 d_vals = dist_from_edge[sl][valid]
 
+                # Histograms & 2D heatmaps use clipped values (display)
                 hist2d_data[(ws_idx, period)][0].extend(d_vals.tolist())
-                hist2d_data[(ws_idx, period)][1].extend(t_vals.tolist())
+                hist2d_data[(ws_idx, period)][1].extend(t_vals_clipped.tolist())
 
-                # Collect for 1D period histogram
-                period_tort_data[(ws_idx, period)].extend(t_vals.tolist())
+                # 1D period histogram (clipped, for display)
+                period_tort_data[(ws_idx, period)].extend(
+                    t_vals_clipped.tolist()
+                )
 
-                # Collect for 1D zone histogram (stimulus only)
+                # Zone histogram + per-fly medians (stimulus only)
                 if period == "stimulus":
                     dist_center_vals = dist[sl][valid]
                     for z_idx_h, (z_lo, z_hi) in enumerate(ZONE_EDGES):
@@ -346,20 +358,31 @@ def aggregate_all(
                         )
                         if z_mask.any():
                             zone_tort_data[(ws_idx, z_idx_h)].extend(
-                                t_vals[z_mask].tolist()
+                                t_vals_clipped[z_mask].tolist()
+                            )
+                            # Per-fly median (unclipped) for stats
+                            fly_median = float(np.median(t_vals_raw[z_mask]))
+                            fly_tort_medians[(ws_idx, z_idx_h)].append(
+                                fly_median
                             )
 
-                # Bin into distance zones for profile
+                # Per-fly baseline median (unclipped)
+                if period == "baseline" and len(t_vals_raw) > 0:
+                    fly_tort_medians[(ws_idx, "baseline")].append(
+                        float(np.median(t_vals_raw))
+                    )
+
+                # Bin into distance zones for profile (clipped, for display)
                 for b_idx in range(N_DIST_BINS):
                     mask = (d_vals >= DIST_BIN_EDGES[b_idx]) & (
                         d_vals < DIST_BIN_EDGES[b_idx + 1]
                     )
                     if mask.any():
                         profile_data[(ws_idx, period)][b_idx].extend(
-                            t_vals[mask].tolist()
+                            t_vals_clipped[mask].tolist()
                         )
 
-            # Time course: tortuosity per frame (baseline + stimulus only)
+            # Time course: tortuosity per frame (clipped, for display)
             tc_end = min(stim_end, len(tort_clipped))
             timecourse_data[(ws_idx, zone_idx)].append(tort_clipped[:tc_end])
 
@@ -384,6 +407,7 @@ def aggregate_all(
         "example_indices": example_indices,
         "zone_tort_data": zone_tort_data,
         "period_tort_data": period_tort_data,
+        "fly_tort_medians": fly_tort_medians,
         "n_frames": n_frames,
         "tort_examples": tort_examples,
     }
@@ -576,11 +600,11 @@ def make_tortuosity_histograms(
             ymax = max(ymax, int(c.max()))
         return ymax
 
-    gmax = _global_max(0)
+    gmax = _global_max(_DEFAULT_WS_IDX)
 
-    # --- Zone distributions (stimulus) ---
+    # --- Zone distributions (stimulus) — initial frame at default window ---
     for z_idx in range(len(ZONE_EDGES)):
-        vals = zone_tort_data.get((0, z_idx), [])
+        vals = zone_tort_data.get((_DEFAULT_WS_IDX, z_idx), [])
         stats = _hist_stats(vals)
         counts, _ = np.histogram(vals, bins=hist_bins) if vals else (
             np.zeros(len(hist_bins) - 1), None)
@@ -598,7 +622,7 @@ def make_tortuosity_histograms(
         ))
 
     # --- Baseline (all zones combined) ---
-    bvals = period_tort_data.get((0, "baseline"), [])
+    bvals = period_tort_data.get((_DEFAULT_WS_IDX, "baseline"), [])
     bstats = _hist_stats(bvals)
     bcounts, _ = np.histogram(bvals, bins=hist_bins) if bvals else (
         np.zeros(len(hist_bins) - 1), None)
@@ -663,7 +687,8 @@ def make_tortuosity_histograms(
     fig.frames = frames
 
     sliders = [dict(
-        active=0, currentvalue=dict(prefix="Window: "), pad=dict(t=60),
+        active=_DEFAULT_WS_IDX, currentvalue=dict(prefix="Window: "),
+        pad=dict(t=60),
         steps=[dict(
             label=f"{ws}s", method="animate",
             args=[[f"{ws}s"], dict(mode="immediate", frame=dict(duration=0, redraw=True))],
@@ -754,12 +779,12 @@ def make_profile_plot(profiles: dict) -> go.Figure:
     """Plot B: Mean tortuosity profile by distance zone."""
     fig = go.Figure()
 
-    # Initial traces (first window size)
+    # Initial traces (default window size)
     for period, color, dash in [
         ("baseline", "grey", "solid"),
         ("stimulus", "#1f77b4", "solid"),
     ]:
-        p = profiles[(0, period)]
+        p = profiles[(_DEFAULT_WS_IDX, period)]
         fig.add_trace(
             go.Scatter(
                 x=DIST_BIN_CENTRES,
@@ -799,7 +824,7 @@ def make_profile_plot(profiles: dict) -> go.Figure:
 
     sliders = [
         dict(
-            active=0,
+            active=_DEFAULT_WS_IDX,
             currentvalue=dict(prefix="Window: "),
             pad=dict(t=60),
             steps=[
@@ -1118,6 +1143,8 @@ def make_trajectory_plot(
     # First pass: compute tortuosity at all 3 windows, collect per-window vals
     per_window_vals = {wi: [] for wi in range(len(TRAJ_WINDOWS_F))}
     raw_trajectories = []
+    # Collect x, y, dist samples to find the arena centre
+    _centre_x, _centre_y, _centre_d = [], [], []
     for fly_idx in example_indices:
         trace = fly_traces[fly_idx]
         x, y = trace["x"], trace["y"]
@@ -1125,6 +1152,12 @@ def make_trajectory_plot(
         stim_end = min(STIM_OFFSET_FRAME, len(x))
         stim_x = x[BASELINE_FRAMES:stim_end]
         stim_y = y[BASELINE_FRAMES:stim_end]
+
+        # Sample points for arena-centre estimation (every 30th frame)
+        v = ~np.isnan(x) & ~np.isnan(y) & ~np.isnan(dist)
+        _centre_x.extend(x[v][::30].tolist())
+        _centre_y.extend(y[v][::30].tolist())
+        _centre_d.extend(dist[v][::30].tolist())
 
         per_window = {}
         for wi, wf in enumerate(TRAJ_WINDOWS_F):
@@ -1141,6 +1174,22 @@ def make_trajectory_plot(
             "stim_x": stim_x, "stim_y": stim_y,
             "per_window": per_window,
         })
+
+    # Estimate arena centre from x, y, dist relationship:
+    # dist = sqrt((x - cx)^2 + (y - cy)^2)
+    from scipy.optimize import minimize as _minimize
+    _cx_arr = np.array(_centre_x)
+    _cy_arr = np.array(_centre_y)
+    _cd_arr = np.array(_centre_d)
+
+    def _arena_obj(params):
+        return np.sum(
+            (np.sqrt(((_cx_arr - params[0]) ** 2 + (_cy_arr - params[1]) ** 2))
+             - _cd_arr) ** 2
+        )
+    _res = _minimize(_arena_obj, [np.mean(_cx_arr), np.mean(_cy_arr)],
+                     method="Nelder-Mead")
+    arena_cx, arena_cy = float(_res.x[0]), float(_res.x[1])
 
     # Per-window adaptive colour ceilings
     tort_cmax = {}
@@ -1211,7 +1260,6 @@ def make_trajectory_plot(
 
         trajectories.append({
             "window_bins": window_bins,
-            "cx": float(np.nanmean(x)), "cy": float(np.nanmean(y)),
             "zone": zone_name, "mean_dist": mean_dist, "mean_tort": mean_tort,
         })
 
@@ -1235,6 +1283,8 @@ def make_trajectory_plot(
     )
 
     theta = np.linspace(0, 2 * np.pi, 100)
+    arena_circle_x = (arena_cx + ARENA_RADIUS_MM * np.cos(theta)).tolist()
+    arena_circle_y = (arena_cy + ARENA_RADIUS_MM * np.sin(theta)).tolist()
     t0 = trajectories[0]
 
     # Traces per subplot: 1 arena + N_COLOR_BINS bins + 1 colorbar = N+2
@@ -1243,10 +1293,10 @@ def make_trajectory_plot(
         bins = per_window_color_bins[wi]
         cmax = tort_cmax[wi]
 
-        # Arena circle
+        # Arena circle (centred on physical arena centre, not fly position)
         fig.add_trace(go.Scatter(
-            x=(t0["cx"] + ARENA_RADIUS_MM * np.cos(theta)).tolist(),
-            y=(t0["cy"] + ARENA_RADIUS_MM * np.sin(theta)).tolist(),
+            x=arena_circle_x,
+            y=arena_circle_y,
             mode="lines", line=dict(color="lightgrey", width=1),
             showlegend=False, hoverinfo="skip",
         ), row=1, col=col)
@@ -1286,9 +1336,9 @@ def make_trajectory_plot(
         new_x = []
         new_y = []
         for wi in range(n_windows):
-            # Arena circle
-            new_x.append((traj["cx"] + ARENA_RADIUS_MM * np.cos(theta)).tolist())
-            new_y.append((traj["cy"] + ARENA_RADIUS_MM * np.sin(theta)).tolist())
+            # Arena circle (same for all flies — physical arena boundary)
+            new_x.append(arena_circle_x)
+            new_y.append(arena_circle_y)
             # Bin traces
             for bx, by in traj["window_bins"][wi]:
                 new_x.append(bx)
@@ -1336,9 +1386,9 @@ def make_time_course(timecourses: dict, n_frames: int) -> go.Figure:
 
     time_s = (np.arange(n_frames) - BASELINE_FRAMES) / FPS
 
-    # Initial traces (first window)
+    # Initial traces (default window)
     for z_idx in range(len(ZONE_EDGES)):
-        tc = timecourses[(0, z_idx)]
+        tc = timecourses[(_DEFAULT_WS_IDX, z_idx)]
         mean_tc = tc["mean"]
         if len(mean_tc) == 0:
             mean_tc = np.full(n_frames, np.nan)
@@ -1380,7 +1430,7 @@ def make_time_course(timecourses: dict, n_frames: int) -> go.Figure:
 
     sliders = [
         dict(
-            active=0,
+            active=_DEFAULT_WS_IDX,
             currentvalue=dict(prefix="Window: "),
             pad=dict(t=60),
             steps=[
@@ -1415,10 +1465,10 @@ def make_time_course(timecourses: dict, n_frames: int) -> go.Figure:
 # HTML assembly
 # ---------------------------------------------------------------------------
 def _build_initial_stats_html(all_stats: dict | None) -> str:
-    """Build the initial stats table HTML for the first window size."""
-    if not all_stats or 0 not in all_stats:
+    """Build the initial stats table HTML for the default window size."""
+    if not all_stats or _DEFAULT_WS_IDX not in all_stats:
         return ""
-    s = all_stats[0]
+    s = all_stats[_DEFAULT_WS_IDX]
     rows = []
     for z_idx in range(len(ZONE_EDGES)):
         zs = s["zones"].get(z_idx, {})
@@ -1566,24 +1616,53 @@ _GROUP_SHORT_NAMES = [
 ]
 
 
-def _compute_group_stats(
-    zone_tort_data: dict, period_tort_data: dict
-) -> dict:
+def _cliffs_delta(a: np.ndarray, b: np.ndarray) -> float:
+    """Cliff's delta effect size (vectorised).
+
+    Measures the degree of overlap between two distributions.
+    Ranges from -1 to +1; 0 means identical distributions.
+    """
+    diff = a[:, None] - b[None, :]  # shape (n_a, n_b)
+    return float((np.sum(diff > 0) - np.sum(diff < 0)) / diff.size)
+
+
+def _effect_label(d: float) -> str:
+    """Classify Cliff's delta magnitude (Romano et al. 2006 thresholds)."""
+    ad = abs(d)
+    if ad < 0.147:
+        return "negligible"
+    if ad < 0.33:
+        return "small"
+    if ad < 0.474:
+        return "medium"
+    return "large"
+
+
+def _compute_group_stats(fly_tort_medians: dict) -> dict:
     """Compute statistical tests comparing 5 groups at the 3s window.
 
+    Uses **per-fly median** tortuosity (one value per fly per group) to
+    avoid pseudoreplication from frame-level data.
+
     Groups: 4 stimulus zones + 1 baseline.
-    Returns dict with kruskal, pairwise_mw, pairwise_ks results.
+    Returns dict with Kruskal-Wallis, pairwise Mann-Whitney U, and
+    Cliff's delta effect sizes.
     """
     ws = _STATS_WS_IDX
     groups = []
     group_names = []
+    group_ns = []
     for z_idx in range(len(ZONE_EDGES)):
-        vals = zone_tort_data.get((ws, z_idx), [])
-        groups.append(np.array(vals) if vals else np.array([]))
+        vals = fly_tort_medians.get((ws, z_idx), [])
+        arr = np.array(vals) if vals else np.array([])
+        groups.append(arr)
         group_names.append(_GROUP_SHORT_NAMES[z_idx])
-    bl_vals = period_tort_data.get((ws, "baseline"), [])
-    groups.append(np.array(bl_vals) if bl_vals else np.array([]))
+        group_ns.append(len(arr))
+    bl_vals = fly_tort_medians.get((ws, "baseline"), [])
+    bl_arr = np.array(bl_vals) if bl_vals else np.array([])
+    groups.append(bl_arr)
     group_names.append("Baseline")
+    group_ns.append(len(bl_arr))
 
     n_groups = len(groups)
     n_pairs = n_groups * (n_groups - 1) // 2  # 10
@@ -1595,30 +1674,36 @@ def _compute_group_stats(
     else:
         kw_stat, kw_p = np.nan, np.nan
 
-    # Pairwise tests
+    # Pairwise Mann-Whitney U + Cliff's delta
     pairwise = []
     for (i, j) in combinations(range(n_groups), 2):
         a, b = groups[i], groups[j]
         if len(a) < 2 or len(b) < 2:
             pairwise.append({
                 "a": group_names[i], "b": group_names[j],
-                "mw_p": np.nan, "ks_p": np.nan,
+                "n_a": len(a), "n_b": len(b),
+                "mw_p": np.nan, "cliffs_d": np.nan,
+                "effect": "N/A",
             })
             continue
         _, mw_p = sp_stats.mannwhitneyu(a, b, alternative="two-sided")
-        _, ks_p = sp_stats.ks_2samp(a, b)
         # Bonferroni correction
         mw_p_adj = min(mw_p * n_pairs, 1.0)
-        ks_p_adj = min(ks_p * n_pairs, 1.0)
+        cd = _cliffs_delta(a, b)
         pairwise.append({
             "a": group_names[i], "b": group_names[j],
-            "mw_p": mw_p_adj, "ks_p": ks_p_adj,
+            "n_a": len(a), "n_b": len(b),
+            "mw_p": mw_p_adj,
+            "cliffs_d": cd,
+            "effect": _effect_label(cd),
         })
 
     return {
         "kw_stat": kw_stat, "kw_p": kw_p,
         "pairwise": pairwise,
         "n_pairs": n_pairs,
+        "group_names": group_names,
+        "group_ns": group_ns,
     }
 
 
@@ -1632,14 +1717,28 @@ def _format_p(p: float) -> str:
 
 
 def _build_significance_html(stats_results: dict) -> str:
-    """Render statistical test results as HTML."""
+    """Render statistical test results as HTML.
+
+    Shows per-fly median tests with Cliff's delta effect sizes.
+    """
     if not stats_results:
         return ""
 
     kw_stat = stats_results["kw_stat"]
     kw_p = stats_results["kw_p"]
     n_pairs = stats_results["n_pairs"]
+    group_names = stats_results["group_names"]
+    group_ns = stats_results["group_ns"]
 
+    # Sample sizes per group
+    ns_parts = [f"{name}: N={n}" for name, n in zip(group_names, group_ns)]
+    ns_line = (
+        '<p style="font-size:13px;">'
+        f'<strong>Sample sizes (flies):</strong> {" &nbsp;|&nbsp; ".join(ns_parts)}'
+        '</p>'
+    )
+
+    # Kruskal-Wallis overall test
     kw_line = (
         f'<p style="font-size:13px;"><strong>Kruskal-Wallis H-test '
         f'(5 groups):</strong> H = {kw_stat:.1f}, '
@@ -1649,52 +1748,66 @@ def _build_significance_html(stats_results: dict) -> str:
         kw_line += ' <span class="sig">(significant)</span>'
     kw_line += "</p>"
 
+    # Effect size colour coding
+    effect_colors = {
+        "negligible": "#999",
+        "small": "#b8860b",
+        "medium": "#e67e22",
+        "large": "#c0392b",
+        "N/A": "#999",
+    }
+
     # Pairwise table
     rows = []
     for pw in stats_results["pairwise"]:
         mw_cls = "sig" if not np.isnan(pw["mw_p"]) and pw["mw_p"] < 0.05 else "nonsig"
-        ks_cls = "sig" if not np.isnan(pw["ks_p"]) and pw["ks_p"] < 0.05 else "nonsig"
-        sig_any = (
+        sig_marker = '<span class="sig">*</span>' if (
             not np.isnan(pw["mw_p"]) and pw["mw_p"] < 0.05
-        ) or (
-            not np.isnan(pw["ks_p"]) and pw["ks_p"] < 0.05
-        )
-        sig_marker = '<span class="sig">*</span>' if sig_any else ""
+        ) else ""
+        cd = pw["cliffs_d"]
+        cd_str = f"{cd:+.3f}" if not np.isnan(cd) else "N/A"
+        eff = pw["effect"]
+        eff_color = effect_colors.get(eff, "#999")
         rows.append(
             f'<tr>'
             f'<td>{pw["a"]}</td><td>{pw["b"]}</td>'
+            f'<td>{pw["n_a"]}</td><td>{pw["n_b"]}</td>'
             f'<td class="{mw_cls}">{_format_p(pw["mw_p"])}</td>'
-            f'<td class="{ks_cls}">{_format_p(pw["ks_p"])}</td>'
+            f'<td>{cd_str}</td>'
+            f'<td style="color:{eff_color}; font-weight:600;">{eff}</td>'
             f'<td>{sig_marker}</td>'
             f'</tr>'
         )
 
     table = (
-        f'<p style="font-size:12px; color:#888;">Pairwise tests with '
-        f'Bonferroni correction ({n_pairs} comparisons, &alpha; = 0.05):</p>'
+        f'<p style="font-size:12px; color:#888;">Pairwise Mann-Whitney U tests with '
+        f'Bonferroni correction ({n_pairs} comparisons, &alpha; = 0.05). '
+        f'Cliff&rsquo;s &delta; effect size: |&delta;| &lt; 0.147 negligible, '
+        f'&lt; 0.33 small, &lt; 0.474 medium, &ge; 0.474 large.</p>'
         '<table class="stats-table">'
         '<tr><th>Group A</th><th>Group B</th>'
-        '<th>Mann-Whitney U p</th><th>KS p</th><th></th></tr>'
+        '<th>N<sub>A</sub></th><th>N<sub>B</sub></th>'
+        '<th>MW-U p</th><th>Cliff&rsquo;s &delta;</th>'
+        '<th>Effect</th><th></th></tr>'
         + ''.join(rows)
         + '</table>'
+        '<p style="font-size:12px; color:#888; margin-top:8px;">'
+        'Tests compare <strong>per-fly median</strong> tortuosity '
+        '(one value per fly per group) to avoid pseudoreplication from '
+        'frame-level data.</p>'
     )
 
-    return kw_line + table
+    return ns_line + kw_line + table
 
 
-def make_violin_plot(
-    zone_tort_data: dict, period_tort_data: dict
-) -> go.Figure:
+def make_violin_plot(fly_tort_medians: dict) -> go.Figure:
     """Create violin plots for the 5 groups at the 3s window.
 
-    Each group gets a Violin trace (subsampled to ~10000 for KDE, which is
-    more than sufficient for smooth density estimation) and a jittered
-    Scatter trace (subsampled to ~2000 points) behind the violin.
+    Each group shows the distribution of **per-fly median** tortuosity
+    (one value per fly), with individual fly markers behind each violin.
+    No subsampling needed — N is typically ~100–600 per group.
     """
     ws = _STATS_WS_IDX
-    MAX_MARKERS = 2000
-    MAX_VIOLIN = 10000  # sufficient for smooth KDE, keeps HTML manageable
-
     group_labels = list(_GROUP_SHORT_NAMES)
     group_colors = list(ZONE_COLORS) + ["grey"]
 
@@ -1705,9 +1818,9 @@ def make_violin_plot(
         color = group_colors[g_idx]
 
         if g_idx < len(ZONE_EDGES):
-            vals = zone_tort_data.get((ws, g_idx), [])
+            vals = fly_tort_medians.get((ws, g_idx), [])
         else:
-            vals = period_tort_data.get((ws, "baseline"), [])
+            vals = fly_tort_medians.get((ws, "baseline"), [])
 
         arr = np.array(vals) if vals else np.array([])
         if len(arr) == 0:
@@ -1715,29 +1828,17 @@ def make_violin_plot(
 
         rng = np.random.default_rng(42 + g_idx)
 
-        # Subsample for violin KDE
-        if len(arr) > MAX_VIOLIN:
-            violin_arr = arr[rng.choice(len(arr), MAX_VIOLIN, replace=False)]
-        else:
-            violin_arr = arr
-
-        # Subsample for markers
-        if len(arr) > MAX_MARKERS:
-            sub = arr[rng.choice(len(arr), MAX_MARKERS, replace=False)]
-        else:
-            sub = arr
-
         # Jitter x positions for scatter
-        jitter = rng.uniform(-0.25, 0.25, len(sub))
+        jitter = rng.uniform(-0.25, 0.25, len(arr))
 
-        # Scatter (behind violin)
+        # Scatter (behind violin) — all fly-level points
         fig.add_trace(go.Scatter(
             x=[g_idx + j for j in jitter],
-            y=sub.tolist(),
+            y=arr.tolist(),
             mode="markers",
             marker=dict(
-                color=_hex_to_rgba(color, 0.12) if color != "grey" else "rgba(150,150,150,0.12)",
-                size=2,
+                color=_hex_to_rgba(color, 0.25) if color != "grey" else "rgba(150,150,150,0.25)",
+                size=3,
             ),
             showlegend=False,
             hoverinfo="skip",
@@ -1746,8 +1847,8 @@ def make_violin_plot(
         # Violin (on top)
         fig.add_trace(go.Violin(
             x0=g_idx,
-            y=violin_arr.tolist(),
-            name=label,
+            y=arr.tolist(),
+            name=f"{label} (N={len(arr)})",
             line_color=color,
             fillcolor=_hex_to_rgba(color, 0.25) if color != "grey" else "rgba(150,150,150,0.25)",
             meanline_visible=True,
@@ -1759,17 +1860,145 @@ def make_violin_plot(
 
     fig.update_layout(
         height=500,
-        title_text="Tortuosity Distribution by Group (3s window)",
+        title_text="Per-Fly Median Tortuosity by Group (3s window)",
         xaxis=dict(
             tickvals=list(range(len(group_labels))),
             ticktext=group_labels,
             title="",
         ),
-        yaxis_title="Tortuosity",
+        yaxis_title="Median Tortuosity (per fly)",
         violinmode="overlay",
     )
 
     return fig
+
+
+def _build_assumptions_html() -> str:
+    """Build collapsible Assumptions & Methodological Notes section."""
+    assumptions = [
+        (
+            "Tortuosity display cap",
+            f"MAX_TORTUOSITY = {MAX_TORTUOSITY}",
+            "Prevents extreme outliers from compressing histogram and colour "
+            "scale ranges. Only affects visual display (histograms, trajectory "
+            "colouring, time course). Statistical tests and violin plots use "
+            "unclipped values. True tortuosity has a theoretical minimum of "
+            "1.0 (straight path) and no upper bound.",
+        ),
+        (
+            "Minimum displacement",
+            f"MIN_DISPLACEMENT = {MIN_DISPLACEMENT} mm",
+            "Tortuosity is undefined when displacement &asymp; 0 (division by "
+            "near-zero). Windows where the fly moves less than "
+            f"{MIN_DISPLACEMENT} mm are marked NaN and excluded. This mainly "
+            "affects stationary or near-stationary segments.",
+        ),
+        (
+            "QC exclusion criteria",
+            "Mean FV &gt; 3 mm/s, mean dist &lt; 110 mm",
+            "Flies with very low forward velocity during stimulus are likely "
+            "stationary or not responding. Flies with mean distance &gt; "
+            "110 mm (within 9 mm of the arena wall) may be edge-tracking "
+            "rather than responding to the stimulus. Both thresholds are "
+            "applied to stimulus-period means.",
+        ),
+        (
+            "Zone boundaries",
+            ", ".join(f"{lo}&ndash;{hi} mm" for lo, hi in ZONE_EDGES),
+            "Equal 30 mm intervals dividing the arena into 4 concentric "
+            "rings. These are arbitrary spatial bins for stratifying "
+            "behaviour by radial position; they do not correspond to known "
+            "biological boundaries.",
+        ),
+        (
+            "Analysis window sizes",
+            ", ".join(f"{w}s" for w in WINDOW_SIZES_S),
+            "Span from short-timescale individual turns (0.5&ndash;1s) to "
+            "extended locomotor patterns (5&ndash;7s). The 3s window is used "
+            "for statistical comparisons as a balance between noise (short "
+            "windows) and temporal smoothing (long windows).",
+        ),
+        (
+            "Statistical tests at 3s window",
+            "Fixed at 3.0s",
+            "All statistical comparisons use the 3s window. Results may "
+            "differ at other timescales. The 3s window was chosen as a "
+            "compromise: long enough to average out single-step noise but "
+            "short enough to capture turning behaviour within a stimulus "
+            "period.",
+        ),
+        (
+            "Per-fly median as summary statistic",
+            "One median per fly per group",
+            "Each fly contributes one median tortuosity value per zone (and "
+            "one for baseline). This respects the nested data structure "
+            "(frames within flies) and prevents pseudoreplication. A "
+            "fly&rsquo;s frames may span multiple zones &mdash; it "
+            "contributes a median to each zone it occupies.",
+        ),
+        (
+            "Baseline period",
+            f"Frames 0&ndash;{BASELINE_FRAMES - 1} "
+            f"({BASELINE_FRAMES / FPS:.0f}s pre-stimulus)",
+            "The pre-stimulus period during which the arena displays a dark "
+            "background pattern. Baseline tortuosity serves as a "
+            "within-session control.",
+        ),
+        (
+            "Stimulus period",
+            f"Frames {BASELINE_FRAMES}&ndash;{STIM_OFFSET_FRAME - 1} "
+            f"({(STIM_OFFSET_FRAME - BASELINE_FRAMES) / FPS:.0f}s)",
+            "The stimulus period for condition 1 (60&deg; gratings at 4Hz). "
+            "Post-stimulus frames are excluded from all analyses.",
+        ),
+        (
+            "Colour scale (trajectory plot)",
+            "75th percentile per subplot",
+            "Each trajectory subplot&rsquo;s colour scale ranges from 1.0 to "
+            "the 75th percentile of tortuosity values for that window size. "
+            "Values above this appear in the brightest colour. This prevents "
+            "rare extreme values from compressing the colour range.",
+        ),
+        (
+            "Centred windows",
+            "Symmetric &plusmn;half_w",
+            "Tortuosity at frame <em>t</em> uses frames "
+            "[<em>t</em>&minus;half_w, <em>t</em>+half_w]. Frames within "
+            "half_w of trace boundaries are NaN. NaN step distances are "
+            "treated as zero path length.",
+        ),
+        (
+            "Condition",
+            "Condition 1 only",
+            "This analysis is hardcoded to condition 1 (60&deg; gratings, "
+            "4Hz) of protocol 27. Results do not generalise to other "
+            "stimulus conditions.",
+        ),
+    ]
+
+    rows = []
+    for i, (name, value, justification) in enumerate(assumptions, 1):
+        rows.append(
+            f'<tr>'
+            f'<td>{i}</td>'
+            f'<td><strong>{name}</strong></td>'
+            f'<td><code>{value}</code></td>'
+            f'<td>{justification}</td>'
+            f'</tr>'
+        )
+
+    return (
+        '<details style="margin-top:40px;">'
+        '<summary style="cursor:pointer; font-size:16px; font-weight:600; '
+        'color:#555; padding:8px 0;">Assumptions &amp; Methodological Notes</summary>'
+        '<div style="margin-top:10px;">'
+        '<table class="stats-table" style="font-size:12px;">'
+        '<tr><th>#</th><th>Assumption</th><th>Value</th>'
+        '<th>Justification</th></tr>'
+        + ''.join(rows)
+        + '</table>'
+        '</div></details>'
+    )
 
 
 def build_html(
@@ -1892,10 +2121,11 @@ def build_html(
         turns. Longer windows (3&ndash;7s) capture extended looping behaviour.
         Use the slider on each plot to explore different timescales.</p>
         <p>The three trajectory subplots below show the <strong>same fly</strong>
-        with tortuosity computed at three different window sizes (1s, 3s, 7s).
+        with tortuosity computed at three different window sizes (1s, 2s, 7s).
         Dark colours (low tortuosity) indicate straight segments; bright colours
-        (high tortuosity) indicate winding or looping segments. Use the dropdown
-        to switch between example flies.</p>
+        (high tortuosity) indicate winding or looping segments. The grey circle
+        shows the physical arena boundary. Use the dropdown to switch between
+        example flies from different distance zones.</p>
     </div>
 
     <h2>Example Trajectory</h2>
@@ -1974,7 +2204,26 @@ def build_html(
             }}
         }});
     }}
+
+    // Set default slider position to {WINDOW_SIZES_S[_DEFAULT_WS_IDX]}s on page load.
+    // Plotly's slider "active" property only highlights the thumb; it does not
+    // trigger the corresponding animation frame.  We must call Plotly.animate()
+    // explicitly for each plot that uses a slider.
+    window.addEventListener('load', function() {{
+        var defaultFrame = '{WINDOW_SIZES_S[_DEFAULT_WS_IDX]}s';
+        var animOpts = {{mode: 'immediate', frame: {{duration: 0, redraw: true}}}};
+        ['histograms', 'profile', 'timecourse'].forEach(function(divId) {{
+            var el = document.getElementById(divId);
+            if (el) {{
+                Plotly.animate(el, [defaultFrame], animOpts);
+            }}
+        }});
+        // Also sync the stats table
+        updateStatsTable(defaultFrame);
+    }});
     </script>
+
+    {_build_assumptions_html()}
 
 </body>
 </html>"""
@@ -2020,18 +2269,14 @@ def main():
         agg["zone_tort_data"], agg["period_tort_data"]
     )
 
-    # Statistical tests + violin plot (3s window, fixed)
-    print("  Computing statistical tests (3s window)...")
-    stats_results = _compute_group_stats(
-        agg["zone_tort_data"], agg["period_tort_data"]
-    )
+    # Statistical tests + violin plot (3s window, per-fly medians)
+    print("  Computing statistical tests (3s window, per-fly medians)...")
+    stats_results = _compute_group_stats(agg["fly_tort_medians"])
     significance_html = _build_significance_html(stats_results)
 
     figures = {
         "A. Tortuosity Distributions": hist_fig,
-        "Violin": make_violin_plot(
-            agg["zone_tort_data"], agg["period_tort_data"]
-        ),
+        "Violin": make_violin_plot(agg["fly_tort_medians"]),
         "B. Mean Tortuosity by Radial Zone": make_profile_plot(agg["profiles"]),
         "Example Trajectory": make_trajectory_plot(
             fly_traces, agg["example_indices"]

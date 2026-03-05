@@ -54,7 +54,9 @@
       "Bash(grep -r \"heading_data\\\\|comb_data\\\\|unwrap\" /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/processing/*.m)",
       "Bash(ls /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/processing/*.m)",
       "Bash(grep -l \"heading\" /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/processing/functions/*.m)",
-      "Bash(open /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/analysis/tortuosity_explorer_jfrc100_es_shibire_kir.html)"
+      "Bash(open /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/analysis/tortuosity_explorer_jfrc100_es_shibire_kir.html)",
+      "Bash(pixi run tortuosity)",
+      "Bash(pixi run python -m analysis._check_coords)"
     ]
   }
 }
