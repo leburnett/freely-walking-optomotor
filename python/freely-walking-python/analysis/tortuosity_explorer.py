@@ -43,6 +43,10 @@ DEFAULT_STRAIN = "jfrc100_es_shibire_kir"
 WINDOW_SIZES_S = [0.5, 1.0, 2.0, 3.0, 5.0, 7.0]
 WINDOW_SIZES_F = [int(ws * FPS) for ws in WINDOW_SIZES_S]
 
+# Trajectory subplot windows (1s, 3s, 7s)
+TRAJ_WINDOWS_S = [1.0, 3.0, 7.0]
+TRAJ_WINDOWS_F = [int(ws * FPS) for ws in TRAJ_WINDOWS_S]
+
 # Displacement threshold below which tortuosity is undefined (mm)
 MIN_DISPLACEMENT = 0.5
 
@@ -55,9 +59,9 @@ DIST_BIN_EDGES = np.linspace(0, ARENA_RADIUS_MM, N_DIST_BINS + 1)
 DIST_BIN_CENTRES = 0.5 * (DIST_BIN_EDGES[:-1] + DIST_BIN_EDGES[1:])
 
 # Zone boundaries for time-course plot (distance from center)
-ZONE_EDGES = [(0, 40), (40, 80), (80, ARENA_RADIUS_MM)]
-ZONE_LABELS = ["Inner (0–40 mm)", "Middle (40–80 mm)", "Outer (80–119 mm)"]
-ZONE_COLORS = ["#1f77b4", "#ff7f0e", "#d62728"]
+ZONE_EDGES = [(0, 30), (30, 60), (60, 90), (90, ARENA_RADIUS_MM)]
+ZONE_LABELS = ["Inner (0–30 mm)", "Inner-mid (30–60 mm)", "Outer-mid (60–90 mm)", "Outer (90–119 mm)"]
+ZONE_COLORS = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"]
 
 # 2D histogram bins
 N_HIST_BINS = 50
@@ -678,28 +682,50 @@ def _arena_zone_svg() -> str:
     """Generate an inline SVG showing the arena with coloured distance zones.
 
     Draws from outer to inner with solid pastel fills so each ring is distinct.
+    Labels: zone title above, distance range below.
     """
-    scale = 70.0 / ARENA_RADIUS_MM
-    r_outer = ARENA_RADIUS_MM * scale  # 70
-    r_mid = 80 * scale  # ~47
-    r_inner = 40 * scale  # ~23.5
-    cx, cy = 80, 80
+    scale = 90.0 / ARENA_RADIUS_MM
+    cx, cy = 110, 110
+    svg_w, svg_h = 220, 240
 
-    # Lighter pastel versions of zone colours for solid fill
-    return f'''<svg width="160" height="175" viewBox="0 0 160 175" style="display:block; margin:0 auto;">
-  <circle cx="{cx}" cy="{cy}" r="{r_outer:.1f}" fill="#f4c7c3" stroke="#999" stroke-width="1"/>
-  <circle cx="{cx}" cy="{cy}" r="{r_mid:.1f}" fill="#fce4b8" stroke="none"/>
-  <circle cx="{cx}" cy="{cy}" r="{r_inner:.1f}" fill="#c4daf4" stroke="none"/>
-  <circle cx="{cx}" cy="{cy}" r="2" fill="#333"/>
-  <text x="{cx}" y="{cy + 6}" text-anchor="middle" font-size="8" fill="#333">centre</text>
-  <text x="{cx}" y="{cy - r_inner + 12:.0f}" text-anchor="middle" font-size="8" font-weight="600" fill="{ZONE_COLORS[0]}">Inner</text>
-  <text x="{cx}" y="{cy - r_inner - 3:.0f}" text-anchor="middle" font-size="7" fill="#666">0–40 mm</text>
-  <text x="{cx + 2}" y="{cy - r_mid + 12:.0f}" text-anchor="middle" font-size="8" font-weight="600" fill="{ZONE_COLORS[1]}">Middle</text>
-  <text x="{cx}" y="{cy - r_mid - 3:.0f}" text-anchor="middle" font-size="7" fill="#666">40–80 mm</text>
-  <text x="{cx}" y="{cy - r_outer + 12:.0f}" text-anchor="middle" font-size="8" font-weight="600" fill="{ZONE_COLORS[2]}">Outer</text>
-  <text x="{cx}" y="{cy - r_outer - 3:.0f}" text-anchor="middle" font-size="7" fill="#666">80–119 mm</text>
-  <text x="{cx}" y="170" text-anchor="middle" font-size="9" fill="#888">Distance from centre</text>
-</svg>'''
+    # Pastel fill colours matching ZONE_COLORS order (blue, orange, green, red)
+    pastel_fills = ["#c4daf4", "#fce4b8", "#c8e6c9", "#f4c7c3"]
+    # Short zone names (without distance)
+    zone_names = ["Inner", "Inner-mid", "Outer-mid", "Outer"]
+
+    # Draw circles from outer to inner
+    circles = ""
+    labels = ""
+    for z_idx in range(len(ZONE_EDGES) - 1, -1, -1):
+        _, z_hi = ZONE_EDGES[z_idx]
+        z_lo, _ = ZONE_EDGES[z_idx]
+        r = z_hi * scale
+        stroke = ' stroke="#999" stroke-width="1"' if z_idx == len(ZONE_EDGES) - 1 else ' stroke="none"'
+        circles += f'  <circle cx="{cx}" cy="{cy}" r="{r:.1f}" fill="{pastel_fills[z_idx]}"{stroke}/>\n'
+
+        # Label position: midpoint of the ring
+        r_mid = 0.5 * (z_lo + z_hi) * scale
+        label_y = cy - r_mid
+        labels += (
+            f'  <text x="{cx}" y="{label_y:.0f}" text-anchor="middle" '
+            f'font-size="9" font-weight="600" fill="{ZONE_COLORS[z_idx]}">{zone_names[z_idx]}</text>\n'
+            f'  <text x="{cx}" y="{label_y + 11:.0f}" text-anchor="middle" '
+            f'font-size="7" fill="#666">{int(z_lo)}–{int(z_hi)} mm</text>\n'
+        )
+
+    # Centre dot + caption
+    centre = (
+        f'  <circle cx="{cx}" cy="{cy}" r="2" fill="#333"/>\n'
+        f'  <text x="{cx}" y="{cy + 6}" text-anchor="middle" font-size="8" fill="#333">centre</text>\n'
+    )
+    footer = f'  <text x="{cx}" y="{svg_h - 5}" text-anchor="middle" font-size="9" fill="#888">Distance from centre</text>\n'
+
+    return (
+        f'<svg width="{svg_w}" height="{svg_h}" viewBox="0 0 {svg_w} {svg_h}" '
+        f'style="display:block; margin:0 auto;">\n'
+        + circles + centre + labels + footer
+        + '</svg>'
+    )
 
 
 def _build_stats_json(all_stats: dict) -> str:
@@ -804,11 +830,14 @@ def make_profile_plot(profiles: dict) -> go.Figure:
     return fig
 
 
-def make_rotation_histograms(rotations: list[dict]) -> go.Figure:
+def make_rotation_histograms(rotations: list[dict]) -> tuple[go.Figure, dict]:
     """Plot C: Histograms of effective turning radius by zone + baseline.
 
-    Similar format to Plot A: 3 zone lines (stimulus) + 1 baseline (grey).
+    Similar format to Plot A: zone lines (stimulus) + 1 baseline (grey).
     Excludes rotations overlapping the direction-change window.
+
+    Returns (figure, rotation_stats) where rotation_stats contains per-zone
+    and baseline summary statistics for the stats table.
     """
     # Direction change at frame 750; exclude ±2.5s = frames 675-825
     dir_change_frame = 750
@@ -818,7 +847,7 @@ def make_rotation_histograms(rotations: list[dict]) -> go.Figure:
     if not rotations:
         fig = go.Figure()
         fig.add_annotation(text="No full rotations detected", showarrow=False)
-        return fig
+        return fig, {}
 
     # Filter rotations: exclude direction-change window and interval period
     n_excluded_dirchange = 0
@@ -860,14 +889,16 @@ def make_rotation_histograms(rotations: list[dict]) -> go.Figure:
         gmax = max(gmax, int(c.max()))
 
     # Zone distributions (stimulus)
+    rotation_stats = {"zones": {}, "baseline": {}}
     for z_idx in range(len(ZONE_EDGES)):
         vals = zone_radii[z_idx]
+        stats = _hist_stats(vals)
+        rotation_stats["zones"][z_idx] = stats
         if not vals:
             counts = np.zeros(len(radius_bins) - 1)
         else:
             counts, _ = np.histogram(vals, bins=radius_bins)
-        mean_val = float(np.mean(vals)) if vals else np.nan
-        median_val = float(np.median(vals)) if vals else np.nan
+        median_val = stats["median"]
 
         fig.add_trace(go.Scatter(
             x=bin_centres.tolist(), y=counts.tolist(),
@@ -884,11 +915,13 @@ def make_rotation_histograms(rotations: list[dict]) -> go.Figure:
             ))
 
     # Baseline distribution
+    bstats = _hist_stats(baseline_radii)
+    rotation_stats["baseline"] = bstats
     if baseline_radii:
         bcounts, _ = np.histogram(baseline_radii, bins=radius_bins)
     else:
         bcounts = np.zeros(len(radius_bins) - 1)
-    bmedian = float(np.median(baseline_radii)) if baseline_radii else np.nan
+    bmedian = bstats["median"]
 
     fig.add_trace(go.Scatter(
         x=bin_centres.tolist(), y=bcounts.tolist(),
@@ -911,6 +944,112 @@ def make_rotation_histograms(rotations: list[dict]) -> go.Figure:
         xaxis=dict(type="log"),
     )
 
+    return fig, rotation_stats
+
+
+def _build_rotation_stats_html(rotation_stats: dict | None) -> str:
+    """Build a static HTML table for effective turning radius stats (Plot C)."""
+    if not rotation_stats or "zones" not in rotation_stats:
+        return ""
+    rows = []
+    for z_idx in range(len(ZONE_EDGES)):
+        zs = rotation_stats["zones"].get(z_idx, {})
+        if not zs or zs.get("n", 0) == 0:
+            continue
+        rows.append(
+            f'<tr style="color:{ZONE_COLORS[z_idx]};">'
+            f'<td>{ZONE_LABELS[z_idx]}</td>'
+            f'<td>{zs["mean"]:.1f}</td>'
+            f'<td>{zs["median"]:.1f}</td>'
+            f'<td>{zs["std"]:.1f}</td>'
+            f'<td>{zs["n"]:,}</td></tr>'
+        )
+    bl = rotation_stats.get("baseline", {})
+    if bl and bl.get("mean") is not None and not np.isnan(bl["mean"]):
+        rows.append(
+            f'<tr style="color:#888;">'
+            f'<td>Baseline (all zones)</td>'
+            f'<td>{bl["mean"]:.1f}</td>'
+            f'<td>{bl["median"]:.1f}</td>'
+            f'<td>{bl["std"]:.1f}</td>'
+            f'<td>{bl["n"]:,}</td></tr>'
+        )
+    if not rows:
+        return ""
+    return (
+        '<table class="stats-table">'
+        '<tr><th>Distribution</th><th>Mean (mm)</th><th>Median (mm)</th>'
+        '<th>Std (mm)</th><th>N</th></tr>'
+        + ''.join(rows)
+        + '</table>'
+    )
+
+
+def make_radius_profile(rotations: list[dict]) -> go.Figure:
+    """Plot D: Mean effective turning radius profile by distance from edge.
+
+    Similar to Plot B but for effective_radius instead of tortuosity.
+    Two traces: baseline (grey) and stimulus (blue) with error bars.
+    No slider needed (no window-size parameter for rotations).
+    """
+    # Direction change at frame 750; exclude ±2.5s = frames 675-825
+    dir_change_frame = 750
+    exclude_lo = dir_change_frame - int(2.5 * FPS)
+    exclude_hi = dir_change_frame + int(2.5 * FPS)
+
+    # Bin rotations by dist_from_edge
+    baseline_bins = {b: [] for b in range(N_DIST_BINS)}
+    stimulus_bins = {b: [] for b in range(N_DIST_BINS)}
+
+    for r in rotations:
+        if r["period"] == "interval":
+            continue
+        if r["period"] == "stimulus":
+            f_start = r.get("frame_start", 0)
+            f_end = r.get("frame_end", 0)
+            if f_start < exclude_hi and f_end > exclude_lo:
+                continue
+            target = stimulus_bins
+        elif r["period"] == "baseline":
+            target = baseline_bins
+        else:
+            continue
+
+        d_edge = r["dist_from_edge"]
+        for b_idx in range(N_DIST_BINS):
+            if d_edge >= DIST_BIN_EDGES[b_idx] and d_edge < DIST_BIN_EDGES[b_idx + 1]:
+                target[b_idx].append(r["effective_radius"])
+                break
+
+    fig = go.Figure()
+
+    for period_name, bins, color in [
+        ("Baseline", baseline_bins, "grey"),
+        ("Stimulus", stimulus_bins, "#1f77b4"),
+    ]:
+        means = np.full(N_DIST_BINS, np.nan)
+        sems = np.full(N_DIST_BINS, np.nan)
+        for b in range(N_DIST_BINS):
+            vals = bins[b]
+            if len(vals) > 1:
+                means[b] = np.mean(vals)
+                sems[b] = np.std(vals) / np.sqrt(len(vals))
+
+        fig.add_trace(go.Scatter(
+            x=DIST_BIN_CENTRES,
+            y=means,
+            error_y=dict(type="data", array=sems, visible=True),
+            mode="lines+markers",
+            name=period_name,
+            line=dict(color=color),
+        ))
+
+    fig.update_layout(
+        height=450,
+        title_text="Mean Effective Turning Radius by Distance from Edge",
+        xaxis_title="Distance from edge (mm)",
+        yaxis_title="Mean effective radius (mm) ± SEM",
+    )
     return fig
 
 
@@ -961,13 +1100,15 @@ def _get_color_bins(n: int = 12, cmin: float = 1.0, cmax: float = 10.0) -> list[
 def make_trajectory_plot(
     fly_traces: list[dict], example_indices: list[int]
 ) -> go.Figure:
-    """Plot D: Single example trajectory with dropdown to switch between flies.
+    """Example Trajectory: 3 subplots showing the SAME fly at 1s/3s/7s windows.
 
-    Uses colour-bin approach: N colour bins, each a separate trace with
-    NaN-separated segments for continuous coloured lines.
-    Trace layout: 1 arena + N colour bins + 1 invisible colorbar = N+2 traces.
+    Uses colour-bin approach: N colour bins per subplot, each a separate trace
+    with NaN-separated segments for continuous coloured lines.
+    Trace layout per subplot: 1 arena + N bins = N+1 traces.
+    Total: 3*(N+1) + 1 colorbar = 3*N + 4 traces.
+    Dropdown switches all traces at once.
     """
-    N_COLOR_BINS = 12
+    N_COLOR_BINS = 8
     TORT_CMIN = 1.0
 
     n_examples = len(example_indices)
@@ -976,58 +1117,44 @@ def make_trajectory_plot(
         fig.add_annotation(text="No example trajectories", showarrow=False)
         return fig
 
-    ws_frames = int(3.0 * FPS)  # 3s window for colouring
-
-    # First pass: compute tortuosity for all flies to determine adaptive colour range
+    # First pass: compute tortuosity at all 3 windows for adaptive colour range
     all_tort_vals = []
     raw_trajectories = []
     for fly_idx in example_indices:
         trace = fly_traces[fly_idx]
         x, y = trace["x"], trace["y"]
         dist = trace["dist"]
-        tort = compute_windowed_tortuosity(x, y, ws_frames)
-        tort_clipped = np.clip(tort, TORT_CMIN, MAX_TORTUOSITY)
-
         stim_end = min(STIM_OFFSET_FRAME, len(x))
         stim_x = x[BASELINE_FRAMES:stim_end]
         stim_y = y[BASELINE_FRAMES:stim_end]
-        stim_tort = tort_clipped[BASELINE_FRAMES:stim_end]
 
-        valid_tort = stim_tort[~np.isnan(stim_tort)]
-        if len(valid_tort) > 0:
-            all_tort_vals.extend(valid_tort.tolist())
+        per_window = {}
+        for wi, wf in enumerate(TRAJ_WINDOWS_F):
+            tort = compute_windowed_tortuosity(x, y, wf)
+            tort_clipped = np.clip(tort, TORT_CMIN, MAX_TORTUOSITY)
+            stim_tort = tort_clipped[BASELINE_FRAMES:stim_end]
+            per_window[wi] = stim_tort
+            valid = stim_tort[~np.isnan(stim_tort)]
+            if len(valid) > 0:
+                all_tort_vals.extend(valid.tolist())
 
         raw_trajectories.append({
             "x": x, "y": y, "dist": dist,
-            "stim_x": stim_x, "stim_y": stim_y, "stim_tort": stim_tort,
+            "stim_x": stim_x, "stim_y": stim_y,
+            "per_window": per_window,
         })
 
-    # Adaptive colour ceiling: 75th percentile so the colorscale covers
-    # the common range of values — values above the ceiling are bright yellow.
+    # Adaptive colour ceiling: 75th percentile
     TORT_CMAX = float(np.percentile(all_tort_vals, 75)) if all_tort_vals else 3.0
-    TORT_CMAX = max(TORT_CMAX, 2.0)  # minimum ceiling of 2.0
+    TORT_CMAX = max(TORT_CMAX, 2.0)
     print(f"  Trajectory colour range: {TORT_CMIN:.1f} – {TORT_CMAX:.1f} (75th percentile)")
 
     color_bins = _get_color_bins(N_COLOR_BINS, TORT_CMIN, TORT_CMAX)
 
-    # Second pass: build per-bin coloured segments
-    trajectories = []
-    for i, fly_idx in enumerate(example_indices):
-        raw = raw_trajectories[i]
-        stim_x, stim_y = raw["stim_x"], raw["stim_y"]
-        stim_tort = raw["stim_tort"]
-        dist = raw["dist"]
-        x, y = raw["x"], raw["y"]
-
-        stim_end = min(STIM_OFFSET_FRAME, len(x))
-        mean_dist = np.nanmean(dist[BASELINE_FRAMES:stim_end])
-        zone_name = ZONE_LABELS[_assign_zone(mean_dist)]
-        valid_tort = stim_tort[~np.isnan(stim_tort)]
-        mean_tort = float(np.nanmean(valid_tort)) if len(valid_tort) > 0 else np.nan
-
-        # Build per-bin x/y arrays with NaN gaps between non-contiguous segments
+    # Helper: build per-bin x/y arrays for a given stim_tort array
+    def _build_bin_xy(stim_x, stim_y, stim_tort):
+        seg_tort = 0.5 * (stim_tort[:-1] + stim_tort[1:])
         bin_xy = []
-        seg_tort = 0.5 * (stim_tort[:-1] + stim_tort[1:])  # mean of endpoints
         for b_lo, b_hi, _ in color_bins:
             bx, by = [], []
             in_seg = False
@@ -1039,8 +1166,9 @@ def make_trajectory_plot(
                         by.append(np.nan)
                         in_seg = False
                     continue
-                # Last bin includes upper boundary (>=cmax clipped values)
-                in_bin = (t_val >= b_lo and t_val < b_hi) or (b_hi == TORT_CMAX and t_val >= b_lo)
+                in_bin = (t_val >= b_lo and t_val < b_hi) or (
+                    b_hi == TORT_CMAX and t_val >= b_lo
+                )
                 if in_bin:
                     if not in_seg:
                         bx.append(float(stim_x[j]))
@@ -1054,38 +1182,68 @@ def make_trajectory_plot(
                         by.append(np.nan)
                         in_seg = False
             bin_xy.append((bx, by))
+        return bin_xy
+
+    # Second pass: build per-fly, per-window bin segments
+    trajectories = []
+    for i, fly_idx in enumerate(example_indices):
+        raw = raw_trajectories[i]
+        stim_x, stim_y = raw["stim_x"], raw["stim_y"]
+        dist = raw["dist"]
+        x, y = raw["x"], raw["y"]
+        stim_end = min(STIM_OFFSET_FRAME, len(x))
+        mean_dist = np.nanmean(dist[BASELINE_FRAMES:stim_end])
+        zone_name = ZONE_LABELS[_assign_zone(mean_dist)]
+
+        # Mean tortuosity using the middle window (3s)
+        mid_tort = raw["per_window"][1]
+        valid_tort = mid_tort[~np.isnan(mid_tort)]
+        mean_tort = float(np.nanmean(valid_tort)) if len(valid_tort) > 0 else np.nan
+
+        window_bins = {}
+        for wi in range(len(TRAJ_WINDOWS_S)):
+            window_bins[wi] = _build_bin_xy(stim_x, stim_y, raw["per_window"][wi])
 
         trajectories.append({
-            "bin_xy": bin_xy,
+            "window_bins": window_bins,
             "cx": float(np.nanmean(x)), "cy": float(np.nanmean(y)),
             "zone": zone_name, "mean_dist": mean_dist, "mean_tort": mean_tort,
         })
 
-    fig = go.Figure()
+    # Create 1×3 subplots
+    n_windows = len(TRAJ_WINDOWS_S)
+    fig = make_subplots(
+        rows=1, cols=n_windows,
+        subplot_titles=[f"{ws:.0f}s window" for ws in TRAJ_WINDOWS_S],
+        horizontal_spacing=0.04,
+    )
+
     theta = np.linspace(0, 2 * np.pi, 100)
     t0 = trajectories[0]
 
-    # Trace 0: arena circle
-    fig.add_trace(go.Scatter(
-        x=(t0["cx"] + ARENA_RADIUS_MM * np.cos(theta)).tolist(),
-        y=(t0["cy"] + ARENA_RADIUS_MM * np.sin(theta)).tolist(),
-        mode="lines", line=dict(color="lightgrey", width=1),
-        showlegend=False, hoverinfo="skip",
-    ))
-
-    # Traces 1..N: colour-bin line traces
-    for b_idx, (_, _, hex_c) in enumerate(color_bins):
-        bx, by = t0["bin_xy"][b_idx]
+    # Add traces for first fly: for each subplot: 1 arena + N_COLOR_BINS bins
+    for wi in range(n_windows):
+        col = wi + 1
+        # Arena circle
         fig.add_trace(go.Scatter(
-            x=bx, y=by,
-            mode="lines", line=dict(color=hex_c, width=2.5),
+            x=(t0["cx"] + ARENA_RADIUS_MM * np.cos(theta)).tolist(),
+            y=(t0["cy"] + ARENA_RADIUS_MM * np.sin(theta)).tolist(),
+            mode="lines", line=dict(color="lightgrey", width=1),
             showlegend=False, hoverinfo="skip",
-        ))
+        ), row=1, col=col)
 
-    # Trace N+1: invisible scatter for colorbar
+        # Colour-bin traces
+        for b_idx, (_, _, hex_c) in enumerate(color_bins):
+            bx, by = t0["window_bins"][wi][b_idx]
+            fig.add_trace(go.Scatter(
+                x=bx, y=by,
+                mode="lines", line=dict(color=hex_c, width=2.5),
+                showlegend=False, hoverinfo="skip",
+            ), row=1, col=col)
+
+    # Colorbar trace (invisible, on last subplot)
     import matplotlib
     matplotlib.use("Agg")
-
     cmap = matplotlib.colormaps["inferno"]
     n_steps = 20
     colorscale = []
@@ -1100,21 +1258,29 @@ def make_trajectory_plot(
         marker=dict(
             color=[TORT_CMIN], colorscale=colorscale,
             cmin=TORT_CMIN, cmax=TORT_CMAX, size=0.001,
-            colorbar=dict(title="Tortuosity (3s)", len=0.6),
+            colorbar=dict(title="Tortuosity", len=0.6),
             showscale=True,
         ),
         showlegend=False, hoverinfo="skip",
-    ))
+    ), row=1, col=n_windows)
 
-    # Dropdown buttons — update all N+2 traces per fly
-    n_traces = 1 + N_COLOR_BINS + 1
+    # Total traces: n_windows * (1 + N_COLOR_BINS) + 1 colorbar
+    n_traces = n_windows * (1 + N_COLOR_BINS) + 1
+
+    # Dropdown buttons — update all traces per fly
     buttons = []
     for i, traj in enumerate(trajectories):
-        new_x = [(traj["cx"] + ARENA_RADIUS_MM * np.cos(theta)).tolist()]
-        new_y = [(traj["cy"] + ARENA_RADIUS_MM * np.sin(theta)).tolist()]
-        for bx, by in traj["bin_xy"]:
-            new_x.append(bx)
-            new_y.append(by)
+        new_x = []
+        new_y = []
+        for wi in range(n_windows):
+            # Arena circle
+            new_x.append((traj["cx"] + ARENA_RADIUS_MM * np.cos(theta)).tolist())
+            new_y.append((traj["cy"] + ARENA_RADIUS_MM * np.sin(theta)).tolist())
+            # Bin traces
+            for bx, by in traj["window_bins"][wi]:
+                new_x.append(bx)
+                new_y.append(by)
+        # Colorbar trace
         new_x.append([None])
         new_y.append([None])
 
@@ -1124,16 +1290,25 @@ def make_trajectory_plot(
             args=[{"x": new_x, "y": new_y}],
         ))
 
+    # Equal-scale axes for all subplots
+    # scaleanchor expects "y", "y2", "y3" (not "yaxis", "yaxis2")
+    axis_updates = {}
+    for wi in range(n_windows):
+        xax = f"xaxis{wi + 1}" if wi > 0 else "xaxis"
+        yref = f"y{wi + 1}" if wi > 0 else "y"
+        axis_updates[xax] = dict(scaleanchor=yref, title="x (mm)" if wi == 0 else "")
+        yax = f"yaxis{wi + 1}" if wi > 0 else "yaxis"
+        axis_updates[yax] = dict(title="y (mm)" if wi == 0 else "")
+
     fig.update_layout(
         updatemenus=[dict(
             active=0, buttons=buttons,
-            x=0.0, xanchor="left", y=1.15, yanchor="top",
+            x=0.0, xanchor="left", y=1.18, yanchor="top",
             type="dropdown",
         )],
         height=550,
-        title_text="Example Trajectory (stimulus period, coloured by 3s mean tortuosity)",
-        xaxis=dict(scaleanchor="y", title="x (mm)"),
-        yaxis=dict(title="y (mm)"),
+        title_text="Example Trajectory (stimulus period, coloured by tortuosity)",
+        **axis_updates,
     )
 
     return fig
@@ -1376,18 +1551,20 @@ def build_html(
     n_excluded: int,
     tort_examples: dict | None = None,
     all_stats: dict | None = None,
+    rotation_stats: dict | None = None,
 ) -> str:
     """Assemble multiple Plotly figures into a standalone HTML page.
 
-    Plot order: D (trajectory) first with explanation, then A (with arena SVG
-    and dynamic stats), B, C (with turning radius explanation), E.
+    Plot order: Trajectory (top), A (with arena SVG + stats), B, C (+ stats table),
+    D (radius profile), E (time course).
     """
     # Render figures in desired order
     ordered = [
-        ("trajectory", figures["D. Example Trajectory"]),
+        ("trajectory", figures["Example Trajectory"]),
         ("histograms", figures["A. Tortuosity Distributions"]),
         ("profile", figures["B. Mean Tortuosity by Radial Zone"]),
         ("rotation", figures["C. Full Rotation Analysis"]),
+        ("radius_profile", figures["D. Turning Radius Profile"]),
         ("timecourse", figures["E. Tortuosity Time Course"]),
     ]
 
@@ -1405,6 +1582,9 @@ def build_html(
 
     # Build initial stats table (first window size)
     initial_stats_html = _build_initial_stats_html(all_stats)
+
+    # Build rotation stats table (Plot C)
+    rotation_stats_html = _build_rotation_stats_html(rotation_stats)
 
     return f"""<!DOCTYPE html>
 <html>
@@ -1477,10 +1657,11 @@ def build_html(
         tortuosity is evaluated. Short windows (0.5&ndash;1s) capture individual
         turns. Longer windows (3&ndash;7s) capture extended looping behaviour.
         Use the slider on each plot to explore different timescales.</p>
-        <p>In the trajectory plot below, the path is drawn as a continuous coloured
-        line where colour represents the tortuosity computed over a 3-second moving
-        mean window. Dark colours (low tortuosity) indicate straight segments;
-        bright colours (high tortuosity) indicate winding or looping segments.</p>
+        <p>The three trajectory subplots below show the <strong>same fly</strong>
+        with tortuosity computed at three different window sizes (1s, 3s, 7s).
+        Dark colours (low tortuosity) indicate straight segments; bright colours
+        (high tortuosity) indicate winding or looping segments. Use the dropdown
+        to switch between example flies.</p>
     </div>
 
     <h2>Example Trajectory</h2>
@@ -1544,6 +1725,11 @@ def build_html(
 
     <h2>C. Full Rotation Analysis</h2>
     {rendered["rotation"]}
+    {rotation_stats_html}
+
+    <hr>
+    <h2>D. Turning Radius Profile</h2>
+    {rendered["radius_profile"]}
 
     <hr>
     <h2>E. Tortuosity Time Course</h2>
@@ -1640,11 +1826,13 @@ def main():
     hist_fig, all_stats = make_tortuosity_histograms(
         agg["zone_tort_data"], agg["period_tort_data"]
     )
+    rotation_fig, rotation_stats = make_rotation_histograms(agg["rotations"])
     figures = {
         "A. Tortuosity Distributions": hist_fig,
         "B. Mean Tortuosity by Radial Zone": make_profile_plot(agg["profiles"]),
-        "C. Full Rotation Analysis": make_rotation_histograms(agg["rotations"]),
-        "D. Example Trajectory": make_trajectory_plot(
+        "C. Full Rotation Analysis": rotation_fig,
+        "D. Turning Radius Profile": make_radius_profile(agg["rotations"]),
+        "Example Trajectory": make_trajectory_plot(
             fly_traces, agg["example_indices"]
         ),
         "E. Tortuosity Time Course": make_time_course(
@@ -1654,7 +1842,7 @@ def main():
 
     html = build_html(
         figures, args.strain, n_files, n_flies, n_excluded,
-        agg["tort_examples"], all_stats,
+        agg["tort_examples"], all_stats, rotation_stats,
     )
 
     if args.output:
