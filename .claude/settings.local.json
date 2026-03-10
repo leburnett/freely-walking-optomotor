@@ -64,7 +64,8 @@
       "Bash(git -C /Users/burnettl/Documents/GitHub/freely-walking-optomotor log --oneline -20)",
       "Bash(git -C /Users/burnettl/Documents/GitHub/freely-walking-optomotor log --oneline --all -- \"*.html\" \"src/plotting/figures/*\" \"python/freely-walking-python/analysis/*\")",
       "Bash(done)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Read(//Users/burnettl/Documents/GitHub/work-log/2026/**)"
     ]
   }
 }
