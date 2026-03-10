@@ -65,7 +65,11 @@
       "Bash(git -C /Users/burnettl/Documents/GitHub/freely-walking-optomotor log --oneline --all -- \"*.html\" \"src/plotting/figures/*\" \"python/freely-walking-python/analysis/*\")",
       "Bash(done)",
       "Bash(git:*)",
-      "Read(//Users/burnettl/Documents/GitHub/work-log/2026/**)"
+      "Read(//Users/burnettl/Documents/GitHub/work-log/2026/**)",
+      "Bash(grep -r \"C:\\\\\\\\|D:\\\\\\\\|/Users/\\\\|smb://\" /c/Users/labadmin/Documents/GitHub/freely-walking-optomotor/src/processing --include=\"*.m\")",
+      "Bash(powershell -Command \"Get-ScheduledTask | Where-Object {$_TaskName -match ''monitor|track|daily|processing|copy|pipeline|optomotor|FreeWalk''} | Format-Table TaskName, State, TaskPath -AutoSize\")",
+      "Bash(powershell -Command 'Get-ScheduledTask | Where-Object {$_.TaskName -match \"\"monitor|track|daily|processing|copy|pipeline|optomotor|FreeWalk\"\"} | Format-Table TaskName, State, TaskPath -AutoSize')",
+      "Bash(tasklist)"
     ]
   }
 }
