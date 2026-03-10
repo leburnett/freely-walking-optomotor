@@ -48,7 +48,21 @@
       "WebFetch(domain:docs.google.com)",
       "WebFetch(domain:doc-04-ag-sheets.googleusercontent.com)",
       "Bash(python backfill_registry.py --scan-paths \"D:\\\\FreeWalkOptomotor\\\\data\" \"C:\\\\MatlabRoot\\\\FreeWalkOptomotor\\\\data\" --output-dir \".\" --dry-run)",
-      "Bash(python backfill_registry.py --scan-paths \"D:\\\\FreeWalkOptomotor\\\\data\" \"C:\\\\MatlabRoot\\\\FreeWalkOptomotor\\\\data\" --output-dir \".\")"
+      "Bash(python backfill_registry.py --scan-paths \"D:\\\\FreeWalkOptomotor\\\\data\" \"C:\\\\MatlabRoot\\\\FreeWalkOptomotor\\\\data\" --output-dir \".\")",
+      "Bash(tasklist)",
+      "Bash(python -c \"import sys; sys.path.insert\\(0, ''C:/Users/labadmin/Documents/GitHub/freely-walking-optomotor''\\); from config.config import SOURCE_ROOT, LOG_DIR, MACHINE_ROLE; print\\(f''MACHINE_ROLE={MACHINE_ROLE}''\\); print\\(f''SOURCE_ROOT={SOURCE_ROOT}''\\); print\\(f''LOG_DIR={LOG_DIR}''\\)\")",
+      "Bash(schtasks /query /v /fo LIST)",
+      "Bash(cmd.exe /c \"schtasks /query /v /fo LIST\")",
+      "Bash(powershell -Command \"Get-ScheduledTask | Where-Object {$_State -ne ''Disabled''} | Select-Object TaskName, TaskPath, State, Description | Format-Table -AutoSize\")",
+      "Bash(powershell -NoProfile -Command 'Get-ScheduledTask | Select-Object TaskName, TaskPath, State | Format-Table -AutoSize')",
+      "Bash(powershell -NoProfile -Command 'Get-ScheduledTask | Where-Object { $_.TaskName -match \"\"monitor|copy|track|daily|pipeline|processing\"\" } | Select-Object TaskName, TaskPath, State | Format-Table -AutoSize')",
+      "Bash(powershell -NoProfile -Command 'Get-ScheduledTaskInfo -TaskName \"\"Run Monitor and Copy\"\" | Format-List *')",
+      "Bash(powershell -NoProfile -Command ':*)",
+      "Bash(printf \"0x%X\\\\n\" 2147942667)",
+      "Bash(powershell -NoProfile -Command 'Unregister-ScheduledTask -TaskName \"\"Run Monitor and Copy\"\" -Confirm:$false')",
+      "Bash(powershell -NoProfile -Command 'Get-ScheduledTask | Where-Object { $_.TaskName -match \"\"Monitor and Copy\"\" } | Select-Object TaskName, State')",
+      "Bash(powershell -NoProfile -Command 'Get-ScheduledTask -TaskName \"\"Run Monitor and Copy\"\" | Select-Object -ExpandProperty Actions | Format-List *')",
+      "Bash(powershell -NoProfile -Command 'Get-ScheduledTask -TaskName \"\"Run Monitor and Copy\"\" | Select-Object TaskName, State | Format-Table')"
     ]
   }
 }
