@@ -29,21 +29,21 @@ for typ_id = 1:n_data_types
 
     data_type = data_types{typ_id};
 
+    % Resolve delta data types (e.g., 'dist_data_delta' → 'dist_data' + delta=1)
+    [base_type, delta_flag] = resolve_delta_data_type(data_type);
+
     % Combine timeseries data across all experiments for one strain/condition.
     % Uses quiescence-based QC: each row = 1 fly (reps averaged after filtering).
-    if data_type == "dist_data_delta"
-        cond_data_control = combine_timeseries_across_exp_check(data_control, condition_n, "dist_data");
-        cond_data = combine_timeseries_across_exp_check(data, condition_n, "dist_data");
+    cond_data_control = combine_timeseries_across_exp_check(data_control, condition_n, base_type);
+    cond_data = combine_timeseries_across_exp_check(data, condition_n, base_type);
+
+    % Apply within-fly baseline subtraction if delta
+    if delta_flag == 1
         cond_data_control = cond_data_control - cond_data_control(:, 300);
         cond_data = cond_data - cond_data(:, 300);
-    elseif data_type == "dist_data_delta_end"
-        cond_data_control = combine_timeseries_across_exp_check(data_control, condition_n, "dist_data");
-        cond_data = combine_timeseries_across_exp_check(data, condition_n, "dist_data");
+    elseif delta_flag == 2
         cond_data_control = cond_data_control - cond_data_control(:, 1200);
         cond_data = cond_data - cond_data(:, 1200);
-    else
-        cond_data_control = combine_timeseries_across_exp_check(data_control, condition_n, data_type);
-        cond_data = combine_timeseries_across_exp_check(data, condition_n, data_type);
     end
 
     % For the different data_types calculate different metrics.

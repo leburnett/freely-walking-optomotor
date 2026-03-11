@@ -1,19 +1,8 @@
 function f = plot_timeseries_diff_contrasts_1strain(DATA, strain, data_type, plot_sem)
 % For p30
 
-    if data_type == "dist_data_delta"
-        data_type = "dist_data";
-        delta = 1;
-        d_fv = 0 ;
-    elseif data_type == "dist_data_fv"
-        data_type = "dist_data";
-        delta = 1;
-        d_fv = 1;
-        plot_sem = 0;
-    else 
-        delta = 0;
-        d_fv = 0;
-    end 
+    [data_type, delta, d_fv] = resolve_delta_data_type(data_type);
+    if d_fv, plot_sem = 0; end
 
     sex = 'F';
     data = DATA.(strain).(sex);

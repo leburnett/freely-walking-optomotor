@@ -1,25 +1,12 @@
 function f = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type)
 
-    if data_type == "dist_data_delta"
-        data_type = "dist_data";
-        delta = 1;
-        d_fv = 0 ;
-        gain = 0;
-    elseif data_type == "dist_data_fv"
-        data_type = "dist_data";
-        delta = 1;
-        d_fv = 1;
-        gain = 0;
-    elseif data_type == "gain"
+    [data_type, delta, d_fv] = resolve_delta_data_type(data_type);
+    if data_type == "gain"
         data_type = "av_data";
         gain = 1;
-        d_fv = 0;
-        delta = 0;
-    else 
-        delta = 0;
-        d_fv = 0;
+    else
         gain = 0;
-    end 
+    end
 
     % Generate new figure
     % figure;

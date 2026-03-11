@@ -481,3 +481,120 @@ After fix, heatmaps show correct colors:
 - Tm5Y → RED for distance (more centring than control, confirmed by diagnostic: −49 vs −33)
 - Dm4 → BLUE for distance (less centring, −11 vs −31)
 - T4/T5 → BLUE for distance (less centring, −18 vs −33)
+
+---
+
+## 2026-03-12: Within-Fly Normalization for FV and AV
+
+**Files created (1):**
+- `src/processing/functions/resolve_delta_data_type.m`
+
+**Files modified (19):**
+- `src/plotting/functions/get_ylb_from_data_type.m`
+- `src/plotting/functions/scatter_boxchart_per_cond_per_grp.m`
+- `src/plotting/functions/scatter_boxchart_per_cond_one_grp.m`
+- `src/plotting/functions/plot_timeseries_acclim_cond.m`
+- `src/plotting/functions/plot_allcond_onecohort_tuning.m`
+- `src/plotting/functions/plot_timeseries_across_groups_all_cond.m`
+- `src/plotting/functions/plot_errorbar_tuning_curve_diff_contrasts.m`
+- `src/plotting/functions/plot_allcond_acrossgroups_tuning.m`
+- `src/plotting/functions/plot_allcond_acrossgroups_tuning_raw.m`
+- `src/plotting/functions/plot_timeseries_diff_contrasts_1strain.m`
+- `src/plotting/functions/plot_timeseries_diff_speeds.m`
+- `src/plotting/functions/plot_errorbar_tuning_diff_speeds.m`
+- `src/plotting/functions/line_per_cond_one_grp.m`
+- `src/plotting/functions/plot_xcond_per_strain.m`
+- `src/plotting/functions/plot_xcond_per_strain2.m`
+- `src/plotting/functions/plot_xstrain_per_cond.m`
+- `src/plotting/functions/plot_boxchart_metrics_xstrains.m`
+- `src/plotting/functions/plot_boxchart_metrics_xcond.m`
+- `src/analysis/single_lady_analysis.m`
+
+**Statistical pipeline also updated (1):**
+- `src/processing/summary_plot/make_pvalue_array_per_condition.m`
+
+### Motivation
+
+Within-fly normalization (subtracting baseline at stimulus onset, frame 300) is critical for controlling intrinsic locomotor differences between strains. This was already implemented for `dist_data_delta` but not for other metrics. Strains like Dm4 have lower baseline forward velocity — without normalization, their stimulus responses appear smaller in absolute terms even if the *change* is equivalent.
+
+### Design: `resolve_delta_data_type.m` Helper
+
+Created a centralized helper function that maps delta data_type strings to their base field name + flags:
+
+```matlab
+[base_type, delta, d_fv] = resolve_delta_data_type(data_type);
+```
+
+| Input | base_type | delta | d_fv |
+|-------|-----------|-------|------|
+| `"dist_data_delta"` | `"dist_data"` | 1 | 0 |
+| `"dist_data_delta_end"` | `"dist_data"` | 2 | 0 |
+| `"dist_data_fv"` | `"dist_data"` | 1 | 1 |
+| `"fv_data_delta"` | `"fv_data"` | 1 | 0 |
+| `"av_data_delta"` | `"av_data"` | 1 | 0 |
+| `"vel_data_delta"` | `"vel_data"` | 1 | 0 |
+| `"curv_data_delta"` | `"curv_data"` | 1 | 0 |
+| Any other type | unchanged | 0 | 0 |
+
+### Changes
+
+**Before:** Each of the 19 plotting/analysis files had a duplicated if/elseif block:
+```matlab
+if data_type == "dist_data_delta"
+    data_type = "dist_data";
+    delta = 1;
+    d_fv = 0;
+elseif data_type == "dist_data_fv"
+    data_type = "dist_data";
+    delta = 1;
+    d_fv = 1;
+else
+    delta = 0;
+    d_fv = 0;
+end
+```
+This ONLY handled `dist_data_delta` — passing `"fv_data_delta"` would fall through to the else branch with `delta = 0`, meaning no baseline subtraction.
+
+**After:** Single function call:
+```matlab
+[data_type, delta, d_fv] = resolve_delta_data_type(data_type);
+```
+Now ALL delta types (`fv_data_delta`, `av_data_delta`, `vel_data_delta`, `curv_data_delta`) are handled uniformly.
+
+**Y-axis limits:** Updated for functions that set axis ranges by data_type. Added delta-aware ranges for FV (±8 or ±15 for SD) and AV (±200).
+
+**Y-axis labels:** Updated `get_ylb_from_data_type.m` to show Δ prefix for delta types (e.g., "ΔForward velocity (mm s⁻¹)").
+
+**Statistical pipeline:** `make_pvalue_array_per_condition.m` now uses `resolve_delta_data_type` for the data loading section, removing duplicated inline delta logic.
+
+### Usage
+
+To use the new delta types in any script:
+```matlab
+% Timeseries plotting (functions with delta parameter):
+plot_xcond_per_strain2(protocol, "fv_data_delta", cond_ids, strain_names, params, DATA)
+
+% Box chart comparisons:
+plot_boxchart_metrics_xcond(DATA, cond_ids, strain_names, "av_data_delta", rng, 0)
+% (delta is resolved from the data_type string automatically)
+
+% Direct use with combine_timeseries_across_exp_check:
+[base, delta_flag] = resolve_delta_data_type("fv_data_delta");
+cond_data = combine_timeseries_across_exp_check(data, cond_n, base);
+if delta_flag == 1
+    cond_data = cond_data - cond_data(:, 300);
+end
+```
+
+### Backwards Compatibility
+
+All changes are fully backwards compatible:
+- Existing callers passing `"dist_data_delta"` get identical behavior
+- Existing callers passing raw types (`"fv_data"`, `"av_data"`) get `delta = 0`
+- Functions with explicit `delta` parameter still accept it; resolved delta overrides only if > 0
+
+### Next Steps
+
+- Test in MATLAB: call key plotting functions with `"fv_data_delta"` and `"av_data_delta"` to verify
+- Consider adding `fv_data_delta` metrics to the heatmap (currently only dist_data_delta is in the heatmap)
+- Move to Phase 2: radial/tangential velocity decomposition, cross-strain heatmaps

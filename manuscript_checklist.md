@@ -3,7 +3,7 @@
 > **Plan file:** `.claude/plans/enchanted-exploring-ember.md`
 > **Session notes:** `session_notes.md`
 > **Branch:** `paper-plan`
-> **Last updated:** 2026-03-12 (sensitivity analysis results + NaN fix)
+> **Last updated:** 2026-03-12 (within-fly normalization for FV/AV)
 
 ---
 
@@ -17,7 +17,7 @@
 | [x] | Integrate quiescence QC into main data pipeline | N/A (function update) | `src/processing/functions/combine_timeseries_across_exp_check.m` | Now passes `vel_data` and uses `'qc_method', 'quiescence'` by default |
 | [x] | Create strain metadata table (Task 1a) | `figures/FIGS/strain_metadata_table.csv`, `.mat` | `src/plotting/figures/generate_strain_metadata_table.m` | 19 screen strains + 8 NorpA strains. Verified 2026-03-11 |
 | [x] | Sensitivity analysis: relaxed QC threshold | `figures/FIGS/qc_sensitivity_results.csv`, 2×2 figure | `src/plotting/figures/qc_sensitivity_analysis.m` | 4/5 conclusions ROBUST. Conclusion 3 (T4/T5 narrow gratings) SENSITIVE — p-values borderline ~0.05. Verified 2026-03-12 |
-| [ ] | Implement within-fly normalization for FV and AV | N/A (pipeline update) | TBD — extend `dist_data_delta` pattern to `fv_data` and `av_data` | Already done for dist_data_delta; critical for controlling intrinsic locomotor differences |
+| [x] | Implement within-fly normalization for FV and AV | N/A (pipeline update) | `resolve_delta_data_type.m` + 19 files updated | Created generic helper; updated 19 plotting/analysis/stats files. `fv_data_delta`, `av_data_delta`, `vel_data_delta`, `curv_data_delta` now work everywhere. 2026-03-12 |
 
 ---
 
