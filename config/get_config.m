@@ -42,9 +42,9 @@ function cfg = get_config()
 %     data_path = cfg.data_tracked;
 
     %% === EDIT THIS LINE FOR YOUR COMPUTER ===
-    % cfg.project_root = '/Users/burnettl/Documents/Projects/oaky_cokey';
+    cfg.project_root = '/Users/burnettl/Documents/Projects/oaky_cokey';
     % Windows example:
-    cfg.project_root = 'C:\Users\labadmin\Documents\freely-walking-optomotor';
+    % cfg.project_root = 'C:\Users\labadmin\Documents\freely-walking-optomotor';
 
     %% ====================================================================
     %  ACQUISITION RIG PATHS (only used on the rig computer)
