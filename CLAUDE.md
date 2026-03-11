@@ -431,6 +431,46 @@ The HTML status page splits experiments into two tables based on this date:
 
 Charts (by Protocol, by Strain, Timeline) show production data only.
 
+## Plotting Conventions (MATLAB)
+
+All MATLAB figures should follow these aesthetic defaults unless explicitly told otherwise:
+
+### Axes
+- **`box off`** — always. No bounding box around plots.
+- **Tick direction:** `set(gca, 'TickDir', 'out')` — ticks face outward.
+- **Axis line width:** `set(gca, 'LineWidth', 1.2)` — thicker axis lines for clarity.
+- **Font size:** 12 pt for tick labels (`set(gca, 'FontSize', 12)`), 14 pt for axis labels (`xlabel`/`ylabel`), 16 pt for panel titles (`title`), 18 pt for figure super-titles (`sgtitle`).
+
+### Lines
+- **Solid lines by default** (`'-'`). Do not use dashed (`'--'`) or dotted (`':'`, `'-.'`) line styles unless explicitly requested.
+- **Reference/threshold lines:** Use solid light grey lines (`[0.7 0.7 0.7]`) instead of dashed black. For example:
+  ```matlab
+  xline(threshold, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
+  ```
+- Only use dashed or dotted lines when the user specifically asks for them.
+
+### Colors
+- Use the default MATLAB colororder for data series.
+- Reference/threshold/guide lines should be **light grey** (`[0.7 0.7 0.7]`), not black.
+
+### Standard boilerplate for new figures
+After creating axes or subplots, apply:
+```matlab
+set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+```
+
+### Example
+```matlab
+figure('Position', [50 50 800 600]);
+plot(x, y, '-', 'LineWidth', 1.5);
+hold on;
+xline(threshold, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
+xlabel('Time (s)', 'FontSize', 14);
+ylabel('Velocity (mm/s)', 'FontSize', 14);
+title('Forward Velocity', 'FontSize', 16);
+set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+```
+
 ## Common Issues & Solutions
 
 ### Pattern Array Dimensions

@@ -164,6 +164,150 @@ Extracted per-fly mean forward velocity and mean distance from centre during the
 
 ### Next Steps
 
+- ~~Update QC filtering to quiescence-based method~~ → Done, see below
 - Implement within-fly normalization (delta from baseline) for FV and AV in the main analysis pipeline
-- Run sensitivity analysis with relaxed QC threshold for stimulus-specific slowing strains
+- Run sensitivity analysis comparing mean_fv vs quiescence QC methods
 - Move to Phase 2: radial/tangential velocity decomposition and cross-strain heatmap
+
+---
+
+## 2026-03-11: QC Method Update — Quiescence-Based Filtering
+
+**File modified:** `src/processing/functions/check_and_average_across_reps.m`
+**Branch:** `paper-plan`
+
+### Motivation
+
+The baseline activity analysis revealed that the original FV-based QC threshold (`mean(fv) < 3 mm/s`) systematically removes flies with genuine behavioural responses:
+
+1. **Dm4 flies** spin in tight coils during stimulation — high angular velocity but low *forward* velocity. The FV threshold removes these flies even though they are actively responding to the stimulus. This is the most biologically interesting Dm4 phenotype (altered turning strategy), and the original QC discards it.
+
+2. **Stimulus-specific slowing strains** (TmY20, T4, H1) have normal baseline FV but slow down during visual stimulation. This slowing is itself a genuine behavioural response that should be analysed, not filtered out.
+
+3. The distinction between "not walking" (QC failure) and "responding differently" (genuine phenotype) depends on measuring the right thing. Forward velocity misses rotational movement; total velocity captures any body displacement.
+
+### Changes
+
+Added **quiescence-based QC** as an optional alternative to the original `mean_fv` method, implemented via `varargin` name-value pairs for full backwards compatibility.
+
+**Original method (`qc_method = 'mean_fv'`, default):**
+- Reject if `mean(fv_data) < 3 mm/s` — fly not walking forward
+- Reject if `min(dist_data) > 110 mm` — fly stuck near edge
+
+**New method (`qc_method = 'quiescence'`):**
+- Reject if `vel_data < 0.5 mm/s` for `>75%` of frames — fly truly stationary/dead
+- Reject if `min(dist_data) > 110 mm` — fly stuck near edge (unchanged)
+
+**Key difference:** Uses `vel_data` (total velocity, direction-independent) instead of `fv_data` (forward velocity, in heading direction). A fly spinning in place has `fv ≈ 0` but `vel > 0`. The quiescence method only removes flies that are genuinely not moving at all.
+
+### Implementation Details
+
+- **Backwards compatible**: All existing callers with 6 positional arguments continue to work unchanged (default = `mean_fv`)
+- **New optional parameters**: `'qc_method'`, `'rep1_vel'`, `'rep2_vel'`, `'vel_threshold'` (default 0.5), `'quiescence_frac'` (default 0.75)
+- **Validation**: Asserts that `rep1_vel` and `rep2_vel` are provided when using quiescence method
+- **Distance threshold** (110 mm) is unchanged in both methods
+- **Constants** (`FV_THRESHOLD = 3`, `DIST_THRESHOLD = 110`) are now explicitly named at the top of the function
+
+### Usage
+
+```matlab
+% Original method (no change needed for existing code):
+avg = check_and_average_across_reps(r1, r2, r1_fv, r2_fv, r1_dist, r2_dist);
+
+% New quiescence method:
+avg = check_and_average_across_reps(r1, r2, r1_fv, r2_fv, r1_dist, r2_dist, ...
+    'qc_method', 'quiescence', 'rep1_vel', r1_vel, 'rep2_vel', r2_vel);
+```
+
+### Expected Impact
+
+| Strain | Original Method | Quiescence Method (expected) | Reason |
+|--------|----------------|------------------------------|--------|
+| Dm4 (ss00297) | 33.4% rejected | **Lower** — spinning flies retained | Tight coils have low FV but non-zero vel |
+| TmY20 (ss2603) | 38.6% rejected | **Lower** — slowed flies retained | Stimulus-specific slowing ≠ stationary |
+| T4 (ss2344) | 36.3% rejected | **Lower** — slowed flies retained | Same as TmY20 |
+| H1 (ss26283) | 37.0% rejected | **Lower** — slowed flies retained | Same as TmY20 |
+| Control (JFRC100) | 18.3% rejected | **Lower** — only dead flies removed | Many control flies walk slowly but aren't stationary |
+| T4/T5 (ss324) | 5.1% rejected | ~Similar — already low rejection | Few flies are truly stationary |
+
+### Next Steps
+
+- ~~Re-run `verify_qc_thresholds.m` with quiescence method~~ → Done, see below
+- ~~Update `combine_timeseries_across_exp_check.m` to pass vel_data for quiescence method~~ → Done
+- Implement within-fly normalization (delta from baseline) for FV and AV
+- Move to Phase 2: radial/tangential velocity decomposition and cross-strain heatmap
+
+---
+
+## 2026-03-11: Quiescence QC Verification Results
+
+**Script:** `src/plotting/figures/verify_qc_thresholds.m`
+**Branch:** `paper-plan`
+**QC thresholds:** vel < 0.5 mm/s for >75% of frames OR min distance > 110 mm
+
+### Summary
+
+Ran the updated quiescence-based QC verification across all 19 strains and 12 conditions in Protocol 27 (68,208 total rep-level observations). Compared to the old FV-based method (mean FV < 3 mm/s), the quiescence method substantially reduces rejection rates while still removing truly stationary/dead flies.
+
+### Comparison: Old (FV) vs New (Quiescence) Rejection Rates
+
+| Strain | Old % Rejected | New % Rejected | Change | Mean Frac Stationary |
+|--------|---------------|---------------|--------|---------------------|
+| TmY20 (ss2603) | 38.6% | **25.9%** | −12.7pp | 0.498 |
+| H1 (ss26283) | 37.0% | **23.6%** | −13.4pp | 0.485 |
+| T4 (ss2344) | 36.3% | **22.8%** | −13.5pp | 0.485 |
+| Dm4 (ss00297) | 33.4% | **16.9%** | −16.5pp | 0.469 |
+| L1/L4 | 23.8% | **13.3%** | −10.5pp | 0.399 |
+| Dm4 (ss02360) | 23.1% | **11.9%** | −11.2pp | 0.413 |
+| Pm2ab (ss00326) | 21.9% | **12.1%** | −9.8pp | 0.373 |
+| T5 (ss2571) | 20.6% | **11.4%** | −9.2pp | 0.343 |
+| **Control (JFRC100)** | **18.3%** | **9.9%** | **−8.4pp** | **0.251** |
+| Dm4 (ss02587) | 17.1% | **9.2%** | −7.9pp | 0.381 |
+| LPC1 (ss2575) | 16.5% | **7.2%** | −9.3pp | 0.210 |
+| Mi4 (ss00316) | 12.5% | **7.6%** | −4.9pp | 0.293 |
+| TmY5a (ss02594) | 10.9% | **5.0%** | −5.9pp | 0.225 |
+| TmY3 (ss00395) | 10.4% | **4.7%** | −5.7pp | 0.167 |
+| DCH/VCH (ss1209) | 9.3% | **3.5%** | −5.8pp | 0.162 |
+| H2 (ss01027) | 8.1% | **3.5%** | −4.6pp | 0.160 |
+| Tm5Y (ss03722) | 5.8% | **3.5%** | −2.3pp | 0.187 |
+| Am1 (ss34318) | 6.5% | **2.3%** | −4.2pp | 0.127 |
+| T4/T5 (ss324) | 5.1% | **3.0%** | −2.1pp | 0.199 |
+
+### Key Observations
+
+1. **Rejection rates dropped substantially across all strains.** Every strain sees a reduction, from −2.1pp (T4/T5) to −16.5pp (Dm4 ss00297). The method successfully retains flies that were walking slowly but not truly stationary.
+
+2. **Only 3 strains remain above 20% rejection** (TmY20, H1, T4), down from 8 with the old method. These three are the stimulus-specific slowing strains — their high rejection reflects genuine behavioural responses to stimulation, not a measurement artefact.
+
+3. **Dm4 (ss00297) dropped from 33.4% to 16.9%.** This is the biggest absolute reduction and confirms that many Dm4 flies were spinning in tight coils (low FV but non-zero total velocity). The quiescence method correctly retains these flies.
+
+4. **Control dropped from 18.3% to 9.9%.** The old method was rejecting almost 1 in 5 control reps. The new method halves this, meaning the old threshold was overly aggressive for healthy flies.
+
+5. **Condition-specific pattern changed.** Static gratings (16.7%) and reverse phi (14.4%) now have the highest rejection. Notably, gratings at 4Hz (cond 1) dropped to just 4.5% — compared to 17.6% with the old method. This confirms the old FV threshold was penalising flies that slowed in response to strong motion stimuli.
+
+### Per-Condition Results (Quiescence Method)
+
+| Condition | Name | % Rejected |
+|-----------|------|-----------|
+| 10 | 60deg gratings static | 16.7% |
+| 8 | reverse phi 4Hz | 14.4% |
+| 9 | 60deg flicker 4Hz | 14.3% |
+| 7 | reverse phi 2Hz | 13.4% |
+| 12 | 32px ON single bar | 13.2% |
+| 6 | OFF curtains 8Hz | 12.5% |
+| 5 | ON curtains 8Hz | 9.5% |
+| 4 | narrow OFF bars 4Hz | 8.5% |
+| 2 | 60deg gratings 8Hz | 5.3% |
+| 11 | 60deg gratings 0.8 offset | 5.1% |
+| 3 | narrow ON bars 4Hz | 4.9% |
+| 1 | 60deg gratings 4Hz | 4.5% |
+
+### Implementation in Main Pipeline
+
+Updated `combine_timeseries_across_exp_check.m` to use quiescence-based QC by default:
+- Extracts `vel_data` alongside `fv_data` and `dist_data` for both reps
+- Passes `'qc_method', 'quiescence', 'rep1_vel', ..., 'rep2_vel', ...` to `check_and_average_across_reps`
+- All downstream analysis scripts that call this function will now use quiescence QC automatically
+- Default parameters: `vel_threshold = 0.5 mm/s`, `quiescence_frac = 0.75`
+
+**Note:** Other plotting/analysis scripts that call `check_and_average_across_reps` directly (not via `combine_timeseries_across_exp_check`) still use the old `mean_fv` method by default. These are primarily one-off plotting functions and can be updated individually as needed.
