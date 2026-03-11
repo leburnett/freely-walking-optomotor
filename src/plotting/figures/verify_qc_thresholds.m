@@ -22,7 +22,7 @@
 
 %% 1 - Configuration
 
-FV_THRESHOLD = 3.0;     % mm/s — same as check_and_average_across_reps line 43
+FV_THRESHOLD = 3;       % mm/s — matches check_and_average_across_reps line 43
 DIST_THRESHOLD = 110;   % mm — same as check_and_average_across_reps line 43
 N_CONDITIONS = 12;       % Protocol 27 has 12 conditions
 
@@ -31,8 +31,12 @@ protocol_dir = fullfile(cfg.results, 'protocol_27');
 assert(isfolder(protocol_dir), ...
     'Protocol 27 directory not found: %s\nCheck cfg.project_root in get_config.m', protocol_dir);
 
-fprintf('Loading Protocol 27 data from: %s\n', protocol_dir);
-DATA = comb_data_across_cohorts_cond(protocol_dir);
+if exist('DATA', 'var') && ~isempty(fieldnames(DATA))
+    fprintf('Using existing DATA variable from workspace.\n');
+else
+    fprintf('Loading Protocol 27 data from: %s\n', protocol_dir);
+    DATA = comb_data_across_cohorts_cond(protocol_dir);
+end
 assert(~isempty(fieldnames(DATA)), 'DATA is empty');
 
 %% 2 - Extract QC metrics for every fly x condition x rep
@@ -41,8 +45,17 @@ strain_names = fieldnames(DATA);
 n_strains = numel(strain_names);
 sex = 'F';
 
-% Collect all QC metrics into a big table
-all_rows = {};
+% Collect all QC metrics using parallel arrays (avoids cell nesting issues)
+row_strain = {};
+row_cond   = [];
+row_rep    = [];
+row_cohort = [];
+row_fly    = [];
+row_fv     = [];
+row_dist   = [];
+row_fail_fv   = [];
+row_fail_dist = [];
+row_rejected  = [];
 
 for s = 1:n_strains
     strain = strain_names{s};
@@ -68,37 +81,33 @@ for s = 1:n_strains
                 n_flies = size(fv, 1);
 
                 for fly = 1:n_flies
-                    mean_fv = mean(fv(fly, :), 'omitnan');
-                    min_dist = min(dist(fly, :), [], 'omitnan');
+                    mfv = mean(fv(fly, :), 'omitnan');
+                    mdist = min(dist(fly, :), [], 'omitnan');
 
-                    fail_fv = mean_fv < FV_THRESHOLD;
-                    fail_dist = min_dist > DIST_THRESHOLD;
-                    rejected = fail_fv || fail_dist;
+                    ffv = mfv < FV_THRESHOLD;
+                    fdist = mdist > DIST_THRESHOLD;
 
-                    all_rows{end+1, 1} = {strain, cond, rep, exp_idx, fly, ...
-                        mean_fv, min_dist, fail_fv, fail_dist, rejected}; %#ok<SAGROW>
+                    row_strain{end+1, 1} = strain; %#ok<SAGROW>
+                    row_cond(end+1, 1)   = cond; %#ok<SAGROW>
+                    row_rep(end+1, 1)    = rep; %#ok<SAGROW>
+                    row_cohort(end+1, 1) = exp_idx; %#ok<SAGROW>
+                    row_fly(end+1, 1)    = fly; %#ok<SAGROW>
+                    row_fv(end+1, 1)     = mfv; %#ok<SAGROW>
+                    row_dist(end+1, 1)   = mdist; %#ok<SAGROW>
+                    row_fail_fv(end+1, 1)   = ffv; %#ok<SAGROW>
+                    row_fail_dist(end+1, 1) = fdist; %#ok<SAGROW>
+                    row_rejected(end+1, 1)  = ffv || fdist; %#ok<SAGROW>
                 end
             end
         end
     end
 end
 
-% Flatten into a table
-all_data = vertcat(all_rows{:});
-qc_table = cell2table(all_data, 'VariableNames', ...
-    {'Strain', 'Condition', 'Rep', 'Cohort', 'Fly', ...
+% Build table directly from parallel arrays
+qc_table = table(row_strain, row_cond, row_rep, row_cohort, row_fly, ...
+    row_fv, row_dist, row_fail_fv, row_fail_dist, row_rejected, ...
+    'VariableNames', {'Strain', 'Condition', 'Rep', 'Cohort', 'Fly', ...
      'MeanFV', 'MinDist', 'FailFV', 'FailDist', 'Rejected'});
-
-% Convert to proper types
-qc_table.MeanFV = cell2mat(qc_table.MeanFV);
-qc_table.MinDist = cell2mat(qc_table.MinDist);
-qc_table.FailFV = cell2mat(qc_table.FailFV);
-qc_table.FailDist = cell2mat(qc_table.FailDist);
-qc_table.Rejected = cell2mat(qc_table.Rejected);
-qc_table.Condition = cell2mat(qc_table.Condition);
-qc_table.Rep = cell2mat(qc_table.Rep);
-qc_table.Cohort = cell2mat(qc_table.Cohort);
-qc_table.Fly = cell2mat(qc_table.Fly);
 
 fprintf('Total rep-level observations: %d\n', height(qc_table));
 
@@ -147,12 +156,12 @@ end
 
 %% 4 - Per-condition rejection rates (averaged across strains)
 
-cond_titles = {"60deg-gratings-4Hz", "60deg-gratings-8Hz", ...
-    "narrow-ON-bars-4Hz", "narrow-OFF-bars-4Hz", ...
-    "ON-curtains-8Hz", "OFF-curtains-8Hz", ...
-    "reverse-phi-2Hz", "reverse-phi-4Hz", ...
-    "60deg-flicker-4Hz", "60deg-gratings-static", ...
-    "60deg-gratings-0-8-offset", "32px-ON-single-bar"};
+cond_titles = {'60deg-gratings-4Hz', '60deg-gratings-8Hz', ...
+    'narrow-ON-bars-4Hz', 'narrow-OFF-bars-4Hz', ...
+    'ON-curtains-8Hz', 'OFF-curtains-8Hz', ...
+    'reverse-phi-2Hz', 'reverse-phi-4Hz', ...
+    '60deg-flicker-4Hz', '60deg-gratings-static', ...
+    '60deg-gratings-0-8-offset', '32px-ON-single-bar'};
 
 cond_summary = table();
 for c = 1:N_CONDITIONS
@@ -271,9 +280,9 @@ save_folder = fullfile(cfg.figures, 'FIGS');
 if ~isfolder(save_folder)
     mkdir(save_folder);
 end
-savefig(fullfile(save_folder, 'qc_threshold_verification.fig'));
-exportgraphics(gcf, fullfile(save_folder, 'qc_threshold_verification.pdf'), 'ContentType', 'vector');
-fprintf('\nFigure saved to: %s\n', save_folder);
+% savefig(fullfile(save_folder, 'qc_threshold_verification.fig'));
+% exportgraphics(gcf, fullfile(save_folder, 'qc_threshold_verification.pdf'), 'ContentType', 'vector');
+% fprintf('\nFigure saved to: %s\n', save_folder);
 
 %% 7 - Export summary tables
 
