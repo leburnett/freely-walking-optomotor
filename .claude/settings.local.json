@@ -69,7 +69,8 @@
       "Bash(grep -r \"C:\\\\\\\\|D:\\\\\\\\|/Users/\\\\|smb://\" /c/Users/labadmin/Documents/GitHub/freely-walking-optomotor/src/processing --include=\"*.m\")",
       "Bash(powershell -Command \"Get-ScheduledTask | Where-Object {$_TaskName -match ''monitor|track|daily|processing|copy|pipeline|optomotor|FreeWalk''} | Format-Table TaskName, State, TaskPath -AutoSize\")",
       "Bash(powershell -Command 'Get-ScheduledTask | Where-Object {$_.TaskName -match \"\"monitor|track|daily|processing|copy|pipeline|optomotor|FreeWalk\"\"} | Format-Table TaskName, State, TaskPath -AutoSize')",
-      "Bash(tasklist)"
+      "Bash(tasklist)",
+      "Bash(ls -d /Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_27/*/)"
     ]
   }
 }
