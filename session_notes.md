@@ -311,3 +311,173 @@ Updated `combine_timeseries_across_exp_check.m` to use quiescence-based QC by de
 - Default parameters: `vel_threshold = 0.5 mm/s`, `quiescence_frac = 0.75`
 
 **Note:** Other plotting/analysis scripts that call `check_and_average_across_reps` directly (not via `combine_timeseries_across_exp_check`) still use the old `mean_fv` method by default. These are primarily one-off plotting functions and can be updated individually as needed.
+
+---
+
+## 2026-03-11: Fix QC Bug in Statistical Comparison Pipeline
+
+**Files modified (8):**
+- `src/processing/functions/combine_timeseries_across_exp_check.m`
+- `src/processing/functions/welch_ttest_for_rng.m`
+- `src/processing/functions/welch_ttest_for_rng_min.m`
+- `src/processing/functions/welch_ttest_for_change.m`
+- `src/processing/summary_plot/fv_metric_tests.m`
+- `src/processing/summary_plot/dist_metric_tests.m`
+- `src/processing/summary_plot/curv_metric_tests.m`
+- `src/processing/summary_plot/make_pvalue_array_per_condition.m`
+
+### The Bug
+
+The statistical comparison pipeline (`make_pvalue_array_per_condition.m` → `make_pvalue_heatmap_across_strains.m` → `make_summary_heat_maps_p27.m`) was using the **OLD** `combine_timeseries_across_exp` function, which applies **no QC filtering at all**. Meanwhile, the main data pipeline (timeseries plots, etc.) uses `combine_timeseries_across_exp_check` with quiescence-based QC. This means the heatmap p-values included dead/stationary flies that were excluded from all other analyses.
+
+### Data Format Difference (Root Cause of Complexity)
+
+| Function | Output | Rows per fly |
+|----------|--------|-------------|
+| `combine_timeseries_across_exp` (OLD) | Interleaved rep1, rep2 | **2** |
+| `combine_timeseries_across_exp_check` (NEW) | QC-filtered, rep-averaged | **1** |
+
+All three Welch test functions (`welch_ttest_for_rng`, `_min`, `_for_change`) call `mean_every_two_rows()` internally to average the paired rep rows before running `ttest2`. Simply swapping the data source function would crash or give wrong results because the new data has 1 row per fly — `mean_every_two_rows` would average fly 1 with fly 2 instead of rep 1 with rep 2.
+
+### Fix: `pre_averaged` Flag
+
+Added an optional `pre_averaged` parameter (default `false`) to the entire call chain:
+
+1. **Welch test functions** (3 files): When `pre_averaged = true`, skip `mean_every_two_rows()` — data already has 1 row per fly.
+   - `welch_ttest_for_rng(data, ctrl, rng, pre_averaged)` — 4th arg
+   - `welch_ttest_for_rng_min(data, ctrl, rng, pre_averaged)` — 4th arg
+   - `welch_ttest_for_change(data, ctrl, rng1, rng2, rel_or_norm, pre_averaged)` — 6th arg
+
+2. **Metric test functions** (3 files): Accept and pass through `pre_averaged`.
+   - `fv_metric_tests(data, ctrl, pre_averaged)` — 3rd arg
+   - `curv_metric_tests(data, ctrl, pre_averaged)` — 3rd arg
+   - `dist_metric_tests(data, ctrl, dist_type, pre_averaged)` — 4th arg
+
+3. **`make_pvalue_array_per_condition.m`**: Switched all 6 data extraction calls from `combine_timeseries_across_exp` to `combine_timeseries_across_exp_check`, and passes `true` for `pre_averaged` to all metric test calls.
+
+All changes are backwards compatible — existing callers that don't pass `pre_averaged` get the original `false` default and behaviour is unchanged.
+
+### Configurable Thresholds for Sensitivity Analysis
+
+Also added `varargin` with `inputParser` to `combine_timeseries_across_exp_check.m`:
+- `'vel_threshold'` (default 0.5) — velocity below which frames count as stationary
+- `'quiescence_frac'` (default 0.75) — fraction of stationary frames to reject a fly
+
+This enables the sensitivity analysis to sweep thresholds without modifying the function.
+
+### Verification Needed
+
+Run `make_summary_heat_maps_p27(DATA)` in MATLAB for condition 1. Compare p-values before and after:
+- Most p-values should be similar (QC mainly removes dead flies)
+- Dm4, TmY20 p-values may shift (these had high rejection under old method)
+- No errors from `mean_every_two_rows` (would crash if `pre_averaged` flag not working)
+
+---
+
+## 2026-03-11: QC Sensitivity Analysis Script Created
+
+**Script:** `src/plotting/figures/qc_sensitivity_analysis.m`
+**Branch:** `paper-plan`
+
+### Purpose
+
+Sweep QC thresholds to confirm manuscript conclusions are robust to threshold choice. Required for Methods section — demonstrates that results are not artefacts of a specific QC cutoff.
+
+### Parameter Sweeps
+
+**Primary sweep** (quiescence fraction, vel_threshold = 0.5 fixed):
+- `quiescence_frac = [0.50, 0.75, 0.90, 1.00]`
+- 1.00 = effectively no activity QC (only distance filter remains)
+
+**Secondary sweep** (velocity threshold, quiescence_frac = 0.75 fixed):
+- `vel_threshold = [0.3, 0.5, 1.0]`
+
+### Key Strains and Conditions
+
+| Strain | Key Condition(s) | Why |
+|--------|------------------|-----|
+| T4/T5 (ss324) | Cond 1 (wide), Cond 3 (narrow) | Centring preserved despite turning loss |
+| Dm4 (ss00297) | Cond 1 | Reduced centring, tight coils |
+| Tm5Y (ss03722) | Cond 1 | Enhanced centring |
+| Am1 (ss34318) | Cond 9 (flicker), Cond 10 (static) | Attraction to static |
+
+### Metrics Computed Per Strain × Condition × Threshold
+
+1. **N retained** — number of flies after QC
+2. **Centring magnitude** — mean dist_data_delta at stimulus end (frames 1170:1200, baselined to frame 300)
+3. **Turning magnitude** — mean absolute curv_data during stimulus (frames 300:1200), sign-flipped for CCW half
+4. **Welch p-value vs control** — for centring and turning metrics
+5. **Cohen's d vs control** — effect size
+
+### Conclusions Tested at Each Threshold
+
+| # | Conclusion | Test |
+|---|-----------|------|
+| 1 | Control flies centre | One-sample t-test on centring metric, p < 0.05 |
+| 2 | T4/T5 has reduced turning (cond 1) | Welch p < 0.05 for turning vs control |
+| 3 | T4/T5 still centres to narrow gratings (cond 3) | Welch p > 0.05 for centring vs control |
+| 4 | Dm4 has reduced centring (cond 1) | Welch p < 0.05 for centring vs control |
+| 5 | Tm5Y has enhanced centring (cond 1) | Welch p < 0.05, centring MORE negative than control |
+
+### Output
+
+- **Figure:** 2×2 panel (N vs threshold, centring vs threshold, p-value vs threshold, Cohen's d vs threshold)
+- **Console:** Robustness summary — for each conclusion, prints ROBUST/SENSITIVE with threshold details
+- **CSV:** `figures/FIGS/qc_sensitivity_results.csv` — full sweep results
+
+### Results (run 2026-03-12)
+
+**Primary sweep:** quiescence_frac = [0.50, 0.75, 0.90, 1.00], vel_threshold = 0.5 fixed.
+
+| # | Conclusion | Verdict | Notes |
+|---|-----------|---------|-------|
+| 1 | Control flies centre (cond 1) | **ROBUST** | Centring −30 to −35 mm, all thresholds |
+| 2 | T4/T5 reduced turning (cond 1) | **Mostly robust** | Fails at QF=0.50 only (p=0.75). Passes at 0.75, 0.90, 1.00 |
+| 3 | T4/T5 still centres to narrow gratings (cond 3) | **SENSITIVE** | p-values hover around 0.05: QF=0.50 p=0.024, **QF=0.75 p=0.082**, QF=0.90 p=0.048, QF=1.00 p=0.047. Only passes (p > 0.05) at the manuscript threshold |
+| 4 | Dm4 reduced centring (cond 1) | **ROBUST** | p ≈ 0 at all thresholds, Cohen's d = 0.70–0.84 |
+| 5 | Tm5Y enhanced centring (cond 1) | **ROBUST** | p ≈ 0 at all thresholds, Cohen's d = 0.51–0.69 |
+
+**Secondary sweep:** vel_threshold = [0.3, 0.5, 1.0], quiescence_frac = 0.75 fixed. All conclusions stable.
+
+**Key concern:** Conclusion 3 (T4/T5 narrow gratings dissociation) has borderline p-values. The manuscript should frame this with effect sizes and direction rather than relying on a binary significance cutoff. Consider supplementing with equivalence testing or Bayesian analysis.
+
+**Other observations:**
+- Dm4 N changes substantially with threshold (75–123 at flicker), reflecting genuinely low activity
+- Am1 static attraction is robust: p < 0.001, d ≈ 0.35–0.41 at all thresholds
+- Am1 flicker aversion (positive centring values relative to control): robust, p < 0.001
+
+---
+
+## 2026-03-12: NaN Bug Fix in Welch Test Functions
+
+**Files modified (3):**
+- `src/processing/functions/welch_ttest_for_rng_min.m`
+- `src/processing/functions/welch_ttest_for_rng.m`
+- `src/processing/functions/welch_ttest_for_change.m`
+
+### The Bug
+
+`combine_timeseries_across_exp_check` NaN-pads shorter cohorts to match the longest cohort's frame count. Just **2 out of 427 Control flies** had NaN in the metric window (frames 1170:1200). Because `min()` and `mean()` propagate NaN, the entire Control strain's distance metrics became NaN. In `plot_pval_heatmap.m`, `NaN > 0` evaluates to `false`, routing all NaN cells to the blue branch. This made **every distance metric cell blue** regardless of the actual data.
+
+### Diagnosis
+
+Created `src/plotting/figures/diagnose_heatmap_signs.m` which:
+1. Extracts dist_data and dist_data_delta for key strains
+2. Reports NaN counts at critical frames per strain
+3. Compares buggy (NaN-propagating) vs NaN-safe metric values
+4. Predicts heatmap colors under both approaches
+
+### Fixes
+
+| File | Change |
+|------|--------|
+| `welch_ttest_for_rng_min.m` | `min(d')` → `min(d, [], 2, 'omitnan')`; `mean()` → `nanmean()`; NaN flies removed before ttest2 |
+| `welch_ttest_for_rng.m` | `mean(d2, 2)` → `nanmean(d2, 2)`; NaN flies removed before ttest2 |
+| `welch_ttest_for_change.m` | NaN flies filtered before ttest2 in "norm" branch |
+
+### Verification
+
+After fix, heatmaps show correct colors:
+- Tm5Y → RED for distance (more centring than control, confirmed by diagnostic: −49 vs −33)
+- Dm4 → BLUE for distance (less centring, −11 vs −31)
+- T4/T5 → BLUE for distance (less centring, −18 vs −33)

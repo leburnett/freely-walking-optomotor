@@ -3,7 +3,7 @@
 > **Plan file:** `.claude/plans/enchanted-exploring-ember.md`
 > **Session notes:** `session_notes.md`
 > **Branch:** `paper-plan`
-> **Last updated:** 2026-03-11
+> **Last updated:** 2026-03-12 (sensitivity analysis results + NaN fix)
 
 ---
 
@@ -15,8 +15,8 @@
 | [x] | Verify baseline activity explains rejection rates | `figures/FIGS/baseline_activity_summary.csv`, 2x3 figure | `src/plotting/figures/verify_baseline_activity.m` | Spearman rho = -0.70. Dm4/L1L4 = baseline deficit; TmY20/T4/H1 = stimulus-specific slowing |
 | [x] | Implement quiescence-based QC in `check_and_average_across_reps` | N/A (function update) | `src/processing/functions/check_and_average_across_reps.m` | Backwards-compatible varargin. Default still `mean_fv`; quiescence available via name-value pairs |
 | [x] | Integrate quiescence QC into main data pipeline | N/A (function update) | `src/processing/functions/combine_timeseries_across_exp_check.m` | Now passes `vel_data` and uses `'qc_method', 'quiescence'` by default |
-| [ ] | Create strain metadata table (Task 1a) | `figures/FIGS/strain_metadata_table.csv` | `src/plotting/figures/generate_strain_metadata_table.m` | 19 strains, neuron annotations, n_cohorts, n_flies, mean_temp. Uses `generate_exp_data_struct.m` |
-| [ ] | Sensitivity analysis: relaxed QC threshold | TBD | TBD | Re-run key strain comparisons with vel_threshold = 1.0 mm/s or quiescence_frac = 0.9; confirm conclusions hold |
+| [x] | Create strain metadata table (Task 1a) | `figures/FIGS/strain_metadata_table.csv`, `.mat` | `src/plotting/figures/generate_strain_metadata_table.m` | 19 screen strains + 8 NorpA strains. Verified 2026-03-11 |
+| [x] | Sensitivity analysis: relaxed QC threshold | `figures/FIGS/qc_sensitivity_results.csv`, 2×2 figure | `src/plotting/figures/qc_sensitivity_analysis.m` | 4/5 conclusions ROBUST. Conclusion 3 (T4/T5 narrow gratings) SENSITIVE — p-values borderline ~0.05. Verified 2026-03-12 |
 | [ ] | Implement within-fly normalization for FV and AV | N/A (pipeline update) | TBD — extend `dist_data_delta` pattern to `fv_data` and `av_data` | Already done for dist_data_delta; critical for controlling intrinsic locomotor differences |
 
 ---
@@ -169,6 +169,9 @@ Each of these should be addressed in the manuscript with the corresponding data.
 | Status | Task | Output Location | Script | Notes |
 |--------|------|----------------|--------|-------|
 | [x] | Set up plotting conventions | `CLAUDE.md` | N/A | box off, ticks out, LineWidth 1.2, FontSize 12/14/16/18, solid lines, light grey references |
+| [x] | Fix QC in statistical comparison pipeline | N/A (8 files modified) | `make_pvalue_array_per_condition.m` + 6 Welch/metric test functions | Switched from `combine_timeseries_across_exp` (no QC) to `_check` (quiescence QC). Added `pre_averaged` flag throughout chain. 2026-03-11 |
+| [x] | Add configurable thresholds to `combine_timeseries_across_exp_check` | N/A (function update) | `src/processing/functions/combine_timeseries_across_exp_check.m` | varargin for vel_threshold and quiescence_frac. Enables sensitivity analysis sweep. 2026-03-11 |
+| [x] | Fix NaN propagation in Welch test functions | N/A (3 files) | `welch_ttest_for_rng.m`, `_min.m`, `_for_change.m` | 2 NaN-padded Control flies made ALL distance heatmap cells blue. Fixed with 'omitnan' and nanmean. 2026-03-12 |
 | [ ] | Update remaining direct callers of `check_and_average_across_reps` to use quiescence | N/A | ~12 scripts in `src/plotting/` and `src/analysis/` | Low priority — these are one-off scripts. Main pipeline already updated |
 | [ ] | Reprocess all Protocol 27 data with quiescence QC | `results/protocol_27/` | Via `combine_timeseries_across_exp_check.m` | Run in MATLAB to regenerate .mat results files |
 | [ ] | Reprocess Protocol 31 data with quiescence QC | `results/protocol_31/` | Same | Speed tuning data |

@@ -431,6 +431,15 @@ The HTML status page splits experiments into two tables based on this date:
 
 Charts (by Protocol, by Strain, Timeline) show production data only.
 
+## Manuscript Tracking
+
+Two files track progress on the centring manuscript:
+
+- **`manuscript_checklist.md`** — Master task checklist with status, output locations, and scripts. **Update this file whenever a manuscript task is completed** (tick the checkbox, fill in output paths if newly generated).
+- **`session_notes.md`** — Detailed lab-notebook-style record of analyses, results, and decisions.
+
+When completing any task from the manuscript plan (`.claude/plans/enchanted-exploring-ember.md`), always update both files before finishing the session.
+
 ## Plotting Conventions (MATLAB)
 
 All MATLAB figures should follow these aesthetic defaults unless explicitly told otherwise:

@@ -72,7 +72,8 @@
       "Bash(tasklist)",
       "Bash(ls -d /Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_27/*/)",
       "Bash(ls -d /Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_27_Norp/*/)",
-      "Bash(grep -r \"acclim_patt\" /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/protocols/protocol_functions/*.m)"
+      "Bash(grep -r \"acclim_patt\" /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/protocols/protocol_functions/*.m)",
+      "Bash(grep -r \"statistical\\\\|comparison\\\\|pval\\\\|ttest\" /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/plotting/summary_plot/*.m)"
     ]
   }
 }

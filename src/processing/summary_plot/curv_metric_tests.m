@@ -1,4 +1,10 @@
-function [pvals, target_mean, control_mean] = curv_metric_tests(cond_data, cond_data_control)
+function [pvals, target_mean, control_mean] = curv_metric_tests(cond_data, cond_data_control, pre_averaged)
+% CURV_METRIC_TESTS Curvature/turning rate metric comparisons between strains.
+%
+%   pre_averaged (optional, default false): If true, data has 1 row per fly
+%   (already rep-averaged). Passed through to Welch test functions.
+
+    if nargin < 3, pre_averaged = false; end
 
     % Initialise empty arrays:
     pvals = [];
@@ -49,7 +55,7 @@ function [pvals, target_mean, control_mean] = curv_metric_tests(cond_data, cond_
     rng_stim = 300:1200;
     
     % RUN TEST
-    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_stim);
+    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_stim, pre_averaged);
 
     % ADD VALUES
     [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
@@ -59,7 +65,7 @@ function [pvals, target_mean, control_mean] = curv_metric_tests(cond_data, cond_
     rng_stim_start = 315:450;
 
     % RUN TEST
-    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_stim_start);
+    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_stim_start, pre_averaged);
 
     % ADD VALUES
     [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
