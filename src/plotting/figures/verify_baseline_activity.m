@@ -79,16 +79,16 @@ for s = 1:n_strains
         if isfield(data(exp_idx), 'acclim_off1') && ~isempty(data(exp_idx).acclim_off1)
             raw_fv = data(exp_idx).acclim_off1.fv_data;
             raw_dist = data(exp_idx).acclim_off1.dist_data;
-            fv_off1_all  = vertcat(fv_off1_all,  pad_or_truncate(raw_fv, N_FRAMES)); %#ok<AGROW>
-            dist_off1_all = vertcat(dist_off1_all, pad_or_truncate(raw_dist, N_FRAMES)); %#ok<AGROW>
+            fv_off1_all  = vertcat(fv_off1_all,  pad_or_truncate(raw_fv, N_FRAMES));
+            dist_off1_all = vertcat(dist_off1_all, pad_or_truncate(raw_dist, N_FRAMES));
         end
 
         % --- acclim_patt ---
         if isfield(data(exp_idx), 'acclim_patt') && ~isempty(data(exp_idx).acclim_patt)
             raw_fv = data(exp_idx).acclim_patt.fv_data;
             raw_dist = data(exp_idx).acclim_patt.dist_data;
-            fv_patt_all  = vertcat(fv_patt_all,  pad_or_truncate(raw_fv, N_FRAMES)); %#ok<AGROW>
-            dist_patt_all = vertcat(dist_patt_all, pad_or_truncate(raw_dist, N_FRAMES)); %#ok<AGROW>
+            fv_patt_all  = vertcat(fv_patt_all,  pad_or_truncate(raw_fv, N_FRAMES));
+            dist_patt_all = vertcat(dist_patt_all, pad_or_truncate(raw_dist, N_FRAMES));
         end
     end
 
@@ -163,21 +163,21 @@ for s = 1:n_strains
     strain = strain_names{s};
     if ~isfield(baseline, strain); continue; end
 
-    row_strain{end+1, 1} = strain; %#ok<SAGROW>
-    row_nflies(end+1, 1) = baseline.(strain).n_flies; %#ok<SAGROW>
-    row_mean_fv(end+1, 1) = round(nanmean(baseline.(strain).mean_fv_per_fly), 2); %#ok<SAGROW>
-    row_median_fv(end+1, 1) = round(nanmedian(baseline.(strain).mean_fv_per_fly), 2); %#ok<SAGROW>
-    row_mean_dist(end+1, 1) = round(nanmean(baseline.(strain).mean_dist_per_fly), 1); %#ok<SAGROW>
-    row_pct_below_fv(end+1, 1) = round(baseline.(strain).pct_below_fv, 1); %#ok<SAGROW>
-    row_pct_above_dist(end+1, 1) = round(baseline.(strain).pct_above_dist, 1); %#ok<SAGROW>
-    row_reject_rate(end+1, 1) = round(reject_rates(s), 1); %#ok<SAGROW>
+    row_strain{end+1, 1} = strain;
+    row_nflies(end+1, 1) = baseline.(strain).n_flies;
+    row_mean_fv(end+1, 1) = round(nanmean(baseline.(strain).mean_fv_per_fly), 2);
+    row_median_fv(end+1, 1) = round(nanmedian(baseline.(strain).mean_fv_per_fly), 2);
+    row_mean_dist(end+1, 1) = round(nanmean(baseline.(strain).mean_dist_per_fly), 1);
+    row_pct_below_fv(end+1, 1) = round(baseline.(strain).pct_below_fv, 1);
+    row_pct_above_dist(end+1, 1) = round(baseline.(strain).pct_above_dist, 1);
+    row_reject_rate(end+1, 1) = round(reject_rates(s), 1);
 
     if strcmp(strain, CONTROL_STRAIN)
-        row_group{end+1, 1} = 'control'; %#ok<SAGROW>
+        row_group{end+1, 1} = 'control';
     elseif reject_rates(s) > 20
-        row_group{end+1, 1} = 'high_reject'; %#ok<SAGROW>
+        row_group{end+1, 1} = 'high_reject';
     else
-        row_group{end+1, 1} = 'other'; %#ok<SAGROW>
+        row_group{end+1, 1} = 'other';
     end
 end
 
@@ -206,10 +206,10 @@ for s = 1:n_strains
     if ~isfield(baseline, strain); continue; end
     vals_fv = baseline.(strain).mean_fv_per_fly;
     vals_dist = baseline.(strain).mean_dist_per_fly;
-    all_fv_vals = [all_fv_vals; vals_fv]; %#ok<AGROW>
-    all_fv_labels = [all_fv_labels; repmat({strain}, numel(vals_fv), 1)]; %#ok<AGROW>
-    all_dist_vals = [all_dist_vals; vals_dist]; %#ok<AGROW>
-    all_dist_labels = [all_dist_labels; repmat({strain}, numel(vals_dist), 1)]; %#ok<AGROW>
+    all_fv_vals = [all_fv_vals; vals_fv];
+    all_fv_labels = [all_fv_labels; repmat({strain}, numel(vals_fv), 1)];
+    all_dist_vals = [all_dist_vals; vals_dist];
+    all_dist_labels = [all_dist_labels; repmat({strain}, numel(vals_dist), 1)];
 end
 
 [p_kw_fv, ~, stats_kw_fv] = kruskalwallis(all_fv_vals, all_fv_labels, 'off');
