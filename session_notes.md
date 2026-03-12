@@ -1,5 +1,89 @@
 # Session Notes — Freely Walking Optomotor Manuscript
 
+## 2026-03-12: Radial/Tangential Velocity Decomposition + Heading-to-Center Analysis
+
+**Scripts created:**
+- `src/processing/functions/compute_radial_tangential.m` — shared function
+- `src/processing/functions/compute_heading_to_center.m` — shared function
+- `src/plotting/figures/radial_tangential_analysis.m` — main analysis (4 figures)
+
+**Branch:** `paper-plan`
+**Phase:** 2 (New Analysis Development)
+
+### Motivation
+
+The manuscript argues centring is an active behavior. A key alternative explanation: centring is a geometric byproduct of curved walking paths. To address this we need:
+1. Radial/tangential velocity decomposition — cleanly separates centring from orbiting
+2. Heading-to-center angle — tests whether flies actively orient toward center
+3. Geometric prediction test — if centring is geometric, radial velocity should be predictable from tangential velocity + position alone
+
+### Implementation
+
+**`compute_radial_tangential.m`** — Shared function for reuse by null model analysis (future task).
+- Input: x_data, y_data, arena center (cx, cy), fps
+- Computes radial unit vector at each frame, projects velocity onto radial/tangential
+- 5-frame moving mean smoothing (matches `add_dist_dt.m` convention)
+- Sign convention: v_rad positive = outward (away from center), so centripetal = -v_rad
+- Validation: mean(-v_rad) should correlate >0.99 with dist_dt from `add_dist_dt.m`
+
+**`compute_heading_to_center.m`** — Angle between fly heading and direction to arena center.
+- Uses `mod(angle_to_center - heading_wrap + 180, 360) - 180` wrapping (same as `phototaxis_test_code.m`)
+- Outputs alignment index `cos(htc_angle)`: +1 = heading toward center, -1 = away
+
+**`radial_tangential_analysis.m`** — Main analysis script with 4 figures:
+1. **Velocity decomposition timeseries** (3×1): centripetal velocity, tangential speed, total speed for control
+2. **Heading-to-center analysis** (2×2): alignment timeseries, polar histogram, scatter of alignment vs centring, distance-binned alignment
+3. **Cross-strain comparison** (3×2): T4/T5, Dm4, Tm5Y vs control — centripetal velocity + alignment timeseries
+4. **Geometric prediction test** (1×2): tangential vs centripetal scatter colored by distance; partial correlation controlling for tangential speed
+
+### Key findings
+
+**Validation (control, condition 1, n = 427 flies):**
+- Correlation of mean(-v_rad) vs mean(dist_dt) = 0.9692 (below 0.99 target; difference is because dist_dt smooths scalar distance then differentiates, while v_rad differentiates 2D position then smooths — order matters)
+- Correlation of sqrt(vr² + vt²) vs vel_data = 0.9292 (vel_data uses 3-point velocity, decomposition uses forward-diff + 5-frame movmean — different temporal smoothing)
+- Both are acceptably high to validate the decomposition
+
+**Control results:**
+- Mean centripetal velocity during stimulus = 0.654 mm/s (p = 5.7e-47) — highly significant centring
+- Mean alignment index during stimulus = **−0.107** (p = 2.7e-15) — **flies head slightly AWAY from center, yet still move toward it**
+
+**Geometric prediction test:**
+- Partial correlation (centripetal ~ starting distance | tangential speed): rho = 0.7026, p = 2.35e-64
+- Centring scales with distance from center even after controlling for orbiting speed
+- Strongly argues against centring being a purely geometric byproduct of curved paths
+
+**Cross-strain comparisons (Cohen's d vs control, Welch t-test p-values):**
+
+| Strain | N | Mean Cp Vel | Cp Vel p (vs 0) | d (Cp Vel) | Welch p (Cp Vel) | Mean Align | d (Align) | Welch p (Align) |
+|--------|---|-------------|-----------------|------------|-----------------|------------|-----------|----------------|
+| Control | 427 | 0.654 | 5.7e-47 | — | — | −0.107 | — | — |
+| T4/T5 | 217 | 0.305 | 2.5e-03 | −0.322 | 1.3e-03 | +0.028 | +0.511 | 1.0e-09 |
+| Dm4 | 123 | 0.303 | 8.8e-04 | −0.409 | 4.0e-04 | −0.196 | −0.336 | 8.3e-04 |
+| Tm5Y | 139 | 0.864 | 2.0e-13 | +0.222 | 6.5e-02 | +0.001 | +0.409 | 1.9e-05 |
+
+### Interpretation — supports viewing-distance-dependent optomotor gain
+
+The negative control alignment (−0.107) is the headline finding: flies do NOT orient toward the arena center to achieve centring. Instead, centring arises from distance-dependent optomotor turning — when flies are closer to the wall, the grating's retinal slip is faster, driving stronger turning that pushes them away from the wall (toward center). The partial correlation (rho = 0.70) confirms the distance dependence exceeds what tangential orbiting alone predicts.
+
+**T4/T5**: Reduced centring (d = −0.32) but alignment *increases* toward positive (+0.028 vs −0.107, d = +0.51). Without direction-selective motion detectors, the curved-path centring mechanism is disrupted; residual centring may use a different (heading-based?) strategy.
+
+**Dm4**: Reduced centring (d = −0.41) and alignment becomes even more negative (−0.196, d = −0.34). Consistent with "tight coils" phenotype: vigorous turning that is not spatially modulated by distance — the gain is high everywhere rather than scaling with proximity to wall.
+
+**Tm5Y**: Mean centripetal velocity is higher (0.864 vs 0.654) but Welch p = 0.065 — borderline non-significant, high variance. Alignment shifts to neutral (0.001, Welch p = 1.9e-05).
+
+### Bug fix applied
+
+Fixed frame-count dimension mismatch in Figure 3 (`patch` error at line 354). Root cause: `x_frames` was computed from control data but strain data from `combine_timeseries_across_exp_check` can have different frame counts. Fix: compute `nf_common = min(n_frames, nf_s)` per strain and trim both control and strain overlays to common range. Same defensive indexing added to statistics and CSV export sections.
+
+### Next steps
+
+- Consider adding condition 3 (narrow ON bars) for T4/T5 dissociation comparison
+- Consider adding flicker (cond 9) and static (cond 10) as negative controls
+- Feed results into null model analysis (Phase 2 remaining task)
+- Investigate whether viewing distance (ray-traced, from `calculate_viewing_distance.m`) better predicts centripetal velocity than simple distance-from-center
+
+---
+
 ## 2026-03-11: QC Threshold Verification (Protocol 27)
 
 **Script:** `src/plotting/figures/verify_qc_thresholds.m`
@@ -598,3 +682,48 @@ All changes are fully backwards compatible:
 - Test in MATLAB: call key plotting functions with `"fv_data_delta"` and `"av_data_delta"` to verify
 - Consider adding `fv_data_delta` metrics to the heatmap (currently only dist_data_delta is in the heatmap)
 - Move to Phase 2: radial/tangential velocity decomposition, cross-strain heatmaps
+
+---
+
+## 2026-03-12: Pipeline Status Page — Auto-populate Cross-Reference Ticks
+
+**File modified:** `python/automation/shared/registry.py`
+**Branch:** `paper-plan`
+
+### Problem
+
+The HTML pipeline status page (`pipeline_status.html`) has six cross-reference tick columns (Data Acq, Data Proc, Data Net, Res Acq, Res Proc, Res Net) indicating where copies of each experiment's data/results exist. These columns were **never populated by the live pipeline** — they were only filled when `backfill_registry.py` was run manually. As a result, newly acquired experiments (e.g. `2026_03_09`) appeared in the table with no ticks, even though data clearly existed (the experiment couldn't have been detected without it).
+
+### Root Cause
+
+`update_registry()` builds a summary dict with basic metadata (date, protocol, strain, etc.) but never set the `has_data_local_*` / `has_data_network` / `has_*_results` fields. For **new** experiments (not yet in the registry), these fields simply didn't exist. The "preserve" logic only applied to existing entries being updated.
+
+### Solution
+
+The per-experiment `pipeline_status.json` already records which pipeline stages have been completed, and each completed stage implicitly tells us where data exists. Added a `_infer_cross_refs()` helper that reads the `stages` dict and maps completed stages to cross-reference flags:
+
+| Stage completed | Cross-ref field set to `True` |
+|:---|:---|
+| `acquired` | `has_data_local_acquisition` |
+| `copied_to_network` | `has_data_network` |
+| `tracked` | `has_data_local_processing` |
+| `processed` | `has_local_results_processing` |
+| `synced_to_network` | `has_network_results` |
+
+The inferred flags are merged into the summary dict **before** the upsert/preserve logic, so:
+- Newly inferred `True` values take effect immediately
+- Previously backfilled values for fields we don't infer (e.g. `has_local_results_acquisition`) are preserved via the existing preserve logic
+- Only fields with completed stages are set; incomplete/missing stages are omitted, so old values aren't overwritten
+
+### Limitations
+
+These are "data *was* here" flags — they indicate data passed through a location based on pipeline stage completion. If data is later deleted from a machine (e.g. cleanup on the acquisition rig), the tick will persist until the next `backfill_registry.py` run corrects it. This is acceptable since backfill can be run periodically to reconcile.
+
+### How the HTML page is updated (for reference)
+
+The HTML status page is regenerated automatically every time `update_registry()` is called (via `generate_status_page()`). This happens when:
+1. `monitor_and_copy.py` copies new data from the acquisition rig to the network
+2. `monitor_and_track.py` finishes (or fails) tracking on the processing machine
+3. `daily_processing.py` finishes processing or syncing results on the processing machine
+
+So the ticks will now appear as soon as each pipeline stage completes — no manual intervention required.

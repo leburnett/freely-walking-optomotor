@@ -3,7 +3,7 @@
 > **Plan file:** `.claude/plans/enchanted-exploring-ember.md`
 > **Session notes:** `session_notes.md`
 > **Branch:** `paper-plan`
-> **Last updated:** 2026-03-12 (within-fly normalization for FV/AV)
+> **Last updated:** 2026-03-12 (radial/tangential decomposition + heading-to-center analysis)
 
 ---
 
@@ -25,8 +25,8 @@
 
 | Status | Task | Output Location | Script | Notes |
 |--------|------|----------------|--------|-------|
-| [ ] | Radial/tangential velocity decomposition | TBD | New script | Decompose velocity into radial (toward/away from center) and tangential. Tests whether centring is geometric consequence of curved paths |
-| [ ] | Heading-to-center analysis | TBD | New script | Angle between fly heading and vector to arena center. Tests active orientation vs passive drift |
+| [x] | Radial/tangential velocity decomposition | `figures/FIGS/radial_tangential_per_fly.csv`, 4 figures | `src/plotting/figures/radial_tangential_analysis.m`, `src/processing/functions/compute_radial_tangential.m` | Decomposes velocity into centripetal + tangential. Includes cross-strain comparison and partial correlation geometric test. 2026-03-12 |
+| [x] | Heading-to-center analysis | Same CSV and figures | `src/processing/functions/compute_heading_to_center.m` (shared), same analysis script | Alignment index (cos of heading-to-center angle). Polar histograms, distance-binned timeseries. 2026-03-12 |
 | [ ] | Cross-strain heatmap: strains x conditions (centring) | TBD | Extend `make_summary_heat_maps_p27.m` | Existing script does 1 condition; need all 12. Both p-value and raw-value versions for dist_data_delta |
 | [ ] | Cross-strain heatmap: strains x conditions (turning) | TBD | Same extension | Side-by-side with centring heatmap (Fig 4A-B) |
 | [ ] | Centring-vs-turning scatter across strains | TBD | New script | Mean centring magnitude vs mean turning magnitude per strain for condition 1 (Fig 4C) |

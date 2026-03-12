@@ -74,7 +74,17 @@
       "Bash(ls -d /Users/burnettl/Documents/Projects/oaky_cokey/results/protocol_27_Norp/*/)",
       "Bash(grep -r \"acclim_patt\" /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/protocols/protocol_functions/*.m)",
       "Bash(grep -r \"statistical\\\\|comparison\\\\|pval\\\\|ttest\" /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/plotting/summary_plot/*.m)",
-      "Bash(grep -r \"300\\\\|baseline\" src/plotting/functions/*.m)"
+      "Bash(grep -r \"300\\\\|baseline\" src/plotting/functions/*.m)",
+      "Bash(ls -lah /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/analysis/*.html)",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__tabs_create_mcp",
+      "Bash(open /Users/burnettl/Documents/GitHub/freely-walking-optomotor/explorations/radial_tangential_explorer.html)",
+      "mcp__Claude_in_Chrome__computer",
+      "mcp__Claude_in_Chrome__find",
+      "mcp__Claude_in_Chrome__form_input",
+      "mcp__Claude_in_Chrome__javascript_tool",
+      "Bash(kill 66105 66197 66232 66268 66307 66345)",
+      "Bash(kill 66384)"
     ]
   }
 }

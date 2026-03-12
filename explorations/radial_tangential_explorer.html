@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radial & Tangential Velocity Explorer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #fafafa; color: #333; padding: 20px;
+  }
+  h1 { font-size: 24px; margin-bottom: 8px; }
+  .intro {
+    max-width: 1300px; margin: 0 auto 20px; font-size: 14px; color: #555;
+    line-height: 1.5; background: #fff; padding: 16px 20px; border-radius: 8px;
+    border: 1px solid #e0e0e0;
+  }
+  .intro strong { color: #333; }
+  .intro .formula { font-family: monospace; background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }
+  .container { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 1300px; margin: 0 auto; }
+  .scenario {
+    background: #fff; border-radius: 8px; border: 1px solid #e0e0e0;
+    padding: 16px; display: flex; flex-direction: column; align-items: center;
+  }
+  .scenario h2 { font-size: 17px; margin-bottom: 4px; }
+  .scenario .subtitle { font-size: 13px; color: #777; margin-bottom: 12px; }
+  canvas.arena { border: 1px solid #ddd; border-radius: 4px; background: #fff; }
+  .controls { width: 100%; margin: 12px 0 8px; }
+  .slider-row {
+    display: flex; align-items: center; margin-bottom: 6px; font-size: 13px;
+  }
+  .slider-row label { width: 110px; flex-shrink: 0; font-weight: 500; }
+  .slider-row input[type="range"] { flex: 1; margin: 0 10px; accent-color: #555; }
+  .slider-row .val { width: 70px; text-align: right; font-family: monospace; font-size: 12px; color: #555; }
+  .btn-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .btn-row button {
+    padding: 4px 14px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px;
+    background: #f8f8f8; cursor: pointer;
+  }
+  .btn-row button:hover { background: #eee; }
+  .btn-row button.active { background: #e0e0e0; border-color: #aaa; }
+  canvas.ts { border: 1px solid #eee; border-radius: 3px; margin-top: 2px; }
+  .ts-label { font-size: 11px; font-weight: 500; margin-top: 6px; color: #555; display: flex; justify-content: space-between; width: 100%; padding: 0 4px; }
+  .ts-label .current-val { font-family: monospace; font-size: 11px; }
+  .legend {
+    max-width: 1300px; margin: 16px auto 0; font-size: 12px; color: #777;
+    display: flex; gap: 24px; justify-content: center;
+  }
+  .legend span { display: flex; align-items: center; gap: 4px; }
+  .legend .swatch { width: 14px; height: 3px; border-radius: 1px; display: inline-block; }
+</style>
+</head>
+<body>
+
+<div class="intro">
+  <h1>Radial & Tangential Velocity Explorer</h1>
+  <p>
+    In a circular arena, any velocity can be decomposed into two perpendicular components relative to the arena center:<br>
+    <strong>Radial velocity (v<sub>rad</sub>)</strong> = how fast the dot moves toward/away from the center.
+    Positive = outward (away from center). Negative = inward (centring).<br>
+    <strong>Tangential velocity (v<sub>tan</sub>)</strong> = how fast the dot moves around the center (orbiting).
+    Positive = counter-clockwise.<br>
+    <strong>&omega;<sub>arena</sub></strong> = v<sub>tan</sub> / r &mdash; arena-centric angular velocity: how fast the dot's position angle changes relative to the arena center. Depends on distance from center.<br>
+    <strong>Turning rate</strong> (d&theta;<sub>heading</sub>/dt) &mdash; fly-centric angular velocity: how fast the dot's heading direction is rotating (= path curvature &times; speed). This is what you measure from fly tracking data and what the optomotor response directly drives.<br><br>
+    <strong>Scenario 1</strong> shows that a perfectly circular path centered on the arena produces zero radial velocity &mdash;
+    all movement is tangential. But offsetting the circle from center creates oscillating radial velocity, even though the path shape hasn't changed.<br>
+    <strong>Scenario 2</strong> shows that an asymmetric (elliptical) path produces oscillating radial velocity even when centered on the arena, because the dot's distance from center varies as it traverses the ellipse.
+  </p>
+</div>
+
+<div class="container">
+  <!-- Scenario 1 -->
+  <div class="scenario">
+    <h2>Scenario 1: Circular Path</h2>
+    <p class="subtitle">Variable speed &amp; offset from arena center</p>
+    <canvas class="arena" id="arena1" width="400" height="400"></canvas>
+    <div class="controls">
+      <div class="slider-row">
+        <label>Speed (rad/s)</label>
+        <input type="range" id="s1_speed" min="0.3" max="6" step="0.1" value="2.0">
+        <span class="val" id="s1_speed_val">2.0</span>
+      </div>
+      <div class="slider-row">
+        <label>Offset (mm)</label>
+        <input type="range" id="s1_offset" min="0" max="60" step="1" value="0">
+        <span class="val" id="s1_offset_val">0</span>
+      </div>
+      <div class="slider-row">
+        <label>Path radius (mm)</label>
+        <input type="range" id="s1_radius" min="15" max="80" step="1" value="50">
+        <span class="val" id="s1_radius_val">50</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button id="s1_pause">Pause</button>
+      <button id="s1_reset">Reset</button>
+    </div>
+    <div class="ts-label"><span>v<sub>rad</sub> (+ = outward)</span><span class="current-val" id="s1_vrad_val"></span></div>
+    <canvas class="ts" id="ts1_vrad" width="400" height="70"></canvas>
+    <div class="ts-label"><span>v<sub>tan</sub> (+ = CCW)</span><span class="current-val" id="s1_vtan_val"></span></div>
+    <canvas class="ts" id="ts1_vtan" width="400" height="70"></canvas>
+    <div class="ts-label"><span>Distance from center (mm)</span><span class="current-val" id="s1_dist_val"></span></div>
+    <canvas class="ts" id="ts1_dist" width="400" height="70"></canvas>
+    <div class="ts-label"><span>&omega;<sub>arena</sub> = v<sub>tan</sub> / r &mdash; arena-centric (rad/s)</span><span class="current-val" id="s1_omega_val"></span></div>
+    <canvas class="ts" id="ts1_omega" width="400" height="70"></canvas>
+    <div class="ts-label"><span>Turning rate d&theta;<sub>heading</sub>/dt &mdash; fly-centric (rad/s)</span><span class="current-val" id="s1_turn_val"></span></div>
+    <canvas class="ts" id="ts1_turn" width="400" height="70"></canvas>
+  </div>
+
+  <!-- Scenario 2 -->
+  <div class="scenario">
+    <h2>Scenario 2: Elliptical Path</h2>
+    <p class="subtitle">Constant speed, variable eccentricity</p>
+    <canvas class="arena" id="arena2" width="400" height="400"></canvas>
+    <div class="controls">
+      <div class="slider-row">
+        <label>Eccentricity</label>
+        <input type="range" id="s2_ecc" min="0" max="0.9" step="0.01" value="0.0">
+        <span class="val" id="s2_ecc_val">0.00</span>
+      </div>
+      <div class="slider-row">
+        <label>Semi-major (mm)</label>
+        <input type="range" id="s2_a" min="30" max="90" step="1" value="60">
+        <span class="val" id="s2_a_val">60</span>
+      </div>
+      <div class="slider-row">
+        <label>Rotation (deg)</label>
+        <input type="range" id="s2_rot" min="0" max="180" step="1" value="0">
+        <span class="val" id="s2_rot_val">0</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button id="s2_pause">Pause</button>
+      <button id="s2_reset">Reset</button>
+    </div>
+    <div class="ts-label"><span>v<sub>rad</sub> (+ = outward)</span><span class="current-val" id="s2_vrad_val"></span></div>
+    <canvas class="ts" id="ts2_vrad" width="400" height="70"></canvas>
+    <div class="ts-label"><span>v<sub>tan</sub> (+ = CCW)</span><span class="current-val" id="s2_vtan_val"></span></div>
+    <canvas class="ts" id="ts2_vtan" width="400" height="70"></canvas>
+    <div class="ts-label"><span>Distance from center (mm)</span><span class="current-val" id="s2_dist_val"></span></div>
+    <canvas class="ts" id="ts2_dist" width="400" height="70"></canvas>
+    <div class="ts-label"><span>&omega;<sub>arena</sub> = v<sub>tan</sub> / r &mdash; arena-centric (rad/s)</span><span class="current-val" id="s2_omega_val"></span></div>
+    <canvas class="ts" id="ts2_omega" width="400" height="70"></canvas>
+    <div class="ts-label"><span>Turning rate d&theta;<sub>heading</sub>/dt &mdash; fly-centric (rad/s)</span><span class="current-val" id="s2_turn_val"></span></div>
+    <canvas class="ts" id="ts2_turn" width="400" height="70"></canvas>
+  </div>
+</div>
+
+<div class="legend">
+  <span><span class="swatch" style="background:#3b82f6"></span> v<sub>rad</sub></span>
+  <span><span class="swatch" style="background:#f59e0b"></span> v<sub>tan</sub></span>
+  <span><span class="swatch" style="background:#10b981"></span> Distance</span>
+  <span><span class="swatch" style="background:#8b5cf6"></span> &omega;<sub>arena</sub></span>
+  <span><span class="swatch" style="background:#e11d48"></span> Turning rate</span>
+  <span><span class="swatch" style="background:#bbb"></span> Zero / Arena</span>
+</div>
+
+<script>
+// ============================================================
+// Shared constants
+// ============================================================
+const ARENA_R_MM = 119;          // arena radius in mm
+const CANVAS_SIZE = 400;
+const CANVAS_PAD = 20;
+const SCALE = (CANVAS_SIZE - 2 * CANVAS_PAD) / (2 * ARENA_R_MM);
+const CX = CANVAS_SIZE / 2;     // canvas center x
+const CY = CANVAS_SIZE / 2;     // canvas center y
+const TS_WIDTH = 400;
+const TS_HEIGHT = 70;
+const TS_PAD_L = 4;
+const TS_PAD_R = 4;
+const TS_PAD_T = 6;
+const TS_PAD_B = 6;
+const HISTORY_SEC = 8;           // seconds of history to show
+const DT = 1 / 60;              // time step (60 fps)
+
+function mmToCanvas(xmm, ymm) {
+  return [CX + xmm * SCALE, CY - ymm * SCALE];
+}
+function mmToCanvasR(rmm) { return rmm * SCALE; }
+
+// ============================================================
+// Time-series buffer
+// ============================================================
+class TSBuffer {
+  constructor(maxLen) {
+    this.maxLen = maxLen;
+    this.data = [];
+  }
+  push(v) {
+    this.data.push(v);
+    if (this.data.length > this.maxLen) this.data.shift();
+  }
+  clear() { this.data = []; }
+  get length() { return this.data.length; }
+}
+
+// ============================================================
+// Draw time-series on a canvas
+// ============================================================
+function drawTS(canvas, buffer, color, yMin, yMax, showZero) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const plotW = w - TS_PAD_L - TS_PAD_R;
+  const plotH = h - TS_PAD_T - TS_PAD_B;
+  const n = buffer.length;
+  const maxN = buffer.maxLen;
+
+  // Auto-scale Y with a minimum range
+  if (yMin === undefined || yMax === undefined) {
+    let mn = Infinity, mx = -Infinity;
+    for (let i = 0; i < n; i++) {
+      const v = buffer.data[i];
+      if (v < mn) mn = v;
+      if (v > mx) mx = v;
+    }
+    if (mn === Infinity) { mn = -1; mx = 1; }
+    const range = mx - mn;
+    const pad = Math.max(range * 0.15, 0.5);
+    yMin = mn - pad;
+    yMax = mx + pad;
+  }
+
+  // Zero line
+  if (showZero && yMin < 0 && yMax > 0) {
+    const zy = TS_PAD_T + plotH * (1 - (0 - yMin) / (yMax - yMin));
+    ctx.strokeStyle = '#ddd';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(TS_PAD_L, zy);
+    ctx.lineTo(w - TS_PAD_R, zy);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Data line
+  if (n < 2) return;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const x = TS_PAD_L + (i / (maxN - 1)) * plotW;
+    const y = TS_PAD_T + plotH * (1 - (buffer.data[i] - yMin) / (yMax - yMin));
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // "Now" indicator
+  if (n > 1) {
+    const nx = TS_PAD_L + ((n - 1) / (maxN - 1)) * plotW;
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(nx, TS_PAD_T);
+    ctx.lineTo(nx, h - TS_PAD_B);
+    ctx.stroke();
+  }
+}
+
+// ============================================================
+// Draw arena background (shared)
+// ============================================================
+function drawArena(ctx) {
+  ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+  // Arena circle
+  ctx.strokeStyle = '#ccc';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(CX, CY, mmToCanvasR(ARENA_R_MM), 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Center cross
+  const cs = 6;
+  ctx.strokeStyle = '#bbb';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(CX - cs, CY); ctx.lineTo(CX + cs, CY);
+  ctx.moveTo(CX, CY - cs); ctx.lineTo(CX, CY + cs);
+  ctx.stroke();
+}
+
+// ============================================================
+// Compute radial and tangential velocity
+// ============================================================
+function decompose(x, y, vx, vy) {
+  const r = Math.sqrt(x * x + y * y);
+  if (r < 0.001) return { vrad: 0, vtan: 0, dist: r };
+  const rx = x / r, ry = y / r;       // radial unit vector (outward)
+  const tx = -ry, ty = rx;            // tangential unit vector (CCW)
+  return {
+    vrad: vx * rx + vy * ry,          // positive = outward
+    vtan: vx * tx + vy * ty,          // positive = CCW
+    dist: r
+  };
+}
+
+// ============================================================
+// Scenario 1: Circular Path
+// ============================================================
+const s1 = {
+  canvas: null, ctx: null,
+  theta: 0,
+  paused: false,
+  speed: 2.0, offset: 0, radius: 50,
+  tsVrad: new TSBuffer(Math.round(HISTORY_SEC / DT)),
+  tsVtan: new TSBuffer(Math.round(HISTORY_SEC / DT)),
+  tsDist: new TSBuffer(Math.round(HISTORY_SEC / DT)),
+  tsOmega: new TSBuffer(Math.round(HISTORY_SEC / DT)),
+  tsTurn: new TSBuffer(Math.round(HISTORY_SEC / DT)),
+  prevHeading: null,
+  trail: []
+};
+
+function s1Init() {
+  s1.canvas = document.getElementById('arena1');
+  s1.ctx = s1.canvas.getContext('2d');
+
+  // Slider listeners
+  const bind = (id, key, decimals) => {
+    const el = document.getElementById(id);
+    const valEl = document.getElementById(id + '_val');
+    el.addEventListener('input', () => {
+      s1[key] = parseFloat(el.value);
+      valEl.textContent = s1[key].toFixed(decimals);
+    });
+  };
+  bind('s1_speed', 'speed', 1);
+  bind('s1_offset', 'offset', 0);
+  bind('s1_radius', 'radius', 0);
+
+  document.getElementById('s1_pause').addEventListener('click', function() {
+    s1.paused = !s1.paused;
+    this.textContent = s1.paused ? 'Play' : 'Pause';
+    this.classList.toggle('active', s1.paused);
+  });
+  document.getElementById('s1_reset').addEventListener('click', () => {
+    s1.theta = 0;
+    s1.tsVrad.clear(); s1.tsVtan.clear(); s1.tsDist.clear(); s1.tsOmega.clear(); s1.tsTurn.clear();
+    s1.prevHeading = null;
+    s1.trail = [];
+    document.getElementById('s1_speed').value = 2.0; s1.speed = 2.0;
+    document.getElementById('s1_offset').value = 0; s1.offset = 0;
+    document.getElementById('s1_radius').value = 50; s1.radius = 50;
+    document.getElementById('s1_speed_val').textContent = '2.0';
+    document.getElementById('s1_offset_val').textContent = '0';
+    document.getElementById('s1_radius_val').textContent = '50';
+  });
+}
+
+function s1Update() {
+  if (s1.paused) return;
+  s1.theta += s1.speed * DT;
+
+  // Path center offset (along +x direction for simplicity)
+  const ox = s1.offset;
+  const oy = 0;
+
+  // Position in mm (relative to arena center)
+  const x = ox + s1.radius * Math.cos(s1.theta);
+  const y = oy + s1.radius * Math.sin(s1.theta);
+
+  // Velocity in mm/s
+  const vx = -s1.radius * s1.speed * Math.sin(s1.theta);
+  const vy = s1.radius * s1.speed * Math.cos(s1.theta);
+
+  const d = decompose(x, y, vx, vy);
+  const omega = d.dist > 0.01 ? d.vtan / d.dist : 0;  // angular velocity = v_tan / r
+  s1.tsVrad.push(d.vrad);
+  s1.tsVtan.push(d.vtan);
+  s1.tsDist.push(d.dist);
+  s1.tsOmega.push(omega);
+
+  // Fly-centric turning rate: dHeading/dt
+  const heading = Math.atan2(vy, vx);
+  if (s1.prevHeading !== null) {
+    let dh = heading - s1.prevHeading;
+    // Wrap to [-pi, pi]
+    while (dh > Math.PI) dh -= 2 * Math.PI;
+    while (dh < -Math.PI) dh += 2 * Math.PI;
+    s1.tsTurn.push(dh / DT);
+  } else {
+    s1.tsTurn.push(0);
+  }
+  s1.prevHeading = heading;
+
+  // Trail (last 120 positions)
+  s1.trail.push([x, y]);
+  if (s1.trail.length > 120) s1.trail.shift();
+
+  s1._pos = { x, y, ox, oy };
+  s1._decomp = d;
+}
+
+function s1Draw() {
+  const ctx = s1.ctx;
+  drawArena(ctx);
+
+  const r = s1.radius;
+  const ox = s1.offset;
+  const [pcx, pcy] = mmToCanvas(ox, 0);
+
+  // Path circle (dashed)
+  ctx.strokeStyle = 'rgba(59,130,246,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.arc(pcx, pcy, mmToCanvasR(r), 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Path center cross (if offset > 0)
+  if (ox > 1) {
+    const cs = 4;
+    ctx.strokeStyle = 'rgba(59,130,246,0.5)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(pcx - cs, pcy); ctx.lineTo(pcx + cs, pcy);
+    ctx.moveTo(pcx, pcy - cs); ctx.lineTo(pcx, pcy + cs);
+    ctx.stroke();
+  }
+
+  if (!s1._pos) return;
+  const { x, y } = s1._pos;
+  const [dx, dy] = mmToCanvas(x, y);
+
+  // Trail
+  if (s1.trail.length > 1) {
+    ctx.strokeStyle = 'rgba(239,68,68,0.15)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i < s1.trail.length; i++) {
+      const [tx, ty] = mmToCanvas(s1.trail[i][0], s1.trail[i][1]);
+      if (i === 0) ctx.moveTo(tx, ty);
+      else ctx.lineTo(tx, ty);
+    }
+    ctx.stroke();
+  }
+
+  // Radial line from arena center to dot
+  ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(CX, CY);
+  ctx.lineTo(dx, dy);
+  ctx.stroke();
+
+  // Dot
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath();
+  ctx.arc(dx, dy, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Velocity arrow (scaled)
+  if (!s1.paused) {
+    const vx = -s1.radius * s1.speed * Math.sin(s1.theta);
+    const vy = s1.radius * s1.speed * Math.cos(s1.theta);
+    const arrowScale = 0.3 * SCALE;
+    const ax = dx + vx * arrowScale;
+    const ay = dy - vy * arrowScale;  // canvas y is flipped
+    ctx.strokeStyle = 'rgba(100,100,100,0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(dx, dy);
+    ctx.lineTo(ax, ay);
+    ctx.stroke();
+  }
+
+  // Time series
+  const d = s1._decomp;
+  document.getElementById('s1_vrad_val').textContent = d.vrad.toFixed(1) + ' mm/s';
+  document.getElementById('s1_vtan_val').textContent = d.vtan.toFixed(1) + ' mm/s';
+  document.getElementById('s1_dist_val').textContent = d.dist.toFixed(1) + ' mm';
+  const omega1 = d.dist > 0.01 ? d.vtan / d.dist : 0;
+  document.getElementById('s1_omega_val').textContent = omega1.toFixed(2) + ' rad/s';
+  const turnVal1 = s1.tsTurn.length > 0 ? s1.tsTurn.data[s1.tsTurn.length - 1] : 0;
+  document.getElementById('s1_turn_val').textContent = turnVal1.toFixed(2) + ' rad/s';
+
+  drawTS(document.getElementById('ts1_vrad'), s1.tsVrad, '#3b82f6', undefined, undefined, true);
+  drawTS(document.getElementById('ts1_vtan'), s1.tsVtan, '#f59e0b', undefined, undefined, true);
+  drawTS(document.getElementById('ts1_dist'), s1.tsDist, '#10b981', undefined, undefined, false);
+  drawTS(document.getElementById('ts1_omega'), s1.tsOmega, '#8b5cf6', undefined, undefined, false);
+  drawTS(document.getElementById('ts1_turn'), s1.tsTurn, '#e11d48', undefined, undefined, true);
+}
+
+// ============================================================
+// Scenario 2: Elliptical Path
+// ============================================================
+const s2 = {
+  canvas: null, ctx: null,
+  theta: 0,
+  paused: false,
+  ecc: 0.0, semiA: 60, rotation: 0,
+  tsVrad: new TSBuffer(Math.round(HISTORY_SEC / DT)),
+  tsVtan: new TSBuffer(Math.round(HISTORY_SEC / DT)),
+  tsDist: new TSBuffer(Math.round(HISTORY_SEC / DT)),
+  tsOmega: new TSBuffer(Math.round(HISTORY_SEC / DT)),
+  tsTurn: new TSBuffer(Math.round(HISTORY_SEC / DT)),
+  prevHeading: null,
+  trail: [],
+  // Fixed orbit period
+  orbitSpeed: 2.0  // base angular velocity for a circle
+};
+
+function s2Init() {
+  s2.canvas = document.getElementById('arena2');
+  s2.ctx = s2.canvas.getContext('2d');
+
+  const bind = (id, key, decimals) => {
+    const el = document.getElementById(id);
+    const valEl = document.getElementById(id + '_val');
+    el.addEventListener('input', () => {
+      s2[key] = parseFloat(el.value);
+      valEl.textContent = decimals === 2 ? s2[key].toFixed(2) : s2[key].toFixed(decimals);
+    });
+  };
+  bind('s2_ecc', 'ecc', 2);
+  bind('s2_a', 'semiA', 0);
+  bind('s2_rot', 'rotation', 0);
+
+  document.getElementById('s2_pause').addEventListener('click', function() {
+    s2.paused = !s2.paused;
+    this.textContent = s2.paused ? 'Play' : 'Pause';
+    this.classList.toggle('active', s2.paused);
+  });
+  document.getElementById('s2_reset').addEventListener('click', () => {
+    s2.theta = 0;
+    s2.tsVrad.clear(); s2.tsVtan.clear(); s2.tsDist.clear(); s2.tsOmega.clear(); s2.tsTurn.clear();
+    s2.prevHeading = null;
+    s2.trail = [];
+    document.getElementById('s2_ecc').value = 0.0; s2.ecc = 0.0;
+    document.getElementById('s2_a').value = 60; s2.semiA = 60;
+    document.getElementById('s2_rot').value = 0; s2.rotation = 0;
+    document.getElementById('s2_ecc_val').textContent = '0.00';
+    document.getElementById('s2_a_val').textContent = '60';
+    document.getElementById('s2_rot_val').textContent = '0';
+  });
+}
+
+function s2EllipsePos(theta, a, b, phi) {
+  const cp = Math.cos(phi), sp = Math.sin(phi);
+  const ct = Math.cos(theta), st = Math.sin(theta);
+  return {
+    x: a * ct * cp - b * st * sp,
+    y: a * ct * sp + b * st * cp
+  };
+}
+
+// Analytical derivative of ellipse position w.r.t. theta
+function s2EllipseDeriv(theta, a, b, phi) {
+  const cp = Math.cos(phi), sp = Math.sin(phi);
+  const ct = Math.cos(theta), st = Math.sin(theta);
+  return {
+    dx: -a * st * cp - b * ct * sp,
+    dy: -a * st * sp + b * ct * cp
+  };
+}
+
+function s2Update() {
+  if (s2.paused) return;
+
+  const a = s2.semiA;
+  const e = s2.ecc;
+  const b = a * Math.sqrt(1 - e * e);
+  const phi = s2.rotation * Math.PI / 180;
+
+  // Arc-length parameterization: dtheta = v * dt / ds_dtheta
+  const deriv = s2EllipseDeriv(s2.theta, a, b, phi);
+  const ds_dtheta = Math.sqrt(deriv.dx * deriv.dx + deriv.dy * deriv.dy);
+
+  // Constant linear speed: set so a circle (e=0) orbits at s2.orbitSpeed rad/s
+  const linearSpeed = s2.orbitSpeed * a;  // mm/s for a circle of radius a
+  const dtheta_dt = linearSpeed / ds_dtheta;
+  s2.theta += dtheta_dt * DT;
+
+  // Position
+  const pos = s2EllipsePos(s2.theta, a, b, phi);
+
+  // Analytical velocity: v = (dx/dtheta, dy/dtheta) * dtheta/dt
+  const deriv2 = s2EllipseDeriv(s2.theta, a, b, phi);
+  const ds2 = Math.sqrt(deriv2.dx * deriv2.dx + deriv2.dy * deriv2.dy);
+  const dtheta_dt2 = linearSpeed / ds2;
+  const vx = deriv2.dx * dtheta_dt2;
+  const vy = deriv2.dy * dtheta_dt2;
+
+  const d = decompose(pos.x, pos.y, vx, vy);
+  const omega = d.dist > 0.01 ? d.vtan / d.dist : 0;  // angular velocity = v_tan / r
+  s2.tsVrad.push(d.vrad);
+  s2.tsVtan.push(d.vtan);
+  s2.tsDist.push(d.dist);
+  s2.tsOmega.push(omega);
+
+  // Fly-centric turning rate: dHeading/dt
+  const heading = Math.atan2(vy, vx);
+  if (s2.prevHeading !== null) {
+    let dh = heading - s2.prevHeading;
+    // Wrap to [-pi, pi]
+    while (dh > Math.PI) dh -= 2 * Math.PI;
+    while (dh < -Math.PI) dh += 2 * Math.PI;
+    s2.tsTurn.push(dh / DT);
+  } else {
+    s2.tsTurn.push(0);
+  }
+  s2.prevHeading = heading;
+
+  s2.trail.push([pos.x, pos.y]);
+  if (s2.trail.length > 120) s2.trail.shift();
+
+  s2._pos = pos;
+  s2._decomp = d;
+  s2._ellipse = { a, b, phi };
+}
+
+function s2Draw() {
+  const ctx = s2.ctx;
+  drawArena(ctx);
+
+  if (!s2._ellipse) return;
+  const { a, b, phi } = s2._ellipse;
+
+  // Draw ellipse path (dashed)
+  ctx.strokeStyle = 'rgba(16,185,129,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  for (let i = 0; i <= 100; i++) {
+    const t = (i / 100) * Math.PI * 2;
+    const p = s2EllipsePos(t, a, b, phi);
+    const [cx, cy] = mmToCanvas(p.x, p.y);
+    if (i === 0) ctx.moveTo(cx, cy);
+    else ctx.lineTo(cx, cy);
+  }
+  ctx.closePath();
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (!s2._pos) return;
+  const { x, y } = s2._pos;
+  const [dx, dy] = mmToCanvas(x, y);
+
+  // Trail
+  if (s2.trail.length > 1) {
+    ctx.strokeStyle = 'rgba(239,68,68,0.15)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i < s2.trail.length; i++) {
+      const [tx, ty] = mmToCanvas(s2.trail[i][0], s2.trail[i][1]);
+      if (i === 0) ctx.moveTo(tx, ty);
+      else ctx.lineTo(tx, ty);
+    }
+    ctx.stroke();
+  }
+
+  // Radial line
+  ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(CX, CY);
+  ctx.lineTo(dx, dy);
+  ctx.stroke();
+
+  // Dot
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath();
+  ctx.arc(dx, dy, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Time series
+  const d = s2._decomp;
+  document.getElementById('s2_vrad_val').textContent = d.vrad.toFixed(1) + ' mm/s';
+  document.getElementById('s2_vtan_val').textContent = d.vtan.toFixed(1) + ' mm/s';
+  document.getElementById('s2_dist_val').textContent = d.dist.toFixed(1) + ' mm';
+  const omega2 = d.dist > 0.01 ? d.vtan / d.dist : 0;
+  document.getElementById('s2_omega_val').textContent = omega2.toFixed(2) + ' rad/s';
+  const turnVal2 = s2.tsTurn.length > 0 ? s2.tsTurn.data[s2.tsTurn.length - 1] : 0;
+  document.getElementById('s2_turn_val').textContent = turnVal2.toFixed(2) + ' rad/s';
+
+  drawTS(document.getElementById('ts2_vrad'), s2.tsVrad, '#3b82f6', undefined, undefined, true);
+  drawTS(document.getElementById('ts2_vtan'), s2.tsVtan, '#f59e0b', undefined, undefined, true);
+  drawTS(document.getElementById('ts2_dist'), s2.tsDist, '#10b981', undefined, undefined, false);
+  drawTS(document.getElementById('ts2_omega'), s2.tsOmega, '#8b5cf6', undefined, undefined, false);
+  drawTS(document.getElementById('ts2_turn'), s2.tsTurn, '#e11d48', undefined, undefined, true);
+}
+
+// ============================================================
+// Main loop
+// ============================================================
+function mainLoop() {
+  s1Update();
+  s1Draw();
+  s2Update();
+  s2Draw();
+  requestAnimationFrame(mainLoop);
+}
+
+s1Init();
+s2Init();
+mainLoop();
+</script>
+
+</body>
+</html>
