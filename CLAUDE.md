@@ -459,8 +459,26 @@ All MATLAB figures should follow these aesthetic defaults unless explicitly told
 - Only use dashed or dotted lines when the user specifically asks for them.
 
 ### Colors
-- Use the default MATLAB colororder for data series.
 - Reference/threshold/guide lines should be **light grey** (`[0.7 0.7 0.7]`), not black.
+- **Control data** should use **light grey** (`[0.7 0.7 0.7]` for lines, `[0.85 0.85 0.85]` for fills/shading).
+- **Histograms:** Use a **light grey fill** by default (`FaceColor`, `[0.8 0.8 0.8]`).
+- **Multi-group comparisons:** Prefer a **blue gradient** (light → dark blue) when groups are ordered or on a continuum. Only switch to discrete categorical colours when groups are truly unrelated categories. Example blue gradient for 4 groups:
+  ```matlab
+  blue_shades = [0.75 0.85 0.95;   % lightest
+                 0.45 0.62 0.80;
+                 0.22 0.42 0.69;
+                 0.10 0.25 0.54];   % darkest
+  ```
+- **Discrete categorical colours** (when needed): Use the dashboard "Strain view" palette so figures are consistent with the interactive dashboard. First 6 colours in MATLAB `[R G B]`:
+  ```matlab
+  strain_palette = [0.216 0.494 0.722;   % blue    (#377eb8)
+                    0.894 0.102 0.110;   % red     (#e41a1c)
+                    0.302 0.686 0.290;   % green   (#4daf4a)
+                    0.596 0.306 0.639;   % purple  (#984ea3)
+                    1.000 0.498 0.000;   % orange  (#ff7f00)
+                    0.651 0.337 0.157];  % brown   (#a65628)
+  ```
+  Full list (19 colours) is in `python/freely-walking-python/dashboard/constants.py` → `STRAIN_COLORS`.
 
 ### Standard boilerplate for new figures
 After creating axes or subplots, apply:
