@@ -84,7 +84,8 @@
       "mcp__Claude_in_Chrome__form_input",
       "mcp__Claude_in_Chrome__javascript_tool",
       "Bash(kill 66105 66197 66232 66268 66307 66345)",
-      "Bash(kill 66384)"
+      "Bash(kill 66384)",
+      "Bash(ls -lh /Users/burnettl/Documents/GitHub/freely-walking-optomotor/explorations/tortuosity*)"
     ]
   }
 }

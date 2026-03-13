@@ -32,6 +32,7 @@
 | [ ] | Centring-vs-turning scatter across strains | TBD | New script | Mean centring magnitude vs mean turning magnitude per strain for condition 1 (Fig 4C) |
 | [ ] | Adapt P31 speed analysis for dist_data_delta | TBD | Adapt `analyse_p31_diff_speeds.m` | Speed tuning of centring across strains (Fig 6B) |
 | [ ] | Null model / simulation | TBD | New script | Resample turning angles removing radial bias; formal test that centring exceeds geometric expectation |
+| [ ] | Fly-centric turning metrics (angular velocity vs wall distance) | TBD | `src/plotting/figures/turning_rate_analysis.m` | Uses existing `av_data` from pipeline. Key plot: |av_data| vs distance-to-wall slope per strain. No new processing function needed. 2026-03-13 |
 
 ---
 
@@ -161,6 +162,7 @@ Each of these should be addressed in the manuscript with the corresponding data.
 | [ ] | Optic flow CoR tracking | Centring shifts with shifted CoR | P27 cond 11, P35/P36 | Fig 3E |
 | [ ] | Temperature / shibire effects | Empty-split control has same temp protocol | Control strain | Methods |
 | [ ] | Non-specific locomotor deficits | Forward velocity comparable across strains | Supplementary | Supp Fig S2 |
+| [ ] | Viewing-distance-dependent gain (vs position-independent gain) | Angular velocity scales with wall distance; slope reduced by motion-vision silencing | `turning_rate_analysis.m` | New figure (fly-centric turning) |
 
 ---
 
