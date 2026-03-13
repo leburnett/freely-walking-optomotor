@@ -24,4 +24,10 @@ addpath(genpath(fullfile(REPO_ROOT, 'src', 'patterns', 'make_patterns')));
 % Note: src/protocols/ is intentionally excluded from the path.
 % Protocol files are run-scripts, not callable functions.
 
+% FlyTracker (external dependency, expected as sibling repo)
+FLYTRACKER_ROOT = fullfile(fileparts(REPO_ROOT), 'FlyTracker');
+if exist(FLYTRACKER_ROOT, 'dir')
+    addpath(genpath(FLYTRACKER_ROOT));
+end
+
 disp('MATLAB path configured for freely-walking-optomotor.')

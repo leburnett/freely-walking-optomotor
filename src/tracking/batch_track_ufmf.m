@@ -61,6 +61,13 @@ function tracking_log = batch_track_ufmf(date_folder)
         calib.n_flies = str2double(LOG.meta.n_flies);
         disp(strcat("Number of flies in calibration file: ", string(calib.n_flies)))
 
+        % Validate n_flies before running FlyTracker
+        if isnan(calib.n_flies) || calib.n_flies <= 0
+            error('batch_track_ufmf:noFlies', ...
+                'No flies detected in LOG file (n_flies=%s). Skipping tracking.', ...
+                string(LOG.meta.n_flies));
+        end
+
         input_calibration_file_name = fullfile(ufmf_files(f).folder, 'calibration.mat');
         
         % save as calibration.mat

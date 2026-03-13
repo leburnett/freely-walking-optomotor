@@ -67,6 +67,7 @@ REPO_ROOT = Path(__file__).parent.parent
 DATA_UNPROCESSED = PROJECT_ROOT / "DATA" / "00_unprocessed"
 DATA_TRACKED     = PROJECT_ROOT / "DATA" / "01_tracked"
 DATA_PROCESSED   = PROJECT_ROOT / "DATA" / "02_processed"
+DATA_FAILED      = PROJECT_ROOT / "DATA" / "00_failed"
 RESULTS_PATH     = PROJECT_ROOT / "results"
 FIGURES_PATH     = PROJECT_ROOT / "figures"
 
@@ -102,16 +103,10 @@ NETWORK_ROOT        = r"\\prfs.hhmi.org\reiserlab\oaky-cokey"
 NETWORK_UNPROCESSED = NETWORK_ROOT + r"\data\0_unprocessed"
 NETWORK_TRACKED     = NETWORK_ROOT + r"\data\1_tracked"
 NETWORK_PROCESSED   = NETWORK_ROOT + r"\data\2_processed"
+NETWORK_FAILED      = NETWORK_ROOT + r"\data\0_failed"
 NETWORK_RESULTS     = NETWORK_ROOT + r"\exp_results"
 NETWORK_FIGS        = NETWORK_ROOT + r"\exp_figures\overview_figs"
 
 # Global pipeline status registry (on network drive, shared by both machines)
 PIPELINE_REGISTRY = NETWORK_ROOT + r"\pipeline_status.json"
 
-# ======================================================================
-# ACQUISITION RIG PATH (rig computer only)
-# ======================================================================
-# Where BIAS saves raw video on the acquisition rig.
-# Only used by monitor_and_copy.py.
-# MATLAB equivalent: cfg.rig_data_folder in config/get_config.m
-SOURCE_ROOT = r"C:\MatlabRoot\FreeWalkOptomotor\data"

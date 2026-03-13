@@ -36,7 +36,7 @@ def run_matlab(function_name, *args, setup_path=None):
 
     # Build argument string for MATLAB
     arg_str = ", ".join(f"'{a}'" for a in args)
-    matlab_expr = f"run('{setup_path}'); {function_name}({arg_str})"
+    matlab_expr = f"restoredefaultpath; run('{setup_path}'); {function_name}({arg_str})"
 
     cmd = f'matlab -batch "{matlab_expr}"'
     logger.info(f"Running MATLAB: {cmd}")

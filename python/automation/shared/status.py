@@ -19,6 +19,7 @@ PIPELINE_STAGES = [
     "tracked",
     "processed",
     "synced_to_network",
+    "permanently_failed",
 ]
 
 
@@ -94,7 +95,7 @@ def update_stage(folder_path, stage_name, status="complete", **extra_fields):
     stage_entry.update(extra_fields)
     data["stages"][stage_name] = stage_entry
 
-    if status == "complete":
+    if status == "complete" or stage_name == "permanently_failed":
         data["current_stage"] = stage_name
 
     _write_status(folder_path, data)

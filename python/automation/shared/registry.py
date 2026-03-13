@@ -245,6 +245,7 @@ def _stage_color(stage):
         "tracked": "#0dcaf0",
         "processed": "#198754",
         "synced_to_network": "#20c997",
+        "permanently_failed": "#dc3545",
     }
     return colors.get(stage, "#ffc107")
 
@@ -595,6 +596,12 @@ def _build_html(experiments, last_updated, stage_counts, error_count,
                     <td><code>daily_processing.py</code></td>
                     <td>Result file exists in network exp_results</td>
                 </tr>
+                <tr>
+                    <td><span class="badge" style="background-color:#dc3545">Failed</span></td>
+                    <td>Tracking failed permanently (e.g., no flies detected)</td>
+                    <td><code>monitor_and_track.py</code></td>
+                    <td>Exceeded max retries or unrecoverable error</td>
+                </tr>
             </tbody>
         </table>
     </details>
@@ -636,6 +643,18 @@ def _build_html(experiments, last_updated, stage_counts, error_count,
                     <div class="flow-desc">Results &amp; figures<br>on network drive</div>
                     <div class="flow-req">copy to exp_results</div>
                     <div class="flow-script">daily_processing.py</div>
+                </div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:0;min-width:780px;padding:0 0 10px 0">
+                <div style="flex:2;min-width:260px"></div>
+                <div style="width:130px;text-align:center;padding-top:0">
+                    <div style="font-size:1.4rem;color:#adb5bd">&darr;</div>
+                    <div class="flow-node" style="border-color:#dc3545;margin:0 auto;max-width:130px">
+                        <div class="flow-label" style="background:#dc3545">Failed</div>
+                        <div class="flow-desc">Tracking failed<br>(e.g., no flies)</div>
+                        <div class="flow-req">Max retries exceeded</div>
+                        <div class="flow-script">monitor_and_track.py</div>
+                    </div>
                 </div>
             </div>
             <div class="flow-machines">
@@ -702,20 +721,22 @@ def _build_html(experiments, last_updated, stage_counts, error_count,
 
     <script>
     const expData = {js_data};
-    const stageOrder = ['acquired','copied_to_network','tracked','processed','synced_to_network'];
+    const stageOrder = ['acquired','copied_to_network','tracked','processed','synced_to_network','permanently_failed'];
     const stageColors = {{
         'acquired': '#6c757d',
         'copied_to_network': '#0d6efd',
         'tracked': '#0dcaf0',
         'processed': '#198754',
-        'synced_to_network': '#20c997'
+        'synced_to_network': '#20c997',
+        'permanently_failed': '#dc3545'
     }};
     const stageLabels = {{
         'acquired': 'Acquired',
         'copied_to_network': 'Copied to Network',
         'tracked': 'Tracked',
         'processed': 'Processed',
-        'synced_to_network': 'Synced to Network'
+        'synced_to_network': 'Synced to Network',
+        'permanently_failed': 'Failed'
     }};
     const sortDirMap = {{}};
 

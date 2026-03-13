@@ -21,8 +21,8 @@ from pathlib import Path
 # Load project-wide config
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from config.config import (
-    DATA_UNPROCESSED, DATA_TRACKED,
-    NETWORK_UNPROCESSED, NETWORK_TRACKED, NETWORK_PROCESSED,
+    DATA_UNPROCESSED, DATA_TRACKED, DATA_FAILED,
+    NETWORK_UNPROCESSED, NETWORK_TRACKED, NETWORK_PROCESSED, NETWORK_FAILED,
     REPO_ROOT,
 )
 
@@ -41,18 +41,23 @@ LOCAL_PATH         = str(DATA_UNPROCESSED)
 TRACKED_PATH       = NETWORK_TRACKED
 TRACKED_LOCAL_PATH = str(DATA_TRACKED)
 PROCESSED_PATH     = NETWORK_PROCESSED
+FAILED_PATH        = NETWORK_FAILED
 
 # Constants
 TRACKING_OUTPUT = "trx.mat"
 SCAN_INTERVAL = 300  # seconds (5 minutes)
+MAX_TRACKING_RETRIES = 3
 
 
 def has_been_processed(folder_path):
-    """Check if the folder already exists in tracked or processed locations."""
+    """Check if the folder already exists in tracked, processed, or failed locations."""
     rel_path = os.path.relpath(folder_path, GROUP_DRIVE_PATH)
     tracked_path = os.path.join(TRACKED_PATH, rel_path)
     processed_path = os.path.join(PROCESSED_PATH, rel_path)
-    return os.path.exists(tracked_path) or os.path.exists(processed_path)
+    failed_path = os.path.join(FAILED_PATH, rel_path)
+    return (os.path.exists(tracked_path)
+            or os.path.exists(processed_path)
+            or os.path.exists(failed_path))
 
 
 def copy_to_local(folder_path):
@@ -88,7 +93,7 @@ def run_matlab_tracking(folder_path):
         setup_path = str(REPO_ROOT / "setup_path.m").replace("\\", "/")
         folder_path_matlab = folder_path.replace("\\", "/")
         cmd = (
-            f'matlab -batch "run(\'{setup_path}\'); '
+            f'matlab -batch "restoredefaultpath; run(\'{setup_path}\'); '
             f"cd('{folder_path_matlab}'); "
             f"batch_track_ufmf('{folder_path_matlab}')\""
         )
@@ -113,6 +118,55 @@ def tracking_successful(folder_path):
         if TRACKING_OUTPUT in files:
             return True
     return False
+
+
+def get_tracking_error_count(folder_path):
+    """Count how many tracking errors have been recorded for this experiment."""
+    status = read_status(folder_path)
+    if status is None:
+        return 0
+    return sum(
+        1 for e in status.get("errors", [])
+        if e.get("stage") == "tracked"
+    )
+
+
+def has_exceeded_max_retries(folder_path):
+    """Check if the experiment has exceeded the max tracking retry limit."""
+    return get_tracking_error_count(folder_path) >= MAX_TRACKING_RETRIES
+
+
+def move_to_failed(local_folder):
+    """Move a permanently failed experiment to the failed folder (network + local).
+
+    Steps:
+    1. Move from local unprocessed to network 0_failed
+    2. Delete from network 0_unprocessed
+    3. Clean up empty parent directories
+    """
+    rel_path = os.path.relpath(local_folder, LOCAL_PATH)
+    failed_dest = os.path.join(FAILED_PATH, rel_path)
+    group_unprocessed_folder = os.path.join(GROUP_DRIVE_PATH, rel_path)
+
+    # Move local copy to network failed folder
+    try:
+        os.makedirs(os.path.dirname(failed_dest), exist_ok=True)
+        shutil.move(local_folder, failed_dest)
+        logger.info(f"Moved to failed: {failed_dest}")
+        cleanup_empty_parents(os.path.dirname(local_folder), LOCAL_PATH)
+    except Exception as e:
+        logger.error(f"Failed to move to failed folder: {e}")
+
+    # Delete original from network unprocessed
+    try:
+        if os.path.exists(group_unprocessed_folder):
+            shutil.rmtree(group_unprocessed_folder)
+            logger.info(f"Deleted original: {group_unprocessed_folder}")
+            cleanup_empty_parents(
+                os.path.dirname(group_unprocessed_folder), GROUP_DRIVE_PATH
+            )
+    except Exception as e:
+        logger.error(f"Failed to delete {group_unprocessed_folder}: {e}")
 
 
 def move_to_tracked(local_folder):
@@ -199,9 +253,30 @@ def process_all_untracked_folders():
                             "MATLAB batch_track_ufmf failed or trx.mat not found",
                             details=stderr,
                         )
-                        updated = read_status(local_copy)
-                        if updated:
-                            update_registry(updated)
+
+                        # Check if we've exceeded max retries
+                        if has_exceeded_max_retries(local_copy):
+                            logger.warning(
+                                f"Experiment exceeded {MAX_TRACKING_RETRIES} retries, "
+                                f"moving to failed: {local_copy}"
+                            )
+                            update_stage(
+                                local_copy, "permanently_failed", status="failed",
+                            )
+                            updated = read_status(local_copy)
+                            if updated:
+                                update_registry(updated)
+                            move_to_failed(local_copy)
+                            processed_any = True
+                        else:
+                            error_count = get_tracking_error_count(local_copy)
+                            logger.info(
+                                f"Retry {error_count}/{MAX_TRACKING_RETRIES} "
+                                f"for {local_copy}"
+                            )
+                            updated = read_status(local_copy)
+                            if updated:
+                                update_registry(updated)
 
     return processed_any
 
