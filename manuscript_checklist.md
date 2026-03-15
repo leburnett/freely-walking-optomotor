@@ -3,7 +3,7 @@
 > **Plan file:** `.claude/plans/enchanted-exploring-ember.md`
 > **Session notes:** `session_notes.md`
 > **Branch:** `paper-plan`
-> **Last updated:** 2026-03-12 (radial/tangential decomposition + heading-to-center analysis)
+> **Last updated:** 2026-03-13 (Phase 3 started. fig1_centring.m created — 6-panel Figure 1 standalone script.)
 
 ---
 
@@ -27,12 +27,13 @@
 |--------|------|----------------|--------|-------|
 | [x] | Radial/tangential velocity decomposition | `figures/FIGS/radial_tangential_per_fly.csv`, 4 figures | `src/plotting/figures/radial_tangential_analysis.m`, `src/processing/functions/compute_radial_tangential.m` | Decomposes velocity into centripetal + tangential. Includes cross-strain comparison and partial correlation geometric test. 2026-03-12 |
 | [x] | Heading-to-center analysis | Same CSV and figures | `src/processing/functions/compute_heading_to_center.m` (shared), same analysis script | Alignment index (cos of heading-to-center angle). Polar histograms, distance-binned timeseries. 2026-03-12 |
-| [ ] | Cross-strain heatmap: strains x conditions (centring) | TBD | Extend `make_summary_heat_maps_p27.m` | Existing script does 1 condition; need all 12. Both p-value and raw-value versions for dist_data_delta |
-| [ ] | Cross-strain heatmap: strains x conditions (turning) | TBD | Same extension | Side-by-side with centring heatmap (Fig 4A-B) |
-| [ ] | Centring-vs-turning scatter across strains | TBD | New script | Mean centring magnitude vs mean turning magnitude per strain for condition 1 (Fig 4C) |
-| [ ] | Adapt P31 speed analysis for dist_data_delta | TBD | Adapt `analyse_p31_diff_speeds.m` | Speed tuning of centring across strains (Fig 6B) |
-| [ ] | Null model / simulation | TBD | New script | Resample turning angles removing radial bias; formal test that centring exceeds geometric expectation |
-| [ ] | Fly-centric turning metrics (angular velocity vs wall distance) | TBD | `src/plotting/figures/turning_rate_analysis.m` | Uses existing `av_data` from pipeline. Key plot: |av_data| vs distance-to-wall slope per strain. No new processing function needed. 2026-03-13 |
+| [x] | Cross-strain heatmap: strains x conditions (centring) | Panel A | `src/plotting/figures/cross_strain_condition_heatmaps.m` | 34/192 cells sig (FDR q<0.05). Key: Tm5Y centres MORE (p=4.9e-11); T4/T5 & L1/L4 abolished; Dm4 & TmY20 reduced; Am1 deficit in flicker/static/offset only. 2026-03-13 |
+| [x] | Cross-strain heatmap: strains x conditions (turning) | Panel B | `src/plotting/figures/cross_strain_condition_heatmaps.m` | 72/192 cells sig. Key dissociations: TmY20/Pm2ab/H1 turn MORE but centre LESS; Tm5Y centres MORE with normal turning; T4-only & T5-only turn MORE (compensated) vs T4/T5 combined abolished. 2026-03-13 |
+| [x] | Centring-vs-turning scatter across strains | Scatter plot | `src/plotting/figures/centring_vs_turning_scatter.m` | **rho = -0.006, p = 0.987** — zero correlation. Centring NOT predicted by turning. Key: Tm5Y normal turning + strongest centring; Dm4 normal turning + 61% less centring; TmY20 +44% turning but -27% centring. 2026-03-13 |
+| [x] | Adapt P31 speed analysis for dist_data_delta | 2×2 figure | `src/plotting/figures/p31_speed_tuning_centring.m` | Speed tuning of centring + turning across 8 strains, 60deg + 15deg gratings. Uses `combine_timeseries_across_exp_check` (quiescence QC). Welch's t-test at each speed. 2026-03-13 |
+| [x] | Null model / simulation | 1×3 figure | `src/model/centring_null_model.m` | Per-fly heading-shuffle permutation (N=1000). Preserves turning rate + speed distributions, breaks position-heading correlation. Histogram, timeseries envelope, per-fly scatter. 2026-03-13 |
+| [x] | Fly-centric turning metrics (angular velocity vs wall distance) | 8 figures | `src/plotting/figures/turning_rate_analysis.m` | Uses existing `av_data` from pipeline. |AV| vs wall-distance slope per strain + 4 follow-up controls (delta-AV, early/late, FV, start-position). **Rejects** simple viewing-distance gain; optomotor response stronger at centre. 2026-03-13 |
+| [x] | Offset CoR turning rate analysis (cond 11 vs cond 1 vs flicker) | Figure 9 (1x3) | `src/plotting/figures/turning_rate_analysis.m` (Section 15) | **Result:** Offset CoR slope (+0.58) NOT different from centred (+0.47), p=0.38. Flicker slope negative (-0.40), delta flat (-0.01). Reveals |AV| vs wall-distance is arena-geometry-dependent, NOT CoR-dependent. Two separable mechanisms: turning magnitude scales with arena position; centring target tracks CoR. 2026-03-13 |
 
 ---
 
@@ -42,12 +43,12 @@
 
 | Status | Panel | Content | Output Location | Script | Notes |
 |--------|-------|---------|----------------|--------|-------|
-| [ ] | A | Arena schematic (top-down, dimensions) | Manual (Illustrator) | N/A | Cylindrical LED arena, camera view |
-| [ ] | B | Example trajectories (3-4 control flies, cond 1), pre/during/post colored | TBD | `plot_traj_xcond.m`, `centring_turning_traj_plots.m` | |
-| [ ] | C | Mean +/- SEM time series: dist_data, control, cond 1 | TBD | `plot_xcond_per_strain2.m` via `fig1_plots.m` | Vertical lines at stimulus on/off |
-| [ ] | D | Same for dist_data_delta | TBD | Same infrastructure | |
-| [ ] | E | Spatial occupancy heatmaps: pre vs during | TBD | `plot_fly_occupancy_heatmaps_all.m` | |
-| [ ] | F | Scatter: starting distance vs ending distance (unity line) | TBD | `dv_dist_data.m` | |
+| [ ] | A | Arena schematic (top-down, dimensions) | Manual (Illustrator) | N/A | Placeholder in fig1_centring.m. Cylindrical LED arena, camera view |
+| [x] | B | Example trajectories (3-4 control flies, cond 1), pre/during/post colored | `figures/manuscript/fig1_centring.pdf` | `fig1_centring.m` | Fly IDs [807,802,791]. Grey=pre/post, blue=stim |
+| [x] | C | Mean +/- SEM time series: dist_data, control, cond 1 | `figures/manuscript/fig1_centring.pdf` | `fig1_centring.m` | QC-filtered via combine_timeseries_across_exp_check |
+| [x] | D | Same for dist_data_delta | `figures/manuscript/fig1_centring.pdf` | `fig1_centring.m` | Baseline subtracted at frame 300 |
+| [x] | E | Spatial occupancy heatmaps: pre vs during | `figures/manuscript/fig1_centring.pdf` | `fig1_centring.m` | 2 side-by-side heatmaps, shared CLim |
+| [x] | F | Scatter: starting distance vs ending distance (unity line) | `figures/manuscript/fig1_centring.pdf` | `fig1_centring.m` | Below unity = centring |
 
 ### Figure 2 — Centring Dynamics & Relationship to Turning
 
@@ -111,7 +112,7 @@
 | Status | Task | Output Location | Script | Notes |
 |--------|------|----------------|--------|-------|
 | [ ] | Define consistent color scheme and formatting | N/A | Shared config or function | Plotting conventions in CLAUDE.md |
-| [ ] | Create `fig1_centring.m` master script | `figures/FIGS/fig1_*.pdf` | `src/plotting/figures/fig1_centring.m` | |
+| [x] | Create `fig1_centring.m` master script | `figures/manuscript/fig1_centring.pdf` | `src/plotting/figures/fig1_centring.m` | 2x3 tiledlayout: A=placeholder, B=trajectories, C=dist ts, D=dist_delta ts, E=occupancy heatmaps, F=start-vs-end scatter. 2026-03-13 |
 | [ ] | Create `fig2_dynamics.m` master script | `figures/FIGS/fig2_*.pdf` | `src/plotting/figures/fig2_dynamics.m` | |
 | [ ] | Create `fig3_stimulus_specificity.m` master script | `figures/FIGS/fig3_*.pdf` | `src/plotting/figures/fig3_stimulus_specificity.m` | |
 | [ ] | Create `fig4_screen_overview.m` master script | `figures/FIGS/fig4_*.pdf` | `src/plotting/figures/fig4_screen_overview.m` | |
@@ -159,10 +160,10 @@ Each of these should be addressed in the manuscript with the corresponding data.
 | [ ] | Social/collision effects | Solo flies still centre | P25 solo data, `single_lady_analysis.m` | Fig 2E |
 | [ ] | Phototaxis | Phototaxis condition doesn't produce centring | P27 cond 12 | Fig 3A |
 | [ ] | Geometric consequence of turning | Radial/tangential decomposition; null model; centring-vs-turning scatter | New analyses | Fig 2D, Fig 4C, Methods |
-| [ ] | Optic flow CoR tracking | Centring shifts with shifted CoR | P27 cond 11, P35/P36 | Fig 3E |
+| [x] | Optic flow CoR tracking | Centring target shifts with shifted CoR (position data). **However**, turning rate (|AV| vs wall dist) does NOT change with offset CoR (slope +0.58 vs +0.47, p=0.38). Reveals two separable mechanisms: (1) turning magnitude is arena-geometry-dependent, (2) centring direction is CoR-dependent. | P27 cond 11; `turning_rate_analysis.m` Fig 9 | Fig 3E + turning rate Fig 9 |
 | [ ] | Temperature / shibire effects | Empty-split control has same temp protocol | Control strain | Methods |
 | [ ] | Non-specific locomotor deficits | Forward velocity comparable across strains | Supplementary | Supp Fig S2 |
-| [ ] | Viewing-distance-dependent gain (vs position-independent gain) | Angular velocity scales with wall distance; slope reduced by motion-vision silencing | `turning_rate_analysis.m` | New figure (fly-centric turning) |
+| [x] | Viewing-distance-dependent gain (vs position-independent gain) | **Rejected.** |AV| is HIGHER at centre (slope +0.47, p=1.2e-8). Delta-AV confirms (+1.44, p=1.7e-13). Early>late rules out centring artifact. FV flat (no locomotor confound). Revised interpretation: symmetric optic flow at centre drives stronger optomotor response; centring arises from geometry of curved walking in bounded arena. | `turning_rate_analysis.m` (Figs 1–8) | New figure (fly-centric turning) |
 
 ---
 

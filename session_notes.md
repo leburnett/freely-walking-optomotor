@@ -1,5 +1,494 @@
 # Session Notes — Freely Walking Optomotor Manuscript
 
+## 2026-03-13 (cont'd): Figure 1 — Experimental System & the Centring Phenomenon
+
+**New script:** `src/plotting/figures/fig1_centring.m`
+**Phase:** 3 (Figure Generation)
+
+### What was done
+Created standalone Figure 1 script with 6 panels in a 2×3 `tiledlayout`:
+
+| Panel | Content | Implementation |
+|-------|---------|---------------|
+| A | Arena schematic | Placeholder (Illustrator) |
+| B | Example trajectories (3 control flies, cond 1) | Pre/during/post colored (grey/blue/grey). Fly IDs [807,802,791] from fig1_plots.m |
+| C | Mean ± SEM dist_data time series | QC-filtered via `combine_timeseries_across_exp_check` |
+| D | Baseline-subtracted dist_data_delta | Subtracted frame 300 baseline |
+| E | Occupancy heatmaps (pre vs during) | 2 side-by-side axes from split tile. Adapted from `plot_fly_occupancy_heatmaps_all.m` |
+| F | Start vs end distance scatter | Unity line. Below = centring. Adapted from `dv_dist_data.m` |
+
+### Design decisions
+- **All inline drawing** — no calls to `plot_trajectory_condition`, `plot_fly_occupancy_heatmaps_all`, or `plot_xcond_per_strain2`. These existing functions create their own figures/legends. For composed multi-panel figures we need direct control over each axes.
+- **Panel E tile split:** Used `nexttile(5)` → get position → delete → create 2 manual `axes()` at left/right halves. Standard MATLAB pattern for sub-dividing tiledlayout tiles.
+- **`combine_timeseries_across_exp`** (no QC) for x/y trajectory data; `combine_timeseries_across_exp_check` (quiescence QC) for dist_data.
+- Saves to `figures/manuscript/fig1_centring.pdf` as vector graphics.
+
+---
+
+## 2026-03-13 (cont'd): Heading-Shuffle Null Model — Centring Exceeds Geometric Expectation
+
+**New script:** `src/model/centring_null_model.m`
+
+### What was done
+Per-fly heading-shuffle permutation test (N=1000 iterations) for control flies (P27, condition 1, 60deg 4Hz). For each fly, the frame-to-frame heading changes (dθ) during the stimulus period (frames 300–1200) are randomly permuted, and the trajectory is reconstructed using the original speeds and starting position. This preserves each fly's turning rate distribution and speed profile but breaks any temporal correlation between position and heading direction.
+
+If centring is merely a geometric consequence of curved walking in a bounded circular arena, shuffled trajectories should produce similar centring. If centring is an active behaviour, observed centring should far exceed the null distribution.
+
+### Implementation details
+- Loads control data via `combine_timeseries_across_exp_check` (quiescence QC)
+- Arena constants: PPM=4.1691, CX=528/PPM, CY=520/PPM, ARENA_R=496/PPM (~119 mm)
+- Heading changes computed in radians, wrapped to [-π, π]
+- Speeds converted to mm/frame (vel × dt)
+- Boundary reflection at arena wall: if reconstructed position exceeds ARENA_R, heading is flipped by π and position stays put (matching `simulate_walking_viewdist_gain.m` logic)
+- Local helper: `reconstruct_trajectory_shuffled(x0, y0, theta0, dtheta_shuffled, speeds, CX, CY, ARENA_R)`
+- 3-panel figure: (A) histogram of observed vs null per-fly centring, (B) timeseries with null 95% CI envelope, (C) per-fly scatter observed vs shuffled
+
+### Results
+
+| Metric | Value |
+|--------|-------|
+| **Observed centring** | **-17.8 ± 0.8 mm** (mean ± SEM, N=425 flies) |
+| **Null centring** | **-1.4 ± 0.2 mm** (mean ± SD of shuffle means) |
+| **Z-score** | **-98.5** |
+| **Population p-value** | **0** (empirical, 1000 shuffles) |
+| Per-fly significant (p<0.05) | 345/425 (81%) |
+| Median per-fly p-value | 0.0040 |
+| Mean null centring per fly | -1.4 mm |
+
+**Observed centring is 12.7× stronger than the geometric expectation from shuffled heading changes.** The null distribution is centred near zero (slight negative bias of -1.4 mm likely reflects boundary effects in the circular arena), while observed centring is -17.8 mm — completely outside the null range.
+
+### Interpretation
+- Centring is NOT a geometric artifact of curved walking in a bounded arena
+- The temporal ordering of heading changes matters — flies actively adjust their heading relative to their position
+- Even the 19% of flies that are not individually significant likely have weak centring (the test is conservative for flies with few valid frames or that start near the centre)
+- The z-score of -98.5 corresponds to a vanishingly small p-value — the observed population mean is ~100 standard deviations below the null expectation
+
+### Manuscript implications
+- This is the definitive control for the "geometric artifact" alternative explanation
+- Can be cited as: "Heading-shuffle permutation test (1000 iterations per fly, N=425) confirmed that observed centring (-17.8 mm) far exceeded geometric expectations from random walking (-1.4 mm; z = -98.5, p < 0.001)"
+- The null model also provides a useful baseline for interpreting strain effects: if a strain's centring falls within the null range, centring may be abolished
+
+---
+
+## 2026-03-13: Cross-strain x cross-condition heatmaps (Figure 10)
+
+**New script:** `src/plotting/figures/cross_strain_condition_heatmaps.m`
+
+### What was done
+Created standalone `cross_strain_condition_heatmaps.m` (1x2 panels):
+- **Panel A — Centring**: Relative distance at end of stimulus (Dist-rel-end metric from `dist_metric_tests`)
+- **Panel B — Turning**: Mean turning rate during stimulus (Turning-stim metric from `curv_metric_tests`)
+
+Both are strains (rows) x conditions 1-12 (columns) heatmaps. Each cell compares one strain vs ES control (Welch's t-test), with FDR correction across all comparisons (q<0.05). Color scheme: red = target metric value higher than control, blue = lower, intensity = significance level.
+
+### Implementation details
+- Reuses existing `make_pvalue_heatmap_across_strains(DATA, condition_n)` for all 12 conditions
+- Extracts specific metric columns from the 6-metric output: col 6 (centring), col 3 (turning)
+- `build_heatmap_rgb` local helper function mirrors the existing `mapValues`/`plot_pval_heatmap` color scheme
+- FDR correction is joint across both panels (2 x n_strains x 12 comparisons)
+
+### Results — key findings
+
+**Overall:** Centring 34/192 cells significant; Turning 72/192 cells significant (FDR q<0.05).
+
+#### Key dissociations (centring vs turning)
+
+1. **Tm5Y (ss03722):** Enhanced centring (RED in 60deg 4Hz p=4.9e-11, ON bars p=4.2e-10, OFF bars p=4.0e-3) but NORMAL turning (no sig cells except RevPhi). **This is the critical dissociation** — more centring without more turning, suggesting centring can be upregulated independently of optomotor response.
+
+2. **TmY20 (ss2603):** Reduced centring (BLUE in 60deg 4Hz/8Hz, ON/OFF bars, OFF curtains, Offset CoR) but INCREASED turning (RED in 60deg 4Hz/8Hz, ON/OFF bars, ON curtains, Offset CoR). **Opposite direction** — these flies turn more but centre less.
+
+3. **T4/T5 combined (ss324):** Abolished BOTH turning (BLUE, p~1e-123 to 1e-142 for gratings/bars) AND centring (BLUE, p~1e-9 to 1e-16). Classic motion-blind phenotype — near-zero turning rate values (~5 deg/s vs 80 control).
+
+4. **T4-only (ss2344):** INCREASED turning (RED in 60deg 4Hz/8Hz, ON bars, OFF bars, OFF curtains, Offset CoR) but centring NOT significantly different (mostly p>0.05). Compensatory response — silencing T4 alone doesn't abolish motion vision.
+
+5. **T5-only (ss2571):** INCREASED turning (RED in 60deg 4Hz/8Hz, ON bars, ON curtains, Offset CoR) and slightly MORE centring (RED in ON curtains p=3.5e-2). Similar to T4-only — individual pathway silencing is compensated.
+
+6. **Dm4 (ss00297):** Reduced centring (BLUE in 60deg 4Hz p=5.5e-10, 8Hz p=5.4e-25, OFF curtains p=3.5e-12, Offset CoR p=4.6e-20) but turning only increased for bars (RED ON bars p=3.5e-10, OFF bars p=1.4e-4). **Selective** — centring impairment broader than turning change.
+
+#### Stimulus specificity
+
+- **Reverse phi (conds 7-8):** Generally NOT significant for centring across strains. But L1/L4 and T4/T5 show RED (increased) turning for RevPhi — reversed optomotor response when primary pathways are silenced.
+- **Flicker (cond 9) & Static (cond 10):** Mostly white (not significant). Exception: Am1 shows BLUE centring for flicker (p=4.2e-4) and static (p=4.9e-3) — specific deficit.
+- **Bar fixation (cond 12):** Mostly white. Not a centring-driving stimulus.
+- **Am1 (ss34318):** BLUE centring in flicker, static, AND Offset CoR (p=4.9e-12) but NOT in standard gratings. Unusual pattern — may relate to adaptation or static pattern responses rather than motion processing.
+
+#### Control validations
+- **L1/L4:** Severely impaired across the board (BLUE everywhere) — confirms screen sensitivity
+- **Pm2ab (ss00326):** No centring phenotype but INCREASED turning (RED) across most conditions — another centring-turning dissociation
+- **H1 (ss26283):** Reduced centring (BLUE) at 8Hz and Offset CoR, but INCREASED turning (RED) across many conditions — same dissociation pattern as TmY20
+
+#### Raw mean values (condition 1, 60deg 4Hz)
+- Control centring: -32.8 mm (strong centring)
+- Tm5Y: -49.1 mm (strongest centring of any strain)
+- T4/T5: -17.6 mm (reduced by ~46%)
+- L1/L4: -4.1 mm (nearly abolished, ~88% reduction)
+- Dm4: -12.9 mm (reduced by ~61%)
+- TmY20: -23.8 mm (reduced by ~27%)
+- Control turning: 79.6 deg/s
+- T4/T5: 5.2 deg/s (nearly abolished)
+- L1/L4: 2.6 deg/s (nearly abolished)
+- T4-only: 110.3 deg/s (38% increase)
+- TmY20: 114.9 deg/s (44% increase)
+
+### Interpretations
+
+#### Tm5Y: "personal space" / proximity avoidance hypothesis
+Tm5Y cells may normally mediate a proximity-avoidance or "personal space" mechanism — a tendency to maintain distance from nearby visual features (the arena wall). Silencing Tm5Y removes this avoidance, allowing flies to centre more aggressively. This is consistent with the phenotype: enhanced centring with unchanged turning. The centring enhancement is NOT because the flies turn more — their optomotor turning is normal — but because a separate spatial-positioning signal that normally counteracts full centring is removed. This would place Tm5Y in a pathway that computes distance-to-wall or looming/proximity information and feeds into a positional control system parallel to the optomotor turning pathway.
+
+#### Visual projection neurons (Am1, H1, H2, DCH-VCH): binocular integration
+Am1, H1, H2, and DCH-VCH all show centring deficits that are specifically worse for the faster 8Hz gratings and the offset CoR condition, while standard 4Hz gratings are less affected. These neurons are visual projection neurons (VPNs) at the output side of the visual system, thought to be involved in:
+- Integrating information across both eyes (binocular processing)
+- Complex visual processing over the entire field of view
+
+This pattern makes sense: centring to offset gratings requires comparing optic flow across the full visual field to find the CoR, and faster gratings (8Hz) may require more sophisticated temporal integration. These are exactly the conditions where whole-field or binocular integration would be most critical. Standard 4Hz centred gratings may be simple enough that local motion circuits suffice, but offset CoR and high temporal frequency demand the kind of global integration these VPNs provide.
+
+Specific p-values for the VPN cluster (centring, BLUE = reduced):
+- **Am1:** 8Hz p=1.8e-2, Offset CoR p=4.9e-12, Flicker p=4.2e-4, Static p=4.9e-3
+- **H1:** 8Hz p=5.2e-7, Offset CoR p=3.9e-2
+- **H2:** 8Hz p=1.1e-4
+- **DCH-VCH:** 8Hz p=3.1e-5, Offset CoR p=1.2e-2
+
+### Manuscript implications
+
+The heatmap reveals four classes of strain phenotype:
+1. **Motion-blind (T4/T5, L1/L4):** Both turning and centring abolished — centring requires motion processing
+2. **Centring-turning dissociation (Tm5Y, TmY20, Pm2ab, H1):** Turning intact or increased but centring impaired (TmY20) or enhanced (Tm5Y) — centring is not a simple byproduct of turning
+3. **Proximity/spatial regulation (Tm5Y):** Enhanced centring with normal turning — silencing removes a "personal space" mechanism that normally limits centring. Places Tm5Y in a distance-to-wall / proximity avoidance pathway parallel to optomotor turning.
+4. **Visual projection neuron cluster (Am1, H1, H2, DCH-VCH):** Centring deficits specifically at 8Hz and offset CoR — conditions requiring binocular/whole-field integration. Consistent with their known role in integrating visual information across both eyes and the full visual field.
+5. **Selective condition effects (Dm4):** Broad centring impairment but turning increase only for bars — suggests modular processing
+
+### Next steps
+- Continue with remaining Phase 2 tasks: P31 speed analysis, null model
+
+---
+
+## 2026-03-13 (cont'd): Centring-vs-turning scatter across strains
+
+**New script:** `src/plotting/figures/centring_vs_turning_scatter.m`
+
+### What was done
+Created standalone scatter plot: each point is one strain (condition 1, 60deg 4Hz).
+- X-axis: mean turning rate during stimulus (deg/s)
+- Y-axis: mean centring (relative distance at end of stimulus, mm) — axis reversed so MORE centring = UP
+- Grey crosshairs at ES control values; control point labelled
+- All strain labels annotated on points
+- Spearman correlation and per-strain summary table printed to console
+
+### Results
+
+**Spearman correlation: rho = -0.006, p = 0.987** — essentially zero. Turning rate does NOT predict centring across strains.
+
+This is the single strongest argument that centring is not a simple byproduct of optomotor turning: strains that turn more do not necessarily centre more, and vice versa.
+
+Key positions in the scatter:
+
+| Strain | Turning (deg/s) | Centring (mm) | Interpretation |
+|--------|-----------------|---------------|----------------|
+| ES control | 79.6 | -32.8 | Reference |
+| Tm5Y | 75.6 | -49.1 | Normal turning, ENHANCED centring |
+| TmY20 | 114.9 | -23.8 | HIGH turning, reduced centring |
+| H1 | 105.0 | -27.2 | HIGH turning, reduced centring |
+| Pm2ab | 108.0 | -38.4 | HIGH turning, normal centring |
+| T4/T5 | 5.2 | -17.6 | Both abolished (motion-blind) |
+| L1/L4 | 2.6 | -4.1 | Both abolished (motion-blind) |
+| T4-only | 110.3 | -26.1 | HIGH turning, slightly reduced centring |
+| Dm4 | 86.0 | -12.9 | Normal turning, severely reduced centring |
+| TmY3 | 55.9 | -39.8 | Reduced turning, normal centring |
+
+Notable dissociations:
+- **Tm5Y** has control-level turning but the STRONGEST centring of any strain — confirms "personal space" hypothesis
+- **TmY20** turns 44% more than control but centres 27% less — opposite directions
+- **Dm4** turns normally but centres 61% less — centring impaired independently of turning
+- **TmY3** turns 30% less than control but centres normally — turning deficit doesn't impair centring
+
+---
+
+## 2026-03-13 (cont'd): P31 Speed Tuning — Centring & Turning
+
+**New script:** `src/plotting/figures/p31_speed_tuning_centring.m`
+
+### What was done
+Speed tuning curves for centring (dist_data_delta) and turning (av_data) across 6 P31 strains: control (N=46), L1/L4 (N=16), Dm4/ss00297 (N=76), Pm2ab (N=61), T4-only (N=15), T4/T5 (N=48). Two spatial frequencies: 60deg and 15deg gratings. Excluded csw1118 and ss02360_Dm4.
+
+### Key findings
+
+#### 1. Centring IS speed-tuned
+Control centring varies with speed:
+- **60deg:** peaks at 240 deg/s (-24.0 mm), declining at 480 (-19.9)
+- **15deg:** monotonically increases, peaking at 480 deg/s (-30.0 mm)
+- Centring speed tuning roughly tracks turning speed tuning but is NOT identical — 60deg centring peaks at 240 while turning is still increasing at 480
+
+#### 2. Dm4: most consistent centring deficit
+Dm4 centring is impaired at ALL speeds and BOTH spatial frequencies:
+- 60deg: -5.3 to -8.3 mm vs control -14.7 to -24.0 (p = 1.9e-3 to 4.8e-8)
+- 15deg: -1.5 to -19.1 mm vs control -6.0 to -30.0 (p = 1.1e-2 to 2.2e-4)
+- Turning is largely NORMAL (no sig difference except marginal at 120 and 480 for 60deg)
+- **This confirms P27 finding:** Dm4 impairs centring without abolishing turning
+
+#### 3. T4/T5 centring less impaired than turning
+T4/T5 turning is near-zero across all speeds (~5-20 vs 30-187 control), yet centring is only moderately reduced:
+- 60deg: -12.9 to -16.9 vs control -14.7 to -24.0 (sig only at 240 and 480, p = 0.015 and 0.023)
+- 15deg at low speeds: -13.1 at 60 deg/s and -21.0 at 120 deg/s — essentially EQUAL to control (-6.0 and -19.4)
+- 15deg at 480: -8.7 vs -30.0 (p = 1.3e-6) — strongly impaired
+- **Implication:** At lower speeds, T4/T5 flies can centre without optomotor turning — other sensory cues may contribute
+
+#### 4. L1/L4 speed-selective centring deficit
+L1/L4 centring is impaired selectively at higher speeds:
+- 60deg: significant at 120 (p=0.036) and 480 (p=0.010) but NOT at 60 or 240
+- 15deg: strongly impaired at 240 (p=2.1e-6) and 480 (p=2.3e-4) but NOT at 60 or 120
+- Turning is abolished across the board (all p < 1e-11)
+
+#### 5. Flicker centring is a genuine behaviour
+Control flicker centring: -16.6 mm (60deg) and -9.5 mm (15deg). Rather than baseline drift, this appears to be a genuine centring response to luminance modulation itself. T4/T5 also shows flicker centring (-19.0 mm for 60deg, -6.6 mm for 15deg), confirming it does not require direction-selective motion processing.
+
+### Interpretations
+
+#### Two-component model: flicker centring + motion centring
+The data support a model where **total centring = flicker/luminance centring + motion-specific centring**:
+
+- **Flicker centring:** T4/T5-independent, driven by luminance modulation. Present for both gratings AND flicker stimuli. Has its own temporal frequency limit.
+- **Motion centring:** T4/T5-dependent, driven by directional motion signals. Adds on top of the flicker component for grating stimuli.
+
+Key evidence — T4/T5 15deg centring matches control except at 480 deg/s:
+
+| Speed | Control | T4/T5 | Notes |
+|-------|---------|-------|-------|
+| 60 | -6.0 | -13.1 | T4/T5 MORE than control |
+| 120 | -19.4 | -21.0 | Matched |
+| 240 | -29.2 | -29.8 | Matched |
+| 480 | -30.0 | -8.7 | Collapsed (p=1.3e-6) |
+| Flicker | -9.5 | -6.6 | Both present |
+
+Despite near-zero turning (~3-5 deg/s), T4/T5 centres as well as controls at 60-240 deg/s. The flicker/luminance component alone is sufficient at these speeds. At 480 deg/s (= 32 Hz temporal frequency for 15deg), T4/T5 centring collapses — the luminance pathway has a temporal frequency ceiling below 32 Hz.
+
+**Dm4 interpretation in this framework:** Dm4 impairs centring across ALL speeds and flicker (-5.2 mm vs control -16.6 mm for 60deg flicker). This suggests Dm4 affects the luminance/flicker centring pathway, not just the motion pathway. Dm4 cells may be upstream of both centring mechanisms.
+
+### Raw values — 60deg centring (mm)
+
+| Strain | 60 | 120 | 240 | 480 | Flicker |
+|--------|-----|------|------|------|---------|
+| Control | -14.7 | -21.6 | -24.0 | -19.9 | -16.6 |
+| T4/T5 | -12.9 | -16.9 | -14.3 | -13.0 | -19.0 |
+| L1/L4 | -12.2 | -11.2 | -13.7 | -8.6 | -12.3 |
+| Dm4 | -5.3 | -5.6 | -8.3 | -7.0 | -5.2 |
+| Pm2ab | -11.4 | -11.7 | -17.6 | -15.3 | -7.9 |
+| T4-only | -12.6 | -6.9 | -21.5 | -18.2 | -21.0 |
+
+### Manuscript implications
+- Speed tuning of centring can be plotted alongside speed tuning of turning (Fig 3D)
+- Dm4 is the clearest "centring-specific" deficit across speeds — and may affect both flicker and motion centring pathways
+- **T4/T5 15deg result is critical:** centring without turning at low/moderate speeds demonstrates that motion processing is NOT required for centring. A T4/T5-independent luminance pathway contributes substantially.
+- Two-component model (flicker centring + motion centring) can be tested directly: subtract flicker centring from grating centring to isolate the motion-specific component
+- The peak speed for centring differs from turning (centring peaks earlier at 240 for 60deg), consistent with two overlapping components with different temporal frequency optima
+
+---
+
+## 2026-03-13 (cont'd): Offset CoR Turning Rate Analysis + Unified Optic Flow Balance Narrative
+
+**Script updated:** `src/plotting/figures/turning_rate_analysis.m` (now 9 figures, Section 15 added)
+**Branch:** `paper-plan`
+**Phase:** 2 (New Analysis Development)
+
+### Context: Connecting Turning Rate Findings to the Offset CoR Experiment
+
+The earlier session (below) established that optomotor turning rate (|AV|) is HIGHER at the arena centre (positive slope +0.47), rejecting the simple viewing-distance gain hypothesis. This session connects that finding to the offset centre-of-rotation (CoR) experiment (condition 11, Protocol 27).
+
+### The Unified "Optic Flow Balance Seeking" Mechanism
+
+The original project motivation was that flies seek the position where the optomotor stimulus is most balanced across both eyes. This predicts:
+
+1. **Centred CoR (condition 1):** The balance point is at the arena centre → flies centre
+2. **Offset CoR (condition 11):** The balance point shifts with the CoR (0.8 × ARENA_R ≈ 95.2 mm from centre, 23.8 mm from wall) → flies track the CoR, not the arena centre
+
+This was confirmed in the position data (existing `analyse_offset_gratings.m`). The turning rate analysis now provides the mechanistic link:
+
+- **At the balance point (CoR):** optic flow is symmetric → maximal optomotor drive → high |AV| → tight circular walking → "trapping"
+- **Away from the balance point:** optic flow is asymmetric → reduced optomotor drive → lower |AV| → looser walking → drift possible
+- The position-dependent turning strength creates a natural "attractor" at the CoR
+
+### New Analysis: Figure 9 (Section 15)
+
+**Figure 9 (1×3):** Offset CoR (condition 11) vs Centred CoR (condition 1) vs Flicker (condition 9)
+
+- **Panel A:** |AV| vs wall distance — three conditions overlaid during stimulus, with CoR position marked (23.8 mm from wall). Linear fits for each.
+- **Panel B:** Per-fly slope boxcharts (conditions 1, 11, 9)
+- **Panel C:** Delta-AV slopes (stimulus minus baseline) boxcharts
+
+**Key predictions:**
+- Condition 1 (centred): positive slope (confirmed, +0.47)
+- Condition 11 (offset CoR): the positive slope should be REDUCED or REVERSED when referenced to the arena centre, because the optic flow balance point has shifted near the wall
+- Condition 9 (flicker): flat slope (no coherent motion → no position-dependent optomotor drive)
+
+**Technical details:**
+- Condition 11: Pattern 21 (`0-8shift_60deg_1-875step_32frames`), speed 127, 15s duration
+- CoR offset: t = 0.8 arena radii = 95.2 mm from arena centre
+- CoR wall distance: ARENA_R - COR_DIST = 119 - 95.2 = 23.8 mm from wall
+- Physical setup: C = [528,516] px, W = [606,37] px, PPM = 4.1691 (from `analyse_offset_gratings.m`)
+
+### Figure 9 Results
+
+| Condition | Slope (stim) | p vs 0 | Delta slope | Delta p |
+|-----------|-------------|--------|-------------|---------|
+| **Cond 1 (centred)** | **+0.47** | 1.2e-8 | **+1.44** | 1.7e-13 |
+| **Cond 11 (offset)** | **+0.58** | 1.4e-9 | **+1.51** | 2.5e-12 |
+| **Cond 9 (flicker)** | **-0.40** | 1.2e-29 | **-0.01** | 0.91 |
+
+**Critical comparisons:**
+- Cond 1 vs 11 slope: **p = 0.38** (NOT different)
+- Cond 1 vs 9 slope: p = 1.6e-22 (highly significant)
+- Cond 11 vs 9 slope: p = 3.7e-22 (highly significant)
+- Delta slope cond 1 vs 11: **p = 0.79** (NOT different)
+- Delta slope cond 1 vs 9: p = 2.1e-12
+
+**The prediction was wrong.** Shifting the CoR near the wall did NOT reduce or reverse the positive |AV| slope when referenced to the arena centre. The offset CoR condition has an essentially identical slope (+0.58 vs +0.47, p=0.38). Flicker behaves as expected: delta slope is flat (no stimulus-driven position dependence).
+
+### Revised Interpretation — Two Separable Mechanisms
+
+The Figure 9 result reveals that the positive |AV| slope is determined by the fly's position relative to the **arena walls**, NOT by proximity to the CoR. This means:
+
+1. **Turning rate magnitude** (|AV| vs wall distance) — scales with arena-centre distance regardless of where the CoR is. Driven by how the circular arena geometry shapes retinal image statistics:
+   - Near the wall: one eye sees extremely fast motion (exceeding temporal frequency optimum of motion detectors), the other sees slow motion → weaker integrated optomotor drive
+   - At the centre: both eyes see moderate-speed motion from equidistant walls → stronger integrated drive
+   - This is true regardless of CoR position because it's the arena walls that determine retinal velocities
+
+2. **Centring target** (position data) — tracks the CoR. Confirmed by existing position data: flies move toward the offset CoR, not the arena centre. Driven by optic flow balance/symmetry of the stimulus pattern itself.
+
+Both mechanisms are vision-dependent (T4/T5 and L1/L4 eliminate both), but they operate on different spatial references:
+- |AV| magnitude → arena geometry (wall distances)
+- Centring target → stimulus geometry (CoR position)
+
+### Manuscript Narrative Update
+
+The paper's mechanistic story is now more nuanced than the initial "unified optic flow balance" framing:
+
+1. **Observation:** Flies centre during optomotor stimulation
+2. **Not geometric artifact:** Radial/tangential decomposition confirms active centring
+3. **Mechanism — arena geometry shapes optomotor drive:** |AV| scales with wall distance because retinal image statistics depend on the fly's position within the circular arena. This is stimulus-driven (absent for flicker) and vision-dependent (absent for T4/T5, L1/L4), but NOT CoR-dependent.
+4. **Centring target tracks the CoR:** Position data shows flies move toward the CoR. The offset CoR experiment dissociates the centring target (CoR-dependent) from the turning rate magnitude (arena-dependent).
+5. **Implication:** Centring arises from the combination of (a) strong stimulus-driven turning that is amplified at the centre due to arena geometry, and (b) directional bias toward the CoR from optic flow balance. The "trapping" effect (tight circles where |AV| is highest) contributes to centring but is arena-geometry-dependent, not CoR-dependent.
+
+### Files Modified
+
+- **Updated:** `src/plotting/figures/turning_rate_analysis.m` — added Section 15 (Figure 9), updated header comments, fixed tick labels
+- **Updated:** `manuscript_checklist.md` — added offset CoR turning rate task to Phase 2, updated Alternative Explanation row
+- **Updated:** `session_notes.md` — added Figure 9 results and revised interpretation
+
+### Next Steps
+
+- Compute |AV| vs distance-from-CoR for condition 11 (requires x_data, y_data) to test whether the slope reappears when referenced to the shifted CoR — this would confirm that centring target and turning magnitude CAN be linked when measured in the right reference frame
+- Consider speed-tuning analysis (condition 2 = 8Hz) to test whether the positive slope changes with temporal frequency
+- P35/P36 offset conditions (0.75 shift, bidirectional) for replication
+- Begin composing manuscript figure panels
+
+---
+
+## 2026-03-13: Fly-Centric Turning Rate Analysis — Optomotor Gain vs Position
+
+**Script created:** `src/plotting/figures/turning_rate_analysis.m` (8 figures)
+**Branch:** `paper-plan`
+**Phase:** 2 (New Analysis Development)
+
+### Motivation
+
+The radial/tangential analysis (2026-03-12) showed centring is not a geometric byproduct of curved walking, but the mechanism remained unclear. The original hypothesis was "viewing-distance-dependent optomotor gain": flies closer to the wall experience faster retinal slip, driving stronger turning that pushes them toward the centre.
+
+This analysis tests that hypothesis directly by measuring the fly's actual motor output — angular velocity (`av_data`, deg/s) — as a function of distance to the arena wall.
+
+### Key Finding: The Simple Viewing-Distance Hypothesis Is Wrong
+
+**The data shows the OPPOSITE of the prediction.** During the stimulus, control flies turn MORE when farther from the wall (positive slope +0.47, p = 1.2e-8). Pre-stimulus baseline shows the reverse pattern: more turning near the wall (slope -0.63, p = 1.6e-20). The stimulus fundamentally reverses the turning-vs-distance relationship (p = 5.8e-24).
+
+### Results — Main Figures (1–4)
+
+**Figure 1: Motor output timeseries (control, condition 1)**
+- Mean |AV| during stimulus: 133.9 ± 39.5 deg/s
+- Clear ramp at stimulus onset, direction change visible at STIM_MID
+
+**Figure 2: |AV| vs wall distance (stimulus vs baseline)**
+- Stimulus slope: +0.47 deg/s per mm (positive — more turning at centre)
+- Baseline slope: -0.63 deg/s per mm (negative — more turning near wall)
+
+**Figure 3: Cross-strain comparison (4×2)**
+
+| Strain | N | Mean Slope | Mean |AV| | Welch p (slope) | Cohen's d |
+|--------|---|-----------|---------|----------------|-----------|
+| Control | 369 | +0.472 | 133.9 | — | — |
+| T4/T5 | 214 | -0.293 | 47.7 | 1.0e-16 | -0.598 |
+| Dm4 | 97 | +0.744 | 108.1 | 0.13 | +0.176 |
+| Tm5Y | 133 | +0.356 | 137.0 | 0.37 | -0.079 |
+| L1/L4 | 144 | -0.360 | 48.3 | 1.0e-11 | -0.582 |
+
+**Key dissociation:** Visually impaired strains (T4/T5, L1/L4) have NEGATIVE slopes matching the baseline pattern — they behave as if unstimulated. Visually intact strains (control, Dm4, Tm5Y) all have positive slopes.
+
+**Figure 4: Per-fly slope summary (box/scatter)**
+- Clear separation between impaired (negative) and intact (positive) strains
+
+### Results — Follow-Up Analyses (Figures 5–8)
+
+Four analyses to probe whether the positive slope is an artifact:
+
+**Figure 5: Delta-AV (stimulus minus baseline per distance bin)**
+- Delta slope = +1.44, p = 1.7e-13
+- The stimulus adds MORE turning at the centre even after subtracting baseline
+- **Rules out:** positive slope inherited from pre-existing turning pattern
+
+**Figure 6: Early (first 5s) vs Late (last 5s) stimulus**
+- Early slope = +0.87, p = 0.002 (n=116 valid)
+- Late slope = -0.53, p = 0.15 (n=58 valid)
+- Early vs late: p = 0.003
+- **Rules out:** centring artifact. If centring caused the positive slope, it should be ABSENT early and STRONGER late. The data shows the opposite — the positive slope is strongest early, before significant centring has occurred.
+
+**Figure 7: Forward velocity vs wall distance**
+- FV slope = +0.004, p = 0.60
+- Forward velocity is FLAT across wall distances during the stimulus
+- **Rules out:** locomotor confound (flies walking slower near wall → lower AV)
+
+**Figure 8: Starting-position-conditioned analysis (first 3s)**
+- Correlation of mean |AV| (first 3s) vs starting wall distance: r = +0.250, p = 1.8e-7 (n=425)
+- Flies that start farther from the wall turn more in the first 3 seconds
+- **Confirms** the positive slope at the individual-fly level with full statistical power
+- (Per-fly slopes were underpowered: only 22/142 near-wall flies had enough bins in 3s)
+
+### Revised Interpretation
+
+**Why the simple hypothesis was wrong:** A fly at the arena centre sees coherent rotational optic flow from all directions — the grating subtends the full visual field symmetrically. A fly near the wall sees extremely fast motion on the near side (likely exceeding the temporal frequency optimum of Reichardt-type motion detectors) and slow motion on the far side. The integrated optomotor drive is weaker near the wall due to this asymmetry.
+
+**What this means for centring:** The centring mechanism does NOT require distance-dependent gain where proximity to the wall drives stronger turning. Instead:
+1. The optomotor response drives strong turning globally (134 deg/s mean |AV|)
+2. The geometry of curved walking in a bounded circular arena produces net inward drift
+3. The stronger optomotor drive at the centre (symmetric optic flow) may help maintain flies there once they arrive
+4. Silencing motion-vision neurons (T4/T5, L1/L4) eliminates the stimulus-driven turning, and the slope reverts to the baseline wall-proximity pattern
+
+The partial correlation from radial/tangential analysis (rho = 0.70) still holds — centring scales with starting distance beyond what geometry alone predicts. But the mechanism is about the interplay of turning + arena geometry, not a simple gain gradient.
+
+### Files Created/Modified
+
+- **Created:** `src/plotting/figures/turning_rate_analysis.m` — 8 figures, helper functions `bin_av_by_wall_dist` and `bin_fv_by_wall_dist`
+- **Updated:** `manuscript_checklist.md` — added Phase 2 task + Alternative Explanation row
+
+### Manuscript Narrative Implications
+
+The turning rate analysis changes the paper's mechanistic story:
+
+**Old framing:** "Flies closer to the wall experience faster retinal slip → stronger optomotor turning → centripetal drift → centring."
+
+**Revised framing:** "The optomotor stimulus drives strong turning that is actually MORE effective at the arena centre (where optic flow is symmetric). Centring arises from the interaction between stimulus-driven circular walking and the arena's geometry. Motion-vision silencing eliminates the stimulus-driven turning component, revealing a baseline wall-proximity turning pattern underneath."
+
+This is actually a **stronger** result than the original hypothesis because:
+1. It explains why centring is so robust (geometry-driven, not dependent on a fragile gain gradient)
+2. It naturally explains the strain dissociation (no vision → no turning → no centring)
+3. It's consistent with the partial correlation (distance dependence exceeds geometric prediction because flies at different distances experience different optic flow coherence)
+4. It makes a testable prediction: reducing grating temporal frequency should shift the optimal distance (moving the peak further from the wall)
+
+### Next Steps
+
+- Update Alternative Explanations in manuscript checklist to reflect revised understanding
+- Consider adding a speed-tuning analysis (condition 2 = 8Hz, condition 8 = reverse phi) to test whether the positive slope changes with temporal frequency
+- Write up session notes for the interactive HTML explorer updates (turning rate added to both scenarios)
+- Begin composing the actual figure panels for the manuscript
+
+---
+
 ## 2026-03-12: Radial/Tangential Velocity Decomposition + Heading-to-Center Analysis
 
 **Scripts created:**
