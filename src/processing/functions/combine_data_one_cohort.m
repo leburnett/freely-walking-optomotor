@@ -161,7 +161,8 @@ function [comb_data, feat, trx] = combine_data_one_cohort(feat, trx)
     [IFD_data, IFA_data] = calculate_distance_to_nearest_fly(x_data, y_data, heading_wrap);
 
     % Combine the matrices into an overall struct
-    comb_data.vel_data = v_data; 
+    comb_data.vel_data = v_data;
+    comb_data.dist_trav = vel_data / FPS;  % distance traveled per frame (from FlyTracker velocity)
     comb_data.dist_data = dist_data;
     comb_data.av_data = av_data;
     comb_data.fv_data = fv_data;

@@ -388,8 +388,10 @@ def _build_html(experiments, last_updated, stage_counts, error_count,
             stage = exp.get("current_stage", "unknown") or "unknown"
             color = _stage_color(stage)
             has_errors = exp.get("has_errors", False)
+            successful_stages = {"processed", "synced_to_network"}
+            show_error_dot = has_errors and stage not in successful_stages
             error_indicator = (
-                ' <span class="error-dot">&#9679;</span>' if has_errors else ""
+                ' <span class="error-dot">&#9679;</span>' if show_error_dot else ""
             )
             has_warning = exp.get("has_operator_warning", False)
             warning_indicator = (
