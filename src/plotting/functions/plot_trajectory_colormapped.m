@@ -11,12 +11,15 @@ function fig = plot_trajectory_colormapped(x, y, metric_vals, opts)
 %     x, y         - [1 x n_frames] position in mm (single fly)
 %     metric_vals  - [1 x n_frames] metric to encode as color
 %     opts         - struct with optional fields:
-%       .arena_radius - for drawing arena boundary (default: 119)
+%       .arena_radius - for drawing arena boundary (default: 120)
+%       .arena_center - [cx, cy] arena centre in mm (default: [126.6, 124.7])
 %       .cmap         - colormap name or Nx3 matrix (default: 'parula')
 %       .clim         - [min max] color limits (default: auto from data)
 %       .title_str    - title string (default: '')
 %       .cbar_label   - colorbar label (default: 'Metric')
-%       .marker_size  - scatter dot size (default: 8)
+%       .marker_size  - scatter dot size (default: 8, only used if line fails)
+%       .clim_pct     - percentile range for auto clim (default: [1 99]).
+%                       Ignored if .clim is set explicitly.
 %       .ax           - existing axes handle (for subplot use)
 %
 %   OUTPUT:
@@ -31,12 +34,14 @@ function fig = plot_trajectory_colormapped(x, y, metric_vals, opts)
 
 %% Parse options
 if nargin < 4, opts = struct(); end
-arena_r     = get_field(opts, 'arena_radius', 119);
+arena_r     = get_field(opts, 'arena_radius', 120);
+arena_c     = get_field(opts, 'arena_center', [528, 520] / 4.1691);
 cmap_name   = get_field(opts, 'cmap', 'parula');
 clim_val    = get_field(opts, 'clim', []);
 title_str   = get_field(opts, 'title_str', '');
 cbar_label  = get_field(opts, 'cbar_label', 'Metric');
 marker_size = get_field(opts, 'marker_size', 8);
+clim_pct    = get_field(opts, 'clim_pct', [1 99]);
 ax_handle   = get_field(opts, 'ax', []);
 
 %% Set up axes
@@ -52,12 +57,39 @@ hold(ax_handle, 'on');
 
 %% Draw arena boundary
 theta = linspace(0, 2*pi, 200);
-plot(ax_handle, arena_r * cos(theta), arena_r * sin(theta), '-', ...
+plot(ax_handle, arena_c(1) + arena_r * cos(theta), arena_c(2) + arena_r * sin(theta), '-', ...
     'Color', [0.7 0.7 0.7], 'LineWidth', 1);
 
-%% Plot trajectory colored by metric
+%% Plot trajectory as a connected coloured line
+% Uses patch with edge colors interpolated from vertex CData.
+% Where NaN gaps exist, break into contiguous segments.
 valid = ~isnan(x) & ~isnan(y) & ~isnan(metric_vals);
-scatter(ax_handle, x(valid), y(valid), marker_size, metric_vals(valid), 'filled');
+
+% Auto clim from percentiles if not set explicitly
+if isempty(clim_val)
+    vals_valid = metric_vals(valid);
+    if ~isempty(vals_valid)
+        clim_val = prctile(vals_valid, clim_pct);
+        if clim_val(1) == clim_val(2)
+            clim_val = [clim_val(1) - 1, clim_val(2) + 1];
+        end
+    end
+end
+
+% Find contiguous valid segments and plot each as a patch line
+d_valid = diff([0, valid, 0]);
+seg_starts = find(d_valid == 1);
+seg_ends   = find(d_valid == -1) - 1;
+
+for s = 1:numel(seg_starts)
+    idx = seg_starts(s):seg_ends(s);
+    if numel(idx) < 2, continue; end
+    % patch trick: vertices = [x; y], faces connect consecutive vertices
+    % CData on vertices gives interpolated edge color
+    patch(ax_handle, [x(idx) NaN], [y(idx) NaN], 0, ...
+        'EdgeColor', 'interp', 'FaceColor', 'none', ...
+        'CData', [metric_vals(idx) NaN], 'LineWidth', 1.2);
+end
 
 %% Start/end markers
 if any(valid)
@@ -72,11 +104,7 @@ if any(valid)
 end
 
 %% Colormap and limits
-if ischar(cmap_name) || isstring(cmap_name)
-    colormap(ax_handle, cmap_name);
-else
-    colormap(ax_handle, cmap_name);
-end
+colormap(ax_handle, cmap_name);
 
 if ~isempty(clim_val)
     clim(ax_handle, clim_val);
@@ -88,8 +116,8 @@ cb.Label.FontSize = 12;
 
 %% Formatting
 axis(ax_handle, 'equal');
-xlim(ax_handle, [-arena_r-5, arena_r+5]);
-ylim(ax_handle, [-arena_r-5, arena_r+5]);
+xlim(ax_handle, [arena_c(1)-arena_r-5, arena_c(1)+arena_r+5]);
+ylim(ax_handle, [arena_c(2)-arena_r-5, arena_c(2)+arena_r+5]);
 xlabel(ax_handle, 'x (mm)', 'FontSize', 14);
 ylabel(ax_handle, 'y (mm)', 'FontSize', 14);
 if ~isempty(title_str)

@@ -21,7 +21,7 @@ function fig = plot_diagnostic_single_fly(x, y, metrics, heading, events, geom, 
 %       .fly_id      - scalar or string for display (default: 1)
 %       .stim_on     - frame index of stimulus onset (default: 300)
 %       .stim_off    - frame index of stimulus offset (default: 1200)
-%       .arena_radius - arena radius in mm (default: 119)
+%       .arena_radius - arena radius in mm (default: 120)
 %       .fps         - frames per second (default: 30)
 %       .raw_av      - [1 x n_frames] raw (unsmoothed) |AV| for overlay
 %       .raw_fv      - [1 x n_frames] raw forward velocity for overlay
@@ -47,7 +47,8 @@ if nargin < 7, opts = struct(); end
 fly_id   = get_field(opts, 'fly_id', 1);
 stim_on  = get_field(opts, 'stim_on', 300);
 stim_off = get_field(opts, 'stim_off', 1200);
-arena_r  = get_field(opts, 'arena_radius', 119);
+arena_r  = get_field(opts, 'arena_radius', 120);
+arena_c  = get_field(opts, 'arena_center', [528, 520] / 4.1691);
 fps      = get_field(opts, 'fps', 30);
 raw_av   = get_field(opts, 'raw_av', []);
 raw_fv   = get_field(opts, 'raw_fv', []);
@@ -64,6 +65,7 @@ sgtitle(tl, sprintf('Diagnostic — Fly %s', string(fly_id)), 'FontSize', 18);
 ax1 = nexttile(tl);
 traj_opts.ax = ax1;
 traj_opts.arena_radius = arena_r;
+traj_opts.arena_center = arena_c;
 traj_opts.cbar_label = '|AV| (deg/s)';
 traj_opts.title_str = '|Angular velocity|';
 traj_opts.marker_size = 6;
@@ -74,9 +76,11 @@ ax2 = nexttile(tl);
 traj_opts.ax = ax2;
 traj_opts.cbar_label = 'Tortuosity';
 traj_opts.title_str = 'Tortuosity';
-traj_opts.cmap = 'hot';
-traj_opts.clim = [0 1];
+traj_opts.cmap = 'parula';
+traj_opts.clim = [];
+traj_opts.clim_pct = [1 95];  % tighter percentile — tortuosity has heavy tail
 plot_trajectory_colormapped(x, y, metrics.tortuosity, traj_opts);
+traj_opts = rmfield(traj_opts, 'clim_pct');  % reset for subsequent plots
 
 % (1,3) Forward velocity
 ax3 = nexttile(tl);
@@ -105,8 +109,13 @@ ax5 = nexttile(tl);
 hold(ax5, 'on');
 plot(ax5, t_s, metrics.tortuosity, '-k', 'LineWidth', 1.5);
 add_stim_lines(ax5, stim_on, stim_off, fps);
+% Clip y-axis at 95th percentile to show structure despite outlier peaks
+tort_valid = metrics.tortuosity(~isnan(metrics.tortuosity));
+if ~isempty(tort_valid)
+    y_upper = prctile(tort_valid, 95);
+    ylim(ax5, [0.8, max(y_upper, 2)]);
+end
 ylabel(ax5, 'Tortuosity', 'FontSize', 14);
-ylim(ax5, [0 1.1]);
 title(ax5, 'Tortuosity timeseries', 'FontSize', 16);
 format_ts_axes(ax5);
 
@@ -153,8 +162,13 @@ format_ts_axes(ax7);
 ax8 = nexttile(tl);
 hold(ax8, 'on');
 theta = linspace(0, 2*pi, 200);
-plot(ax8, arena_r*cos(theta), arena_r*sin(theta), '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
+plot(ax8, arena_c(1)+arena_r*cos(theta), arena_c(2)+arena_r*sin(theta), '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
 plot(ax8, x, y, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5);
+
+if events.n_events == 0
+    text(ax8, arena_c(1), arena_c(2), {'No turning events', '(run Approach B first)'}, ...
+        'HorizontalAlignment', 'center', 'FontSize', 11, 'Color', [0.5 0.5 0.5]);
+end
 
 if events.n_events > 0
     cmap_events = lines(min(events.n_events, 12));
@@ -176,8 +190,8 @@ if events.n_events > 0
     end
 end
 axis(ax8, 'equal');
-xlim(ax8, [-arena_r-5, arena_r+5]);
-ylim(ax8, [-arena_r-5, arena_r+5]);
+xlim(ax8, [arena_c(1)-arena_r-5, arena_c(1)+arena_r+5]);
+ylim(ax8, [arena_c(2)-arena_r-5, arena_c(2)+arena_r+5]);
 title(ax8, 'Trajectory + bounding boxes', 'FontSize', 16);
 set(ax8, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
 
@@ -185,6 +199,7 @@ set(ax8, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
 ax9 = nexttile(tl);
 traj_opts2.ax = ax9;
 traj_opts2.arena_radius = arena_r;
+traj_opts2.arena_center = arena_c;
 traj_opts2.cbar_label = 'Wall dist (mm)';
 traj_opts2.title_str = 'Wall distance';
 traj_opts2.cmap = 'cool';

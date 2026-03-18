@@ -1,7 +1,7 @@
-function geom = compute_turning_event_geometry(events, x_data, y_data, arena_radius)
+function geom = compute_turning_event_geometry(events, x_data, y_data, arena_radius, arena_center)
 % COMPUTE_TURNING_EVENT_GEOMETRY  Bounding box and spatial metrics for turning events.
 %
-%   geom = COMPUTE_TURNING_EVENT_GEOMETRY(events, x_data, y_data, arena_radius)
+%   geom = COMPUTE_TURNING_EVENT_GEOMETRY(events, x_data, y_data, arena_radius, arena_center)
 %
 %   For each detected 360-degree turning event, computes the bounding box
 %   of the trajectory segment, its area, aspect ratio, centre of mass, and
@@ -13,6 +13,7 @@ function geom = compute_turning_event_geometry(events, x_data, y_data, arena_rad
 %     x_data       - [1 x n_frames] x position (mm) for this fly
 %     y_data       - [1 x n_frames] y position (mm) for this fly
 %     arena_radius - scalar, arena radius in mm
+%     arena_center - [1 x 2] arena centre in mm (default: [528, 520]/4.1691)
 %
 %   OUTPUT:
 %     geom - struct with fields, each [1 x n_events]:
@@ -26,9 +27,13 @@ function geom = compute_turning_event_geometry(events, x_data, y_data, arena_rad
 %       .path_length      - total path length during the turn (mm)
 %
 %   EXAMPLE:
-%     geom = compute_turning_event_geometry(events(1), x(1,:), y(1,:), 119);
+%     geom = compute_turning_event_geometry(events(1), x(1,:), y(1,:), 120, [126.6, 124.7]);
 %
 % See also: detect_360_turning_events
+
+if nargin < 5 || isempty(arena_center)
+    arena_center = [528, 520] / 4.1691;
+end
 
 n_events = events.n_events;
 
@@ -89,8 +94,8 @@ for e = 1:n_events
     geom.bbox_center_x(e) = cx;
     geom.bbox_center_y(e) = cy;
 
-    % Distance from bbox centre to wall (arena center at origin)
-    dist_from_center = sqrt(cx^2 + cy^2);
+    % Distance from bbox centre to wall
+    dist_from_center = sqrt((cx - arena_center(1))^2 + (cy - arena_center(2))^2);
     geom.wall_dist_center(e) = arena_radius - dist_from_center;
 
     % Path length

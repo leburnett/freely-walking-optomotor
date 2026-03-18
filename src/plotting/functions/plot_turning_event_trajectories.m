@@ -30,7 +30,7 @@ function fig = plot_turning_event_trajectories(events, geom, x, y, opts)
 %% Parse options
 if nargin < 5, opts = struct(); end
 max_events = get_field(opts, 'max_events', 12);
-arena_r    = get_field(opts, 'arena_radius', 119);
+arena_r    = get_field(opts, 'arena_radius', 120);
 fps        = get_field(opts, 'fps', 30);
 
 n_events = min(events.n_events, max_events);

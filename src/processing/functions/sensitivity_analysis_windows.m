@@ -32,7 +32,7 @@ function results = sensitivity_analysis_windows(av_data, curv_data, fv_data, ...
 %
 %   EXAMPLE:
 %     results = sensitivity_analysis_windows(av, curv, fv, dist, x, y, ...
-%         119, 30, 300:1200, 0:10:119, 0.1:0.1:3.0);
+%         120, 30, 300:1200, 0:10:120, 0.1:0.1:3.0);
 %
 % See also: compute_sliding_window_metrics, bin_metric_by_wall_distance
 

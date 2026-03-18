@@ -43,7 +43,9 @@ end
 cfg = get_config();
 
 % Arena geometry
-ARENA_R = 119;  % arena radius in mm
+PPM = 4.1691;                     % pixels per mm (from calibration)
+ARENA_CENTER = [528, 520] / PPM;  % arena centre in mm [126.6, 124.7]
+ARENA_R = 120;                    % arena radius in mm (dist_data = 120 - d_wall)
 FPS = 30;
 
 % Key strains and conditions
@@ -65,7 +67,7 @@ PRE_START = 1;
 PRE_END   = 300;
 
 % Distance-to-wall bins (mm from wall)
-bin_edges = 0:10:ARENA_R;
+bin_edges = 0:10:ARENA_R;  % 0 = at wall, 120 = at centre
 bin_centres = bin_edges(1:end-1) + diff(bin_edges) / 2;
 
 % Colors
@@ -148,6 +150,9 @@ for p = 1:4
     plot_metric_vs_wall_distance(bin_centres, combined_means, combined_sems, popts);
 end
 
+f = gcf;
+f.Position = [206   287   761   662];
+
 if save_figs
     exportgraphics(fig_metrics, fullfile(save_folder, 'metrics_vs_wall_distance.pdf'), 'ContentType', 'vector');
 end
@@ -190,6 +195,7 @@ for fi = 1:numel(example_flies)
     diag_opts.stim_on = STIM_ON;
     diag_opts.stim_off = STIM_OFF;
     diag_opts.arena_radius = ARENA_R;
+    diag_opts.arena_center = ARENA_CENTER;
     diag_opts.fps = FPS;
     diag_opts.raw_av = abs(av_ctrl(f, :));
     diag_opts.raw_fv = fv_ctrl(f, :);
@@ -200,6 +206,18 @@ for fi = 1:numel(example_flies)
     if save_figs
         exportgraphics(fig_diag, fullfile(save_folder, ...
             sprintf('diagnostic_fly%d.pdf', f)), 'ContentType', 'vector');
+    end
+
+    % Multi-window tortuosity timeseries for this fly
+    tort_mw_opts.windows = [0.5, 1, 2, 3];
+    tort_mw_opts.stim_on = STIM_ON;
+    tort_mw_opts.stim_off = STIM_OFF;
+    tort_mw_opts.title_str = sprintf('Tortuosity — %s — Multiple Windows', fly_labels{fi});
+    % fig_tort_mw = plot_tortuosity_multiwindow(x_ctrl(f,:), y_ctrl(f,:), FPS, tort_mw_opts);
+
+    if save_figs
+        exportgraphics(fig_tort_mw, fullfile(save_folder, ...
+            sprintf('tortuosity_multiwindow_fly%d.pdf', f)), 'ContentType', 'vector');
     end
 end
 
@@ -273,9 +291,9 @@ geom_h2 = geom_h1;
 
 for f = 1:n_flies_rep
     geom_h1(f) = compute_turning_event_geometry(events_h1(f), ...
-        x_rep(f, h1_range), y_rep(f, h1_range), ARENA_R);
+        x_rep(f, h1_range), y_rep(f, h1_range), ARENA_R, ARENA_CENTER);
     geom_h2(f) = compute_turning_event_geometry(events_h2(f), ...
-        x_rep(f, h2_range), y_rep(f, h2_range), ARENA_R);
+        x_rep(f, h2_range), y_rep(f, h2_range), ARENA_R, ARENA_CENTER);
 end
 
 % Summary statistics
@@ -338,6 +356,7 @@ for di = 1:n_diag
     diag_opts_b.stim_on = STIM_ON;
     diag_opts_b.stim_off = STIM_OFF;
     diag_opts_b.arena_radius = ARENA_R;
+    diag_opts_b.arena_center = ARENA_CENTER;
     diag_opts_b.fps = FPS;
 
     fig_diag_b = plot_diagnostic_single_fly(x_rep(f,:), y_rep(f,:), ...
