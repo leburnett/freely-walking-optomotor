@@ -92,7 +92,14 @@
       "Bash(find /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src -name *dv_dist* -o -name *.m -exec grep -l \"starting distance.*ending distance\\\\|unity line.*scatter\" {})",
       "Bash(2)",
       "Bash(grep -r \"starting distance\\\\|ending distance\" /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/plotting/figures/*.m)",
-      "Bash(ls -lh /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/plotting/functions/*.m)"
+      "Bash(ls -lh /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/plotting/functions/*.m)",
+      "Bash(find /Users/burnettl/Documents/GitHub/freely-walking-optomotor -name *analysis*.py -o -name *turning* -o -name *tortuosity* -o -name *centring*)",
+      "Bash(grep -E \"\\\\.\\(py|m\\)$\")",
+      "Bash(ls -1 /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/analysis/*.m)",
+      "Bash(ls -1 /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/plotting/figures/*.m)",
+      "Bash(open /Users/burnettl/.claude/plans/sunny-roaming-hare.md)",
+      "Bash(open /Users/burnettl/.claude/plans/key-results-summary.md)",
+      "Bash(ls /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/analysis/*.m)"
     ]
   }
 }
