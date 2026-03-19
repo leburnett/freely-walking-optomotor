@@ -46,7 +46,7 @@ for f = 1:n_flies
         valid  = in_bin & ~isnan(m_f);
 
         if sum(valid) >= MIN_FRAMES
-            per_fly_means(f, b) = nanmean(m_f(in_bin));
+            per_fly_means(f, b) = mean(m_f(valid));
         end
     end
 end

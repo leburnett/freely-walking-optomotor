@@ -261,12 +261,15 @@ end
 fprintf('\n=== Approach B: 360-degree turning events ===\n');
 
 % Load per-rep data (not averaged) to preserve trajectory structure
-data_types_b = {'heading_data', 'x_data', 'y_data', 'dist_data', 'vel_data'};
+data_types_b = {'heading_data', 'x_data', 'y_data', 'dist_data', 'av_data', 'fv_data', 'curv_data'};
 [rep_data, n_flies_rep] = load_per_rep_data(DATA, control_strain, sex, key_condition, data_types_b);
 
 % Split into first half (CW) and second half (CCW) at direction change
 % STIM_MID is the direction change frame in the combined timeseries
 heading_rep = rep_data.heading_data;
+av_rep      = rep_data.av_data;
+fv_rep      = rep_data.fv_data;
+curv_rep    = rep_data.curv_data;
 x_rep       = rep_data.x_data;
 y_rep       = rep_data.y_data;
 dist_rep    = rep_data.dist_data;
@@ -279,16 +282,24 @@ h2_range = STIM_MID:min(STIM_OFF, size(heading_rep, 2));
 fprintf('  Half 1 frames: %d-%d (%d frames)\n', h1_range(1), h1_range(end), numel(h1_range));
 fprintf('  Half 2 frames: %d-%d (%d frames)\n', h2_range(1), h2_range(end), numel(h2_range));
 
-% Detect turning events in each half
-events_h1 = detect_360_turning_events(heading_rep(:, h1_range), FPS);
-events_h2 = detect_360_turning_events(heading_rep(:, h2_range), FPS);
+% Turning event detection options
+event_opts.av_threshold    = 30;   % deg/s — only count active turning
+event_opts.merge_gap       = 0;   % frames — merge briefly-interrupted bouts
+event_opts.min_bout_frames = 1;    % frames — discard very short bouts
+event_opts.heading_target  = 360;  % degrees — full turn criterion
+event_opts.max_duration_s  = 6;    % seconds — discard long meandering events
+
+fprintf('  AV threshold: %d deg/s, max duration: %.1fs\n', ...
+    event_opts.av_threshold, event_opts.max_duration_s);
+
+% Clear stale variables from previous runs (field sets may have changed)
+clear events_h1 events_h2 geom_h1 geom_h2;
+
+% Detect turning events in each half (now requires av_data)
+events_h1 = detect_360_turning_events(heading_rep(:, h1_range), av_rep(:, h1_range), FPS, event_opts);
+events_h2 = detect_360_turning_events(heading_rep(:, h2_range), av_rep(:, h2_range), FPS, event_opts);
 
 % Compute geometry for each half
-geom_h1 = struct('bbox_area', {}, 'bbox_aspect', {}, 'bbox_center_x', {}, ...
-    'bbox_center_y', {}, 'wall_dist_center', {}, 'path_length', {}, ...
-    'bbox_width', {}, 'bbox_height', {});
-geom_h2 = geom_h1;
-
 for f = 1:n_flies_rep
     geom_h1(f) = compute_turning_event_geometry(events_h1(f), ...
         x_rep(f, h1_range), y_rep(f, h1_range), ARENA_R, ARENA_CENTER);
@@ -321,29 +332,24 @@ n_diag = min(3, numel(flies_with_events_h1));
 for di = 1:n_diag
     f = flies_with_events_h1(di);
 
-    % Build single-fly metrics struct for diagnostic plot
-    % (compute on the per-rep data for this fly)
-    fly_sw = compute_sliding_window_metrics(heading_rep(f,:)*0 + abs(diff([0, heading_rep(f,:)])), ...
-        zeros(1, size(heading_rep,2)), ... % curv placeholder
-        zeros(1, size(heading_rep,2)), ... % fv placeholder
+    % Compute proper sliding-window metrics for this fly using actual data
+    fly_met_diag = compute_sliding_window_metrics( ...
+        av_rep(f,:), curv_rep(f,:), fv_rep(f,:), ...
         dist_rep(f,:), x_rep(f,:), y_rep(f,:), ARENA_R, FPS, opts_sw);
-
-    % For the diagnostic, use actual computed metrics
-    fly_met_diag.abs_av = movmean(abs(diff([0, heading_rep(f,:)])), round(0.5*FPS), 'omitnan');
-    fly_met_diag.abs_curv = NaN(1, size(heading_rep,2));
-    fly_met_diag.fwd_vel = NaN(1, size(heading_rep,2));
-    fly_met_diag.tortuosity = compute_tortuosity(x_rep(f,:), y_rep(f,:), round(2.0*FPS));
-    fly_met_diag.wall_dist = ARENA_R - dist_rep(f,:);
 
     % Combine events from both halves for diagnostic display
     % Offset half-2 frame indices to full-timeseries coordinates
-    combined_events.start_frame = [events_h1(f).start_frame + h1_range(1) - 1, ...
-                                   events_h2(f).start_frame + h2_range(1) - 1];
-    combined_events.end_frame   = [events_h1(f).end_frame + h1_range(1) - 1, ...
-                                   events_h2(f).end_frame + h2_range(1) - 1];
-    combined_events.direction   = [events_h1(f).direction, events_h2(f).direction];
-    combined_events.duration_s  = [events_h1(f).duration_s, events_h2(f).duration_s];
-    combined_events.n_events    = events_h1(f).n_events + events_h2(f).n_events;
+    combined_events.start_frame  = [events_h1(f).start_frame + h1_range(1) - 1, ...
+                                    events_h2(f).start_frame + h2_range(1) - 1];
+    combined_events.end_frame    = [events_h1(f).end_frame + h1_range(1) - 1, ...
+                                    events_h2(f).end_frame + h2_range(1) - 1];
+    combined_events.direction    = [events_h1(f).direction, events_h2(f).direction];
+    combined_events.duration_s   = [events_h1(f).duration_s, events_h2(f).duration_s];
+    combined_events.n_events     = events_h1(f).n_events + events_h2(f).n_events;
+    combined_events.peak_av      = [events_h1(f).peak_av, events_h2(f).peak_av];
+    combined_events.mean_av      = [events_h1(f).mean_av, events_h2(f).mean_av];
+    combined_events.cum_heading  = [events_h1(f).cum_heading, events_h2(f).cum_heading];
+    combined_events.av_threshold = event_opts.av_threshold;
 
     combined_geom.bbox_area        = [geom_h1(f).bbox_area, geom_h2(f).bbox_area];
     combined_geom.bbox_aspect      = [geom_h1(f).bbox_aspect, geom_h2(f).bbox_aspect];
@@ -352,12 +358,15 @@ for di = 1:n_diag
     combined_geom.wall_dist_center = [geom_h1(f).wall_dist_center, geom_h2(f).wall_dist_center];
     combined_geom.path_length      = [geom_h1(f).path_length, geom_h2(f).path_length];
 
+    diag_opts_b = struct();  % clear from previous iteration
     diag_opts_b.fly_id = sprintf('Rep-fly %d (%d events)', f, combined_events.n_events);
     diag_opts_b.stim_on = STIM_ON;
     diag_opts_b.stim_off = STIM_OFF;
     diag_opts_b.arena_radius = ARENA_R;
     diag_opts_b.arena_center = ARENA_CENTER;
     diag_opts_b.fps = FPS;
+    diag_opts_b.raw_av = abs(av_rep(f,:));
+    diag_opts_b.raw_fv = fv_rep(f,:);
 
     fig_diag_b = plot_diagnostic_single_fly(x_rep(f,:), y_rep(f,:), ...
         fly_met_diag, heading_rep(f,:), combined_events, combined_geom, diag_opts_b);
@@ -367,18 +376,19 @@ for di = 1:n_diag
             sprintf('diagnostic_events_fly%d.pdf', f)), 'ContentType', 'vector');
     end
 
-    % Individual event small multiples (half 1 only for clarity)
-    if events_h1(f).n_events > 0
-        evt_opts.arena_radius = ARENA_R;
-        evt_opts.fps = FPS;
-        fig_evt = plot_turning_event_trajectories(events_h1(f), geom_h1(f), ...
-            x_rep(f, h1_range), y_rep(f, h1_range), evt_opts);
-
-        if save_figs
-            exportgraphics(fig_evt, fullfile(save_folder, ...
-                sprintf('event_trajectories_fly%d_h1.pdf', f)), 'ContentType', 'vector');
-        end
-    end
+    % % Individual event small multiples (half 1 only for clarity)
+    % if events_h1(f).n_events > 0
+    %     evt_opts.arena_radius = ARENA_R;
+    %     evt_opts.fps = FPS;
+    %     fig_evt = plot_turning_event_trajectories(events_h1(f), geom_h1(f), ...
+    %         x_rep(f, h1_range), y_rep(f, h1_range), evt_opts);
+    % 
+    %     if save_figs
+    %         exportgraphics(fig_evt, fullfile(save_folder, ...
+    %             sprintf('event_trajectories_fly%d_h1.pdf', f)), 'ContentType', 'vector');
+    %     end
+    % 
+    % end
 end
 
 %% 8 — Multi-strain comparison stub

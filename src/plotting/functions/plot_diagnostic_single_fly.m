@@ -78,7 +78,7 @@ traj_opts.cbar_label = 'Tortuosity';
 traj_opts.title_str = 'Tortuosity';
 traj_opts.cmap = 'parula';
 traj_opts.clim = [];
-traj_opts.clim_pct = [1 95];  % tighter percentile — tortuosity has heavy tail
+traj_opts.clim_pct = [1 75];  % tighter percentile — tortuosity has heavy tail
 plot_trajectory_colormapped(x, y, metrics.tortuosity, traj_opts);
 traj_opts = rmfield(traj_opts, 'clim_pct');  % reset for subsequent plots
 
