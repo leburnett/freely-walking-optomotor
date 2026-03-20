@@ -57,9 +57,6 @@ N = numel(x);
 boundaries = [];      % frame indices where intersections occur
 intersect_xy = [];    % [n x 2] intersection coordinates
 
-% State machine
-searching = true;         % true = looking for intersections
-cum_heading_since = 0;    % cumulative heading change since last intersection
 last_boundary_frame = 1;  % frame of the last intersection
 
 for i = 2:(N-1)
@@ -68,29 +65,15 @@ for i = 2:(N-1)
         continue;
     end
 
-    if ~searching
-        % Accumulate heading change until we reach the threshold
-        if ~isnan(heading(i)) && ~isnan(heading(i-1))
-            cum_heading_since = cum_heading_since + abs(heading(i) - heading(i-1));
-        end
-        if cum_heading_since >= heading_thr
-            searching = true;
-        else
-            continue;
-        end
-    end
-
     % Current segment: (x(i), y(i)) -> (x(i+1), y(i+1))
-    % Check against previous segments for intersection
+    % Check against previous segments since the last intersection
     j_start = max(1, i - lookback_limit);
     % Don't check the immediately adjacent segment (shares an endpoint)
     j_end = i - 2;
 
-    % Also don't check segments before the last boundary (we only care
-    % about the current "open" path crossing itself)
+    % Only check segments since the last boundary (current open path)
     j_start = max(j_start, last_boundary_frame);
 
-    found = false;
     for j = j_end:-1:j_start
         if isnan(x(j)) || isnan(x(j+1)) || isnan(y(j)) || isnan(y(j+1))
             continue;
@@ -105,11 +88,7 @@ for i = 2:(N-1)
             boundaries(end+1) = i; %#ok<AGROW>
             intersect_xy(end+1, :) = [px, py]; %#ok<AGROW>
 
-            % Reset state: stop searching until heading threshold met
-            searching = false;
-            cum_heading_since = 0;
             last_boundary_frame = i;
-            found = true;
             break;  % only need the first (most recent) intersection
         end
     end
