@@ -5,8 +5,11 @@
 %   Middle:   |AV| timeseries (full width)
 %   Bottom:   Sliders (AV threshold, t_window, time) + navigation buttons
 %
-% AV is computed live from heading_data using vel_estimate() with the
-% 'line_fit' method. The t_window slider controls the smoothing window.
+% AV is computed from Gaussian-smoothed heading using vel_estimate() with
+% the 'line_fit' method. The Gaussian matches the smoothing applied to x,y
+% in the pipeline, so AV peaks align with trajectory curves. The t_window
+% slider controls the vel_estimate window (default 4, since the Gaussian
+% has already done most of the smoothing).
 %
 % Requires DATA in workspace (from comb_data_across_cohorts_cond, protocol 27).
 
@@ -30,11 +33,9 @@ sex = 'F';
 STIM_ON  = 300;
 STIM_MID = 750;
 
-% Load heading_data (wrapped, in radians stored as degrees after unwrap —
-% but we need the WRAPPED version for vel_estimate). heading_data in DATA
-% is the unwrapped version in degrees. We need to convert back to wrapped
-% radians for vel_estimate.
-data_types = {'x_data', 'y_data', 'dist_data', 'heading_data', 'heading_wrap'};
+% Load unwrapped heading (degrees). We'll apply gaussian_conv to match the
+% smoothing applied to x,y in the pipeline, then compute AV from that.
+data_types = {'x_data', 'y_data', 'dist_data', 'heading_data'};
 [rep_data, n_flies] = load_per_rep_data(DATA, control_strain, sex, key_condition, data_types);
 
 % Use half 1 only
@@ -43,19 +44,27 @@ x_all       = rep_data.x_data(:, h1_range);
 y_all       = rep_data.y_data(:, h1_range);
 heading_all = rep_data.heading_data(:, h1_range);  % unwrapped, degrees
 
-% Wrapped heading in radians — this is what vel_estimate expects
-heading_wrap_rad = deg2rad(rep_data.heading_wrap(:, h1_range));
+% Apply the SAME gaussian_conv smoothing to heading that was applied to x,y
+% in the pipeline. This brings AV into temporal alignment with the smoothed
+% trajectory positions. We smooth the unwrapped heading (continuous signal,
+% no wrapping issues), then convert to radians for vel_estimate.
+heading_smooth_deg = NaN(size(heading_all));
+for fi = 1:n_flies
+    heading_smooth_deg(fi,:) = gaussian_conv(heading_all(fi,:));
+end
+heading_smooth_rad = deg2rad(heading_smooth_deg);
 
 n_total_frames = size(x_all, 2);
 MIN_GAP = 15;
 
-% Precompute AV at default t_window=16 so initial draw is fast
-DEFAULT_TWIN = 16;
-fprintf('Precomputing AV with t_window=%d for %d flies...', DEFAULT_TWIN, n_flies);
+% Precompute AV with a small t_window — the Gaussian has already done
+% most of the smoothing, so vel_estimate just needs to take the derivative.
+DEFAULT_TWIN = 4;
+fprintf('Precomputing AV (Gaussian-smoothed heading, t_window=%d) for %d flies...', DEFAULT_TWIN, n_flies);
 av_all = NaN(n_flies, n_total_frames);
 samp_rate = 1/FPS;
 for fi = 1:n_flies
-    av_rad = vel_estimate(heading_wrap_rad(fi,:), samp_rate, 'line_fit', DEFAULT_TWIN, []);
+    av_rad = vel_estimate(heading_smooth_rad(fi,:), samp_rate, 'line_fit', DEFAULT_TWIN, []);
     av_all(fi,:) = abs(rad2deg(av_rad));
 end
 fprintf(' done.\n');
@@ -142,7 +151,7 @@ state.time_frame = 1;
 state.x_all = x_all;
 state.y_all = y_all;
 state.heading_all = heading_all;         % unwrapped, degrees (for display + playback)
-state.heading_wrap_rad = heading_wrap_rad; % wrapped, radians (for vel_estimate)
+state.heading_smooth_rad = heading_smooth_rad; % Gaussian-smoothed unwrapped heading, radians (for vel_estimate)
 state.av_all = av_all;                    % current |AV| for all flies
 state.n_flies = n_flies;
 state.n_frames = n_total_frames;
@@ -406,10 +415,10 @@ fig.UserData = state;
         sr = 1 / s.FPS;
         nf = s.n_flies;
 
-        fprintf('Recomputing AV with t_window=%d for %d flies...', tw, nf);
+        fprintf('Recomputing AV (Gaussian-smoothed heading, t_window=%d) for %d flies...', tw, nf);
         new_av = NaN(nf, s.n_frames);
         for f = 1:nf
-            av_rad = vel_estimate(s.heading_wrap_rad(f,:), sr, 'line_fit', tw, []);
+            av_rad = vel_estimate(s.heading_smooth_rad(f,:), sr, 'line_fit', tw, []);
             new_av(f,:) = abs(rad2deg(av_rad));
         end
         fprintf(' done.\n');
