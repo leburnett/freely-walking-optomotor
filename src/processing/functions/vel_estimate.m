@@ -26,8 +26,7 @@ function V = vel_estimate(D, samp_rate, method, t_window, cutoff)
 % 
 %  Michael Reiser, Jan 2005
 
-d = D*2*pi./(max(D));   % unwrap the data
-D_unw = unwrap(d).*max(D)/2/pi;
+D_unw = unwrap(D);
 D_unw = reshape(D_unw, [1, numel(D_unw)]);
 
 switch lower(method)
