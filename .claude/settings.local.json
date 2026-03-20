@@ -99,7 +99,8 @@
       "Bash(ls -1 /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/plotting/figures/*.m)",
       "Bash(open /Users/burnettl/.claude/plans/sunny-roaming-hare.md)",
       "Bash(open /Users/burnettl/.claude/plans/key-results-summary.md)",
-      "Bash(ls /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/analysis/*.m)"
+      "Bash(ls /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/analysis/*.m)",
+      "Bash(grep -n \"unwrap.*heading_data\\\\|heading_data.*unwrap\" src/processing/functions/*.m)"
     ]
   }
 }
