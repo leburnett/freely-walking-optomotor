@@ -4,23 +4,20 @@ function loops = find_trajectory_loops(x, y, heading, opts)
 %   loops = FIND_TRAJECTORY_LOOPS(x, y, heading)
 %   loops = FIND_TRAJECTORY_LOOPS(x, y, heading, opts)
 %
-%   Walks along the trajectory looking for self-intersections (where the
-%   path crosses itself). After each intersection is found, the next
-%   intersection is suppressed until the fly's cumulative heading change
-%   has reached 360 degrees. This segments the trajectory into loops
-%   corresponding to full turns.
+%   For each segment of the trajectory, looks FORWARD up to a specified
+%   number of frames to find where the fly's future path crosses the
+%   current segment. When an intersection is found, the trajectory from
+%   the current frame to the crossing frame forms a closed loop. After
+%   recording a loop, the search skips past it to avoid overlaps.
 %
 %   INPUTS:
 %     x       - [1 x N] x-position (mm)
 %     y       - [1 x N] y-position (mm)
 %     heading - [1 x N] unwrapped heading (degrees)
 %     opts    - (optional) struct with fields:
-%       .heading_threshold  - cumulative heading change required before
-%                             allowing the next intersection (default: 360)
+%       .lookahead_frames   - max frames to look ahead for a crossing
+%                             (default: 75, i.e. 2.5s at 30fps)
 %       .min_loop_frames    - minimum frames in a loop segment (default: 10)
-%       .lookback_limit     - max frames to look back for intersections.
-%                             Reduces computation for long trajectories.
-%                             (default: Inf = check all previous segments)
 %
 %   OUTPUT:
 %     loops - struct with fields:
@@ -34,71 +31,78 @@ function loops = find_trajectory_loops(x, y, heading, opts)
 %       .duration_s       - [1 x n_loops] duration in seconds (assumes 30 fps)
 %
 %   ALGORITHM:
-%     1. Walk frame by frame along the trajectory
-%     2. For each segment (frame i to i+1), check if it intersects any
-%        previous segment (frame j to j+1, j < i)
-%     3. When an intersection is found, record it as a loop boundary
-%     4. After recording, require |cumulative heading change| >= 360 deg
-%        from this frame before allowing the next intersection
-%     5. This prevents tiny crossings from fragmenting the trajectory
+%     1. For each segment i→i+1, check if any future segment j→j+1
+%        (where j is in [i+2, i+lookahead_frames]) crosses it
+%     2. If a crossing is found, record the loop from frame i to frame j
+%     3. Skip past frame j to avoid overlapping loop detections
+%     4. Continue searching from frame j+1
 %
 %   See also: temp_loop_segmentation_gui
 
 %% Parse options
 if nargin < 4, opts = struct(); end
-heading_thr    = get_opt(opts, 'heading_threshold', 360);
-min_loop_fr    = get_opt(opts, 'min_loop_frames', 10);
-lookback_limit = get_opt(opts, 'lookback_limit', Inf);
-fps            = get_opt(opts, 'fps', 30);
+lookahead_frames = get_opt(opts, 'lookahead_frames', 75);
+min_loop_fr      = get_opt(opts, 'min_loop_frames', 10);
+fps              = get_opt(opts, 'fps', 30);
 
 N = numel(x);
 
-%% Find intersection-based loop boundaries
-boundaries = [];      % frame indices where intersections occur
+%% Find loops by looking FORWARD for self-intersections
+%
+% For each segment i→i+1, check if any future segment j→j+1 (within
+% lookahead_frames) crosses it. If so, the trajectory from frame i to
+% frame j forms a closed loop. After finding a loop, skip past frame j
+% to avoid overlapping detections.
+
+loop_starts = [];
+loop_ends   = [];
 intersect_xy = [];    % [n x 2] intersection coordinates
 
-last_boundary_frame = 1;  % frame of the last intersection
-
-for i = 2:(N-1)
+i = 1;
+while i <= (N - 2)
     % Skip NaN frames
     if isnan(x(i)) || isnan(x(i+1)) || isnan(y(i)) || isnan(y(i+1))
+        i = i + 1;
         continue;
     end
 
-    % Current segment: (x(i), y(i)) -> (x(i+1), y(i+1))
-    % Check against previous segments since the last intersection
-    j_start = max(1, i - lookback_limit);
-    % Don't check the immediately adjacent segment (shares an endpoint)
-    j_end = i - 2;
+    % Look forward: check if any future segment crosses segment i→i+1
+    j_end = min(N - 1, i + lookahead_frames);
+    % Skip adjacent segment (shares endpoint at i+1)
+    j_start = i + 2;
 
-    % Only check segments since the last boundary (current open path)
-    j_start = max(j_start, last_boundary_frame);
-
-    for j = j_end:-1:j_start
+    found = false;
+    for j = j_start:j_end
         if isnan(x(j)) || isnan(x(j+1)) || isnan(y(j)) || isnan(y(j+1))
             continue;
         end
 
         [does_intersect, px, py] = segment_intersect( ...
-            x(j), y(j), x(j+1), y(j+1), ...
-            x(i), y(i), x(i+1), y(i+1));
+            x(i), y(i), x(i+1), y(i+1), ...
+            x(j), y(j), x(j+1), y(j+1));
 
         if does_intersect
-            % Record this intersection as a boundary
-            boundaries(end+1) = i; %#ok<AGROW>
+            % Loop found: trajectory from frame i to frame j
+            loop_starts(end+1) = i; %#ok<AGROW>
+            loop_ends(end+1)   = j; %#ok<AGROW>
             intersect_xy(end+1, :) = [px, py]; %#ok<AGROW>
 
-            last_boundary_frame = i;
-            break;  % only need the first (most recent) intersection
+            % Skip past this loop to avoid overlapping detections
+            i = j + 1;
+            found = true;
+            break;
         end
+    end
+
+    if ~found
+        i = i + 1;
     end
 end
 
-%% Build loop segments from consecutive boundaries
-n_boundaries = numel(boundaries);
+%% Package loops
+n_raw = numel(loop_starts);
 
-if n_boundaries < 2
-    % Not enough intersections to form a loop
+if n_raw == 0
     loops.n_loops = 0;
     loops.start_frame = [];
     loops.end_frame = [];
@@ -110,17 +114,13 @@ if n_boundaries < 2
     return;
 end
 
-% Each loop is the segment between consecutive intersection points
-start_frames = boundaries(1:end-1);
-end_frames   = boundaries(2:end);
-n_raw = numel(start_frames);
-
 % Filter by minimum duration
-keep = (end_frames - start_frames) >= min_loop_fr;
-start_frames = start_frames(keep);
-end_frames   = end_frames(keep);
-int_x = intersect_xy(find(keep), 1)'; %#ok — start intersection
-int_y = intersect_xy(find(keep), 2)';
+dur_raw = loop_ends - loop_starts;
+keep = dur_raw >= min_loop_fr;
+start_frames = loop_starts(keep);
+end_frames   = loop_ends(keep);
+int_x = intersect_xy(keep, 1)';
+int_y = intersect_xy(keep, 2)';
 
 n_loops = numel(start_frames);
 
