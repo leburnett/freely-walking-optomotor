@@ -28,7 +28,13 @@ function loops = find_trajectory_loops(x, y, heading, opts)
 %       .intersect_y      - [1 x n_loops] y-coordinate of the intersection point
 %       .cum_heading      - [1 x n_loops] cumulative heading change within loop (degrees)
 %       .duration_frames  - [1 x n_loops] number of frames in each loop
-%       .duration_s       - [1 x n_loops] duration in seconds (assumes 30 fps)
+%       .duration_s       - [1 x n_loops] duration in seconds
+%       .bbox_area        - [1 x n_loops] bounding box area (mm²)
+%       .bbox_aspect      - [1 x n_loops] bounding box aspect ratio (max/min side)
+%       .bbox_center_x    - [1 x n_loops] x-coord of bounding box centre (mm)
+%       .bbox_center_y    - [1 x n_loops] y-coord of bounding box centre (mm)
+%       .bbox_dist_center - [1 x n_loops] distance of bbox centre from arena centre (mm)
+%       .bbox_wall_dist   - [1 x n_loops] distance of bbox centre from arena wall (mm)
 %
 %   ALGORITHM:
 %     1. For each segment i→i+1, check if any future segment j→j+1
@@ -44,6 +50,8 @@ if nargin < 4, opts = struct(); end
 lookahead_frames = get_opt(opts, 'lookahead_frames', 75);
 min_loop_fr      = get_opt(opts, 'min_loop_frames', 10);
 fps              = get_opt(opts, 'fps', 30);
+arena_center     = get_opt(opts, 'arena_center', [528, 520] / 4.1691);
+arena_radius     = get_opt(opts, 'arena_radius', 120);
 
 N = numel(x);
 
@@ -111,6 +119,12 @@ if n_raw == 0
     loops.cum_heading = [];
     loops.duration_frames = [];
     loops.duration_s = [];
+    loops.bbox_area = [];
+    loops.bbox_aspect = [];
+    loops.bbox_center_x = [];
+    loops.bbox_center_y = [];
+    loops.bbox_dist_center = [];
+    loops.bbox_wall_dist = [];
     return;
 end
 
@@ -125,14 +139,47 @@ int_y = intersect_xy(keep, 2)';
 n_loops = numel(start_frames);
 
 % Compute per-loop metrics
-cum_hdg = NaN(1, n_loops);
+cum_hdg       = NaN(1, n_loops);
+bbox_area     = NaN(1, n_loops);
+bbox_aspect   = NaN(1, n_loops);
+bbox_cx       = NaN(1, n_loops);
+bbox_cy       = NaN(1, n_loops);
+bbox_dist_ctr = NaN(1, n_loops);
+bbox_wall     = NaN(1, n_loops);
+
 for k = 1:n_loops
     sf = start_frames(k);
     ef = end_frames(k);
+
+    % Cumulative heading change
     h_seg = heading(sf:ef);
     h_valid = h_seg(~isnan(h_seg));
     if numel(h_valid) >= 2
         cum_hdg(k) = h_valid(end) - h_valid(1);
+    end
+
+    % Bounding box from x, y segment
+    x_seg = x(sf:ef);
+    y_seg = y(sf:ef);
+    x_valid = x_seg(~isnan(x_seg));
+    y_valid = y_seg(~isnan(y_seg));
+
+    if numel(x_valid) >= 2 && numel(y_valid) >= 2
+        x_min = min(x_valid);  x_max = max(x_valid);
+        y_min = min(y_valid);  y_max = max(y_valid);
+        w = x_max - x_min;
+        h = y_max - y_min;
+
+        bbox_area(k)   = w * h;
+        bbox_aspect(k) = max(w, h) / max(min(w, h), 0.01);  % avoid /0
+        bbox_cx(k)     = (x_min + x_max) / 2;
+        bbox_cy(k)     = (y_min + y_max) / 2;
+
+        % Distance from arena centre
+        dx = bbox_cx(k) - arena_center(1);
+        dy = bbox_cy(k) - arena_center(2);
+        bbox_dist_ctr(k) = sqrt(dx^2 + dy^2);
+        bbox_wall(k)     = arena_radius - bbox_dist_ctr(k);
     end
 end
 
@@ -148,6 +195,12 @@ loops.intersect_y     = int_y;
 loops.cum_heading     = cum_hdg;
 loops.duration_frames = dur_frames;
 loops.duration_s      = dur_s;
+loops.bbox_area       = bbox_area;
+loops.bbox_aspect     = bbox_aspect;
+loops.bbox_center_x   = bbox_cx;
+loops.bbox_center_y   = bbox_cy;
+loops.bbox_dist_center = bbox_dist_ctr;
+loops.bbox_wall_dist  = bbox_wall;
 
 end
 

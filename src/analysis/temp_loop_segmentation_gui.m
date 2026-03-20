@@ -45,21 +45,43 @@ n_total_frames = size(x_all, 2);
 
 %% Precompute loops for all flies
 
-fprintf('Finding trajectory loops for %d flies...', n_flies);
-loop_opts.lookahead_frames  = 90;   % look 3s ahead for crossings
+fprintf('Finding trajectory loops for %d flies...\n', n_flies);
+loop_opts.lookahead_frames  = 75;   % look 2.5s ahead for crossings
 loop_opts.min_loop_frames   = 10;
 loop_opts.fps               = FPS;
+loop_opts.arena_center      = ARENA_CENTER;
+loop_opts.arena_radius      = ARENA_R;
 
 all_loops = cell(n_flies, 1);
 for fi = 1:n_flies
     all_loops{fi} = find_trajectory_loops( ...
         x_all(fi,:), y_all(fi,:), heading_all(fi,:), loop_opts);
 end
-fprintf(' done.\n');
+fprintf('done.\n');
 
 total_loops = sum(cellfun(@(L) L.n_loops, all_loops));
 fprintf('Total loops found: %d across %d flies (mean %.1f per fly)\n', ...
     total_loops, n_flies, total_loops / n_flies);
+
+% Print summary statistics
+all_areas    = cellfun(@(L) L.bbox_area, all_loops, 'UniformOutput', false);
+all_aspects  = cellfun(@(L) L.bbox_aspect, all_loops, 'UniformOutput', false);
+all_durs     = cellfun(@(L) L.duration_s, all_loops, 'UniformOutput', false);
+all_walldist = cellfun(@(L) L.bbox_wall_dist, all_loops, 'UniformOutput', false);
+areas_cat    = [all_areas{:}];
+aspects_cat  = [all_aspects{:}];
+durs_cat     = [all_durs{:}];
+wall_cat     = [all_walldist{:}];
+if ~isempty(areas_cat)
+    fprintf('  Bbox area:    median %.0f mm² (IQR %.0f–%.0f)\n', ...
+        median(areas_cat, 'omitnan'), prctile(areas_cat, 25), prctile(areas_cat, 75));
+    fprintf('  Bbox aspect:  median %.2f (IQR %.2f–%.2f)\n', ...
+        median(aspects_cat, 'omitnan'), prctile(aspects_cat, 25), prctile(aspects_cat, 75));
+    fprintf('  Duration:     median %.2fs (IQR %.2f–%.2f)\n', ...
+        median(durs_cat, 'omitnan'), prctile(durs_cat, 25), prctile(durs_cat, 75));
+    fprintf('  Wall dist:    median %.1f mm (IQR %.1f–%.1f)\n', ...
+        median(wall_cat, 'omitnan'), prctile(wall_cat, 25), prctile(wall_cat, 75));
+end
 
 %% Colour palette for loops
 
@@ -141,27 +163,43 @@ fig.UserData = state;
         % Full trajectory in light grey
         plot(ax_h, x, y, '-', 'Color', [0.85 0.85 0.85], 'LineWidth', 0.8);
 
-        % Overlay each loop segment in a distinct colour
+        % Overlay each loop segment in a distinct colour with bounding box
         if loops.n_loops > 0
             for k = 1:loops.n_loops
                 sf = loops.start_frame(k);
                 ef = loops.end_frame(k);
                 col = cols(mod(k-1, nc) + 1, :);
 
+                % Loop trajectory
                 plot(ax_h, x(sf:ef), y(sf:ef), '-', ...
                     'Color', col, 'LineWidth', 2.5);
 
-                % Mark intersection points
+                % Intersection points
                 plot(ax_h, x(sf), y(sf), 'o', 'MarkerSize', 8, ...
                     'MarkerFaceColor', col, 'MarkerEdgeColor', 'k', 'LineWidth', 0.5);
                 plot(ax_h, x(ef), y(ef), 's', 'MarkerSize', 8, ...
                     'MarkerFaceColor', col, 'MarkerEdgeColor', 'k', 'LineWidth', 0.5);
 
-                % Label with loop number and duration
+                % Bounding box (dashed rectangle)
+                x_seg = x(sf:ef);  y_seg = y(sf:ef);
+                x_seg = x_seg(~isnan(x_seg));  y_seg = y_seg(~isnan(y_seg));
+                if numel(x_seg) >= 2
+                    bx = [min(x_seg), max(x_seg)];
+                    by = [min(y_seg), max(y_seg)];
+                    rectangle(ax_h, 'Position', [bx(1), by(1), diff(bx), diff(by)], ...
+                        'EdgeColor', col, 'LineWidth', 1, 'LineStyle', '--');
+
+                    % Centre of bounding box marker
+                    plot(ax_h, loops.bbox_center_x(k), loops.bbox_center_y(k), ...
+                        'x', 'MarkerSize', 8, 'Color', col, 'LineWidth', 1.5);
+                end
+
+                % Label: loop number, duration, area, heading
                 mid_frame = round((sf + ef) / 2);
+                lbl_str = sprintf('#%d  %.1fs  %.0fmm²  %.0f°', ...
+                    k, loops.duration_s(k), loops.bbox_area(k), loops.cum_heading(k));
                 text(ax_h, x(mid_frame) + 1, y(mid_frame) + 1, ...
-                    sprintf('%d (%.1fs)', k, loops.duration_s(k)), ...
-                    'FontSize', 9, 'Color', col, 'FontWeight', 'bold');
+                    lbl_str, 'FontSize', 8, 'Color', col, 'FontWeight', 'bold');
             end
         end
 
