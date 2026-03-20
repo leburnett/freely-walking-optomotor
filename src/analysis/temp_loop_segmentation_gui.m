@@ -46,7 +46,7 @@ n_total_frames = size(x_all, 2);
 %% Precompute loops for all flies
 
 fprintf('Finding trajectory loops for %d flies...', n_flies);
-loop_opts.lookahead_frames  = 75;   % look 2.5s ahead for crossings
+loop_opts.lookahead_frames  = 90;   % look 3s ahead for crossings
 loop_opts.min_loop_frames   = 10;
 loop_opts.fps               = FPS;
 
