@@ -18,6 +18,10 @@ function loops = find_trajectory_loops(x, y, heading, opts)
 %       .lookahead_frames   - max frames to look ahead for a crossing
 %                             (default: 75, i.e. 2.5s at 30fps)
 %       .min_loop_frames    - minimum frames in a loop segment (default: 10)
+%       .max_dist_center    - exclude loops with bbox centre > this distance
+%                             from the arena centre in mm (default: 110)
+%       .min_bbox_area      - exclude loops with bbox area < this in mm²
+%                             (default: 2). Removes tiny jitter crossings.
 %
 %   OUTPUT:
 %     loops - struct with fields:
@@ -47,11 +51,13 @@ function loops = find_trajectory_loops(x, y, heading, opts)
 
 %% Parse options
 if nargin < 4, opts = struct(); end
-lookahead_frames = get_opt(opts, 'lookahead_frames', 75);
+lookahead_frames = get_opt(opts, 'lookahead_frames', 90);
 min_loop_fr      = get_opt(opts, 'min_loop_frames', 10);
 fps              = get_opt(opts, 'fps', 30);
 arena_center     = get_opt(opts, 'arena_center', [528, 520] / 4.1691);
 arena_radius     = get_opt(opts, 'arena_radius', 120);
+max_dist_center  = get_opt(opts, 'max_dist_center', 110);  % exclude loops with centre > this from arena centre
+min_bbox_area    = get_opt(opts, 'min_bbox_area', 2);       % exclude loops with area < this (mm²)
 
 N = numel(x);
 
@@ -91,9 +97,9 @@ while i <= (N - 2)
 
         if does_intersect
             % Loop found: trajectory from frame i to frame j
-            loop_starts(end+1) = i; %#ok<AGROW>
-            loop_ends(end+1)   = j; %#ok<AGROW>
-            intersect_xy(end+1, :) = [px, py]; %#ok<AGROW>
+            loop_starts(end+1) = i; 
+            loop_ends(end+1)   = j; 
+            intersect_xy(end+1, :) = [px, py];
 
             % Skip past this loop to avoid overlapping detections
             i = j + 1;
@@ -182,6 +188,22 @@ for k = 1:n_loops
         bbox_wall(k)     = arena_radius - bbox_dist_ctr(k);
     end
 end
+
+%% Quality filter: exclude loops too far from centre or too small
+keep2 = (bbox_dist_ctr <= max_dist_center) & (bbox_area >= min_bbox_area);
+
+start_frames  = start_frames(keep2);
+end_frames    = end_frames(keep2);
+int_x         = int_x(keep2);
+int_y         = int_y(keep2);
+cum_hdg       = cum_hdg(keep2);
+bbox_area     = bbox_area(keep2);
+bbox_aspect   = bbox_aspect(keep2);
+bbox_cx       = bbox_cx(keep2);
+bbox_cy       = bbox_cy(keep2);
+bbox_dist_ctr = bbox_dist_ctr(keep2);
+bbox_wall     = bbox_wall(keep2);
+n_loops       = numel(start_frames);
 
 dur_frames = end_frames - start_frames;
 dur_s = dur_frames / fps;

@@ -168,20 +168,20 @@ for si = 1:numel(all_strain_names)
 
                 % Accumulate into flat table
                 if loops.n_loops > 0
-                    flat_strain = [flat_strain; repmat({strain}, loops.n_loops, 1)]; %#ok<AGROW>
-                    flat_area   = [flat_area;   loops.bbox_area(:)];                 %#ok<AGROW>
-                    flat_dist   = [flat_dist;   loops.bbox_dist_center(:)];          %#ok<AGROW>
-                    flat_aspect = [flat_aspect;  loops.bbox_aspect(:)];              %#ok<AGROW>
-                    flat_dur    = [flat_dur;     loops.duration_s(:)];               %#ok<AGROW>
-                    flat_hdg    = [flat_hdg;     loops.cum_heading(:)];              %#ok<AGROW>
-                    flat_wall   = [flat_wall;    loops.bbox_wall_dist(:)];           %#ok<AGROW>
+                    flat_strain = [flat_strain; repmat({strain}, loops.n_loops, 1)];
+                    flat_area   = [flat_area;   loops.bbox_area(:)];                
+                    flat_dist   = [flat_dist;   loops.bbox_dist_center(:)];          
+                    flat_aspect = [flat_aspect;  loops.bbox_aspect(:)];              
+                    flat_dur    = [flat_dur;     loops.duration_s(:)];               
+                    flat_hdg    = [flat_hdg;     loops.cum_heading(:)];              
+                    flat_wall   = [flat_wall;    loops.bbox_wall_dist(:)];          
                 end
 
                 % Store for GUI
-                x_cell{end+1}       = x_fly;       %#ok<AGROW>
-                y_cell{end+1}       = y_fly;       %#ok<AGROW>
-                heading_cell{end+1} = h_fly;       %#ok<AGROW>
-                loop_cell{end+1}    = loops;        %#ok<AGROW>
+                x_cell{end+1}       = x_fly;
+                y_cell{end+1}       = y_fly;
+                heading_cell{end+1} = h_fly;
+                loop_cell{end+1}    = loops;
             end
 
             all_loops.(strain).(sex)(exp_idx).(rep_str).loops = fly_loops_arr;
@@ -235,7 +235,7 @@ gui_strains = fieldnames(gui_data);
 gui_strain_list = {};
 for si = 1:numel(gui_strains)
     if ~isempty(gui_data.(gui_strains{si}).x_cell)
-        gui_strain_list{end+1} = gui_strains{si}; %#ok<AGROW>
+        gui_strain_list{end+1} = gui_strains{si};
     end
 end
 
