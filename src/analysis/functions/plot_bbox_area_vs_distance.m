@@ -114,7 +114,7 @@ for si = 1:n_strains
 
         % Annotate slope
         text(ax, 5, y_upper * 0.9, sprintf('slope = %.1f', p(1)), ...
-            'FontSize', 9, 'Color', col, 'FontWeight', 'bold');
+            'FontSize', 9, 'Color', 'k', 'FontWeight', 'bold');
     end
 
     xlim(ax, [0 arena_radius + 5]);
