@@ -1,7 +1,8 @@
-function [rep_data, n_flies_total] = load_per_rep_data(DATA, strain, sex, condition_n, data_types)
+function [rep_data, n_flies_total, provenance] = load_per_rep_data(DATA, strain, sex, condition_n, data_types)
 % LOAD_PER_REP_DATA  Load individual rep data without averaging across reps.
 %
 %   [rep_data, n_flies_total] = LOAD_PER_REP_DATA(DATA, strain, sex, condition_n, data_types)
+%   [rep_data, n_flies_total, provenance] = LOAD_PER_REP_DATA(...)
 %
 %   Unlike combine_timeseries_across_exp_check (which averages R1 and R2),
 %   this function returns each rep as a separate fly observation. This is
@@ -27,10 +28,17 @@ function [rep_data, n_flies_total] = load_per_rep_data(DATA, strain, sex, condit
 %                     across all experiments, concatenated vertically.
 %                     QC-failed fly-reps are excluded.
 %     n_flies_total - scalar, total number of valid fly-rep observations
+%     provenance    - (optional) struct tracking which experiment and rep
+%                     each row came from:
+%                       .cohort_idx    [n_flies_total x 1] experiment index
+%                       .rep           [n_flies_total x 1] rep (1 or 2)
+%                       .fly_in_cohort [n_flies_total x 1] fly index within cohort-rep
 %
 %   EXAMPLE:
 %     [rd, n] = load_per_rep_data(DATA, "jfrc100_es_shibire_kir", "F", 1, ...
 %         {'heading_data', 'x_data', 'y_data', 'dist_data', 'vel_data'});
+%     [rd, n, prov] = load_per_rep_data(DATA, "jfrc100_es_shibire_kir", "F", 1, ...
+%         {'heading_data', 'x_data', 'y_data', 'dist_data'});
 %
 % See also: combine_timeseries_across_exp_check, detect_360_turning_events
 
@@ -66,6 +74,10 @@ collected = struct();
 for d = 1:numel(data_types)
     collected.(data_types{d}) = {};
 end
+% Provenance tracking (which experiment/rep/fly each row came from)
+prov_cohort = [];
+prov_rep    = [];
+prov_fly    = [];
 
 for idx = 1:n_exp
     rep1_struct = data(idx).(rep1_str);
@@ -106,6 +118,10 @@ for idx = 1:n_exp
                 row = rep_struct.(data_types{d})(f, 1:min_frames);
                 collected.(data_types{d}){end+1} = row;
             end
+            % Track provenance
+            prov_cohort(end+1) = idx;     %#ok<AGROW>
+            prov_rep(end+1)    = rep_idx; %#ok<AGROW>
+            prov_fly(end+1)    = f;       %#ok<AGROW>
         end
     end
 end
@@ -128,5 +144,12 @@ end
 
 fprintf('load_per_rep_data: %s.%s condition %d — %d valid fly-rep observations\n', ...
     strain, sex, condition_n, n_flies_total);
+
+%% Provenance output (optional third argument)
+if nargout >= 3
+    provenance.cohort_idx    = prov_cohort(:);
+    provenance.rep           = prov_rep(:);
+    provenance.fly_in_cohort = prov_fly(:);
+end
 
 end
