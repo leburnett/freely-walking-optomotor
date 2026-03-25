@@ -57,7 +57,7 @@ fps              = get_opt(opts, 'fps', 30);
 arena_center     = get_opt(opts, 'arena_center', [528, 520] / 4.1691);
 arena_radius     = get_opt(opts, 'arena_radius', 120);
 max_dist_center  = get_opt(opts, 'max_dist_center', 110);  % exclude loops with centre > this from arena centre
-min_bbox_area    = get_opt(opts, 'min_bbox_area', 2);       % exclude loops with area < this (mm²)
+min_bbox_area    = get_opt(opts, 'min_bbox_area', 1);       % exclude loops with area < this (mm²)
 
 N = numel(x);
 
