@@ -5,16 +5,18 @@
 %  750-850 (stimulus direction reversal), and analyses how loop metrics
 %  relate to distance from the arena centre.
 %
-%  Generates 13 figures:
-%    Fig 1:     Pooled metric distributions (histograms)
-%    Fig 2-4:   Pooled scatter: metric vs distance with OLS regression
-%    Fig 5-7:   Per-fly scatter subplots: metric vs distance
-%    Fig 8:     Per-fly slope distributions with Wilcoxon signed-rank test
-%    Fig 9:     Radial zone box plots with Kruskal-Wallis test
-%    Fig 10:    Loop direction vs distance (CW/CCW)
-%    Fig 11:    Temporal analysis (distance-time confound)
-%    Fig 12:    Multiple regression: distance vs time effects
-%    Fig 13:    Metric correlation matrix
+%  Active figures (7):
+%    Fig 1:   Pooled metric distributions (histograms)
+%    Fig 2-4: Per-fly fit lines overlaid: metric vs distance
+%    Fig 5:   Per-fly slope distributions with Wilcoxon signed-rank test
+%    Fig 6:   Radial zone box plots with Kruskal-Wallis test
+%    Fig 7:   CW vs CCW proportions (by zone and by stimulus half) +
+%             multiple regression: distance vs time effects
+%
+%  Commented out (slow to render — uncomment to enable):
+%    Pooled scatter: metric vs distance with OLS regression (Section 3)
+%    Scatter subplots in temporal analysis (Section 7)
+%    Metric correlation matrix (Section 8)
 %
 %  Requires DATA in workspace (from comb_data_across_cohorts_cond, protocol 27).
 
@@ -149,7 +151,7 @@ fprintf('  Loops starting in masked frames: %d (should be 0)\n', n_in_mask);
 %  SECTION 2: Pooled metric distributions (Figure 1)
 %  ================================================================
 
-fig1 = figure('Position', [50 50 1400 700], 'Name', 'Fig 1: Metric Distributions');
+figure('Position', [50 50 1400 700], 'Name', 'Fig 1: Metric Distributions');
 sgtitle('Control strain — Loop metric distributions', 'FontSize', 18);
 
 hist_data   = {flat_area, flat_dur, flat_aspect, ...
@@ -192,6 +194,9 @@ scatter_ylabels = {'Bbox area (mm^2)', 'Duration (s)', '|Heading change| (deg)'}
 scatter_titles  = {'Loop area vs distance', 'Loop duration vs distance', ...
                    '|Heading change| vs distance'};
 
+% --- COMMENTED OUT: many-point scatter plots are slow to render ---
+% Uncomment this block to generate Figures 2-4.
+%{
 for mi = 1:3
     figure('Position', [50 + mi*30, 50 + mi*30, 700, 550], ...
         'Name', sprintf('Fig %d: %s', mi+1, scatter_titles{mi}));
@@ -235,63 +240,89 @@ for mi = 1:3
         'FontSize', 11, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
     set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
 end
+%}
+fprintf('  (Figures 2-4 commented out — pooled scatter plots slow to render)\n');
 
 %% ================================================================
-%  SECTION 4: Per-fly scatter subplots (Figures 5-7)
+%  SECTION 4: Per-fly fit lines overlaid on one plot (Figures 2-4)
 %  ================================================================
+%
+%  Instead of individual subplots per fly, each figure overlays all
+%  per-fly OLS fit lines (thin, semi-transparent) on a single axes,
+%  with the average fit line (mean intercept and slope across flies)
+%  drawn bold on top. Flies with fewer than MIN_LOOPS_FOR_FIT loops
+%  are excluded from fitting.
 
 MIN_LOOPS_FOR_FIT = 5;   % minimum loops to compute a meaningful per-fly slope
 
-% Pre-compute per-fly slopes for all 3 metrics
-per_fly_slopes = NaN(n_flies, 3);  % columns: area, duration, |heading|
+% Pre-compute per-fly slopes and intercepts for all 3 metrics
+per_fly_slopes     = NaN(n_flies, 3);  % columns: area, duration, |heading|
+per_fly_intercepts = NaN(n_flies, 3);
 
 metric_names_short = {'area', 'duration', '|heading|'};
 
+x_fit = linspace(0, ARENA_R, 100);
+
 for mi = 1:3
-    n_cols = ceil(sqrt(n_flies));
-    n_rows = ceil(n_flies / n_cols);
-
-    figure('Position', [30 + mi*20, 30 + mi*20, n_cols*220, n_rows*200], ...
-        'Name', sprintf('Fig %d: Per-fly %s vs distance', mi+4, metric_names_short{mi}));
-    sgtitle(sprintf('Per-fly: %s vs distance from centre', scatter_ylabels{mi}), ...
-        'FontSize', 16);
-
+    % First pass: compute per-fly fits
     for f = 1:n_flies
-        subplot(n_rows, n_cols, f);
-        hold on;
-
         idx = (flat_fly_id == f);
         d_f = flat_dist(idx);
         m_f = scatter_metrics{mi}(idx);
         valid = ~isnan(d_f) & ~isnan(m_f);
         d_f = d_f(valid);
         m_f = m_f(valid);
-        n_l = numel(d_f);
 
-        if n_l >= MIN_LOOPS_FOR_FIT
-            scatter(d_f, m_f, 15, [0.216 0.494 0.722], 'filled', ...
-                'MarkerFaceAlpha', 0.5, 'MarkerEdgeColor', 'none');
+        if numel(d_f) >= MIN_LOOPS_FOR_FIT
             p_f = polyfit(d_f, m_f, 1);
-            per_fly_slopes(f, mi) = p_f(1);
-            x_fit = linspace(0, ARENA_R, 50);
-            plot(x_fit, polyval(p_f, x_fit), '-', ...
-                'Color', [0.10 0.25 0.54], 'LineWidth', 1.5);
-            title(sprintf('Fly %d (n=%d) s=%.2f', f, n_l, p_f(1)), 'FontSize', 8);
-        elseif n_l > 0
-            scatter(d_f, m_f, 15, [0.7 0.7 0.7], 'filled', ...
-                'MarkerFaceAlpha', 0.5, 'MarkerEdgeColor', 'none');
-            title(sprintf('Fly %d (n=%d)', f, n_l), 'FontSize', 8, 'Color', [0.5 0.5 0.5]);
-        else
-            title(sprintf('Fly %d (n=0)', f), 'FontSize', 8, 'Color', [0.5 0.5 0.5]);
+            per_fly_slopes(f, mi)     = p_f(1);
+            per_fly_intercepts(f, mi) = p_f(2);
         end
-
-        xlim([0 ARENA_R + 5]);
-        set(gca, 'FontSize', 8, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 0.8);
     end
+
+    % Second pass: plot
+    figure('Position', [30 + mi*20, 30 + mi*20, 750, 550], ...
+        'Name', sprintf('Fig %d: Per-fly %s vs distance', mi+1, metric_names_short{mi}));
+    hold on;
+
+    % Individual per-fly fit lines (thin, semi-transparent)
+    has_fit = ~isnan(per_fly_slopes(:, mi));
+    n_with_fit = sum(has_fit);
+    fly_indices = find(has_fit);
+
+    for fi = 1:n_with_fit
+        f = fly_indices(fi);
+        y_fit = per_fly_intercepts(f, mi) + per_fly_slopes(f, mi) * x_fit;
+        plot(x_fit, y_fit, '-', 'Color', [0.216 0.494 0.722 0.25], 'LineWidth', 1);
+    end
+
+    % Average fit line: mean of per-fly intercepts and slopes
+    mean_slope = mean(per_fly_slopes(has_fit, mi));
+    mean_int   = mean(per_fly_intercepts(has_fit, mi));
+    y_avg = mean_int + mean_slope * x_fit;
+    plot(x_fit, y_avg, '-', 'Color', [0.10 0.25 0.54], 'LineWidth', 3);
+
+    % SE envelope around the average line (mean +/- SEM of predicted values)
+    all_y_fits = per_fly_intercepts(has_fit, mi) + per_fly_slopes(has_fit, mi) * x_fit;
+    y_sem = std(all_y_fits, 0, 1) / sqrt(n_with_fit);
+    fill([x_fit, fliplr(x_fit)], ...
+        [y_avg + y_sem, fliplr(y_avg - y_sem)], ...
+        [0.216 0.494 0.722], 'FaceAlpha', 0.15, 'EdgeColor', 'none');
+
+    xlim([0 ARENA_R + 5]);
+    xlabel('Distance from centre (mm)', 'FontSize', 14);
+    ylabel(scatter_ylabels{mi}, 'FontSize', 14);
+    title(sprintf('Per-fly fit lines: %s vs distance (n=%d flies)', ...
+        scatter_ylabels{mi}, n_with_fit), 'FontSize', 16);
+    text(5, max(ylim) * 0.92, ...
+        sprintf('mean slope = %.3f\nn flies = %d (>=%d loops each)', ...
+        mean_slope, n_with_fit, MIN_LOOPS_FOR_FIT), ...
+        'FontSize', 11, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
+    set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
 end
 
 %% ================================================================
-%  SECTION 5: Per-fly slope distribution and Wilcoxon test (Figure 8)
+%  SECTION 5: Per-fly slope distribution and Wilcoxon test (Figure 5)
 %  ================================================================
 %
 %  For each metric we collected one OLS slope per fly (Section 4).
@@ -304,7 +335,7 @@ end
 %  approach is simpler, interpretable, and does not require specific
 %  toolbox functions.
 
-fig8 = figure('Position', [50 50 1500 450], 'Name', 'Fig 8: Per-fly Slopes');
+figure('Position', [50 50 1500 450], 'Name', 'Fig 5: Per-fly Slopes');
 sgtitle('Per-fly OLS slopes: metric vs distance from centre', 'FontSize', 18);
 
 for mi = 1:3
@@ -345,7 +376,7 @@ for mi = 1:3
 end
 
 %% ================================================================
-%  SECTION 6: Radial zone comparison (Figure 9)
+%  SECTION 6: Radial zone comparison (Figure 6)
 %  ================================================================
 
 zone_edges  = [0 40 80 120];
@@ -360,7 +391,7 @@ zone_colors = [0.75 0.85 0.95;
                0.40 0.58 0.78;
                0.10 0.25 0.54];
 
-fig9 = figure('Position', [50 50 1500 500], 'Name', 'Fig 9: Radial Zones');
+figure('Position', [50 50 1500 500], 'Name', 'Fig 6: Radial Zones');
 sgtitle('Loop metrics by radial zone — Kruskal-Wallis test', 'FontSize', 18);
 
 zone_metrics = {flat_area, flat_dur, abs(flat_hdg)};
@@ -437,51 +468,28 @@ for mi = 1:3
 end
 
 %% ================================================================
-%  SECTION 7: Loop direction and temporal analysis (Figures 10-12)
+%  SECTION 7: Loop direction, temporal analysis, and multiple
+%  regression (Figure 7)
 %  ================================================================
 %
 %  The stimulus is CW gratings for the first half (frames 300-749) then
 %  CCW gratings for the second half (frames 851-1200). Loop direction
 %  could be confounded with time and with distance.
+%
+%  This figure combines three bar-chart analyses into a 1x3 layout:
+%    (a) CW vs CCW proportion by radial zone + chi-squared test
+%    (b) CW vs CCW proportion by stimulus half + chi-squared test
+%    (c) Multiple regression: standardised betas for distance vs time
 
 % CW loops: negative cum_heading; CCW loops: positive cum_heading
 is_cw  = flat_hdg < 0;
 is_ccw = flat_hdg > 0;
 
-% --- Figure 10: Direction vs distance ---
-fig10 = figure('Position', [50 50 1200 500], 'Name', 'Fig 10: Direction vs Distance');
-sgtitle('Loop direction vs distance from centre', 'FontSize', 18);
+figure('Position', [50 50 1600 500], 'Name', 'Fig 7: Direction & Temporal');
+sgtitle('Loop direction, stimulus half, and distance vs time effects', 'FontSize', 18);
 
-% (1) Scatter: signed heading vs distance
-subplot(1, 2, 1);
-hold on;
-scatter(flat_dist(is_cw), flat_hdg(is_cw), 15, [0.894 0.102 0.110], 'filled', ...
-    'MarkerFaceAlpha', 0.3, 'MarkerEdgeColor', 'none');
-scatter(flat_dist(is_ccw), flat_hdg(is_ccw), 15, [0.216 0.494 0.722], 'filled', ...
-    'MarkerFaceAlpha', 0.3, 'MarkerEdgeColor', 'none');
-yline(0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
-
-% Trend lines per direction
-for dir_i = 1:2
-    if dir_i == 1, idx_d = is_cw; col = [0.894 0.102 0.110];
-    else,          idx_d = is_ccw; col = [0.216 0.494 0.722]; end
-    d_d = flat_dist(idx_d); m_d = flat_hdg(idx_d);
-    v = ~isnan(d_d) & ~isnan(m_d);
-    if sum(v) >= 3
-        p_d = polyfit(d_d(v), m_d(v), 1);
-        x_fit = linspace(0, ARENA_R, 100);
-        plot(x_fit, polyval(p_d, x_fit), '-', 'Color', col, 'LineWidth', 2);
-    end
-end
-
-xlabel('Distance from centre (mm)', 'FontSize', 14);
-ylabel('Cumulative heading change (deg)', 'FontSize', 14);
-title('Signed heading vs distance', 'FontSize', 14);
-legend('CW', 'CCW', 'Location', 'best');
-set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
-
-% (2) Proportion CW vs CCW per radial zone
-subplot(1, 2, 2);
+% --- Subplot (a): CW vs CCW proportion by radial zone ---
+subplot(1, 3, 1);
 hold on;
 n_cw_zone  = zeros(n_zones, 1);
 n_ccw_zone = zeros(n_zones, 1);
@@ -506,54 +514,16 @@ df_chi = (size(obs,1)-1) * (size(obs,2)-1);
 p_chi_zone = 1 - chi2cdf(chi2, df_chi);
 
 set(gca, 'XTick', 1:n_zones, 'XTickLabel', zone_labels);
-ylabel('Proportion', 'FontSize', 14);
-title(sprintf('CW vs CCW by zone (\\chi^2 p=%.3f)', p_chi_zone), 'FontSize', 14);
+ylabel('Proportion', 'FontSize', 12);
+title(sprintf('CW vs CCW by zone\n\\chi^2 p=%.3f', p_chi_zone), 'FontSize', 12);
 legend('CW', 'CCW', 'Location', 'best');
 ylim([0 1]);
 set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
 
 fprintf('\nDirection vs zone chi-squared: chi2=%.2f, df=%d, p=%.4f\n', chi2, df_chi, p_chi_zone);
 
-% --- Figure 11: Temporal analysis ---
-fig11 = figure('Position', [50 50 1100 900], 'Name', 'Fig 11: Temporal Analysis');
-sgtitle('Temporal analysis — distance, time, and stimulus half', 'FontSize', 18);
-
-% (1) Distance vs time — are they correlated?
-subplot(2, 2, 1);
-hold on;
-scatter(flat_start_time, flat_dist, 15, [0.216 0.494 0.722], 'filled', ...
-    'MarkerFaceAlpha', 0.3, 'MarkerEdgeColor', 'none');
-v = ~isnan(flat_start_time) & ~isnan(flat_dist);
-[rho_dt, p_dt] = corr(flat_start_time(v), flat_dist(v), 'Type', 'Spearman');
-if sum(v) >= 3
-    p_fit = polyfit(flat_start_time(v), flat_dist(v), 1);
-    x_fit = linspace(min(flat_start_time), max(flat_start_time), 100);
-    plot(x_fit, polyval(p_fit, x_fit), '-', 'Color', [0.10 0.25 0.54], 'LineWidth', 2);
-end
-xlabel('Time since stim onset (s)', 'FontSize', 12);
-ylabel('Distance from centre (mm)', 'FontSize', 12);
-title(sprintf('Distance vs time\n\\rho=%.3f, p=%.3e', rho_dt, p_dt), 'FontSize', 12);
-set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
-
-% (2) Area vs time
-subplot(2, 2, 2);
-hold on;
-scatter(flat_start_time, flat_area, 15, [0.216 0.494 0.722], 'filled', ...
-    'MarkerFaceAlpha', 0.3, 'MarkerEdgeColor', 'none');
-v = ~isnan(flat_start_time) & ~isnan(flat_area);
-if sum(v) >= 3
-    p_fit = polyfit(flat_start_time(v), flat_area(v), 1);
-    x_fit = linspace(min(flat_start_time), max(flat_start_time), 100);
-    plot(x_fit, polyval(p_fit, x_fit), '-', 'Color', [0.10 0.25 0.54], 'LineWidth', 2);
-end
-[rho_at, p_at] = corr(flat_start_time(v), flat_area(v), 'Type', 'Spearman');
-xlabel('Time since stim onset (s)', 'FontSize', 12);
-ylabel('Bbox area (mm^2)', 'FontSize', 12);
-title(sprintf('Area vs time\n\\rho=%.3f, p=%.3e', rho_at, p_at), 'FontSize', 12);
-set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
-
-% (3) CW vs CCW proportion by stimulus half
-subplot(2, 2, 3);
+% --- Subplot (b): CW vs CCW proportion by stimulus half ---
+subplot(1, 3, 2);
 hold on;
 n_cw_h  = [sum(flat_stim_half == 1 & is_cw),  sum(flat_stim_half == 2 & is_cw)];
 n_ccw_h = [sum(flat_stim_half == 1 & is_ccw), sum(flat_stim_half == 2 & is_ccw)];
@@ -572,7 +542,7 @@ chi2_h = sum((obs_h(:) - exp_h(:)).^2 ./ max(exp_h(:), 1));
 df_h = 1;
 p_chi_half = 1 - chi2cdf(chi2_h, df_h);
 
-set(gca, 'XTick', 1:2, 'XTickLabel', {'CW stim (half 1)', 'CCW stim (half 2)'});
+set(gca, 'XTick', 1:2, 'XTickLabel', {'CW stim', 'CCW stim'});
 ylabel('Proportion', 'FontSize', 12);
 title(sprintf('Direction by stim half\n\\chi^2=%.2f, p=%.3f', chi2_h, p_chi_half), 'FontSize', 12);
 legend('CW loops', 'CCW loops', 'Location', 'best');
@@ -582,22 +552,15 @@ set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
 fprintf('Direction vs stimulus half chi-squared: chi2=%.2f, df=%d, p=%.4f\n', ...
     chi2_h, df_h, p_chi_half);
 
-% (4) |heading| vs time, coloured by stimulus half
-subplot(2, 2, 4);
-hold on;
-h1_idx = flat_stim_half == 1;
-h2_idx = flat_stim_half == 2;
-scatter(flat_start_time(h1_idx), abs(flat_hdg(h1_idx)), 15, [0.894 0.102 0.110], ...
-    'filled', 'MarkerFaceAlpha', 0.3, 'MarkerEdgeColor', 'none');
-scatter(flat_start_time(h2_idx), abs(flat_hdg(h2_idx)), 15, [0.216 0.494 0.722], ...
-    'filled', 'MarkerFaceAlpha', 0.3, 'MarkerEdgeColor', 'none');
-xlabel('Time since stim onset (s)', 'FontSize', 12);
-ylabel('|Heading change| (deg)', 'FontSize', 12);
-title('|Heading| vs time by stim half', 'FontSize', 12);
-legend('CW half', 'CCW half', 'Location', 'best');
-set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+% Compute Spearman correlations for console (distance-time confound)
+v_dt = ~isnan(flat_start_time) & ~isnan(flat_dist);
+[rho_dt, p_dt] = corr(flat_start_time(v_dt), flat_dist(v_dt), 'Type', 'Spearman');
+v_at = ~isnan(flat_start_time) & ~isnan(flat_area);
+[rho_at, p_at] = corr(flat_start_time(v_at), flat_area(v_at), 'Type', 'Spearman');
+fprintf('  Distance vs time: rho=%.3f, p=%.3e\n', rho_dt, p_dt);
+fprintf('  Area vs time:     rho=%.3f, p=%.3e\n', rho_at, p_at);
 
-% --- Figure 12: Multiple regression to disentangle distance vs time ---
+% --- Subplot (c): Multiple regression (standardised betas) ---
 %
 %  For each metric, fit:  metric = b0 + b_dist * distance + b_time * time
 %
@@ -605,8 +568,8 @@ set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
 %  are directly comparable in effect size. This tests whether distance
 %  has an effect *after controlling for time*, and vice versa.
 
-fig12 = figure('Position', [50 50 900 450], 'Name', 'Fig 12: Distance vs Time Effects');
-sgtitle('Multiple regression: standardised betas (distance vs time)', 'FontSize', 18);
+subplot(1, 3, 3);
+hold on;
 
 mreg_metrics = {flat_area, flat_dur, abs(flat_hdg)};
 beta_dist = NaN(3, 1);
@@ -692,8 +655,9 @@ for mi = 1:3
         'Color', [0.894 0.102 0.110]);
 end
 
-set(gca, 'XTick', x_pos, 'XTickLabel', scatter_ylabels);
-ylabel('Standardised beta', 'FontSize', 14);
+set(gca, 'XTick', x_pos, 'XTickLabel', metric_names_short);
+ylabel('Standardised \beta', 'FontSize', 12);
+title('Distance vs time (multiple regression)', 'FontSize', 12);
 legend('Distance', 'Time', 'Location', 'best');
 set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
 
@@ -701,6 +665,9 @@ set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
 %  SECTION 8: Metric correlation matrix (Figure 13)
 %  ================================================================
 
+% --- COMMENTED OUT: 6x6 scatter matrix is slow with many data points ---
+% Uncomment this block to generate Figure 13.
+%{
 corr_data = [flat_area, flat_dur, abs(flat_hdg), flat_aspect, flat_dist, flat_start_time];
 corr_labels = {'Area', 'Duration', '|Heading|', 'Aspect', 'Distance', 'Time'};
 n_vars = size(corr_data, 2);
@@ -744,6 +711,8 @@ for ri = 1:n_vars
         set(ax, 'FontSize', 8, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 0.8);
     end
 end
+%}
+fprintf('  (Figure 13 commented out — correlation matrix slow to render)\n');
 
 %% Print final summary
 
@@ -751,5 +720,5 @@ fprintf('\n=============================================\n');
 fprintf('  ANALYSIS COMPLETE\n');
 fprintf('  %d loops from %d flies (control strain)\n', n_total_loops, n_flies);
 fprintf('  Frames 750-850 excluded (stimulus reversal)\n');
-fprintf('  13 figures generated\n');
+fprintf('  7 figures generated\n');
 fprintf('=============================================\n');
