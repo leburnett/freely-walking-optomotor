@@ -5,17 +5,18 @@
 %  750-850 (stimulus direction reversal), and analyses how loop metrics
 %  relate to distance from the arena centre.
 %
-%  Active figures (7):
-%    Fig 1:   Pooled metric distributions (histograms)
-%    Fig 2-4: Per-fly fit lines overlaid: metric vs distance
-%    Fig 5:   Per-fly slope distributions with Wilcoxon signed-rank test
-%    Fig 6:   Radial zone box plots with Kruskal-Wallis test
-%    Fig 7:   CW vs CCW proportions (by zone and by stimulus half) +
-%             multiple regression: distance vs time effects
+%  Active figures (10):
+%    Fig 1:    Pooled metric distributions (histograms)
+%    Fig 2-4:  Per-fly OLS fit lines overlaid: metric vs distance
+%    Fig 5:    Per-fly slope distributions with Wilcoxon signed-rank test
+%    Fig 6:    Radial zone box plots with Kruskal-Wallis test
+%    Fig 7:    CW vs CCW proportions (by zone and by stimulus half) +
+%              multiple regression: distance vs time effects
+%    Fig 8-10: LMM per-fly predicted lines: metric vs distance
+%              (with population fixed-effect line and 95% CI)
 %
 %  Commented out (slow to render — uncomment to enable):
 %    Pooled scatter: metric vs distance with OLS regression (Section 3)
-%    Scatter subplots in temporal analysis (Section 7)
 %    Metric correlation matrix (Section 8)
 %
 %  Requires DATA in workspace (from comb_data_across_cohorts_cond, protocol 27).
@@ -714,11 +715,344 @@ end
 %}
 fprintf('  (Figure 13 commented out — correlation matrix slow to render)\n');
 
+%% ================================================================
+%  SECTION 9: Linear Mixed-Effects Models (LMM) — Figures 8-10
+%  ================================================================
+%
+%  WHY A MIXED-EFFECTS MODEL?
+%  --------------------------
+%  Our data is hierarchical: each fly contributes multiple loops, and
+%  loops from the same fly are not independent (a fly that makes big
+%  loops will tend to make big loops everywhere). A standard OLS
+%  regression ignores this structure and treats each loop as if it came
+%  from a different fly, which inflates significance (anti-conservative).
+%
+%  The per-fly slope approach in Section 5 handles this by collapsing
+%  each fly to a single slope, but it throws away information: a fly
+%  with 30 loops gets the same weight as a fly with 5.
+%
+%  A linear mixed-effects model (LMM) is the formal solution. It
+%  simultaneously estimates:
+%    - FIXED EFFECTS: the population-average relationship (the thing
+%      we care about — "does loop area decrease with distance?")
+%    - RANDOM EFFECTS: how much each individual fly deviates from the
+%      population average (both in baseline level and in slope)
+%
+%  NOTATION
+%  --------
+%  We write the model in Wilkinson notation (as used by MATLAB's fitlme):
+%
+%    bbox_area ~ 1 + distance + (1 + distance | fly_id)
+%
+%  This means:
+%    Fixed part:   bbox_area = beta0 + beta1 * distance
+%                  beta0 = population intercept (average area at distance=0)
+%                  beta1 = population slope (how area changes per mm of distance)
+%                  ** This is the key parameter — its p-value tells us whether
+%                     the distance effect is real across the population **
+%
+%    Random part:  (1 + distance | fly_id)
+%                  Each fly gets its OWN intercept and slope that deviate
+%                  from the population values. The model estimates the
+%                  variance of these deviations (how much flies differ).
+%                  "1" = random intercept (some flies make bigger loops overall)
+%                  "distance" = random slope (some flies show steeper trends)
+%                  The "|" means "grouped by" — so each fly_id gets its own pair.
+%
+%  HOW IT WORKS (intuition)
+%  ------------------------
+%  Think of it as fitting a separate regression line for each fly, but
+%  with "partial pooling": flies with very few data points get pulled
+%  toward the population average (shrinkage), while flies with lots of
+%  data are allowed to show their own pattern. This is more efficient
+%  than the two-stage approach because it uses all the data optimally.
+%
+%  The fixed-effect p-value on the slope is the formal test of:
+%    H0: the population-average slope is zero
+%  This properly accounts for the within-fly correlation.
+%
+%  REQUIRES: Statistics and Machine Learning Toolbox (for fitlme, table).
+
+fprintf('\n=== Section 9: Linear Mixed-Effects Models ===\n');
+
+% ---------------------------------------------------------------
+% STEP 1: BUILD THE DATA TABLE
+% ---------------------------------------------------------------
+% fitlme requires data in a MATLAB table (like a dataframe in R/Python).
+% Each row is one observation (one loop), with columns for the response
+% variable, the predictor, and the grouping variable (fly identity).
+
+% Remove rows with any NaN in the variables we need
+valid = ~isnan(flat_area) & ~isnan(flat_dist) & ~isnan(flat_dur) & ...
+        ~isnan(flat_hdg) & ~isnan(flat_start_time);
+
+lmm_tbl = table( ...
+    flat_fly_id(valid),  ...
+    flat_dist(valid),    ...
+    flat_area(valid),    ...
+    flat_dur(valid),     ...
+    abs(flat_hdg(valid)), ...
+    flat_start_time(valid), ...
+    'VariableNames', {'fly_id', 'distance', 'bbox_area', 'duration_s', ...
+                      'abs_heading', 'start_time'});
+
+% fly_id must be categorical for fitlme to treat it as a grouping variable
+% (not a continuous number). This tells MATLAB "fly 1 and fly 2 are
+% different groups, not that fly 2 is twice fly 1".
+lmm_tbl.fly_id = categorical(lmm_tbl.fly_id);
+
+fprintf('LMM table: %d loops from %d unique flies\n', ...
+    height(lmm_tbl), numel(unique(lmm_tbl.fly_id)));
+
+% ---------------------------------------------------------------
+% STEP 2: FIT THE MODELS
+% ---------------------------------------------------------------
+% We fit three separate LMMs, one for each metric.
+%
+% Model specification in Wilkinson notation:
+%   'metric ~ 1 + distance + (1 + distance | fly_id)'
+%
+% Breaking this down:
+%   metric ~ 1 + distance       = fixed effects (population line)
+%   (1 + distance | fly_id)     = random effects (per-fly deviations)
+%
+% The "1" in the fixed part is the intercept (implicit, but written
+% explicitly for clarity). The "1" in the random part means each fly
+% gets its own intercept offset. "distance" in the random part means
+% each fly also gets its own slope offset.
+%
+% fitlme estimates the model using Restricted Maximum Likelihood (REML),
+% which is the default and recommended method. REML gives unbiased
+% estimates of the variance components (how much flies vary in their
+% intercepts and slopes).
+
+lmm_metrics  = {'bbox_area', 'duration_s', 'abs_heading'};
+lmm_ylabels  = {'Bbox area (mm^2)', 'Duration (s)', '|Heading change| (deg)'};
+lmm_formulas = {
+    'bbox_area  ~ 1 + distance + (1 + distance | fly_id)'
+    'duration_s ~ 1 + distance + (1 + distance | fly_id)'
+    'abs_heading ~ 1 + distance + (1 + distance | fly_id)'
+};
+lmm_models = cell(3, 1);
+
+for mi = 1:3
+    fprintf('\n--- Fitting LMM: %s ~ distance + (1 + distance | fly_id) ---\n', ...
+        lmm_metrics{mi});
+
+    lmm_models{mi} = fitlme(lmm_tbl, lmm_formulas{mi});
+
+    % ---------------------------------------------------------------
+    % STEP 3: INTERPRET THE OUTPUT
+    % ---------------------------------------------------------------
+    % The model output has two key sections:
+    %
+    % FIXED EFFECTS (fixedEffects / coefTest):
+    %   (Intercept): population-average metric value at distance = 0
+    %   distance:    population-average change in metric per mm of distance
+    %                *** This is the main result ***
+    %                Its p-value answers: "Is there a significant linear
+    %                relationship between distance and this metric, after
+    %                properly accounting for repeated measures within flies?"
+    %
+    % RANDOM EFFECTS (covarianceParameters):
+    %   Variance of fly intercepts: how much flies differ in baseline metric
+    %   Variance of fly slopes: how much flies differ in their distance trend
+    %   Covariance: whether flies with high baselines tend to have steeper slopes
+
+    % Display the full model summary
+    disp(lmm_models{mi});
+
+    % Extract fixed effects with confidence intervals
+    fe = fixedEffects(lmm_models{mi});
+    [~, ~, fe_stats] = fixedEffects(lmm_models{mi}, 'DFMethod', 'satterthwaite');
+
+    fprintf('  Fixed effects (Satterthwaite df):\n');
+    fprintf('    Intercept: %.3f (SE=%.3f, t=%.2f, p=%.3e)\n', ...
+        fe_stats.Estimate(1), fe_stats.SE(1), fe_stats.tStat(1), fe_stats.pValue(1));
+    fprintf('    Distance:  %.4f (SE=%.4f, t=%.2f, p=%.3e)\n', ...
+        fe_stats.Estimate(2), fe_stats.SE(2), fe_stats.tStat(2), fe_stats.pValue(2));
+    fprintf('    95%% CI on slope: [%.4f, %.4f]\n', ...
+        fe_stats.Lower(2), fe_stats.Upper(2));
+
+    % ---------------------------------------------------------------
+    % STEP 3b: UNDERSTAND THE RANDOM EFFECTS
+    % ---------------------------------------------------------------
+    % randomEffects() returns the estimated deviation of each fly from
+    % the population average. These are called BLUPs (Best Linear
+    % Unbiased Predictors). Each fly gets two values:
+    %   - intercept offset (how much higher/lower than average)
+    %   - slope offset (how much steeper/shallower than average)
+    %
+    % The per-fly predicted line is:
+    %   y_fly = (beta0 + u0_fly) + (beta1 + u1_fly) * distance
+    % where u0 and u1 are the random effects for that fly.
+
+    [~, ~, re_stats] = randomEffects(lmm_models{mi});
+    re_intercepts = re_stats.Estimate(strcmp(re_stats.Name, '(Intercept)'));
+    re_slopes     = re_stats.Estimate(strcmp(re_stats.Name, 'distance'));
+
+    fprintf('    Random effect SDs: intercept=%.3f, slope=%.4f\n', ...
+        std(re_intercepts), std(re_slopes));
+end
+
+% ---------------------------------------------------------------
+% STEP 4: PLOT THE LMM RESULTS — Per-fly predicted lines (Figures 8-10)
+% ---------------------------------------------------------------
+%
+% For each metric, we plot:
+%   - Thin semi-transparent lines: each fly's PREDICTED line from the LMM
+%     (population fixed effect + that fly's random effect). These are the
+%     "shrunk" estimates — flies with few data points are pulled toward
+%     the population mean.
+%   - Bold line: the population fixed-effect line (the LMM's answer to
+%     "what is the average trend?")
+%   - Shaded band: 95% CI on the population fixed-effect line
+%
+% Compare this to Section 4 (per-fly OLS lines):
+%   - Section 4 lines are raw OLS fits — each fly's line is estimated
+%     independently with no borrowing of information from other flies.
+%   - LMM lines are "partially pooled" — flies with few data points are
+%     regularised toward the population average. This is visible as
+%     tighter clustering of the LMM lines compared to the OLS lines.
+
+x_pred = linspace(0, ARENA_R, 100)';
+
+for mi = 1:3
+    mdl = lmm_models{mi};
+    fe = fixedEffects(mdl);       % [intercept; slope]
+    [~, ~, re_stats] = randomEffects(mdl);
+
+    % Extract per-fly random effects
+    re_int = re_stats.Estimate(strcmp(re_stats.Name, '(Intercept)'));
+    re_slp = re_stats.Estimate(strcmp(re_stats.Name, 'distance'));
+    fly_ids_re = re_stats.Level(strcmp(re_stats.Name, '(Intercept)'));
+    n_flies_re = numel(re_int);
+
+    figure('Position', [30 + mi*20, 30 + mi*20, 750, 550], ...
+        'Name', sprintf('Fig %d: LMM %s', mi+7, lmm_metrics{mi}));
+    hold on;
+
+    % Per-fly predicted lines (fixed + random effects)
+    for fi = 1:n_flies_re
+        fly_int = fe(1) + re_int(fi);   % population intercept + fly offset
+        fly_slp = fe(2) + re_slp(fi);   % population slope + fly offset
+        y_fly = fly_int + fly_slp * x_pred;
+        plot(x_pred, y_fly, '-', 'Color', [0.216 0.494 0.722 0.15], 'LineWidth', 0.8);
+    end
+
+    % Population fixed-effect line (the main result)
+    y_pop = fe(1) + fe(2) * x_pred;
+    plot(x_pred, y_pop, '-', 'Color', [0.10 0.25 0.54], 'LineWidth', 3);
+
+    % 95% CI on the fixed-effect line
+    % We need the variance of the predicted mean at each x value.
+    % For a linear model: Var(y_hat) = Var(b0) + x^2*Var(b1) + 2*x*Cov(b0,b1)
+    % The covariance matrix of fixed effects gives us this.
+    cov_fe = lmm_models{mi}.CoefficientCovariance;
+    var_pred = cov_fe(1,1) + x_pred.^2 * cov_fe(2,2) + 2 * x_pred * cov_fe(1,2);
+    se_pred = sqrt(var_pred);
+    ci_upper = y_pop + 1.96 * se_pred;
+    ci_lower = y_pop - 1.96 * se_pred;
+
+    fill([x_pred; flipud(x_pred)], [ci_upper; flipud(ci_lower)], ...
+        [0.216 0.494 0.722], 'FaceAlpha', 0.2, 'EdgeColor', 'none');
+
+    xlim([0 ARENA_R + 5]);
+    xlabel('Distance from centre (mm)', 'FontSize', 14);
+    ylabel(lmm_ylabels{mi}, 'FontSize', 14);
+
+    [~, ~, fe_stats] = fixedEffects(mdl, 'DFMethod', 'satterthwaite');
+    title(sprintf('LMM: %s vs distance\nslope = %.4f [%.4f, %.4f], p = %.2e', ...
+        lmm_ylabels{mi}, fe_stats.Estimate(2), fe_stats.Lower(2), ...
+        fe_stats.Upper(2), fe_stats.pValue(2)), 'FontSize', 14);
+
+    text(5, max(ylim) * 0.92, ...
+        sprintf('Fixed: slope=%.4f, p=%.2e\nRandom slope SD=%.4f\nn=%d loops, %d flies', ...
+        fe(2), fe_stats.pValue(2), std(re_slp), height(lmm_tbl), n_flies_re), ...
+        'FontSize', 11, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
+    set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+end
+
+% ---------------------------------------------------------------
+% STEP 5: COMPARE PER-FLY SLOPES — OLS vs LMM (console output)
+% ---------------------------------------------------------------
+%
+% This comparison shows the "shrinkage" effect of the LMM. The LMM
+% slopes will be more tightly clustered around the population mean
+% because flies with few data points are pulled toward the average.
+% The OLS slopes from Section 4 show more spread because each fly
+% is estimated independently.
+
+fprintf('\n=== Comparison: Per-fly OLS slopes vs LMM random slopes ===\n');
+for mi = 1:3
+    [~, ~, re_stats] = randomEffects(lmm_models{mi});
+    re_slp = re_stats.Estimate(strcmp(re_stats.Name, 'distance'));
+    fe = fixedEffects(lmm_models{mi});
+
+    % LMM per-fly slopes = fixed slope + random slope offset
+    lmm_fly_slopes = fe(2) + re_slp;
+
+    % OLS per-fly slopes from Section 4
+    ols_slopes_valid = per_fly_slopes(~isnan(per_fly_slopes(:, mi)), mi);
+
+    fprintf('\n  %s:\n', metric_names_short{mi});
+    fprintf('    OLS per-fly slopes:  mean=%.4f, SD=%.4f, range=[%.4f, %.4f] (n=%d)\n', ...
+        mean(ols_slopes_valid), std(ols_slopes_valid), ...
+        min(ols_slopes_valid), max(ols_slopes_valid), numel(ols_slopes_valid));
+    fprintf('    LMM per-fly slopes:  mean=%.4f, SD=%.4f, range=[%.4f, %.4f] (n=%d)\n', ...
+        mean(lmm_fly_slopes), std(lmm_fly_slopes), ...
+        min(lmm_fly_slopes), max(lmm_fly_slopes), numel(lmm_fly_slopes));
+    fprintf('    LMM fixed slope:     %.4f (this is the population estimate)\n', fe(2));
+    fprintf('    Shrinkage ratio:     %.2f (LMM SD / OLS SD — <1 means LMM is tighter)\n', ...
+        std(lmm_fly_slopes) / std(ols_slopes_valid));
+end
+
+% ---------------------------------------------------------------
+% STEP 6 (optional): MODEL WITH TIME AS ADDITIONAL FIXED EFFECT
+% ---------------------------------------------------------------
+%
+% This is the LMM equivalent of the multiple regression in Section 7c,
+% but now properly accounting for repeated measures.
+%
+%   metric ~ distance + start_time + (1 + distance | fly_id)
+%
+% If the distance fixed effect remains significant after adding time,
+% the spatial effect is real and not a temporal artefact.
+
+fprintf('\n=== LMM with distance + time (controlling for temporal confound) ===\n');
+
+lmm_formulas_dt = {
+    'bbox_area   ~ 1 + distance + start_time + (1 + distance | fly_id)'
+    'duration_s  ~ 1 + distance + start_time + (1 + distance | fly_id)'
+    'abs_heading ~ 1 + distance + start_time + (1 + distance | fly_id)'
+};
+
+for mi = 1:3
+    mdl_dt = fitlme(lmm_tbl, lmm_formulas_dt{mi});
+    [~, ~, fe_stats] = fixedEffects(mdl_dt, 'DFMethod', 'satterthwaite');
+
+    fprintf('\n  %s ~ distance + time + (1 + distance | fly_id):\n', lmm_metrics{mi});
+    fprintf('    distance:   beta=%.4f (SE=%.4f, p=%.3e)\n', ...
+        fe_stats.Estimate(2), fe_stats.SE(2), fe_stats.pValue(2));
+    fprintf('    start_time: beta=%.4f (SE=%.4f, p=%.3e)\n', ...
+        fe_stats.Estimate(3), fe_stats.SE(3), fe_stats.pValue(3));
+
+    % Compare models using likelihood ratio test (LRT)
+    % This tests whether adding time significantly improves the model.
+    % compare() requires models fit with ML (not REML) for valid LRT.
+    mdl_dist_ml = fitlme(lmm_tbl, lmm_formulas{mi}, 'FitMethod', 'ML');
+    mdl_dt_ml   = fitlme(lmm_tbl, lmm_formulas_dt{mi}, 'FitMethod', 'ML');
+    comp = compare(mdl_dist_ml, mdl_dt_ml);
+    fprintf('    LRT (distance-only vs distance+time): chi2=%.2f, p=%.4f\n', ...
+        comp.LRStat(2), comp.pValue(2));
+    fprintf('    (p>0.05 means adding time does not significantly improve the model)\n');
+end
+
 %% Print final summary
 
 fprintf('\n=============================================\n');
 fprintf('  ANALYSIS COMPLETE\n');
 fprintf('  %d loops from %d flies (control strain)\n', n_total_loops, n_flies);
 fprintf('  Frames 750-850 excluded (stimulus reversal)\n');
-fprintf('  7 figures generated\n');
+fprintf('  10 figures generated\n');
 fprintf('=============================================\n');
