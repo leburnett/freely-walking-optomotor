@@ -57,7 +57,7 @@ function browse_trajectories_by_slip(rep_data, travel_dir, abs_ang_diff, ...
     end
 
     %% Colormap: hot (0° = black/dark red -> 180° = white/yellow)
-    cmap_div = hot(256);
+    cmap_div = turbo(256);
 
     %% Create figure
     fig = figure('Name', 'Trajectory Browser — Heading vs Travel Direction', ...
