@@ -135,12 +135,31 @@ ang_diff = mod(heading_corrected - travel_dir + 180, 360) - 180;
 abs_ang_diff = abs(ang_diff);
 
 %% ================================================================
+%  SECTION 4b: Smooth with 5-frame moving average
+%  ================================================================
+%  Apply a centred 5-frame sliding window mean to the absolute angular
+%  difference.  NaN-out frames below speed threshold first so that
+%  stationary frames do not dilute the average.  Use movmean with
+%  'omitnan' so edges and gaps degrade gracefully.
+
+SMOOTH_WIN = 5;  % frames (centred)
+
+abs_ang_diff_raw = abs_ang_diff;  % keep unsmoothed copy for reference
+abs_ang_diff_smooth = abs_ang_diff;
+abs_ang_diff_smooth(~speed_mask) = NaN;
+for f = 1:n_flies
+    abs_ang_diff_smooth(f, :) = movmean(abs_ang_diff_smooth(f, :), SMOOTH_WIN, 'omitnan');
+end
+
+fprintf('Applied %d-frame centred moving average to |heading - travel dir|\n', SMOOTH_WIN);
+
+%% ================================================================
 %  SECTION 5: Extract stimulus period
 %  ================================================================
 
 stim_range = STIM_ON:STIM_OFF;
 
-abs_diff_stim = abs_ang_diff(:, stim_range);
+abs_diff_stim = abs_ang_diff_smooth(:, stim_range);
 signed_diff_stim = ang_diff(:, stim_range);
 speed_mask_stim = speed_mask(:, stim_range);
 dist_stim = rep_data.dist_data(:, stim_range);
@@ -287,11 +306,157 @@ if create_plots
     title('Sideways Movement vs Arena Position', 'FontSize', 16);
     set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
 
-end 
+end
 
 %% ================================================================
-%  SECTION 9: Launch interactive trajectory browser
+%  SECTION 9: Per-fly summary histograms (mean & max |diff|)
 %  ================================================================
 
-browse_trajectories_by_slip(rep_data, travel_dir, abs_ang_diff, ...
+% Compute per-fly mean and max |heading - travel dir| during stimulus
+fly_mean_diff = NaN(n_flies, 1);
+fly_max_diff  = NaN(n_flies, 1);
+for f = 1:n_flies
+    v = abs_diff_stim(f, valid(f, :));
+    if ~isempty(v)
+        fly_mean_diff(f) = mean(v, 'omitnan');
+        fly_max_diff(f)  = max(v);
+    end
+end
+
+figure('Position', [50 50 800 400]);
+
+% --- Left: histogram of per-fly mean ---
+subplot(1, 2, 1);
+edges = 0:5:180;
+histogram(fly_mean_diff, edges, 'FaceColor', [0.8 0.8 0.8], ...
+    'EdgeColor', 'w', 'Normalization', 'count');
+hold on;
+xline(median(fly_mean_diff, 'omitnan'), '-', 'Color', 'k', 'LineWidth', 1.5);
+xline(90, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
+xlabel('Mean |Heading − Travel Dir| per fly (deg)', 'FontSize', 14);
+ylabel('Number of flies', 'FontSize', 14);
+title(sprintf('Per-Fly Mean (%d-frame avg)', SMOOTH_WIN), 'FontSize', 16);
+xlim([0 180]);
+set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+
+% --- Right: histogram of per-fly max ---
+subplot(1, 2, 2);
+histogram(fly_max_diff, edges, 'FaceColor', [0.8 0.8 0.8], ...
+    'EdgeColor', 'w', 'Normalization', 'count');
+hold on;
+xline(median(fly_max_diff, 'omitnan'), '-', 'Color', 'k', 'LineWidth', 1.5);
+xline(90, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
+xlabel('Max |Heading − Travel Dir| per fly (deg)', 'FontSize', 14);
+ylabel('Number of flies', 'FontSize', 14);
+title(sprintf('Per-Fly Max (%d-frame avg)', SMOOTH_WIN), 'FontSize', 16);
+xlim([0 180]);
+set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+
+sgtitle(sprintf('%s — Condition %d — %d flies', ...
+    strrep(char(control_strain), '_', ' '), key_condition, n_flies), ...
+    'FontSize', 18);
+
+%% ================================================================
+%  SECTION 10: Scatter — |diff| vs distance from centre
+%  ================================================================
+
+% Subsample for scatter plot (plotting millions of points is slow)
+MAX_PTS = 20000;
+valid_linear = find(valid);
+if numel(valid_linear) > MAX_PTS
+    rng(42);
+    sub_idx = valid_linear(randperm(numel(valid_linear), MAX_PTS));
+else
+    sub_idx = valid_linear;
+end
+
+dist_sub = dist_stim(sub_idx);
+diff_sub = abs_diff_stim(sub_idx);
+
+figure('Position', [100 100 700 550]);
+scatter(dist_sub, diff_sub, 4, [0.3 0.3 0.3], 'filled', 'MarkerFaceAlpha', 0.15);
+hold on;
+
+% Binned mean ± SEM overlay
+dist_edges = 0:10:120;
+dist_centers = dist_edges(1:end-1) + 5;
+binned_mean = NaN(1, numel(dist_centers));
+binned_sem  = NaN(1, numel(dist_centers));
+for b = 1:numel(dist_centers)
+    in_bin = dist_stim >= dist_edges(b) & dist_stim < dist_edges(b+1) & valid;
+    vals_b = abs_diff_stim(in_bin);
+    if numel(vals_b) > 30
+        binned_mean(b) = mean(vals_b, 'omitnan');
+        binned_sem(b)  = std(vals_b, 'omitnan') / sqrt(numel(vals_b));
+    end
+end
+errorbar(dist_centers, binned_mean, binned_sem, '-o', ...
+    'Color', [0.8 0.2 0.2], 'MarkerFaceColor', [0.8 0.2 0.2], ...
+    'MarkerSize', 6, 'LineWidth', 1.5, 'CapSize', 4);
+
+yline(90, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
+xlabel('Distance from arena centre (mm)', 'FontSize', 14);
+ylabel('|Heading − Travel Dir| (deg)', 'FontSize', 14);
+title(sprintf('Angular Difference vs Distance from Centre (%d-frame avg)', SMOOTH_WIN), 'FontSize', 16);
+xlim([0 125]);
+ylim([0 180]);
+legend({'Individual frames', 'Binned mean ± SEM'}, 'Location', 'northwest', ...
+    'FontSize', 11, 'Box', 'off');
+set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+
+%% ================================================================
+%  SECTION 11: Compute viewing distance (using corrected heading)
+%  ================================================================
+
+% calculate_viewing_distance expects heading in RADIANS
+heading_rad_stim = deg2rad(heading_corrected(:, stim_range));
+x_stim = rep_data.x_data(:, stim_range);
+y_stim = rep_data.y_data(:, stim_range);
+
+view_dist_stim = calculate_viewing_distance(x_stim, y_stim, heading_rad_stim);
+
+fprintf('Viewing distance computed for %d flies x %d stim frames\n', ...
+    size(view_dist_stim, 1), size(view_dist_stim, 2));
+
+%% ================================================================
+%  SECTION 12: Scatter — |diff| vs viewing distance
+%  ================================================================
+
+vd_sub = view_dist_stim(sub_idx);
+
+figure('Position', [150 150 700 550]);
+scatter(vd_sub, diff_sub, 4, [0.3 0.3 0.3], 'filled', 'MarkerFaceAlpha', 0.15);
+hold on;
+
+% Binned mean ± SEM overlay
+vd_edges = 0:10:240;
+vd_centers = vd_edges(1:end-1) + 5;
+binned_mean_vd = NaN(1, numel(vd_centers));
+binned_sem_vd  = NaN(1, numel(vd_centers));
+for b = 1:numel(vd_centers)
+    in_bin = view_dist_stim >= vd_edges(b) & view_dist_stim < vd_edges(b+1) & valid;
+    vals_b = abs_diff_stim(in_bin);
+    if numel(vals_b) > 30
+        binned_mean_vd(b) = mean(vals_b, 'omitnan');
+        binned_sem_vd(b)  = std(vals_b, 'omitnan') / sqrt(numel(vals_b));
+    end
+end
+errorbar(vd_centers, binned_mean_vd, binned_sem_vd, '-o', ...
+    'Color', [0.8 0.2 0.2], 'MarkerFaceColor', [0.8 0.2 0.2], ...
+    'MarkerSize', 6, 'LineWidth', 1.5, 'CapSize', 4);
+
+yline(90, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
+xlabel('Viewing distance (mm)', 'FontSize', 14);
+ylabel('|Heading − Travel Dir| (deg)', 'FontSize', 14);
+title(sprintf('Angular Difference vs Viewing Distance (%d-frame avg)', SMOOTH_WIN), 'FontSize', 16);
+ylim([0 180]);
+legend({'Individual frames', 'Binned mean ± SEM'}, 'Location', 'northwest', ...
+    'FontSize', 11, 'Box', 'off');
+set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+
+%% ================================================================
+%  SECTION 13: Launch interactive trajectory browser
+%  ================================================================
+
+browse_trajectories_by_slip(rep_data, travel_dir, abs_ang_diff_smooth, ...
     speed_mask, STIM_ON, STIM_OFF, ARENA_CENTER, ARENA_R, SPEED_THRESHOLD);
