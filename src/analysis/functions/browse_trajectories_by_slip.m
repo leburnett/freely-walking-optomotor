@@ -56,19 +56,8 @@ function browse_trajectories_by_slip(rep_data, travel_dir, abs_ang_diff, ...
         end
     end
 
-    %% Build diverging colormap: blue (0) -> light yellow (90) -> red (180)
-    n_cmap = 256;
-    half = n_cmap / 2;
-    mid = [1.0 0.95 0.55];  % light yellow — visible against white background
-    % Blue to light yellow
-    r1 = linspace(0.2, mid(1), half)';
-    g1 = linspace(0.4, mid(2), half)';
-    b1 = linspace(0.8, mid(3), half)';
-    % Light yellow to red
-    r2 = linspace(mid(1), 0.8, half)';
-    g2 = linspace(mid(2), 0.2, half)';
-    b2 = linspace(mid(3), 0.2, half)';
-    cmap_div = [r1 g1 b1; r2 g2 b2];
+    %% Colormap: hot (0° = black/dark red -> 180° = white/yellow)
+    cmap_div = hot(256);
 
     %% Create figure
     fig = figure('Name', 'Trajectory Browser — Heading vs Travel Direction', ...
