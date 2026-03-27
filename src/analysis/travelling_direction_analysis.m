@@ -112,135 +112,141 @@ signed_diff_valid = signed_diff_stim(valid);
 fprintf('Valid frames (speed > %g mm/s): %d / %d (%.1f%%)\n', ...
     SPEED_THRESHOLD, sum(valid(:)), numel(valid), 100 * sum(valid(:)) / numel(valid));
 
-%% ================================================================
-%  SECTION 5: Figure 1 — Histogram of angular difference
-%  ================================================================
+create_plots = 0;
 
-figure('Position', [50 50 700 800]);
+if create_plots
 
-% --- Top: absolute angular difference ---
-subplot(2, 1, 1);
-edges_abs = 0:5:180;
-h_counts = histcounts(abs_diff_valid, edges_abs, 'Normalization', 'probability');
-bar_centers = edges_abs(1:end-1) + 2.5;
-bar(bar_centers, h_counts, 1, 'FaceColor', [0.8 0.8 0.8], 'EdgeColor', 'none');
-hold on;
-
-% Reference lines
-xline(0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
-xline(90, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
-
-% Median and mean
-med_val = median(abs_diff_valid, 'omitnan');
-mean_val = mean(abs_diff_valid, 'omitnan');
-xline(med_val, '-', 'Color', 'k', 'LineWidth', 1.5);
-xline(mean_val, '-', 'Color', 'r', 'LineWidth', 1.5);
-
-% Sideways fraction annotation
-sideways_frac = sum(abs_diff_valid >= 75 & abs_diff_valid <= 105) / numel(abs_diff_valid);
-text(0.97, 0.92, sprintf('Sideways (75-105°): %.1f%%', 100 * sideways_frac), ...
-    'Units', 'normalized', 'HorizontalAlignment', 'right', 'FontSize', 11);
-text(0.97, 0.82, sprintf('Median: %.1f°', med_val), ...
-    'Units', 'normalized', 'HorizontalAlignment', 'right', 'FontSize', 11);
-text(0.97, 0.72, sprintf('Mean: %.1f°', mean_val), ...
-    'Units', 'normalized', 'HorizontalAlignment', 'right', 'FontSize', 11, 'Color', 'r');
-
-xlabel('|Heading − Travelling Direction| (deg)', 'FontSize', 14);
-ylabel('Fraction of frames', 'FontSize', 14);
-title('Angular Difference — Absolute', 'FontSize', 16);
-xlim([0 180]);
-set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
-
-% --- Bottom: signed angular difference ---
-subplot(2, 1, 2);
-edges_signed = -180:5:180;
-h_counts_s = histcounts(signed_diff_valid, edges_signed, 'Normalization', 'probability');
-bar_centers_s = edges_signed(1:end-1) + 2.5;
-bar(bar_centers_s, h_counts_s, 1, 'FaceColor', [0.8 0.8 0.8], 'EdgeColor', 'none');
-hold on;
-
-xline(0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
-xline(90, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
-xline(-90, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
-
-med_val_s = median(signed_diff_valid, 'omitnan');
-xline(med_val_s, '-', 'Color', 'k', 'LineWidth', 1.5);
-
-xlabel('Heading − Travelling Direction (deg)', 'FontSize', 14);
-ylabel('Fraction of frames', 'FontSize', 14);
-title('Angular Difference — Signed', 'FontSize', 16);
-xlim([-180 180]);
-set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
-
-sgtitle(sprintf('%s — Condition %d — %d flies, speed > %g mm/s', ...
-    strrep(char(control_strain), '_', ' '), key_condition, n_flies, SPEED_THRESHOLD), ...
-    'FontSize', 18);
-
-%% ================================================================
-%  SECTION 6: Figure 2 — Time course of angular difference
-%  ================================================================
-
-% Per-frame mean across flies (only speed-valid frames contribute)
-abs_diff_stim_masked = abs_diff_stim;
-abs_diff_stim_masked(~speed_mask_stim) = NaN;
-
-frame_mean = mean(abs_diff_stim_masked, 1, 'omitnan');
-frame_sem  = std(abs_diff_stim_masked, 0, 1, 'omitnan') ./ ...
-    sqrt(sum(~isnan(abs_diff_stim_masked), 1));
-
-time_s = (0:numel(frame_mean)-1) / FPS;
-
-figure('Position', [100 100 900 400]);
-fill([time_s, fliplr(time_s)], ...
-    [frame_mean + frame_sem, fliplr(frame_mean - frame_sem)], ...
-    [0.85 0.85 0.85], 'EdgeColor', 'none');
-hold on;
-plot(time_s, frame_mean, '-k', 'LineWidth', 1.5);
-yline(90, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
-
-xlabel('Time from stimulus onset (s)', 'FontSize', 14);
-ylabel('Mean |Heading − Travel Dir| (deg)', 'FontSize', 14);
-title('Time Course of Angular Difference During Stimulus', 'FontSize', 16);
-xlim([0 time_s(end)]);
-ylim([0 135]);
-set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
-
-%% ================================================================
-%  SECTION 7: Figure 3 — Sideways fraction vs distance from centre
-%  ================================================================
-
-dist_bin_edges = 0:10:120;
-n_bins = numel(dist_bin_edges) - 1;
-sideways_by_dist = NaN(1, n_bins);
-n_frames_by_dist = zeros(1, n_bins);
-
-for b = 1:n_bins
-    in_bin = dist_stim >= dist_bin_edges(b) & dist_stim < dist_bin_edges(b+1) & valid;
-    n_frames_by_dist(b) = sum(in_bin(:));
-    if n_frames_by_dist(b) > 100  % require minimum frame count
-        sideways_by_dist(b) = sum(abs_diff_stim(in_bin) >= 75 & abs_diff_stim(in_bin) <= 105) ...
-            / n_frames_by_dist(b);
+    %% ================================================================
+    %  SECTION 5: Figure 1 — Histogram of angular difference
+    %  ================================================================
+    
+    figure('Position', [50 50 700 800]);
+    
+    % --- Top: absolute angular difference ---
+    subplot(2, 1, 1);
+    edges_abs = 0:5:180;
+    h_counts = histcounts(abs_diff_valid, edges_abs, 'Normalization', 'probability');
+    bar_centers = edges_abs(1:end-1) + 2.5;
+    bar(bar_centers, h_counts, 1, 'FaceColor', [0.8 0.8 0.8], 'EdgeColor', 'none');
+    hold on;
+    
+    % Reference lines
+    xline(0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
+    xline(90, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
+    
+    % Median and mean
+    med_val = median(abs_diff_valid, 'omitnan');
+    mean_val = mean(abs_diff_valid, 'omitnan');
+    xline(med_val, '-', 'Color', 'k', 'LineWidth', 1.5);
+    xline(mean_val, '-', 'Color', 'r', 'LineWidth', 1.5);
+    
+    % Sideways fraction annotation
+    sideways_frac = sum(abs_diff_valid >= 75 & abs_diff_valid <= 105) / numel(abs_diff_valid);
+    text(0.97, 0.92, sprintf('Sideways (75-105°): %.1f%%', 100 * sideways_frac), ...
+        'Units', 'normalized', 'HorizontalAlignment', 'right', 'FontSize', 11);
+    text(0.97, 0.82, sprintf('Median: %.1f°', med_val), ...
+        'Units', 'normalized', 'HorizontalAlignment', 'right', 'FontSize', 11);
+    text(0.97, 0.72, sprintf('Mean: %.1f°', mean_val), ...
+        'Units', 'normalized', 'HorizontalAlignment', 'right', 'FontSize', 11, 'Color', 'r');
+    
+    xlabel('|Heading − Travelling Direction| (deg)', 'FontSize', 14);
+    ylabel('Fraction of frames', 'FontSize', 14);
+    title('Angular Difference — Absolute', 'FontSize', 16);
+    xlim([0 180]);
+    set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+    
+    % --- Bottom: signed angular difference ---
+    subplot(2, 1, 2);
+    edges_signed = -180:5:180;
+    h_counts_s = histcounts(signed_diff_valid, edges_signed, 'Normalization', 'probability');
+    bar_centers_s = edges_signed(1:end-1) + 2.5;
+    bar(bar_centers_s, h_counts_s, 1, 'FaceColor', [0.8 0.8 0.8], 'EdgeColor', 'none');
+    hold on;
+    
+    xline(0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
+    xline(90, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
+    xline(-90, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
+    
+    med_val_s = median(signed_diff_valid, 'omitnan');
+    xline(med_val_s, '-', 'Color', 'k', 'LineWidth', 1.5);
+    
+    xlabel('Heading − Travelling Direction (deg)', 'FontSize', 14);
+    ylabel('Fraction of frames', 'FontSize', 14);
+    title('Angular Difference — Signed', 'FontSize', 16);
+    xlim([-180 180]);
+    set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+    
+    sgtitle(sprintf('%s — Condition %d — %d flies, speed > %g mm/s', ...
+        strrep(char(control_strain), '_', ' '), key_condition, n_flies, SPEED_THRESHOLD), ...
+        'FontSize', 18);
+    
+    %% ================================================================
+    %  SECTION 6: Figure 2 — Time course of angular difference
+    %  ================================================================
+    
+    % Per-frame mean across flies (only speed-valid frames contribute)
+    abs_diff_stim_masked = abs_diff_stim;
+    abs_diff_stim_masked(~speed_mask_stim) = NaN;
+    
+    frame_mean = mean(abs_diff_stim_masked, 1, 'omitnan');
+    frame_sem  = std(abs_diff_stim_masked, 0, 1, 'omitnan') ./ ...
+        sqrt(sum(~isnan(abs_diff_stim_masked), 1));
+    
+    time_s = (0:numel(frame_mean)-1) / FPS;
+    
+    figure('Position', [100 100 900 400]);
+    fill([time_s, fliplr(time_s)], ...
+        [frame_mean + frame_sem, fliplr(frame_mean - frame_sem)], ...
+        [0.85 0.85 0.85], 'EdgeColor', 'none');
+    hold on;
+    plot(time_s, frame_mean, '-k', 'LineWidth', 1.5);
+    yline(90, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
+    
+    xlabel('Time from stimulus onset (s)', 'FontSize', 14);
+    ylabel('Mean |Heading − Travel Dir| (deg)', 'FontSize', 14);
+    title('Time Course of Angular Difference During Stimulus', 'FontSize', 16);
+    xlim([0 time_s(end)]);
+    ylim([0 135]);
+    set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+    
+    %% ================================================================
+    %  SECTION 7: Figure 3 — Sideways fraction vs distance from centre
+    %  ================================================================
+    
+    dist_bin_edges = 0:10:120;
+    n_bins = numel(dist_bin_edges) - 1;
+    sideways_by_dist = NaN(1, n_bins);
+    n_frames_by_dist = zeros(1, n_bins);
+    
+    for b = 1:n_bins
+        in_bin = dist_stim >= dist_bin_edges(b) & dist_stim < dist_bin_edges(b+1) & valid;
+        n_frames_by_dist(b) = sum(in_bin(:));
+        if n_frames_by_dist(b) > 100  % require minimum frame count
+            sideways_by_dist(b) = sum(abs_diff_stim(in_bin) >= 75 & abs_diff_stim(in_bin) <= 105) ...
+                / n_frames_by_dist(b);
+        end
     end
-end
+    
+    dist_bin_centers = dist_bin_edges(1:end-1) + 5;
+    
+    figure('Position', [150 150 700 450]);
+    
+    yyaxis left
+    bar(dist_bin_centers, 100 * sideways_by_dist, 1, ...
+        'FaceColor', [0.45 0.62 0.80], 'EdgeColor', 'none');
+    ylabel('Sideways Frames (75-105°) (%)', 'FontSize', 14);
+    ylim([0 max(100 * sideways_by_dist) * 1.3]);
+    
+    yyaxis right
+    plot(dist_bin_centers, n_frames_by_dist, '-o', 'Color', [0.7 0.7 0.7], ...
+        'MarkerFaceColor', [0.7 0.7 0.7], 'MarkerSize', 5, 'LineWidth', 1);
+    ylabel('Frame count', 'FontSize', 14);
+    
+    xlabel('Distance from arena centre (mm)', 'FontSize', 14);
+    title('Sideways Movement vs Arena Position', 'FontSize', 16);
+    set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
 
-dist_bin_centers = dist_bin_edges(1:end-1) + 5;
-
-figure('Position', [150 150 700 450]);
-
-yyaxis left
-bar(dist_bin_centers, 100 * sideways_by_dist, 1, ...
-    'FaceColor', [0.45 0.62 0.80], 'EdgeColor', 'none');
-ylabel('Sideways Frames (75-105°) (%)', 'FontSize', 14);
-ylim([0 max(100 * sideways_by_dist) * 1.3]);
-
-yyaxis right
-plot(dist_bin_centers, n_frames_by_dist, '-o', 'Color', [0.7 0.7 0.7], ...
-    'MarkerFaceColor', [0.7 0.7 0.7], 'MarkerSize', 5, 'LineWidth', 1);
-ylabel('Frame count', 'FontSize', 14);
-
-xlabel('Distance from arena centre (mm)', 'FontSize', 14);
-title('Sideways Movement vs Arena Position', 'FontSize', 16);
-set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+end 
 
 %% ================================================================
 %  SECTION 8: Launch interactive trajectory browser
