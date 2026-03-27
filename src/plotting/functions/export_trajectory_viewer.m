@@ -15,8 +15,9 @@ function export_trajectory_viewer(DATA, condition, rep, varargin)
 %   NAME-VALUE PAIRS:
 %     'OutputFile'        - output path (default: auto-named in cfg.figures)
 %     'Sex'               - 'F' (default), 'M', or 'both'
-%     'Strains'           - cell array of strain names to include (default:
-%                           all strains in DATA). Use this to reduce file size.
+%     'Strains'           - cell array of substrings to match against strain
+%                           names (case-insensitive). e.g. {'Dm4', 'es'}
+%                           matches any strain containing "Dm4" or "es".
 %     'TortuosityWindow'  - frames (default: 31, ~1 s at 30 fps)
 %     'Downsample'        - integer factor to reduce frame count (default: 1)
 %     'MaxFliesPerStrain' - max flies per strain (default: Inf)
@@ -24,7 +25,7 @@ function export_trajectory_viewer(DATA, condition, rep, varargin)
 %   EXAMPLE:
 %     DATA = comb_data_across_cohorts_cond(fullfile(cfg.results, 'protocol_27'));
 %     export_trajectory_viewer(DATA, 1, 1);
-%     export_trajectory_viewer(DATA, 1, 1, 'Strains', {'jfrc100_es_shibire_kir'});
+%     export_trajectory_viewer(DATA, 1, 1, 'Strains', {'Dm4', 'es', 'TmY3'});
 %     export_trajectory_viewer(DATA, 'acclim_off1', []);
 %
 % See also: trajectory_viewer_template, comb_data_across_cohorts_cond
@@ -84,13 +85,26 @@ else
     sexes = {sex_list};
 end
 
-% Strain selection
+% Strain selection — supports substring matching
+% e.g. 'Strains', {'Dm4', 'es', 'TmY3'} matches any strain containing
+% any of those strings (case-insensitive).
 all_strains = fieldnames(DATA);
 if ~isempty(p.Results.Strains)
-    all_strains = intersect(all_strains, p.Results.Strains, 'stable');
-    if isempty(all_strains)
-        error('None of the specified strains found in DATA.');
+    patterns = p.Results.Strains;
+    match_mask = false(size(all_strains));
+    for si = 1:numel(all_strains)
+        for pi = 1:numel(patterns)
+            if contains(all_strains{si}, patterns{pi}, 'IgnoreCase', true)
+                match_mask(si) = true;
+                break;
+            end
+        end
     end
+    all_strains = all_strains(match_mask);
+    if isempty(all_strains)
+        error('No strains matched patterns: %s', strjoin(patterns, ', '));
+    end
+    fprintf('Matched %d strains: %s\n', numel(all_strains), strjoin(all_strains, ', '));
 end
 
 %% Constants
