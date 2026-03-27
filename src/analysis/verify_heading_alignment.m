@@ -63,6 +63,25 @@ function verify_heading_alignment(video_path, mat_path)
     fprintf('Loaded: %d trx flies, %d comb_data flies, %d total frames\n', ...
         n_flies_trx, n_flies_comb, total_frames);
 
+    %% Precompute cumulative absolute heading change for each fly
+    % trx: cumulative |delta theta| in degrees, per frame
+    cum_heading_trx = cell(n_flies_trx, 1);
+    for fly = 1:n_flies_trx
+        dth = abs(diff(unwrap(trx(fly).theta)));  % radians
+        dth(isnan(dth)) = 0;  % NaN frames contribute zero turning
+        cum_heading_trx{fly} = [0; cumsum(rad2deg(dth(:)))];  % degrees, same length as trx data
+    end
+
+    % comb_data: cumulative |delta heading| in degrees
+    n_frames_comb = size(comb_data.heading_wrap, 2);
+    cum_heading_comb = zeros(n_flies_comb, n_frames_comb);
+    for fly = 1:n_flies_comb
+        hdg_rad = deg2rad(comb_data.heading_wrap(fly, :));
+        dth = abs(diff(unwrap(hdg_rad)));
+        dth(isnan(dth)) = 0;  % NaN frames contribute zero turning
+        cum_heading_comb(fly, :) = [0, cumsum(rad2deg(dth))];
+    end
+
     %% Create figure
     fig = figure('Name', 'Heading Alignment Viewer', ...
         'NumberTitle', 'off', ...
@@ -172,18 +191,26 @@ function verify_heading_alignment(video_path, mat_path)
         'Value', 1, 'Units', 'normalized', 'Position', [0.46 0.04 0.10 0.04], ...
         'FontSize', 10, 'BackgroundColor', [0.15 0.15 0.15], ...
         'ForegroundColor', [1 1 1], 'Callback', @(~,~) draw_frame());
+    h_chk_gauge = uicontrol(fig, 'Style', 'checkbox', 'String', 'Turn gauge', ...
+        'Value', 1, 'Units', 'normalized', 'Position', [0.57 0.04 0.11 0.04], ...
+        'FontSize', 10, 'BackgroundColor', [0.15 0.15 0.15], ...
+        'ForegroundColor', [1 1 1], 'Callback', @(~,~) draw_frame());
+
+    uicontrol(fig, 'Style', 'pushbutton', 'String', 'Reset gauge', ...
+        'Units', 'normalized', 'Position', [0.69 0.04 0.09 0.04], ...
+        'FontSize', 10, 'Callback', @reset_gauge_cb);
 
     uicontrol(fig, 'Style', 'text', 'String', 'Trail frames:', ...
-        'Units', 'normalized', 'Position', [0.57 0.04 0.10 0.04], ...
+        'Units', 'normalized', 'Position', [0.79 0.04 0.10 0.04], ...
         'FontSize', 10, 'BackgroundColor', [0.15 0.15 0.15], ...
         'ForegroundColor', [1 1 1], 'HorizontalAlignment', 'right');
     h_trail_edit = uicontrol(fig, 'Style', 'edit', 'String', '30', ...
-        'Units', 'normalized', 'Position', [0.68 0.04 0.06 0.04], ...
+        'Units', 'normalized', 'Position', [0.90 0.04 0.06 0.04], ...
         'FontSize', 10, 'Callback', @(~,~) draw_frame());
 
     % Legend label
     uicontrol(fig, 'Style', 'text', ...
-        'String', 'Solid line = heading | Dashed red = velocity vector', ...
+        'String', 'Solid = heading | Dashed red = velocity | Pie = cumulative turn (resets each 360)', ...
         'Units', 'normalized', 'Position', [0.30 0.10 0.68 0.04], ...
         'FontSize', 10, 'BackgroundColor', [0.15 0.15 0.15], ...
         'ForegroundColor', [0.7 0.7 0.7], 'HorizontalAlignment', 'left');
@@ -193,6 +220,7 @@ function verify_heading_alignment(video_path, mat_path)
     overlay_handles = [];
     use_trx = true;  % true = trx, false = comb_data
     timer_obj = [];
+    gauge_reset_frame = 1;  % frame from which cumulative heading is measured
 
     %% Initial draw
     draw_frame();
@@ -220,6 +248,7 @@ function verify_heading_alignment(video_path, mat_path)
         show_velocity = h_chk_velocity.Value;
         show_trails   = h_chk_trails.Value;
         show_ids      = h_chk_ids.Value;
+        show_gauge    = h_chk_gauge.Value;
         trail_length  = str2double(h_trail_edit.String);
         if isnan(trail_length) || trail_length < 1
             trail_length = 30;
@@ -292,6 +321,18 @@ function verify_heading_alignment(video_path, mat_path)
                         'Color', col, 'FontSize', 9, 'FontWeight', 'bold');
                     overlay_handles(end+1) = h_ov;
                 end
+
+                % Cumulative turning gauge
+                if show_gauge
+                    reset_fi = max(1, min(gauge_reset_frame + trx(fly).off, numel(cum_heading_trx{fly})));
+                    cum_deg = cum_heading_trx{fly}(fi) - cum_heading_trx{fly}(reset_fi);
+                    frac = mod(cum_deg, 360) / 360;  % 0-1 fill fraction
+                    gauge_r = 8;  % radius in pixels
+                    gauge_cx = cx + sa + 18;
+                    gauge_cy = cy - sb - 3;
+                    overlay_handles = draw_pie_gauge(ax, gauge_cx, gauge_cy, ...
+                        gauge_r, frac, col, overlay_handles);
+                end
             end
             source_str = 'trx (raw)';
 
@@ -362,6 +403,18 @@ function verify_heading_alignment(video_path, mat_path)
                         'Color', col, 'FontSize', 9, 'FontWeight', 'bold');
                     overlay_handles(end+1) = h_ov;
                 end
+
+                % Cumulative turning gauge
+                if show_gauge
+                    reset_col = max(1, min(gauge_reset_frame, n_frames_comb));
+                    cum_deg = cum_heading_comb(fly, current_frame) - cum_heading_comb(fly, reset_col);
+                    frac = mod(cum_deg, 360) / 360;
+                    gauge_r = 8;
+                    gauge_cx = cx + 26;
+                    gauge_cy = cy - 12;
+                    overlay_handles = draw_pie_gauge(ax, gauge_cx, gauge_cy, ...
+                        gauge_r, frac, col, overlay_handles);
+                end
             end
             source_str = 'comb\_data';
         end
@@ -415,6 +468,11 @@ function verify_heading_alignment(video_path, mat_path)
             case 'i'
                 h_chk_ids.Value = ~h_chk_ids.Value;
                 draw_frame();
+            case 'g'
+                h_chk_gauge.Value = ~h_chk_gauge.Value;
+                draw_frame();
+            case 'r'
+                reset_gauge_cb([], []);
         end
     end
 
@@ -448,6 +506,35 @@ function verify_heading_alignment(video_path, mat_path)
         end
         current_frame = current_frame + 1;
         draw_frame();
+    end
+
+    function reset_gauge_cb(~, ~)
+        gauge_reset_frame = current_frame;
+        fprintf('Gauge reset at frame %d (%.2fs)\n', current_frame, current_frame/FPS);
+        draw_frame();
+    end
+
+    function handles = draw_pie_gauge(target_ax, cx, cy, r, frac, col, handles)
+        % Draw a pie-chart gauge: open circle outline + filled wedge.
+        % frac = 0..1 (fraction of 360 degrees filled).
+        n_pts = 40;
+
+        % Open circle outline
+        t_c = linspace(0, 2*pi, 60);
+        h_ov = plot(target_ax, cx + r*cos(t_c), cy + r*sin(t_c), ...
+            '-', 'Color', col, 'LineWidth', 1);
+        handles(end+1) = h_ov;
+
+        % Filled wedge (if any turning accumulated)
+        if frac > 0.005
+            arc_angle = frac * 2 * pi;
+            t_arc = linspace(-pi/2, -pi/2 + arc_angle, n_pts);  % start from top
+            wedge_x = [cx, cx + r*cos(t_arc), cx];
+            wedge_y = [cy, cy + r*sin(t_arc), cy];
+            h_ov = fill(target_ax, wedge_x, wedge_y, col, ...
+                'EdgeColor', 'none', 'FaceAlpha', 0.7);
+            handles(end+1) = h_ov;
+        end
     end
 
     function cleanup_cb(~, ~)
