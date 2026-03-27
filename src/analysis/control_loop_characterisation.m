@@ -64,6 +64,7 @@ stim_range = STIM_ON:STIM_OFF;
 x_stim       = rep_data.x_data(:, stim_range);
 y_stim       = rep_data.y_data(:, stim_range);
 heading_stim = rep_data.heading_data(:, stim_range);
+vel_stim     = rep_data.vel_data(:, stim_range);
 
 % Loop detection options
 loop_opts.lookahead_frames = 75;
@@ -88,6 +89,7 @@ flat_stim_half  = [];   % 1 = CW half (frames 300-749), 2 = CCW half (851-1200)
 fly_loop_structs = cell(n_flies, 1);
 
 for f = 1:n_flies
+    loop_opts.vel = vel_stim(f,:);
     loops = find_trajectory_loops( ...
         x_stim(f,:), y_stim(f,:), heading_stim(f,:), loop_opts);
     fly_loop_structs{f} = loops;

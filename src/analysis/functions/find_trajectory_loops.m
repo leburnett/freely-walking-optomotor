@@ -39,6 +39,13 @@ function loops = find_trajectory_loops(x, y, heading, opts)
 %       .bbox_center_y    - [1 x n_loops] y-coord of bounding box centre (mm)
 %       .bbox_dist_center - [1 x n_loops] distance of bbox centre from arena centre (mm)
 %       .bbox_wall_dist   - [1 x n_loops] distance of bbox centre from arena wall (mm)
+%       .mean_ang_diff    - [1 x n_loops] mean |angular difference| between heading
+%                           and travelling direction within the loop (degrees, 0-180).
+%                           Only computed over moving frames (speed > speed_threshold).
+%                           Requires opts.vel to be provided; NaN otherwise.
+%       .dist_from_prev   - [1 x n_loops] Euclidean distance between this loop's
+%                           bbox centre and the previous loop's bbox centre (mm).
+%                           NaN for the first loop in a trajectory.
 %
 %   ALGORITHM:
 %     1. For each segment i→i+1, check if any future segment j→j+1
@@ -58,6 +65,9 @@ arena_center     = get_opt(opts, 'arena_center', [528, 520] / 4.1691);
 arena_radius     = get_opt(opts, 'arena_radius', 120);
 max_dist_center  = get_opt(opts, 'max_dist_center', 110);  % exclude loops with centre > this from arena centre
 min_bbox_area    = get_opt(opts, 'min_bbox_area', 1);       % exclude loops with area < this (mm²)
+vel              = get_opt(opts, 'vel', []);                 % [1 x N] speed (mm/s); needed for angular_diff
+speed_threshold  = get_opt(opts, 'speed_threshold', 0.5);   % mm/s; frames below this excluded from angular_diff
+has_vel          = ~isempty(vel);
 
 N = numel(x);
 
@@ -131,6 +141,8 @@ if n_raw == 0
     loops.bbox_center_y = [];
     loops.bbox_dist_center = [];
     loops.bbox_wall_dist = [];
+    loops.mean_ang_diff = [];
+    loops.dist_from_prev = [];
     return;
 end
 
@@ -152,6 +164,29 @@ bbox_cx       = NaN(1, n_loops);
 bbox_cy       = NaN(1, n_loops);
 bbox_dist_ctr = NaN(1, n_loops);
 bbox_wall     = NaN(1, n_loops);
+mean_ang_diff = NaN(1, n_loops);
+
+% Pre-compute travel direction from x, y using central differences
+% (needed for angular_diff). Only computed if vel is provided.
+if has_vel
+    dt = 1 / fps;
+    N_pts = numel(x);
+    vx = NaN(1, N_pts);
+    vy = NaN(1, N_pts);
+    % Forward difference at first frame
+    vx(1) = (x(2) - x(1)) / dt;
+    vy(1) = (y(2) - y(1)) / dt;
+    % Central difference for interior frames
+    vx(2:N_pts-1) = (x(3:N_pts) - x(1:N_pts-2)) / (2 * dt);
+    vy(2:N_pts-1) = (y(3:N_pts) - y(1:N_pts-2)) / (2 * dt);
+    % Backward difference at last frame
+    vx(N_pts) = (x(N_pts) - x(N_pts-1)) / dt;
+    vy(N_pts) = (y(N_pts) - y(N_pts-1)) / dt;
+    % Travel direction in degrees
+    travel_dir = atan2d(vy, vx);
+    % Heading wrapped to [0, 360)
+    heading_wrap = mod(heading, 360);
+end
 
 for k = 1:n_loops
     sf = start_frames(k);
@@ -187,6 +222,19 @@ for k = 1:n_loops
         bbox_dist_ctr(k) = sqrt(dx^2 + dy^2);
         bbox_wall(k)     = arena_radius - bbox_dist_ctr(k);
     end
+
+    % Mean |angular difference| between heading and travel direction.
+    % Only over moving frames (speed > threshold) to avoid noise when
+    % the fly is stationary (travel direction is undefined at low speed).
+    if has_vel
+        ang_seg = mod(heading_wrap(sf:ef) - travel_dir(sf:ef) + 180, 360) - 180;
+        abs_ang = abs(ang_seg);
+        vel_seg = vel(sf:ef);
+        moving = vel_seg >= speed_threshold & ~isnan(abs_ang);
+        if sum(moving) >= 2
+            mean_ang_diff(k) = mean(abs_ang(moving));
+        end
+    end
 end
 
 %% Quality filter: exclude loops too far from centre or too small
@@ -203,10 +251,21 @@ bbox_cx       = bbox_cx(keep2);
 bbox_cy       = bbox_cy(keep2);
 bbox_dist_ctr = bbox_dist_ctr(keep2);
 bbox_wall     = bbox_wall(keep2);
+mean_ang_diff = mean_ang_diff(keep2);
 n_loops       = numel(start_frames);
 
 dur_frames = end_frames - start_frames;
 dur_s = dur_frames / fps;
+
+% Distance between consecutive loop bbox centres (NaN for the first loop)
+dist_from_prev = NaN(1, n_loops);
+for k = 2:n_loops
+    if ~isnan(bbox_cx(k)) && ~isnan(bbox_cx(k-1))
+        ddx = bbox_cx(k) - bbox_cx(k-1);
+        ddy = bbox_cy(k) - bbox_cy(k-1);
+        dist_from_prev(k) = sqrt(ddx^2 + ddy^2);
+    end
+end
 
 %% Package output
 loops.n_loops         = n_loops;
@@ -223,6 +282,8 @@ loops.bbox_center_x   = bbox_cx;
 loops.bbox_center_y   = bbox_cy;
 loops.bbox_dist_center = bbox_dist_ctr;
 loops.bbox_wall_dist  = bbox_wall;
+loops.mean_ang_diff   = mean_ang_diff;
+loops.dist_from_prev  = dist_from_prev;
 
 end
 

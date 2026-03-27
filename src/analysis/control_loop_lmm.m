@@ -4,10 +4,11 @@
 %  (LMMs) for 4 loop metrics as a function of distance from the arena centre.
 %  Control strain only (jfrc100_es_shibire_kir), frames 750-850 excluded.
 %
-%  Figures (9):
-%    Fig 1-4: Per-fly OLS fit lines overlaid (area, duration, |heading|, aspect)
-%    Fig 5:   Per-fly slope distributions with Wilcoxon signed-rank test
-%    Fig 6-9: LMM per-fly predicted lines with population line and 95% CI
+%  Figures (13):
+%    Fig 1-6:  Per-fly OLS fit lines overlaid
+%              (area, duration, |heading|, aspect, ang_diff, dist_from_prev)
+%    Fig 7:    Per-fly slope distributions with Wilcoxon signed-rank test
+%    Fig 8-13: LMM per-fly predicted lines with population line and 95% CI
 %
 %  Requires DATA in workspace (from comb_data_across_cohorts_cond, protocol 27).
 %  Requires Statistics and Machine Learning Toolbox (fitlme, signrank, corr).
@@ -46,6 +47,7 @@ stim_range   = STIM_ON:STIM_OFF;
 x_stim       = rep_data.x_data(:, stim_range);
 y_stim       = rep_data.y_data(:, stim_range);
 heading_stim = rep_data.heading_data(:, stim_range);
+vel_stim     = rep_data.vel_data(:, stim_range);
 
 loop_opts.lookahead_frames = 75;
 loop_opts.min_loop_frames  = 10;
@@ -61,8 +63,11 @@ flat_aspect     = [];
 flat_hdg        = [];
 flat_dist       = [];
 flat_start_time = [];
+flat_ang_diff   = [];
+flat_dist_prev  = [];
 
 for f = 1:n_flies
+    loop_opts.vel = vel_stim(f,:);
     loops = find_trajectory_loops( ...
         x_stim(f,:), y_stim(f,:), heading_stim(f,:), loop_opts);
 
@@ -75,6 +80,8 @@ for f = 1:n_flies
         flat_hdg        = [flat_hdg;        loops.cum_heading(:)];
         flat_dist       = [flat_dist;       loops.bbox_dist_center(:)];
         flat_start_time = [flat_start_time; (loops.start_frame(:) - 1) / FPS];
+        flat_ang_diff   = [flat_ang_diff;   loops.mean_ang_diff(:)];
+        flat_dist_prev  = [flat_dist_prev;  loops.dist_from_prev(:)];
     end
 end
 
@@ -85,9 +92,11 @@ fprintf('  Area:     %.0f mean, %.0f median mm²\n', mean(flat_area,'omitnan'), 
 fprintf('  Duration: %.2f mean, %.2f median s\n', mean(flat_dur,'omitnan'), median(flat_dur,'omitnan'));
 fprintf('  |Heading|: %.0f mean, %.0f median deg\n', mean(abs(flat_hdg),'omitnan'), median(abs(flat_hdg),'omitnan'));
 fprintf('  Aspect:   %.2f mean, %.2f median\n', mean(flat_aspect,'omitnan'), median(flat_aspect,'omitnan'));
+fprintf('  Ang diff: %.1f mean, %.1f median deg\n', mean(flat_ang_diff,'omitnan'), median(flat_ang_diff,'omitnan'));
+fprintf('  Dist prev: %.1f mean, %.1f median mm\n', mean(flat_dist_prev,'omitnan'), median(flat_dist_prev,'omitnan'));
 
 %% ================================================================
-%  SECTION 2: Per-fly OLS fit lines overlaid (Figures 1-4)
+%  SECTION 2: Per-fly OLS fit lines overlaid (Figures 1-6)
 %  ================================================================
 %
 %  For each metric, we fit a separate OLS line (metric = a + b*distance)
@@ -96,11 +105,12 @@ fprintf('  Aspect:   %.2f mean, %.2f median\n', mean(flat_aspect,'omitnan'), med
 %  line (mean of per-fly intercepts and slopes) drawn bold on top.
 
 MIN_LOOPS_FOR_FIT = 5;
-N_METRICS = 4;
+N_METRICS = 6;
 
-metric_data   = {flat_area, flat_dur, abs(flat_hdg), flat_aspect};
-metric_labels = {'Bbox area (mm^2)', 'Duration (s)', '|Heading change| (deg)', 'Aspect ratio'};
-metric_short  = {'area', 'duration', '|heading|', 'aspect'};
+metric_data   = {flat_area, flat_dur, abs(flat_hdg), flat_aspect, flat_ang_diff, flat_dist_prev};
+metric_labels = {'Bbox area (mm^2)', 'Duration (s)', '|Heading change| (deg)', ...
+                 'Aspect ratio', 'Mean |ang diff| (deg)', 'Dist from prev loop (mm)'};
+metric_short  = {'area', 'duration', '|heading|', 'aspect', 'ang_diff', 'dist_prev'};
 
 per_fly_slopes     = NaN(n_flies, N_METRICS);
 per_fly_intercepts = NaN(n_flies, N_METRICS);
@@ -166,11 +176,11 @@ end
 %  the population of slopes differs from zero using the Wilcoxon
 %  signed-rank test (non-parametric, robust to non-normality).
 
-figure('Position', [50 50 1600 400], 'Name', 'Fig 5: Per-fly Slope Distributions');
+figure('Position', [50 50 1600 700], 'Name', sprintf('Fig %d: Per-fly Slope Distributions', N_METRICS+1));
 sgtitle('Per-fly OLS slopes: metric vs distance from centre', 'FontSize', 18);
 
 for mi = 1:N_METRICS
-    subplot(1, N_METRICS, mi);
+    subplot(2, ceil(N_METRICS/2), mi);
     hold on;
 
     slopes_v = per_fly_slopes(~isnan(per_fly_slopes(:,mi)), mi);
@@ -223,7 +233,8 @@ fprintf('\n=== Fitting Linear Mixed-Effects Models ===\n');
 
 % Build table (fitlme requires a MATLAB table with categorical grouping)
 valid = ~isnan(flat_area) & ~isnan(flat_dist) & ~isnan(flat_dur) & ...
-        ~isnan(flat_hdg) & ~isnan(flat_aspect) & ~isnan(flat_start_time);
+        ~isnan(flat_hdg) & ~isnan(flat_aspect) & ~isnan(flat_start_time) & ...
+        ~isnan(flat_ang_diff) & ~isnan(flat_dist_prev);
 
 lmm_tbl = table( ...
     categorical(flat_fly_id(valid)), ...
@@ -232,18 +243,22 @@ lmm_tbl = table( ...
     flat_dur(valid), ...
     abs(flat_hdg(valid)), ...
     flat_aspect(valid), ...
+    flat_ang_diff(valid), ...
+    flat_dist_prev(valid), ...
     flat_start_time(valid), ...
     'VariableNames', {'fly_id','distance','bbox_area','duration_s', ...
-                      'abs_heading','bbox_aspect','start_time'});
+                      'abs_heading','bbox_aspect','mean_ang_diff','dist_from_prev','start_time'});
 
 fprintf('LMM table: %d loops from %d flies\n', height(lmm_tbl), numel(unique(lmm_tbl.fly_id)));
 
-lmm_vars = {'bbox_area', 'duration_s', 'abs_heading', 'bbox_aspect'};
+lmm_vars = {'bbox_area', 'duration_s', 'abs_heading', 'bbox_aspect', 'mean_ang_diff', 'dist_from_prev'};
 lmm_formulas = {
-    'bbox_area   ~ 1 + distance + (1 + distance | fly_id)'
-    'duration_s  ~ 1 + distance + (1 + distance | fly_id)'
-    'abs_heading ~ 1 + distance + (1 + distance | fly_id)'
-    'bbox_aspect ~ 1 + distance + (1 + distance | fly_id)'
+    'bbox_area      ~ 1 + distance + (1 + distance | fly_id)'
+    'duration_s     ~ 1 + distance + (1 + distance | fly_id)'
+    'abs_heading    ~ 1 + distance + (1 + distance | fly_id)'
+    'bbox_aspect    ~ 1 + distance + (1 + distance | fly_id)'
+    'mean_ang_diff  ~ 1 + distance + (1 + distance | fly_id)'
+    'dist_from_prev ~ 1 + distance + (1 + distance | fly_id)'
 };
 lmm_models = cell(N_METRICS, 1);
 
@@ -353,10 +368,12 @@ end
 fprintf('\n=== LMM: controlling for temporal confound (distance + time) ===\n');
 
 lmm_formulas_dt = {
-    'bbox_area   ~ 1 + distance + start_time + (1 + distance | fly_id)'
-    'duration_s  ~ 1 + distance + start_time + (1 + distance | fly_id)'
-    'abs_heading ~ 1 + distance + start_time + (1 + distance | fly_id)'
-    'bbox_aspect ~ 1 + distance + start_time + (1 + distance | fly_id)'
+    'bbox_area      ~ 1 + distance + start_time + (1 + distance | fly_id)'
+    'duration_s     ~ 1 + distance + start_time + (1 + distance | fly_id)'
+    'abs_heading    ~ 1 + distance + start_time + (1 + distance | fly_id)'
+    'bbox_aspect    ~ 1 + distance + start_time + (1 + distance | fly_id)'
+    'mean_ang_diff  ~ 1 + distance + start_time + (1 + distance | fly_id)'
+    'dist_from_prev ~ 1 + distance + start_time + (1 + distance | fly_id)'
 };
 
 for mi = 1:N_METRICS
@@ -384,5 +401,5 @@ fprintf('\n=============================================\n');
 fprintf('  ANALYSIS COMPLETE\n');
 fprintf('  %d loops from %d flies (control strain)\n', n_total_loops, n_flies);
 fprintf('  Frames 750-850 excluded (stimulus reversal)\n');
-fprintf('  9 figures generated (4 OLS + 1 slopes + 4 LMM)\n');
+fprintf('  13 figures generated (6 OLS + 1 slopes + 6 LMM)\n');
 fprintf('=============================================\n');

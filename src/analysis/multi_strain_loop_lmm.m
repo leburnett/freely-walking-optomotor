@@ -4,10 +4,11 @@
 %  distance from the arena centre. Compares per-fly slope distributions
 %  across strains and tests for significant differences from control.
 %
-%  Figures (12):
-%    Fig 1-4:   Per-strain LMM subplots (area, duration, |heading|, aspect)
-%    Fig 5-8:   Overlay of all strains' population trend lines
-%    Fig 9-12:  Violin plots of per-fly slopes with statistical tests
+%  Figures (18):
+%    Fig 1-6:   Per-strain LMM subplots (area, duration, |heading|, aspect,
+%               ang_diff, dist_from_prev)
+%    Fig 7-12:  Overlay of all strains' population trend lines
+%    Fig 13-18: Violin plots of per-fly slopes with statistical tests
 %
 %  Requires DATA in workspace (from comb_data_across_cohorts_cond, protocol 27).
 %  Requires Statistics and Machine Learning Toolbox (fitlme, signrank, ranksum).
@@ -30,12 +31,13 @@ STIM_OFF = 1200;
 MASK_START = 750;
 MASK_END   = 850;
 MIN_LOOPS_FOR_FIT = 5;
-N_METRICS = 4;
+N_METRICS = 6;
 
 control_strain = "jfrc100_es_shibire_kir";
 
-metric_labels = {'Bbox area (mm^2)', 'Duration (s)', '|Heading change| (deg)', 'Aspect ratio'};
-metric_short  = {'area', 'duration', '|heading|', 'aspect'};
+metric_labels = {'Bbox area (mm^2)', 'Duration (s)', '|Heading change| (deg)', ...
+                 'Aspect ratio', 'Mean |ang diff| (deg)', 'Dist from prev loop (mm)'};
+metric_short  = {'area', 'duration', '|heading|', 'aspect', 'ang_diff', 'dist_prev'};
 
 loop_opts.lookahead_frames = 75;
 loop_opts.min_loop_frames  = 10;
@@ -132,34 +134,41 @@ for si = 1:n_strains
     x_stim       = rep_data.x_data(:, stim_range);
     y_stim       = rep_data.y_data(:, stim_range);
     heading_stim = rep_data.heading_data(:, stim_range);
+    vel_stim     = rep_data.vel_data(:, stim_range);
 
     % Detect loops per fly
-    f_fly_id = []; f_dist = []; f_area = []; f_dur = []; f_hdg = []; f_aspect = [];
+    f_fly_id = []; f_dist = []; f_area = []; f_dur = [];
+    f_hdg = []; f_aspect = []; f_ang_diff = []; f_dist_prev = [];
 
     for f = 1:n_flies
+        loop_opts.vel = vel_stim(f,:);
         loops = find_trajectory_loops( ...
             x_stim(f,:), y_stim(f,:), heading_stim(f,:), loop_opts);
         if loops.n_loops > 0
             nl = loops.n_loops;
-            f_fly_id = [f_fly_id; repmat(f, nl, 1)];
-            f_dist   = [f_dist;   loops.bbox_dist_center(:)];
-            f_area   = [f_area;   loops.bbox_area(:)];
-            f_dur    = [f_dur;    loops.duration_s(:)];
-            f_hdg    = [f_hdg;    loops.cum_heading(:)];
-            f_aspect = [f_aspect; loops.bbox_aspect(:)];
+            f_fly_id    = [f_fly_id;    repmat(f, nl, 1)];
+            f_dist      = [f_dist;      loops.bbox_dist_center(:)];
+            f_area      = [f_area;      loops.bbox_area(:)];
+            f_dur       = [f_dur;       loops.duration_s(:)];
+            f_hdg       = [f_hdg;       loops.cum_heading(:)];
+            f_aspect    = [f_aspect;    loops.bbox_aspect(:)];
+            f_ang_diff  = [f_ang_diff;  loops.mean_ang_diff(:)];
+            f_dist_prev = [f_dist_prev; loops.dist_from_prev(:)];
         end
     end
 
-    flat.fly_id = f_fly_id;
-    flat.dist   = f_dist;
-    flat.area   = f_area;
-    flat.dur    = f_dur;
-    flat.hdg    = f_hdg;
-    flat.aspect = f_aspect;
+    flat.fly_id    = f_fly_id;
+    flat.dist      = f_dist;
+    flat.area      = f_area;
+    flat.dur       = f_dur;
+    flat.hdg       = f_hdg;
+    flat.aspect    = f_aspect;
+    flat.ang_diff  = f_ang_diff;
+    flat.dist_prev = f_dist_prev;
     strain_flat{si} = flat;
 
     % Per-fly OLS slopes
-    metric_data = {f_area, f_dur, abs(f_hdg), f_aspect};
+    metric_data = {f_area, f_dur, abs(f_hdg), f_aspect, f_ang_diff, f_dist_prev};
     slopes = NaN(n_flies, N_METRICS);
     for mi = 1:N_METRICS
         for f = 1:n_flies
@@ -214,6 +223,8 @@ for mi = 1:N_METRICS
             case 2, vals = strain_flat{si}.dur;
             case 3, vals = abs(strain_flat{si}.hdg);
             case 4, vals = strain_flat{si}.aspect;
+            case 5, vals = strain_flat{si}.ang_diff;
+            case 6, vals = strain_flat{si}.dist_prev;
         end
         all_vals = [all_vals; vals(~isnan(vals))];
     end
@@ -246,10 +257,12 @@ for mi = 1:N_METRICS
 
         % Get metric values
         switch mi
-            case 1, m_vals = flat.area;   var_name = 'area';
-            case 2, m_vals = flat.dur;    var_name = 'dur';
-            case 3, m_vals = abs(flat.hdg); var_name = 'abs_hdg';
-            case 4, m_vals = flat.aspect; var_name = 'aspect';
+            case 1, m_vals = flat.area;
+            case 2, m_vals = flat.dur;
+            case 3, m_vals = abs(flat.hdg);
+            case 4, m_vals = flat.aspect;
+            case 5, m_vals = flat.ang_diff;
+            case 6, m_vals = flat.dist_prev;
         end
 
         col = strain_colors(si, :);
@@ -332,12 +345,12 @@ for mi = 1:N_METRICS
 end
 
 %% ================================================================
-%  SECTION 3: Overlay trend lines — all strains on one plot (Figs 5-8)
+%  SECTION 3: Overlay trend lines — all strains on one plot (Figs 7-12)
 %  ================================================================
 
 for mi = 1:N_METRICS
     figure('Position', [50+mi*20, 50+mi*20, 800, 550], ...
-        'Name', sprintf('Fig %d: Overlay — %s', mi+4, metric_short{mi}));
+        'Name', sprintf('Fig %d: Overlay — %s', mi+N_METRICS, metric_short{mi}));
     hold on;
 
     legend_handles = [];
@@ -402,7 +415,7 @@ for mi = 1:N_METRICS
     vopts.show_mean   = true;
 
     [fig_v, ax_v] = plot_violin(group_data, group_labels_v, vopts);
-    set(fig_v, 'Name', sprintf('Fig %d: Violin — %s', mi+8, metric_short{mi}));
+    set(fig_v, 'Name', sprintf('Fig %d: Violin — %s', mi+2*N_METRICS, metric_short{mi}));
 
     % Add zero reference line
     hold(ax_v, 'on');
@@ -534,7 +547,7 @@ for mi = 1:N_METRICS
 end
 
 fprintf('========================================================================\n');
-fprintf('  %d strains, 12 figures generated\n', n_strains);
+fprintf('  %d strains, 18 figures generated\n', n_strains);
 fprintf('  Frames 750-850 excluded (stimulus reversal)\n');
 fprintf('  * = signed-rank vs zero; dagger = rank-sum vs control (Bonferroni)\n');
 fprintf('========================================================================\n');
