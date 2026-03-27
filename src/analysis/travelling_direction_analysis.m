@@ -83,18 +83,59 @@ vy(:, end) = (rep_data.y_data(:, end) - rep_data.y_data(:, end-1)) / dt;
 travel_dir = atan2d(vy, vx);
 
 %% ================================================================
-%  SECTION 3: Compute angular difference
+%  SECTION 3: Detect and correct head-tail flips
 %  ================================================================
+%
+%  FlyTracker can assign the head/tail of the fly 180° wrong for entire
+%  trajectories.  Detect this by computing each fly's mean |heading -
+%  travel_dir| over all moving frames across the full trial.  If the mean
+%  is above FLIP_THRESHOLD (default 120°), the heading is almost certainly
+%  inverted — flip it by 180° and log the correction.
 
-% Signed angular difference: heading_wrap - travel_dir, wrapped to [-180, 180]
-ang_diff = mod(rep_data.heading_wrap - travel_dir + 180, 360) - 180;
-abs_ang_diff = abs(ang_diff);
+FLIP_THRESHOLD = 90;  % degrees — well above 90 to avoid false positives
 
-% Speed mask: only consider frames where the fly is actually moving
+% Speed mask (needed here for the flip detection)
 speed_mask = rep_data.vel_data >= SPEED_THRESHOLD;
 
+% Preliminary angular difference (before correction)
+ang_diff_raw = mod(rep_data.heading_wrap - travel_dir + 180, 360) - 180;
+abs_diff_raw = abs(ang_diff_raw);
+
+% Per-fly median |diff| over all moving frames (full trial, not just stim)
+% Median is more robust than mean to transient tracking glitches
+fly_median_raw = NaN(n_flies, 1);
+for f = 1:n_flies
+    moving = speed_mask(f, :) & ~isnan(abs_diff_raw(f, :));
+    if sum(moving) > 50  % require a minimum number of valid frames
+        fly_median_raw(f) = mean(abs_diff_raw(f, moving), 'omitnan');
+    end
+end
+
+% Identify and flip
+flipped_idx = find(fly_median_raw > FLIP_THRESHOLD);
+heading_corrected = rep_data.heading_wrap;  % copy
+heading_corrected(flipped_idx, :) = mod(heading_corrected(flipped_idx, :) + 180, 360);
+
+fprintf('\n--- Head-tail flip correction (median threshold = %d°) ---\n', FLIP_THRESHOLD);
+fprintf('Flies flipped: %d / %d\n', numel(flipped_idx), n_flies);
+if ~isempty(flipped_idx)
+    for k = 1:numel(flipped_idx)
+        fprintf('  Fly %3d: median |diff| was %.1f° -> flipped\n', ...
+            flipped_idx(k), fly_median_raw(flipped_idx(k)));
+    end
+end
+fprintf('----------------------------------------------------\n\n');
+
 %% ================================================================
-%  SECTION 4: Extract stimulus period
+%  SECTION 4: Compute angular difference (using corrected heading)
+%  ================================================================
+
+% Signed angular difference: corrected heading - travel_dir, wrapped to [-180, 180]
+ang_diff = mod(heading_corrected - travel_dir + 180, 360) - 180;
+abs_ang_diff = abs(ang_diff);
+
+%% ================================================================
+%  SECTION 5: Extract stimulus period
 %  ================================================================
 
 stim_range = STIM_ON:STIM_OFF;
@@ -117,7 +158,7 @@ create_plots = 0;
 if create_plots
 
     %% ================================================================
-    %  SECTION 5: Figure 1 — Histogram of angular difference
+    %  SECTION 6: Figure 1 — Histogram of angular difference
     %  ================================================================
     
     figure('Position', [50 50 700 800]);
@@ -181,7 +222,7 @@ if create_plots
         'FontSize', 18);
     
     %% ================================================================
-    %  SECTION 6: Figure 2 — Time course of angular difference
+    %  SECTION 7: Figure 2 — Time course of angular difference
     %  ================================================================
     
     % Per-frame mean across flies (only speed-valid frames contribute)
@@ -210,7 +251,7 @@ if create_plots
     set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
     
     %% ================================================================
-    %  SECTION 7: Figure 3 — Sideways fraction vs distance from centre
+    %  SECTION 8: Figure 3 — Sideways fraction vs distance from centre
     %  ================================================================
     
     dist_bin_edges = 0:10:120;
@@ -249,7 +290,7 @@ if create_plots
 end 
 
 %% ================================================================
-%  SECTION 8: Launch interactive trajectory browser
+%  SECTION 9: Launch interactive trajectory browser
 %  ================================================================
 
 browse_trajectories_by_slip(rep_data, travel_dir, abs_ang_diff, ...
