@@ -54,7 +54,8 @@ for dt = 1:numel(data_types)
     figure
     for st = 1:numel(strains)
         strain = strains{st};
-        f3 = plot_errorbar_tuning_diff_speeds(DATA, strain, data_type);
+        sex = 'F';
+        f3 = plot_errorbar_tuning_diff_speeds(DATA, strain, sex, data_type);
     end 
     if data_type == "gain"
         ylim([-0.2 1])

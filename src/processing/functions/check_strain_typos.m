@@ -1,5 +1,8 @@
 function strain = check_strain_typos(strain)
 
+    % 0 - Replace spaces with hyphens (spaces are invalid in struct field names)
+    strain = strrep(strain, ' ', '-');
+
     % 1 - Check for if the strain begins with a number:
     startsnum = isstrprop(strain(1), 'digit');
     if startsnum

@@ -1,14 +1,11 @@
-function f = plot_errorbar_tuning_curve_diff_contrasts(DATA, strain, col, data_type)
+function f = plot_errorbar_tuning_curve_diff_contrasts(DATA, strain, sex, col, data_type)
 
     [data_type, delta, d_fv] = resolve_delta_data_type(data_type);
 
     % Generate new figure
     % figure;
 
-    % % Eventually have this as the input to the function 
-    sex = 'F';
-    landing = 'none';
-    data = DATA.(strain).(landing).(sex); 
+    data = DATA.(strain).(sex);
     n_exp = length(data);
 
     val_stim = zeros(1, 7);

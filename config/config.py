@@ -81,6 +81,7 @@ REPO_ROOT = Path(__file__).parent.parent
 DATA_UNPROCESSED = PROJECT_ROOT / "DATA" / "00_unprocessed"
 DATA_TRACKED     = PROJECT_ROOT / "DATA" / "01_tracked"
 DATA_PROCESSED   = PROJECT_ROOT / "DATA" / "02_processed"
+DATA_FAILED      = PROJECT_ROOT / "DATA" / "00_failed"
 RESULTS_PATH     = PROJECT_ROOT / "results"
 FIGURES_PATH     = PROJECT_ROOT / "figures"
 

@@ -75,7 +75,8 @@ for st = [1,2]
         col = [0.9, 0.5, 0.9]/1.5;
     end 
      
-    f2 = plot_errorbar_tuning_curve_diff_contrasts(DATA, strain, col, data_type);
+    sex = 'F';
+    f2 = plot_errorbar_tuning_curve_diff_contrasts(DATA, strain, sex, col, data_type);
     hold on
 end 
 
