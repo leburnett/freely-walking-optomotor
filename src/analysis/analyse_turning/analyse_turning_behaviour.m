@@ -1,33 +1,34 @@
-%% ANALYSE_TURNING_BEHAVIOUR - Comprehensive turning analysis for freely-walking flies
+%% ANALYSE_TURNING_BEHAVIOUR - Turning analysis for freely-walking flies
 %
-% Analyses turning behaviour during visual stimulus conditions using two
-% complementary approaches:
-%   A — Sliding-window time series metrics vs distance from wall
-%   B — Discrete 360-degree turning event detection and characterisation
+% Analyses turning behaviour during visual stimulus conditions using
+% sliding-window metrics binned by wall distance and discrete 360-degree
+% turning event detection.
 %
 % Currently configured for jfrc100_es_shibire_kir (control) flies during
 % condition 1 of protocol 27 (60 deg gratings, 4Hz).
 %
 % SECTIONS:
 %   1. Configuration and data loading
-%   2. Approach A — Sliding-window metrics vs wall distance
-%   3. Diagnostic trajectory plots (Approach A validation)
-%   4. Sensitivity analysis
-%   5. Metric correlation matrix
-%   6. Approach B — 360-degree turning event detection
-%   7. Diagnostic turning event plots (Approach B validation)
-%   8. Multi-strain comparison stub
+%   2. Sliding-window metrics vs wall distance (|AV|, |curv|, FV, tortuosity)
+%   3. Sensitivity analysis (window width heatmaps)
+%   4. Metric correlation matrix
+%   5. 360-degree turning event detection (per-rep, split by stimulus half)
+%
+% FIGURES:
+%   Fig 1: 2x2 metric vs wall distance (stimulus vs baseline)
+%   Fig 2: 2x2 window width sensitivity heatmaps
+%   Fig 3: Metric correlation matrix (stimulus period)
+%   Fig 4: 360-degree turning events summary (duration, direction, geometry)
 %
 % REQUIREMENTS:
 %   - DATA struct from comb_data_across_cohorts_cond (Protocol 27)
-%   - Processing functions: compute_sliding_window_metrics, compute_tortuosity,
+%   - Processing functions: compute_sliding_window_metrics,
 %     sensitivity_analysis_windows, detect_360_turning_events,
 %     compute_turning_event_geometry, load_per_rep_data,
 %     bin_metric_by_wall_distance
-%   - Plotting functions: plot_metric_vs_wall_distance, plot_sensitivity_heatmap,
-%     plot_turning_events_summary, plot_metric_correlations,
-%     plot_trajectory_colormapped, plot_diagnostic_single_fly,
-%     plot_turning_event_trajectories
+%   - Plotting functions: plot_metric_vs_wall_distance,
+%     plot_sensitivity_heatmap, plot_turning_events_summary,
+%     plot_metric_correlations
 %
 % See also: compute_sliding_window_metrics, detect_360_turning_events
 
@@ -157,71 +158,7 @@ if save_figs
     exportgraphics(fig_metrics, fullfile(save_folder, 'metrics_vs_wall_distance.pdf'), 'ContentType', 'vector');
 end
 
-%% 3 — Diagnostic trajectory plots (Approach A validation)
-
-fprintf('\n=== Diagnostic: trajectory colormaps ===\n');
-
-% Pick example flies: fly 1, median-activity fly, max-activity fly
-mean_av_per_fly = nanmean(abs(av_ctrl(:, stim_range)), 2);
-[~, idx_median] = min(abs(mean_av_per_fly - nanmedian(mean_av_per_fly)));
-[~, idx_max]    = max(mean_av_per_fly);
-example_flies = [1, idx_median, idx_max];
-fly_labels = {'Fly 1', sprintf('Fly %d (median AV)', idx_median), ...
-              sprintf('Fly %d (max AV)', idx_max)};
-
-for fi = 1:numel(example_flies)
-    f = example_flies(fi);
-
-    % Single-fly metrics (extract row)
-    fly_metrics.abs_av    = metrics_ctrl.abs_av(f, :);
-    fly_metrics.abs_curv  = metrics_ctrl.abs_curv(f, :);
-    fly_metrics.fwd_vel   = metrics_ctrl.fwd_vel(f, :);
-    fly_metrics.tortuosity = metrics_ctrl.tortuosity(f, :);
-    fly_metrics.wall_dist = metrics_ctrl.wall_dist(f, :);
-
-    % Create empty events/geom for diagnostic plot (Approach B not yet run on averaged data)
-    empty_events.start_frame = [];
-    empty_events.end_frame = [];
-    empty_events.direction = [];
-    empty_events.duration_s = [];
-    empty_events.n_events = 0;
-
-    empty_geom.bbox_area = [];
-    empty_geom.bbox_aspect = [];
-    empty_geom.bbox_center_x = [];
-    empty_geom.bbox_center_y = [];
-
-    diag_opts.fly_id = fly_labels{fi};
-    diag_opts.stim_on = STIM_ON;
-    diag_opts.stim_off = STIM_OFF;
-    diag_opts.arena_radius = ARENA_R;
-    diag_opts.arena_center = ARENA_CENTER;
-    diag_opts.fps = FPS;
-    diag_opts.raw_av = abs(av_ctrl(f, :));
-    diag_opts.raw_fv = fv_ctrl(f, :);
-
-    fig_diag = plot_diagnostic_single_fly(x_ctrl(f,:), y_ctrl(f,:), ...
-        fly_metrics, head_ctrl(f,:), empty_events, empty_geom, diag_opts);
-
-    if save_figs
-        exportgraphics(fig_diag, fullfile(save_folder, ...
-            sprintf('diagnostic_fly%d.pdf', f)), 'ContentType', 'vector');
-    end
-
-    % Multi-window tortuosity timeseries for this fly
-    tort_mw_opts.windows = [0.5, 1, 2, 3];
-    tort_mw_opts.stim_on = STIM_ON;
-    tort_mw_opts.stim_off = STIM_OFF;
-    tort_mw_opts.title_str = sprintf('Tortuosity — %s — Multiple Windows', fly_labels{fi});
-    % fig_tort_mw = plot_tortuosity_multiwindow(x_ctrl(f,:), y_ctrl(f,:), FPS, tort_mw_opts);
-
-    if save_figs
-        exportgraphics(fig_tort_mw, fullfile(save_folder, ...
-            sprintf('tortuosity_multiwindow_fly%d.pdf', f)), 'ContentType', 'vector');
-    end
-end
-
-%% 4 — Sensitivity analysis
+%% 3 — Sensitivity analysis
 
 fprintf('\n=== Sensitivity analysis ===\n');
 
@@ -244,7 +181,7 @@ if save_figs
     exportgraphics(fig_sens, fullfile(save_folder, 'sensitivity_heatmaps.pdf'), 'ContentType', 'vector');
 end
 
-%% 5 — Metric correlations
+%% 4 — Metric correlations
 
 fprintf('\n=== Metric correlation matrix ===\n');
 
@@ -256,7 +193,7 @@ if save_figs
     exportgraphics(fig_corr, fullfile(save_folder, 'metric_correlations.pdf'), 'ContentType', 'vector');
 end
 
-%% 6 — Approach B: 360-degree turning events (per-rep)
+%% 5 — Approach B: 360-degree turning events (per-rep)
 
 fprintf('\n=== Approach B: 360-degree turning events ===\n');
 
@@ -320,136 +257,5 @@ fig_events = plot_turning_events_summary(events_h1, geom_h1, events_h2, geom_h2,
 if save_figs
     exportgraphics(fig_events, fullfile(save_folder, 'turning_events_summary.pdf'), 'ContentType', 'vector');
 end
-
-%% 7 — Diagnostic turning event plots (Approach B validation)
-
-fprintf('\n=== Diagnostic: turning event trajectories ===\n');
-
-% Find flies with detected events for diagnostics
-flies_with_events_h1 = find([events_h1.n_events] > 0);
-n_diag = min(3, numel(flies_with_events_h1));
-
-for di = 1:n_diag
-    f = flies_with_events_h1(di);
-
-    % Compute proper sliding-window metrics for this fly using actual data
-    fly_met_diag = compute_sliding_window_metrics( ...
-        av_rep(f,:), curv_rep(f,:), fv_rep(f,:), ...
-        dist_rep(f,:), x_rep(f,:), y_rep(f,:), ARENA_R, FPS, opts_sw);
-
-    % Combine events from both halves for diagnostic display
-    % Offset half-2 frame indices to full-timeseries coordinates
-    combined_events.start_frame  = [events_h1(f).start_frame + h1_range(1) - 1, ...
-                                    events_h2(f).start_frame + h2_range(1) - 1];
-    combined_events.end_frame    = [events_h1(f).end_frame + h1_range(1) - 1, ...
-                                    events_h2(f).end_frame + h2_range(1) - 1];
-    combined_events.direction    = [events_h1(f).direction, events_h2(f).direction];
-    combined_events.duration_s   = [events_h1(f).duration_s, events_h2(f).duration_s];
-    combined_events.n_events     = events_h1(f).n_events + events_h2(f).n_events;
-    combined_events.peak_av      = [events_h1(f).peak_av, events_h2(f).peak_av];
-    combined_events.mean_av      = [events_h1(f).mean_av, events_h2(f).mean_av];
-    combined_events.cum_heading  = [events_h1(f).cum_heading, events_h2(f).cum_heading];
-    combined_events.av_threshold = event_opts.av_threshold;
-
-    combined_geom.bbox_area        = [geom_h1(f).bbox_area, geom_h2(f).bbox_area];
-    combined_geom.bbox_aspect      = [geom_h1(f).bbox_aspect, geom_h2(f).bbox_aspect];
-    combined_geom.bbox_center_x    = [geom_h1(f).bbox_center_x, geom_h2(f).bbox_center_x];
-    combined_geom.bbox_center_y    = [geom_h1(f).bbox_center_y, geom_h2(f).bbox_center_y];
-    combined_geom.wall_dist_center = [geom_h1(f).wall_dist_center, geom_h2(f).wall_dist_center];
-    combined_geom.path_length      = [geom_h1(f).path_length, geom_h2(f).path_length];
-
-    diag_opts_b = struct();  % clear from previous iteration
-    diag_opts_b.fly_id = sprintf('Rep-fly %d (%d events)', f, combined_events.n_events);
-    diag_opts_b.stim_on = STIM_ON;
-    diag_opts_b.stim_off = STIM_OFF;
-    diag_opts_b.arena_radius = ARENA_R;
-    diag_opts_b.arena_center = ARENA_CENTER;
-    diag_opts_b.fps = FPS;
-    diag_opts_b.raw_av = abs(av_rep(f,:));
-    diag_opts_b.raw_fv = fv_rep(f,:);
-
-    fig_diag_b = plot_diagnostic_single_fly(x_rep(f,:), y_rep(f,:), ...
-        fly_met_diag, heading_rep(f,:), combined_events, combined_geom, diag_opts_b);
-
-    if save_figs
-        exportgraphics(fig_diag_b, fullfile(save_folder, ...
-            sprintf('diagnostic_events_fly%d.pdf', f)), 'ContentType', 'vector');
-    end
-
-    % % Individual event small multiples (half 1 only for clarity)
-    % if events_h1(f).n_events > 0
-    %     evt_opts.arena_radius = ARENA_R;
-    %     evt_opts.fps = FPS;
-    %     fig_evt = plot_turning_event_trajectories(events_h1(f), geom_h1(f), ...
-    %         x_rep(f, h1_range), y_rep(f, h1_range), evt_opts);
-    % 
-    %     if save_figs
-    %         exportgraphics(fig_evt, fullfile(save_folder, ...
-    %             sprintf('event_trajectories_fly%d_h1.pdf', f)), 'ContentType', 'vector');
-    %     end
-    % 
-    % end
-end
-
-%% 8 — Multi-strain comparison stub
-
-fprintf('\n=== Multi-strain comparison (stub) ===\n');
-fprintf('To add strains, populate key_strains and re-run this section.\n');
-fprintf('Currently configured strains:\n');
-for s = 1:numel(key_strains)
-    fprintf('  %s (%s)\n', key_strains{s}, key_labels{s});
-end
-
-% Uncomment and extend below to run multi-strain comparison:
-%{
-fig_multi = figure('Position', [50 50 1200 900]);
-tl_m = tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
-sgtitle(tl_m, 'Cross-Strain Comparison — Condition 1', 'FontSize', 18);
-
-metric_fields = {'abs_av', 'abs_curv', 'fwd_vel', 'tortuosity'};
-
-for p = 1:4
-    ax_m = nexttile(tl_m);
-    hold(ax_m, 'on');
-
-    % Control (grey)
-    all_means = ctrl_means{p};  % from Section 2
-    all_sems  = ctrl_sems{p};
-    all_labels = {'Control'};
-    all_colors = [0.7 0.7 0.7];
-
-    % Loop over strains
-    for s = 1:numel(key_strains)
-        strain_name = key_strains{s};
-        if ~isfield(DATA, strain_name), continue; end
-
-        data_s = DATA.(strain_name).(sex);
-        av_s   = combine_timeseries_across_exp_check(data_s, key_condition, "av_data");
-        curv_s = combine_timeseries_across_exp_check(data_s, key_condition, "curv_data");
-        fv_s   = combine_timeseries_across_exp_check(data_s, key_condition, "fv_data");
-        dist_s = combine_timeseries_across_exp_check(data_s, key_condition, "dist_data");
-        x_s    = combine_timeseries_across_exp_check(data_s, key_condition, "x_data");
-        y_s    = combine_timeseries_across_exp_check(data_s, key_condition, "y_data");
-
-        metrics_s = compute_sliding_window_metrics(av_s, curv_s, fv_s, ...
-            dist_s, x_s, y_s, ARENA_R, FPS, opts_sw);
-
-        [s_means, s_sems] = bin_metric_by_wall_distance( ...
-            metrics_s.(metric_fields{p}), metrics_s.wall_dist, stim_range, bin_edges);
-
-        all_means = [all_means; s_means];
-        all_sems  = [all_sems; s_sems];
-        all_labels{end+1} = key_labels{s};
-        all_colors = [all_colors; strain_cols(s,:)];
-    end
-
-    mopts.colors = all_colors;
-    mopts.labels = all_labels;
-    mopts.ylabel_str = metric_names{p};
-    mopts.title_str = metric_names{p};
-    mopts.ax = ax_m;
-    plot_metric_vs_wall_distance(bin_centres, all_means, all_sems, mopts);
-end
-%}
 
 fprintf('\n=== Analysis complete ===\n');

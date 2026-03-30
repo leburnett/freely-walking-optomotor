@@ -448,4 +448,6 @@ function s = make_empty_loop_struct()
     s.bbox_center_y   = [];
     s.bbox_dist_center = [];
     s.bbox_wall_dist  = [];
+    s.mean_ang_diff   = [];
+    s.dist_from_prev  = [];
 end
