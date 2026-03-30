@@ -1443,11 +1443,11 @@ Generates a p-value heatmap summarizing statistical comparisons of all screened 
 - All scripts load data via `comb_data_across_cohorts_cond` and use the same underlying plotting functions
 :::
 
-These scripts are located in `plotting_functions/figures/` and `analysis_scripts/` and serve as worked examples of how to use the plotting functions described in @sec-plotting with the DATA struct described in @sec-data. They are not part of the automated pipeline; instead, they are run interactively to explore results and generate figures for presentations or publications.
+These scripts are located in `plotting/figures/` and `analysis/` and serve as worked examples of how to use the plotting functions described in @sec-plotting with the DATA struct described in @sec-data. They are not part of the automated pipeline; instead, they are run interactively to explore results and generate figures for presentations or publications.
 
 ## \colorbox{fnbg}{\texttt{fig\_different\_speeds.m}} \label{fn:fig_different_speeds}
 
-**Location:** `plotting_functions/figures/fig_different_speeds.m`
+**Location:** `plotting/figures/fig_different_speeds.m`
 
 Compares locomotor responses across different stimulus speeds within a single spatial frequency. Designed for **protocol\_31**, which contains 10 conditions: 60-degree gratings at 1, 2, 4, and 8 Hz; 15-degree gratings at 4, 8, 16, and 32 Hz; and corresponding flicker controls for each spatial frequency.
 
@@ -1471,7 +1471,7 @@ Compares locomotor responses across different stimulus speeds within a single sp
 
 ## \colorbox{fnbg}{\texttt{fig1\_plots.m}} \label{fn:fig1_plots}
 
-**Location:** `plotting_functions/figures/fig1_plots.m`
+**Location:** `plotting/figures/fig1_plots.m`
 
 The most comprehensive figure-generation script, producing the full set of publication figures for the MIC paper using **protocol\_27** data. This script demonstrates all major analysis approaches: single-strain time series, cross-condition box plots, spatial occupancy heatmaps, trajectory visualizations, and multi-strain comparisons.
 
@@ -1552,7 +1552,7 @@ plot_boxchart_metrics_xstrains(DATA, ...
 
 ## \colorbox{fnbg}{\texttt{generate\_trajectory\_plots.m}} \label{fn:generate_trajectory_plots}
 
-**Location:** `analysis_scripts/generate_trajectory_plots.m`
+**Location:** `analysis/archive/generate_trajectory_plots.m` (archived — see trajectory plotting functions below)
 
 Generates trajectory visualizations showing individual fly movement paths in the arena. Uses four complementary trajectory plotting functions that each show a different aspect of fly locomotion.
 
