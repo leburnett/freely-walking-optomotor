@@ -1,4 +1,4 @@
-%% TEMP_AV_THRESHOLD_GUI - Interactive GUI for exploring AV threshold on trajectories
+%% AV_THRESHOLD_GUI - Interactive GUI for exploring AV threshold on trajectories
 %
 % Layout:
 %   Top row:  AV-coloured trajectory (left) | Heading playback (right)

@@ -1,4 +1,4 @@
-%% TEMP_LOOP_SEGMENTATION_GUI - Trajectory loop segmentation across all strains
+%% LOOP_SEGMENTATION_GUI - Trajectory loop segmentation across all strains
 %
 % Loads ALL strains from DATA, finds trajectory self-intersection loops for
 % each fly during the FULL 30s stimulus (frames 300-1200), and stores
