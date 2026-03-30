@@ -4,12 +4,7 @@
 
 function f = plot_allcond_acrossgroups_tuning_raw(DATA, gp_data, params, data_type, gps2plot, plot_sem)
 
-    if data_type == "dist_data_delta"
-        data_type = "dist_data";
-        delta = 1;
-    else 
-        delta = 0;
-    end 
+    [data_type, delta] = resolve_delta_data_type(data_type);
 
     % Generate new figure
     figure;

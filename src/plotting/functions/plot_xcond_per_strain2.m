@@ -20,7 +20,7 @@ function plot_xcond_per_strain2(protocol, data_type, cond_ids, strain_names, par
     % end 
     
     % % Initialise parameters:
-    delta = 0;
+    [data_type, delta] = resolve_delta_data_type(data_type);
     sex = 'F';
 
     xmax = 1800;
@@ -87,40 +87,32 @@ function plot_xcond_per_strain2(protocol, data_type, cond_ids, strain_names, par
         ]./255;
         
 if params.plot_sd == 1
-    if data_type == "fv_data" 
-        rng = [0 22];
-    elseif data_type == "dist_data_delta"
-        delta = 1;
-        data_type = "dist_data";
-        rng = [-70 30];
+    if data_type == "fv_data"
+        if delta, rng = [-15 15]; else, rng = [0 22]; end
     elseif data_type == "dist_data"
-        rng = [0 120];
+        if delta, rng = [-70 30]; else, rng = [0 120]; end
     elseif data_type == "view_dist"
         rng = [60 140];
     elseif data_type == "dist_dt"
         rng = [-7 5];
-    elseif data_type == "av_data" || data_type == "curv_data" 
-        rng = [-350 350];
-    end 
+    elseif data_type == "av_data" || data_type == "curv_data"
+        if delta, rng = [-350 350]; else, rng = [-350 350]; end
+    end
 else
-    if data_type == "fv_data" 
-        rng = [0 15];
-    elseif data_type == "dist_data_delta"
-        delta = 1;
-        data_type = "dist_data";
-        rng = [-45 10];
+    if data_type == "fv_data"
+        if delta, rng = [-8 8]; else, rng = [0 15]; end
     elseif data_type == "dist_data"
-        rng = [30 90];
+        if delta, rng = [-45 10]; else, rng = [30 90]; end
     elseif data_type == "view_dist"
         rng = [60 140];
     elseif data_type == "dist_dt"
         rng = [-7 5];
     elseif data_type == "av_data"
-        rng = [-245 245];
-    elseif data_type == "curv_data" 
+        if delta, rng = [-245 245]; else, rng = [-245 245]; end
+    elseif data_type == "curv_data"
         rng = [-200 200];
-    end 
-end 
+    end
+end
     
 %% PLOT 
 

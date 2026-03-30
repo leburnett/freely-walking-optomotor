@@ -1,17 +1,6 @@
 function f = plot_errorbar_tuning_curve_diff_contrasts(DATA, strain, sex, col, data_type)
 
-    if data_type == "dist_data_delta"
-        data_type = "dist_data";
-        delta = 1;
-        d_fv = 0 ;
-    elseif data_type == "dist_data_fv"
-        data_type = "dist_data";
-        delta = 1;
-        d_fv = 1;
-    else 
-        delta = 0;
-        d_fv = 0;
-    end 
+    [data_type, delta, d_fv] = resolve_delta_data_type(data_type);
 
     % Generate new figure
     % figure;

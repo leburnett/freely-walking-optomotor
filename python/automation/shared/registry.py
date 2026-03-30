@@ -57,6 +57,40 @@ def _write_registry(registry_path, data):
             os.remove(tmp_path)
 
 
+def _infer_cross_refs(experiment_status):
+    """Infer cross-reference location flags from completed pipeline stages.
+
+    Each completed stage implies data exists at a known location.  This lets
+    the live pipeline populate the cross-ref columns (Data Acq, Data Proc,
+    Data Net, Res Proc, Res Net) automatically, without waiting for a full
+    backfill run.
+
+    Returns:
+        Dict of cross-ref field names mapped to ``True``.  Fields whose
+        corresponding stage is incomplete or missing are omitted so that
+        the preserve logic in ``update_registry`` can keep previously
+        backfilled values.
+    """
+    stages = experiment_status.get("stages", {})
+    refs = {}
+
+    # Map: completed stage -> cross-ref field it implies
+    _STAGE_TO_REF = {
+        "acquired":            "has_data_local_acquisition",
+        "copied_to_network":   "has_data_network",
+        "tracked":             "has_data_local_processing",
+        "processed":           "has_local_results_processing",
+        "synced_to_network":   "has_network_results",
+    }
+
+    for stage_name, field in _STAGE_TO_REF.items():
+        entry = stages.get(stage_name, {})
+        if entry.get("status") == "complete":
+            refs[field] = True
+
+    return refs
+
+
 def update_registry(experiment_status):
     """Upsert an experiment entry in the global registry.
 
@@ -88,6 +122,12 @@ def update_registry(experiment_status):
             summary["has_operator_warning"] = True
         else:
             summary["has_operator_warning"] = False
+
+    # Infer cross-reference flags from completed pipeline stages so that
+    # the tick columns (Data Acq, Data Net, etc.) are populated immediately
+    # for new experiments without waiting for a backfill run.
+    inferred = _infer_cross_refs(experiment_status)
+    summary.update(inferred)
 
     # Upsert: replace existing or append
     experiments = data.get("experiments", [])

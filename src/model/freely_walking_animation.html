@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Fly Trajectories - Optomotor Model</title>
+    <style>
+        :root {
+            --primary-color: #000000;
+            --secondary-color: #555555;
+            --background-color: #f0f0f0;
+            --panel-bg: #ffffff;
+            --text-color: #1a1a1a;
+            --border-color: #cccccc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        header p {
+            opacity: 0.9;
+            margin-top: 0.3rem;
+            font-size: 0.9rem;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .simulation-layout {
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+        }
+
+        @media (max-width: 900px) {
+            .simulation-layout {
+                flex-direction: column;
+            }
+        }
+
+        .controls-panel {
+            background: var(--panel-bg);
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-width: 280px;
+            flex-shrink: 0;
+        }
+
+        .controls-panel h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .control-group {
+            margin-bottom: 1rem;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            margin-top: 0.25rem;
+        }
+
+        .control-group .value-display {
+            font-size: 0.8rem;
+            color: #666;
+            text-align: right;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-top: 0.25rem;
+        }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1.25rem;
+        }
+
+        button {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+            flex: 1;
+        }
+
+        .btn-start {
+            background-color: #2d8a4e;
+            color: white;
+        }
+
+        .btn-start:hover {
+            background-color: #236b3c;
+        }
+
+        .btn-stop {
+            background-color: #c0392b;
+            color: white;
+        }
+
+        .btn-stop:hover {
+            background-color: #962d22;
+        }
+
+        .btn-reset {
+            background-color: #888888;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background-color: #666666;
+        }
+
+        .arena-panel {
+            background: var(--panel-bg);
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex: 1 1 auto;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .arena-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .arena-canvas {
+            border-radius: 4px;
+            background: #fafafa;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .status-bar {
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            color: #666;
+            text-align: center;
+        }
+
+        /* Statistics Section */
+        .statistics-section {
+            background: var(--panel-bg);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .statistics-section h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .statistics-grid-2col {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        @media (max-width: 900px) {
+            .statistics-grid-2col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stat-panel {
+            background: #fafafa;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem;
+        }
+
+        .stat-panel h3 {
+            font-size: 0.85rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .stat-canvas {
+            width: 100%;
+            height: 150px;
+            display: block;
+        }
+
+        /* Glossary Section (Collapsible) */
+        .glossary-section {
+            background: var(--panel-bg);
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .glossary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .glossary-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            border-left: 3px solid var(--secondary-color);
+        }
+
+        .glossary-item h4 {
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            color: var(--primary-color);
+            margin-bottom: 0.4rem;
+        }
+
+        .glossary-item p {
+            font-size: 0.85rem;
+            color: #444;
+            margin-bottom: 0.3rem;
+        }
+
+        .glossary-item .effect {
+            font-size: 0.8rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Model Section (Collapsible) */
+        .model-section {
+            background: var(--panel-bg);
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .collapsible-header {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .collapsible-header:hover {
+            background-color: #f5f5f5;
+        }
+
+        .collapsible-header h2 {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .collapsible-header::after {
+            content: '\25BC';
+            font-size: 0.8rem;
+            transition: transform 0.3s;
+            color: var(--secondary-color);
+        }
+
+        .collapsible-header.collapsed::after {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-content {
+            padding: 0 1.5rem 1.5rem 1.5rem;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+        }
+
+        .collapsible-content.collapsed {
+            max-height: 0 !important;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        .model-content h3 {
+            font-size: 1.05rem;
+            color: var(--primary-color);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .model-content h3:first-child {
+            margin-top: 0.5rem;
+        }
+
+        .model-content h4 {
+            font-size: 0.95rem;
+            color: #2c3e50;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .model-content p {
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+            color: #333;
+        }
+
+        .model-content ul, .model-content ol {
+            margin: 0.5rem 0 1rem 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .model-content li {
+            margin-bottom: 0.4rem;
+        }
+
+        .equation {
+            background: #f0f0f0;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 0.75rem 0;
+            border-left: 3px solid var(--secondary-color);
+        }
+
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        .param-table th, .param-table td {
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .param-table th {
+            background: #f0f0f0;
+            font-weight: 600;
+        }
+
+        .param-table code {
+            background: #e8e8e8;
+            padding: 0.1rem 0.3rem;
+            border-radius: 2px;
+            font-size: 0.85rem;
+        }
+
+        .explanation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 700px) {
+            .explanation-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .explanation-card {
+            background: #f5f5f5;
+            padding: 1rem;
+            border-radius: 4px;
+            border-left: 4px solid #555;
+        }
+
+        .explanation-card h4 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        .explanation-card p {
+            margin-bottom: 0;
+            font-size: 0.85rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            color: #666;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Animated Fly Trajectories</h1>
+        <p>15 simulated flies walking in a cylindrical LED arena with optomotor response</p>
+    </header>
+
+    <main>
+        <div class="simulation-layout">
+            <!-- Controls Panel (Left) -->
+            <div class="controls-panel">
+                <h2>Parameters</h2>
+
+                <div class="control-group">
+                    <label>k_dist (distance gain): <span id="kDist_val">2.0</span></label>
+                    <input type="range" id="kDist" min="0" max="10" step="0.1" value="2.0" oninput="updateParam('kDist')">
+                </div>
+
+                <div class="control-group">
+                    <label>Walking speed (mm/s): <span id="vMax_val">20</span></label>
+                    <input type="range" id="vMax" min="5" max="50" step="1" value="20" oninput="updateParam('vMax')">
+                </div>
+
+                <div class="control-group">
+                    <label>Trail length (s): <span id="trailLength_val">3.0</span></label>
+                    <input type="range" id="trailLength" min="0" max="10" step="0.5" value="3" oninput="updateTrailLength()">
+                </div>
+
+                <div class="control-group">
+                    <label>Grating speed: <span id="gratingSpeed_val">0.1</span></label>
+                    <input type="range" id="gratingSpeed" min="0" max="1" step="0.01" value="0.1" oninput="updateParam('gratingSpeed')">
+                </div>
+
+                <div class="control-group">
+                    <label>Grating direction:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="grating" value="1" checked onchange="updateParam('grating')"> CW</label>
+                        <label><input type="radio" name="grating" value="-1" onchange="updateParam('grating')"> CCW</label>
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button id="startBtn" class="btn-start" onclick="startAnimation()">Start</button>
+                    <button id="stopBtn" class="btn-stop" onclick="stopAnimation()" disabled>Stop</button>
+                </div>
+                <div class="buttons">
+                    <button class="btn-reset" onclick="resetSimulation()">Reset</button>
+                </div>
+
+            </div>
+
+            <!-- Arena Panel (Right) -->
+            <div class="arena-panel">
+                <div class="arena-container">
+                    <canvas id="arenaCanvas" class="arena-canvas" width="500" height="500"></canvas>
+                </div>
+                <div class="status-bar">
+                    <span id="statusText">Ready - Press Start to begin</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Section -->
+        <section class="statistics-section">
+            <h2>Real-Time Statistics (10s window)</h2>
+            <div class="statistics-grid-2col">
+                <div class="stat-panel">
+                    <h3>Radial Position Distribution</h3>
+                    <canvas id="histogramCanvas" class="stat-canvas"></canvas>
+                </div>
+                <div class="stat-panel">
+                    <h3>Turning Rate Distribution</h3>
+                    <canvas id="turningHistCanvas" class="stat-canvas"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Glossary Section (Collapsible) -->
+        <section class="glossary-section">
+            <div class="collapsible-header collapsed" onclick="toggleSection(this)">
+                <h2>Parameter Glossary</h2>
+            </div>
+            <div class="collapsible-content collapsed" style="max-height: 0;">
+                <div class="glossary-grid">
+                <div class="glossary-item">
+                    <h4>k_dist (Distance Gain)</h4>
+                    <p>Strength of the distance-dependent optomotor modulation. This parameter scales how much extra turning is added when the fly is close to the arena wall.</p>
+                    <p class="effect">Higher values &rarr; stronger centripetal drift; flies turn more sharply when approaching walls and accumulate near the centre faster.</p>
+                </div>
+                <div class="glossary-item">
+                    <h4>Grating Speed</h4>
+                    <p>The angular velocity of the visual gratings, which determines the baseline turning rate induced uniformly across the arena. Represents the fly's tendency to turn with the visual motion.</p>
+                    <p class="effect">Higher values &rarr; tighter spiralling trajectories and faster grating animation; zero &rarr; static gratings and pure random walk.</p>
+                </div>
+                <div class="glossary-item">
+                    <h4>Walking Speed (v_max)</h4>
+                    <p>Maximum forward walking speed in mm/s. The instantaneous speed decreases from this value during sharp turns (speed-turning coupling).</p>
+                    <p class="effect">Higher values &rarr; flies cover more ground per unit time; trajectories appear stretched and less curved.</p>
+                </div>
+                <div class="glossary-item">
+                    <h4>Grating Direction</h4>
+                    <p>Direction of the visual motion displayed on the arena walls. CW (clockwise) causes rightward turning; CCW (counter-clockwise) causes leftward turning.</p>
+                    <p class="effect">Reverses the direction of spiral trajectories and the systematic turning bias.</p>
+                </div>
+                <div class="glossary-item">
+                    <h4>Trail Length</h4>
+                    <p>Duration of the trajectory trail displayed behind each fly, in seconds. Controls how much historical path is visible.</p>
+                    <p class="effect">Longer trails &rarr; more visible trajectory history; shorter trails &rarr; cleaner display focused on current positions.</p>
+                </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Model Description Section (Collapsible) -->
+        <section class="model-section">
+            <div class="collapsible-header collapsed" onclick="toggleSection(this)">
+                <h2>The Model: How Trajectories Are Generated</h2>
+            </div>
+            <div class="collapsible-content collapsed" style="max-height: 0;">
+                <div class="model-content">
+                    <h3>Core Hypothesis</h3>
+                    <p>This model proposes that <strong>centripetal drift</strong> (the tendency of flies to accumulate near the arena centre) emerges from a distance-dependent modulation of the <strong>optomotor response</strong>. When a fly faces the nearby arena wall, the visual gratings occupy a larger portion of its visual field and move with higher angular velocity on the retina. This triggers a stronger turning response, redirecting the fly away from the wall. When facing the distant centre, the weaker visual drive allows straighter trajectories to persist. This asymmetry produces a statistical bias towards the centre over time.</p>
+
+                    <h3>Simulation Algorithm</h3>
+                    <p>At each time step (dt = 1/30 s), the following computations occur for each fly:</p>
+                    <ol>
+                        <li><strong>Compute viewing distance:</strong> Ray-cast from the fly's position along its heading direction to find the intersection with the circular arena boundary.</li>
+                        <li><strong>Calculate distance-dependent gain:</strong> Apply a sigmoid function to convert viewing distance into a gain multiplier (0 to 1).</li>
+                        <li><strong>Compute total turning:</strong> Sum three components: base optomotor bias, Brownian noise, and distance-dependent extra turning.</li>
+                        <li><strong>Update heading:</strong> Add the total turning to the current heading angle.</li>
+                        <li><strong>Compute instantaneous speed:</strong> Reduce speed proportionally to turning magnitude (speed-turning coupling).</li>
+                        <li><strong>Update position:</strong> Move forward based on speed and heading. If the new position would exit the arena, reflect the heading by 180°.</li>
+                    </ol>
+
+                    <h3>Turning Dynamics</h3>
+                    <p>The change in heading (&Delta;&theta;) at each time step is the sum of three independent components:</p>
+                    <div class="equation">
+                        &Delta;&theta; = bias_term + brownian_turn + gain_turn
+                    </div>
+
+                    <h4>1. Base Optomotor Response (bias_term)</h4>
+                    <div class="equation">
+                        bias_term = grating_dir &times; grating_speed &times; dt
+                    </div>
+                    <p>This represents the fly's innate tendency to turn in the direction of visual motion to stabilise its retinal image. It is applied uniformly regardless of position in the arena.</p>
+                    <ul>
+                        <li><code>grating_dir</code>: +1 for clockwise, -1 for counter-clockwise grating motion</li>
+                        <li><code>grating_speed</code>: Turning rate in rad/s, corresponding to the angular velocity of the gratings</li>
+                        <li><code>dt</code>: Time step (1/fps seconds)</li>
+                    </ul>
+
+                    <h4>2. Brownian Noise (brownian_turn)</h4>
+                    <div class="equation">
+                        brownian_turn = randn() / brownian_amp &times; &radic;dt
+                    </div>
+                    <p>Stochastic variability in heading that captures the inherent randomness of walking behaviour. The &radic;dt scaling ensures proper Brownian motion statistics regardless of frame rate.</p>
+                    <ul>
+                        <li><code>randn()</code>: Random sample from a standard normal distribution (mean=0, std=1)</li>
+                        <li><code>brownian_amp</code>: Divisor controlling noise amplitude (fixed at 1.2 in this simulation)</li>
+                    </ul>
+
+                    <h4>3. Distance-Dependent Turning (gain_turn)</h4>
+                    <div class="equation">
+                        gain_turn = grating_dir &times; k_dist &times; view_factor &times; dt
+                    </div>
+                    <p>This is the key component producing centripetal drift. It adds extra turning in the same direction as the base optomotor response, but modulated by proximity to the wall.</p>
+                    <ul>
+                        <li><code>k_dist</code>: Maximum additional turning rate when very close to the wall</li>
+                        <li><code>view_factor</code>: A value between 0 and 1 determined by the sigmoid function (see below)</li>
+                    </ul>
+
+                    <h3>The Sigmoid Gain Function</h3>
+                    <p>The <code>view_factor</code> maps viewing distance to a gain multiplier using a logistic sigmoid:</p>
+                    <div class="equation">
+                        view_factor = 1 / (1 + exp(b &times; (viewing_dist - d0)))
+                    </div>
+                    <table class="param-table">
+                        <tr>
+                            <th>Viewing Distance</th>
+                            <th>view_factor</th>
+                            <th>Interpretation</th>
+                        </tr>
+                        <tr>
+                            <td>Much less than d0</td>
+                            <td>&asymp; 1</td>
+                            <td>Close to wall: strong extra turning applied</td>
+                        </tr>
+                        <tr>
+                            <td>Equal to d0</td>
+                            <td>= 0.5</td>
+                            <td>Transition zone: half-maximal extra turning</td>
+                        </tr>
+                        <tr>
+                            <td>Much greater than d0</td>
+                            <td>&asymp; 0</td>
+                            <td>Far from wall: minimal extra turning</td>
+                        </tr>
+                    </table>
+                    <p>The parameter <code>b</code> controls the steepness of this transition. With higher <code>b</code>, the shift from "wall regime" to "centre regime" becomes more abrupt.</p>
+
+                    <h3>Speed-Turning Coupling</h3>
+                    <p>Flies slow down when executing sharp turns, a well-documented feature of insect locomotion. The instantaneous speed is computed as:</p>
+                    <div class="equation">
+                        speed = v_max / (1 + &alpha; &times; |&Delta;&theta;|)
+                    </div>
+                    <p>where <code>&alpha; = 7</code> (fixed) determines how strongly turning reduces speed. This coupling means that tight spirals near walls involve slower movement, while straighter paths towards the centre are faster.</p>
+
+                    <h3>Why This Produces Centripetal Drift</h3>
+                    <div class="explanation-grid">
+                        <div class="explanation-card">
+                            <h4>Heading Towards Wall</h4>
+                            <p>Short viewing distance &rarr; high view_factor &rarr; strong turning response &rarr; trajectory quickly curves away from wall</p>
+                        </div>
+                        <div class="explanation-card">
+                            <h4>Heading Towards Centre</h4>
+                            <p>Long viewing distance &rarr; low view_factor &rarr; weak turning response &rarr; trajectory persists longer before curving</p>
+                        </div>
+                    </div>
+                    <p>This asymmetry creates a statistical bias: trajectories approaching the wall are "cut short" by enhanced turning, while trajectories heading inward continue relatively unimpeded. Over time, this imbalance accumulates, producing net displacement towards the arena centre.</p>
+
+                    <h3>Boundary Handling</h3>
+                    <p>If a fly's computed next position would fall outside the arena boundary, its heading is reflected by 180° and the position update is cancelled for that frame. This prevents flies from escaping while maintaining continuous trajectories.</p>
+
+                    <h3>Minimum Distance Suppression</h3>
+                    <p>When the viewing distance falls below a threshold (<code>min_dist = 20 mm</code>), the optomotor response is suppressed entirely and only Brownian motion remains. This prevents numerical instabilities and unrealistic behaviour when the fly is extremely close to the wall and facing it directly.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Optomotor Response Model - Animated Fly Trajectories</p>
+    </footer>
+
+    <script>
+        // Constants
+        const ARENA_RADIUS = 120.5;  // mm
+        const CANVAS_PADDING = 20;
+        const FPS = 30;
+        const NUM_FLIES = 15;
+        const STATS_WINDOW = 10;  // seconds of data to show in statistics plots
+
+        // Dynamic settings
+        let trailLength = 90;  // Number of past positions to show (default 3 seconds at 30fps)
+
+        // Statistics data (rolling window)
+        const STATS_FRAMES = STATS_WINDOW * FPS;  // 10 seconds worth of frames
+        let statsHistory = {
+            radialPositions: [], // all radial positions for histogram (accumulated)
+            turningRates: []     // all turning rates for histogram (accumulated)
+        };
+
+        // Grating animation state
+        let gratingPhase = 0;  // Current phase of the grating animation (radians)
+        const NUM_STRIPES = 12;  // Number of stripe pairs around the perimeter
+
+        // Fly colours - distinct hues
+        const FLY_COLOURS = [
+            '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
+            '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe',
+            '#008080', '#e6beff', '#9a6324', '#800000', '#aaffc3'
+        ];
+
+        // Animation state
+        let animationId = null;
+        let isRunning = false;
+        let elapsedTime = 0;
+
+        // Flies state
+        let flies = [];
+
+        // Get current parameters from UI
+        function getParams() {
+            const gratingRadio = document.querySelector('input[name="grating"]:checked');
+            return {
+                fps: FPS,
+                arena_radius: ARENA_RADIUS,
+                k_dist: parseFloat(document.getElementById('kDist').value),
+                d0: 90,  // Fixed value (half-max distance in mm)
+                b: 0.02,  // Fixed value (sigmoid slope)
+                grating_speed: parseFloat(document.getElementById('gratingSpeed').value),
+                grating_dir: parseInt(gratingRadio.value),
+                v_max: parseFloat(document.getElementById('vMax').value),
+                alpha: 7,
+                brownian_amp: 1.2,
+                min_dist: 20
+            };
+        }
+
+        // Update parameter display
+        function updateParam(id) {
+            if (id !== 'grating') {
+                const input = document.getElementById(id);
+                const display = document.getElementById(id + '_val');
+                display.textContent = input.value;
+            }
+        }
+
+        // Update trail length
+        function updateTrailLength() {
+            const input = document.getElementById('trailLength');
+            const display = document.getElementById('trailLength_val');
+            display.textContent = parseFloat(input.value).toFixed(1);
+            trailLength = Math.round(parseFloat(input.value) * FPS);
+        }
+
+        // Seeded random number generator for each fly
+        function createRNG(seed) {
+            let state = seed;
+            return function() {
+                state = (state * 1103515245 + 12345) & 0x7fffffff;
+                return state / 0x7fffffff;
+            };
+        }
+
+        // Box-Muller transform for normal distribution
+        function gaussianRandom(rand) {
+            const u1 = rand();
+            const u2 = rand();
+            return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        }
+
+        // Compute viewing distance via ray-circle intersection
+        function computeViewingDistance(x, y, theta, arenaRadius) {
+            const dx = Math.cos(theta);
+            const dy = Math.sin(theta);
+
+            const A = dx * dx + dy * dy;
+            const B = 2 * (x * dx + y * dy);
+            const C = x * x + y * y - arenaRadius * arenaRadius;
+            const discriminant = B * B - 4 * A * C;
+
+            if (discriminant < 0) return 0;
+
+            const t1 = (-B + Math.sqrt(discriminant)) / (2 * A);
+            const t2 = (-B - Math.sqrt(discriminant)) / (2 * A);
+
+            const candidates = [t1, t2].filter(t => t > 0);
+            return candidates.length > 0 ? Math.min(...candidates) : 0;
+        }
+
+        // Initialize a single fly at random position
+        function initializeFly(index) {
+            // Random position within arena (not too close to edge)
+            const maxR = ARENA_RADIUS * 0.85;
+            const seed = Date.now() + index * 1000 + Math.floor(Math.random() * 10000);
+            const rand = createRNG(seed);
+
+            // Random polar coordinates
+            const r = Math.sqrt(rand()) * maxR;  // sqrt for uniform distribution
+            const angle = rand() * 2 * Math.PI;
+
+            return {
+                x: r * Math.cos(angle),
+                y: r * Math.sin(angle),
+                theta: rand() * 2 * Math.PI,  // Random heading
+                trail: [],  // Recent positions for trail
+                colour: FLY_COLOURS[index],
+                rand: createRNG(seed + 999)  // Separate RNG for Brownian motion
+            };
+        }
+
+        // Initialize all flies
+        function initializeFlies() {
+            flies = [];
+            for (let i = 0; i < NUM_FLIES; i++) {
+                flies.push(initializeFly(i));
+            }
+            elapsedTime = 0;
+        }
+
+        // Update a single fly for one time step
+        function updateFly(fly, params) {
+            const dt = 1 / params.fps;
+
+            // Save current position to trail
+            fly.trail.push({ x: fly.x, y: fly.y });
+            while (fly.trail.length > trailLength) {
+                fly.trail.shift();
+            }
+
+            const viewing_dist = computeViewingDistance(fly.x, fly.y, fly.theta, params.arena_radius);
+
+            // 1. Base optomotor response
+            let bias_term = 0;
+            if (viewing_dist >= params.min_dist) {
+                bias_term = params.grating_dir * params.grating_speed * dt;
+            }
+
+            // 2. Brownian noise
+            const brownian_turn = gaussianRandom(fly.rand) / params.brownian_amp * Math.sqrt(dt);
+
+            // 3. Distance-dependent gain
+            const view_factor = 1 / (1 + Math.exp(params.b * (viewing_dist - params.d0)));
+            const gain_turn = params.grating_dir * params.k_dist * view_factor * dt;
+
+            // Combine turning components
+            let dtheta;
+            if (viewing_dist < params.min_dist) {
+                dtheta = brownian_turn;
+            } else {
+                dtheta = bias_term + brownian_turn + gain_turn;
+            }
+
+            fly.theta = fly.theta + dtheta;
+
+            // Compute speed
+            const v_inst = params.v_max / (1 + params.alpha * Math.abs(dtheta));
+
+            // Update position
+            let x_new = fly.x + v_inst * dt * Math.cos(fly.theta);
+            let y_new = fly.y + v_inst * dt * Math.sin(fly.theta);
+
+            // Boundary check: reflect heading if hitting wall
+            if (Math.sqrt(x_new * x_new + y_new * y_new) >= params.arena_radius) {
+                fly.theta = fly.theta + Math.PI;
+                x_new = fly.x;
+                y_new = fly.y;
+            }
+
+            fly.x = x_new;
+            fly.y = y_new;
+
+            // Return the turning rate for statistics
+            return Math.abs(dtheta) / dt;  // Convert to rad/s
+        }
+
+        // Toggle collapsible sections
+        function toggleSection(header) {
+            header.classList.toggle('collapsed');
+            const content = header.nextElementSibling;
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                content.style.maxHeight = content.scrollHeight + 'px';
+            } else {
+                content.style.maxHeight = '0';
+                content.classList.add('collapsed');
+            }
+        }
+
+        // Draw the arena and all flies
+        function drawArena() {
+            const canvas = document.getElementById('arenaCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // Calculate scale to fit arena + grating within canvas
+            // Grating adds 30% of arena radius outside, so total radius is 1.3 * ARENA_RADIUS
+            const totalRadius = ARENA_RADIUS * 1.35;  // Extra margin for clean edges
+            const scale = (width - 2 * CANVAS_PADDING) / (2 * totalRadius);
+            const cx = width / 2;
+            const cy = height / 2;
+
+            // Clear canvas
+            ctx.fillStyle = '#fafafa';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw grating stimulus as annulus OUTSIDE the arena
+            const arenaRadius = ARENA_RADIUS * scale;
+            const gratingWidth = ARENA_RADIUS * 0.30 * scale;  // 15% of diameter = 30% of radius
+            const outerRadius = arenaRadius + gratingWidth;
+            const innerRadius = arenaRadius;
+
+            // Draw alternating green/black stripes
+            const stripeAngle = Math.PI / NUM_STRIPES;  // Angular width of each stripe
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(cx, cy, outerRadius, 0, 2 * Math.PI);
+            ctx.arc(cx, cy, innerRadius, 0, 2 * Math.PI, true);
+            ctx.clip();
+
+            for (let i = 0; i < NUM_STRIPES * 2; i++) {
+                const startAngle = i * stripeAngle + gratingPhase;
+                const endAngle = startAngle + stripeAngle;
+
+                ctx.fillStyle = (i % 2 === 0) ? '#1a1a1a' : '#22aa22';
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, outerRadius + 5, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fill();
+            }
+            ctx.restore();
+
+            // Draw arena boundary (where flies walk)
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(cx, cy, arenaRadius, 0, 2 * Math.PI);
+            ctx.stroke();
+
+            // Draw centre cross
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(cx - 10, cy);
+            ctx.lineTo(cx + 10, cy);
+            ctx.moveTo(cx, cy - 10);
+            ctx.lineTo(cx, cy + 10);
+            ctx.stroke();
+
+            // Draw each fly's trail and current position
+            for (const fly of flies) {
+                // Draw trail with fading opacity
+                if (fly.trail.length > 1) {
+                    for (let i = 1; i < fly.trail.length; i++) {
+                        const opacity = (i / fly.trail.length) * 0.4;  // Max 0.4 opacity
+                        ctx.strokeStyle = fly.colour + Math.floor(opacity * 255).toString(16).padStart(2, '0');
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.moveTo(cx + fly.trail[i-1].x * scale, cy - fly.trail[i-1].y * scale);
+                        ctx.lineTo(cx + fly.trail[i].x * scale, cy - fly.trail[i].y * scale);
+                        ctx.stroke();
+                    }
+
+                    // Connect trail to current position
+                    const lastTrail = fly.trail[fly.trail.length - 1];
+                    ctx.strokeStyle = fly.colour + '66';  // 40% opacity
+                    ctx.beginPath();
+                    ctx.moveTo(cx + lastTrail.x * scale, cy - lastTrail.y * scale);
+                    ctx.lineTo(cx + fly.x * scale, cy - fly.y * scale);
+                    ctx.stroke();
+                }
+
+                // Draw fly as a filled circle
+                ctx.fillStyle = fly.colour;
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(cx + fly.x * scale, cy - fly.y * scale, 5, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+
+                // Draw heading indicator (small line)
+                const headingLen = 8;
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(cx + fly.x * scale, cy - fly.y * scale);
+                ctx.lineTo(
+                    cx + fly.x * scale + headingLen * Math.cos(fly.theta),
+                    cy - fly.y * scale - headingLen * Math.sin(fly.theta)
+                );
+                ctx.stroke();
+            }
+        }
+
+        // Clear statistics history
+        function clearStatistics() {
+            statsHistory = {
+                radialPositions: [],
+                turningRates: []
+            };
+            drawStatistics();
+        }
+
+        // Update statistics with current frame data
+        function updateStatistics(turningRates) {
+            // Compute distances from centre for all flies
+            const distances = flies.map(fly => Math.sqrt(fly.x * fly.x + fly.y * fly.y));
+
+            // Add radial positions and turning rates to histogram data
+            distances.forEach(d => statsHistory.radialPositions.push(d));
+            turningRates.forEach(t => statsHistory.turningRates.push(t));
+
+            // Trim to window size (keep last STATS_FRAMES * NUM_FLIES samples)
+            const maxSamples = STATS_FRAMES * NUM_FLIES;
+            while (statsHistory.radialPositions.length > maxSamples) {
+                statsHistory.radialPositions.shift();
+            }
+            while (statsHistory.turningRates.length > maxSamples) {
+                statsHistory.turningRates.shift();
+            }
+        }
+
+        // Draw all statistics plots
+        function drawStatistics() {
+            drawRadialHistogram();
+            drawTurningHistogram();
+        }
+
+        // Draw radial position histogram
+        function drawRadialHistogram() {
+            const canvas = document.getElementById('histogramCanvas');
+            const ctx = canvas.getContext('2d');
+
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+            const width = rect.width;
+            const height = rect.height;
+            const padding = { left: 45, right: 10, top: 10, bottom: 25 };
+            const plotWidth = width - padding.left - padding.right;
+            const plotHeight = height - padding.top - padding.bottom;
+
+            // Clear
+            ctx.fillStyle = '#fafafa';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, padding.top);
+            ctx.lineTo(padding.left, height - padding.bottom);
+            ctx.lineTo(width - padding.right, height - padding.bottom);
+            ctx.stroke();
+
+            // X-axis labels
+            ctx.fillStyle = '#666';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('0', padding.left, height - padding.bottom + 15);
+            ctx.fillText(Math.round(ARENA_RADIUS), width - padding.right, height - padding.bottom + 15);
+            ctx.fillText('Distance from centre (mm)', width / 2, height - 3);
+
+            if (statsHistory.radialPositions.length < 10) {
+                ctx.textAlign = 'left';
+                ctx.fillText('Freq.', padding.left - 40, padding.top + 10);
+                return;
+            }
+
+            // Create histogram bins
+            const numBins = 15;
+            const binWidth = ARENA_RADIUS / numBins;
+            const bins = new Array(numBins).fill(0);
+
+            statsHistory.radialPositions.forEach(r => {
+                const binIndex = Math.min(numBins - 1, Math.floor(r / binWidth));
+                bins[binIndex]++;
+            });
+
+            // Normalize to get density (account for area of annulus)
+            const totalSamples = statsHistory.radialPositions.length;
+            const densities = bins.map((count, i) => {
+                const rInner = i * binWidth;
+                const rOuter = (i + 1) * binWidth;
+                const annulusArea = Math.PI * (rOuter * rOuter - rInner * rInner);
+                return count / totalSamples / annulusArea * 1000;  // Scale for visibility
+            });
+
+            const maxDensity = Math.max(...densities, 0.1);
+
+            // Y-axis label
+            ctx.textAlign = 'left';
+            ctx.fillText('Density', padding.left - 40, padding.top + 10);
+
+            // Draw bars
+            const barWidth = plotWidth / numBins - 2;
+            ctx.fillStyle = '#555';
+
+            for (let i = 0; i < numBins; i++) {
+                const x = padding.left + (i / numBins) * plotWidth + 1;
+                const barHeight = (densities[i] / maxDensity) * plotHeight;
+                const y = height - padding.bottom - barHeight;
+
+                ctx.fillRect(x, y, barWidth, barHeight);
+            }
+
+            // Draw mean line
+            const meanRadius = statsHistory.radialPositions.reduce((a, b) => a + b, 0) / totalSamples;
+            const meanX = padding.left + (meanRadius / ARENA_RADIUS) * plotWidth;
+            ctx.strokeStyle = '#cc0000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(meanX, padding.top);
+            ctx.lineTo(meanX, height - padding.bottom);
+            ctx.stroke();
+        }
+
+        // Draw turning rate histogram
+        function drawTurningHistogram() {
+            const canvas = document.getElementById('turningHistCanvas');
+            const ctx = canvas.getContext('2d');
+
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+            const width = rect.width;
+            const height = rect.height;
+            const padding = { left: 45, right: 10, top: 10, bottom: 25 };
+            const plotWidth = width - padding.left - padding.right;
+            const plotHeight = height - padding.top - padding.bottom;
+
+            // Clear
+            ctx.fillStyle = '#fafafa';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, padding.top);
+            ctx.lineTo(padding.left, height - padding.bottom);
+            ctx.lineTo(width - padding.right, height - padding.bottom);
+            ctx.stroke();
+
+            // Determine x-axis range based on data
+            let xMax = 10;  // Default max turning rate (rad/s)
+            if (statsHistory.turningRates.length > 10) {
+                const p95 = [...statsHistory.turningRates].sort((a, b) => a - b)[Math.floor(statsHistory.turningRates.length * 0.95)];
+                xMax = Math.max(5, Math.ceil(p95));
+            }
+
+            // X-axis labels
+            ctx.fillStyle = '#666';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('0', padding.left, height - padding.bottom + 15);
+            ctx.fillText(xMax, width - padding.right, height - padding.bottom + 15);
+            ctx.fillText('Turning rate (rad/s)', width / 2, height - 3);
+
+            if (statsHistory.turningRates.length < 10) {
+                ctx.textAlign = 'left';
+                ctx.fillText('Freq.', padding.left - 40, padding.top + 10);
+                return;
+            }
+
+            // Create histogram bins
+            const numBins = 20;
+            const binWidth = xMax / numBins;
+            const bins = new Array(numBins).fill(0);
+
+            statsHistory.turningRates.forEach(t => {
+                const binIndex = Math.min(numBins - 1, Math.floor(t / binWidth));
+                bins[binIndex]++;
+            });
+
+            // Normalize to frequency
+            const totalSamples = statsHistory.turningRates.length;
+            const frequencies = bins.map(count => count / totalSamples);
+            const maxFreq = Math.max(...frequencies, 0.01);
+
+            // Y-axis label
+            ctx.textAlign = 'left';
+            ctx.fillText('Freq.', padding.left - 40, padding.top + 10);
+
+            // Draw bars
+            const barWidthPx = plotWidth / numBins - 1;
+            ctx.fillStyle = '#555';
+
+            for (let i = 0; i < numBins; i++) {
+                const x = padding.left + (i / numBins) * plotWidth + 0.5;
+                const barHeight = (frequencies[i] / maxFreq) * plotHeight;
+                const y = height - padding.bottom - barHeight;
+
+                ctx.fillRect(x, y, barWidthPx, barHeight);
+            }
+
+            // Draw mean line
+            const meanTurning = statsHistory.turningRates.reduce((a, b) => a + b, 0) / totalSamples;
+            const meanX = padding.left + (meanTurning / xMax) * plotWidth;
+            ctx.strokeStyle = '#cc0000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(meanX, padding.top);
+            ctx.lineTo(meanX, height - padding.bottom);
+            ctx.stroke();
+        }
+
+        // Animation loop
+        function animate() {
+            if (!isRunning) return;
+
+            const params = getParams();
+            const dt = 1 / params.fps;
+
+            // Update grating phase based on grating_speed and direction
+            // Speed is proportional to grating_speed (scaled for visible rotation)
+            const visualGratingSpeed = params.grating_speed * 3;  // Scale factor for visible animation
+            gratingPhase += params.grating_dir * visualGratingSpeed * dt;
+
+            // Update all flies and collect turning rates
+            const turningRates = [];
+            for (const fly of flies) {
+                const turnRate = updateFly(fly, params);
+                turningRates.push(turnRate);
+            }
+
+            elapsedTime += dt;
+
+            // Update statistics
+            updateStatistics(turningRates);
+
+            // Draw arena and statistics
+            drawArena();
+            drawStatistics();
+
+            // Update status
+            document.getElementById('statusText').textContent =
+                `Running - Time: ${elapsedTime.toFixed(1)}s`;
+
+            // Schedule next frame
+            animationId = requestAnimationFrame(animate);
+        }
+
+        // Start animation
+        function startAnimation() {
+            if (isRunning) return;
+
+            isRunning = true;
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+
+            animate();
+        }
+
+        // Stop animation
+        function stopAnimation() {
+            isRunning = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('statusText').textContent =
+                `Paused at ${elapsedTime.toFixed(1)}s - Press Start to resume`;
+        }
+
+        // Reset simulation
+        function resetSimulation() {
+            stopAnimation();
+            initializeFlies();
+            clearStatistics();
+            gratingPhase = 0;  // Reset grating animation
+            drawArena();
+            document.getElementById('statusText').textContent = 'Ready - Press Start to begin';
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize parameter displays
+            ['kDist', 'gratingSpeed', 'vMax'].forEach(id => {
+                const input = document.getElementById(id);
+                const display = document.getElementById(id + '_val');
+                display.textContent = input.value;
+            });
+
+            // Initialize trail length display
+            updateTrailLength();
+
+            // Initialize flies and draw
+            initializeFlies();
+            drawArena();
+            drawStatistics();
+        });
+    </script>
+</body>
+</html>

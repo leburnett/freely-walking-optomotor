@@ -1,4 +1,4 @@
-function single_lady_analysis()
+function p25_single_lady_analysis()
 % SINGLE_LADY_ANALYSIS - Compare group vs solo fly behavioral responses
 %
 % FUNCTION CONTENTS:
@@ -62,12 +62,7 @@ for d = 1:numel(data_types)
 
     data_type = data_types{d};
 
-    if data_type == "dist_data_delta"
-        data_type = "dist_data";
-        delta = 1;
-    else 
-        delta = 0;
-    end 
+    [data_type, delta] = resolve_delta_data_type(data_type);
 
     %% Get "cond_data" - array of size [number of flies x time points]
     strain = 'jfrc100_es_shibire_kir';
@@ -195,12 +190,7 @@ for d = 1:numel(data_types)
 
     data_type = data_types{d};
 
-    if data_type == "dist_data_delta"
-        data_type = "dist_data";
-        delta = 1;
-    else 
-        delta = 0;
-    end 
+    [data_type, delta] = resolve_delta_data_type(data_type);
 
     %% Get "cond_data" - array of size [number of flies x time points]
     sex = 'G';

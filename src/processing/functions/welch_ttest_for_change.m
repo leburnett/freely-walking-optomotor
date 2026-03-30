@@ -1,4 +1,4 @@
-function [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(cond_data, cond_data_control, rng1, rng2, rel_or_norm)
+function [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(cond_data, cond_data_control, rng1, rng2, rel_or_norm, pre_averaged)
 % WELCH_TTEST_FOR_CHANGE Compare pre-post change between target and control strains
 %
 %   [p, mean_per_strain, mean_per_strain_control] = WELCH_TTEST_FOR_CHANGE(...)
@@ -11,6 +11,8 @@ function [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(
 %   rng1              - Frame indices for baseline (pre) period
 %   rng2              - Frame indices for test (post) period
 %   rel_or_norm       - "rel" for relative (fold change) or "norm" for normalized
+%   pre_averaged      - (optional, default false) If true, skip mean_every_two_rows
+%                       — use when data already has 1 row per fly.
 %
 % OUTPUTS:
 %   p                      - p-value from Welch's t-test
@@ -23,7 +25,7 @@ function [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(
 %
 % NOTES:
 %   - Uses Welch's t-test (unequal variance assumption)
-%   - Averages every two rows before computing per-fly means
+%   - Averages every two rows before computing per-fly means (unless pre_averaged)
 %   - Filters out NaN, Inf, and extreme fold changes (>10000)
 %
 % EXAMPLE:
@@ -31,16 +33,26 @@ function [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(
 %
 % See also: ttest2, mean_every_two_rows
 
-    % TARGET 
+    if nargin < 6, pre_averaged = false; end
 
-    % During range 1 - before 
+    % TARGET
+
+    % During range 1 - before
     d_1 = cond_data(:, rng1);
-    d2_1 = mean_every_two_rows(d_1);
+    if pre_averaged
+        d2_1 = d_1;
+    else
+        d2_1 = mean_every_two_rows(d_1);
+    end
     mean_per_fly_1 = nanmean(d2_1, 2); % [n_flies x 1];
 
     % During range 2 - after
     d_2 = cond_data(:, rng2);
-    d2_2 = mean_every_two_rows(d_2);
+    if pre_averaged
+        d2_2 = d_2;
+    else
+        d2_2 = mean_every_two_rows(d_2);
+    end
     mean_per_fly_2 = nanmean(d2_2, 2); % [n_flies x 1];
 
     if rel_or_norm == "rel"
@@ -52,18 +64,26 @@ function [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(
     elseif rel_or_norm == "norm"
         % Normalised change
         norm_diff_per_fly = (mean_per_fly_2 - mean_per_fly_1) ./ (mean_per_fly_2 + mean_per_fly_1);
-    end 
+    end
 
-    % CONTROL 
+    % CONTROL
 
-    % During range 1 - before 
+    % During range 1 - before
     d_1c = cond_data_control(:, rng1);
-    d2_1c = mean_every_two_rows(d_1c);
+    if pre_averaged
+        d2_1c = d_1c;
+    else
+        d2_1c = mean_every_two_rows(d_1c);
+    end
     mean_per_fly_1c = nanmean(d2_1c, 2); % [n_flies x 1];
 
     % During range 2 - after
     d_2c = cond_data_control(:, rng2);
-    d2_2c = mean_every_two_rows(d_2c);
+    if pre_averaged
+        d2_2c = d_2c;
+    else
+        d2_2c = mean_every_two_rows(d_2c);
+    end
     mean_per_fly_2c = nanmean(d2_2c, 2); % [n_flies x 1];
 
     if rel_or_norm == "rel"
@@ -87,10 +107,14 @@ function [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(
         % Normalised change
         norm_diff_per_fly_control = (mean_per_fly_2c - mean_per_fly_1c) ./ (mean_per_fly_2c + mean_per_fly_1c);
 
+        % Remove NaN flies before t-test
+        valid_target = ~isnan(norm_diff_per_fly);
+        valid_control = ~isnan(norm_diff_per_fly_control);
+
          % Unpaired t-test with unequal group sizes (Welch's t-test)
-        [~, p] = ttest2(norm_diff_per_fly, norm_diff_per_fly_control, 'Vartype','unequal');
+        [~, p] = ttest2(norm_diff_per_fly(valid_target), norm_diff_per_fly_control(valid_control), 'Vartype','unequal');
         mean_per_strain = nanmean(norm_diff_per_fly);
         mean_per_strain_control = nanmean(norm_diff_per_fly_control);
-    end 
+    end
 
-end 
+end

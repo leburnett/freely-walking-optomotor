@@ -27,7 +27,7 @@ function plot_xcond_per_strain(protocol, data_type, save_figs, DATA)
     end 
     
     % % Initialise parameters:
-    delta = 0;
+    [data_type, delta] = resolve_delta_data_type(data_type);
     tiled_plot = 0;
     leg = 1;
     sex = 'F';
@@ -100,22 +100,18 @@ function plot_xcond_per_strain(protocol, data_type, save_figs, DATA)
             ]./255;
     end 
         
-    if data_type == "fv_data" 
+    if data_type == "fv_data"
         tiled_plot = 1;
-        rng = [0 20];
-    elseif data_type == "dist_data_delta"
-        delta = 1;
-        data_type = "dist_data";
-        rng = [-40 15];
+        if delta, rng = [-8 8]; else, rng = [0 20]; end
     elseif data_type == "dist_data"
-        rng = [20 100];
+        if delta, rng = [-40 15]; else, rng = [20 100]; end
     elseif data_type == "view_dist"
         rng = [60 140];
     elseif data_type == "dist_dt"
         rng = [-7 5];
-    elseif data_type == "av_data" || data_type == "curv_data" 
-        rng = [-250 250];
-    end 
+    elseif data_type == "av_data" || data_type == "curv_data"
+        if delta, rng = [-250 250]; else, rng = [-250 250]; end
+    end
     
     %% PLOT 
     
