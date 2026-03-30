@@ -135,7 +135,8 @@
       "Bash(powershell -Command \"Get-Process -Id 111448 | Select-Object Id, ProcessName, Path | Format-List\")",
       "Bash(powershell -Command \"\\(Get-CimInstance Win32_Process -Filter ''ProcessId=111448''\\).CommandLine\")",
       "Bash(taskkill //F //PID 111448)",
-      "Read(//c/Users/labadmin/Documents/freely-walking-optomotor/DATA/01_tracked/2025_08_15/**)"
+      "Read(//c/Users/labadmin/Documents/freely-walking-optomotor/DATA/01_tracked/2025_08_15/**)",
+      "Bash(find /Users/burnettl/Documents/GitHub/freely-walking-optomotor -name *.fig -o -name *.pdf)"
     ]
   }
 }

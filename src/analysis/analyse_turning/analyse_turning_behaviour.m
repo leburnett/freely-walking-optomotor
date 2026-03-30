@@ -10,15 +10,17 @@
 % SECTIONS:
 %   1. Configuration and data loading
 %   2. Sliding-window metrics vs wall distance (|AV|, |curv|, FV, tortuosity)
+%   2b. Stimulus-driven delta (stim - baseline) vs wall distance
 %   3. Sensitivity analysis (window width heatmaps)
 %   4. Metric correlation matrix
 %   5. 360-degree turning event detection (per-rep, split by stimulus half)
 %
 % FIGURES:
 %   Fig 1: 2x2 metric vs wall distance (stimulus vs baseline)
-%   Fig 2: 2x2 window width sensitivity heatmaps
-%   Fig 3: Metric correlation matrix (stimulus period)
-%   Fig 4: 360-degree turning events summary (duration, direction, geometry)
+%   Fig 2: 2x2 stimulus-driven delta (stim - base) vs wall distance
+%   Fig 3: 2x2 window width sensitivity heatmaps
+%   Fig 4: Metric correlation matrix (stimulus period)
+%   Fig 5: 360-degree turning events summary (duration, direction, geometry)
 %
 % REQUIREMENTS:
 %   - DATA struct from comb_data_across_cohorts_cond (Protocol 27)
@@ -156,6 +158,41 @@ f.Position = [206   287   761   662];
 
 if save_figs
     exportgraphics(fig_metrics, fullfile(save_folder, 'metrics_vs_wall_distance.pdf'), 'ContentType', 'vector');
+end
+
+%% 2b — Stimulus-driven delta: (stimulus - baseline) vs wall distance
+%
+%  Subtracting the baseline (pre-stimulus) bin means from the stimulus bin
+%  means isolates the stimulus-driven component of each metric. SEM of the
+%  delta is propagated as sqrt(SEM_stim^2 + SEM_pre^2).
+
+fig_delta = figure('Position', [50 50 1200 900]);
+tl_d = tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
+sgtitle(tl_d, sprintf('Control — Condition %d — Stimulus-driven \\Delta (stim - base)', key_condition), 'FontSize', 18);
+
+delta_labels = {'\Delta|AV| (stim - base, deg/s)', '\Delta|Curvature| (stim - base, deg/mm)', ...
+                '\DeltaFwd Vel (stim - base, mm/s)', '\DeltaTortuosity (stim - base)'};
+
+for p = 1:4
+    delta_mean = stim_means{p} - pre_means{p};
+    delta_sem  = sqrt(stim_sems{p}.^2 + pre_sems{p}.^2);
+
+    dopts = struct();
+    dopts.ylabel_str = delta_labels{p};
+    dopts.title_str  = delta_labels{p};
+    dopts.show_fit   = false;
+    dopts.ax         = nexttile(tl_d);
+    plot_metric_vs_wall_distance(bin_centres, delta_mean, delta_sem, dopts);
+
+    % Zero reference line
+    yline(dopts.ax, 0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
+end
+
+f = gcf;
+f.Position = [206 287 761 662];
+
+if save_figs
+    exportgraphics(fig_delta, fullfile(save_folder, 'delta_metrics_vs_wall_distance.pdf'), 'ContentType', 'vector');
 end
 
 %% 3 — Sensitivity analysis
