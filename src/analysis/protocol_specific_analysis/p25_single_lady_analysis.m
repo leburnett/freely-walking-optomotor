@@ -1,4 +1,4 @@
-function single_lady_analysis()
+function p25_single_lady_analysis()
 % SINGLE_LADY_ANALYSIS - Compare group vs solo fly behavioral responses
 %
 % FUNCTION CONTENTS:
