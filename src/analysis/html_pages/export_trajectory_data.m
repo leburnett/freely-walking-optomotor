@@ -12,7 +12,9 @@ function export_trajectory_data(DATA, varargin)
 %     DATA - struct from comb_data_across_cohorts_cond (all conditions).
 %
 %   NAME-VALUE PAIRS:
-%     'OutputDir'         - directory for JSON files and viewer HTML
+%     'Protocol'          - protocol name (REQUIRED), e.g. 'protocol_27'.
+%                           Determines subdirectory under data/ for JSON files.
+%     'OutputDir'         - top-level directory for viewer HTML and data/
 %                           (default: ~/Documents/Projects/oaky_cokey/html_files/trajectories)
 %     'Sex'               - 'F' (default), 'M', or 'both'
 %     'Strains'           - cell array of substrings to match (case-insensitive)
@@ -25,14 +27,16 @@ function export_trajectory_data(DATA, varargin)
 %
 %   EXAMPLE:
 %     DATA = comb_data_across_cohorts_cond(fullfile(cfg.results, 'protocol_27'));
-%     export_trajectory_data(DATA);
-%     export_trajectory_data(DATA, 'Strains', {'Dm4', 'es'}, 'Conditions', [1 2 3]);
+%     export_trajectory_data(DATA, 'Protocol', 'protocol_27');
+%     export_trajectory_data(DATA, 'Protocol', 'protocol_27', ...
+%         'Strains', {'Dm4', 'es'}, 'Conditions', [1 2 3]);
 %
 % See also: trajectory_viewer_template, comb_data_across_cohorts_cond
 
 %% Parse inputs
 p = inputParser;
 addRequired(p, 'DATA', @isstruct);
+addParameter(p, 'Protocol', '', @ischar);
 addParameter(p, 'OutputDir', '', @ischar);
 addParameter(p, 'Sex', 'F', @ischar);
 addParameter(p, 'Strains', {}, @iscell);
@@ -51,6 +55,12 @@ max_flies = p.Results.MaxFliesPerStrain;
 reps = p.Results.Reps;
 include_acclim = p.Results.IncludeAcclim;
 
+protocol_name = p.Results.Protocol;
+if isempty(protocol_name)
+    error(['Protocol name is required. Specify e.g. ''Protocol'', ''protocol_27''.\n' ...
+           'This determines the subdirectory under data/ for the JSON files.']);
+end
+
 output_dir = p.Results.OutputDir;
 if isempty(output_dir)
     output_dir = '/Users/burnettl/Documents/Projects/oaky_cokey/html_files/trajectories';
@@ -58,7 +68,7 @@ end
 if ~isfolder(output_dir)
     mkdir(output_dir);
 end
-data_dir = fullfile(output_dir, 'data');
+data_dir = fullfile(output_dir, 'data', protocol_name);
 if ~isfolder(data_dir)
     mkdir(data_dir);
 end
