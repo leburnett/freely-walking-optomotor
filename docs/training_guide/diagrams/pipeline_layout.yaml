@@ -1,0 +1,325 @@
+# ══════════════════════════════════════════════════════════════════════
+# Pipeline Layout Template
+# ══════════════════════════════════════════════════════════════════════
+#
+# Edit this file to define your schematic, then run:
+#   python render_schematic.py pipeline_layout.yaml
+#
+# ── Node types ──
+#   script   → blue rounded box (processing step / function call)
+#   data     → light grey rounded box (data file / struct)
+#   major    → dark blue rounded box (key pipeline milestone)
+#   output   → light blue rounded box (output-generating script)
+#
+# ── Connections ──
+#   All lines are orthogonal (vertical + horizontal only, with right-angle bends).
+#   Specify connections as:  from_id -> to_id
+#   Optional: "dashed" for dashed lines (e.g. LOG flowing down the side)
+#
+# ── Side images ──
+#   badge: A        → orange circle badge on the node
+#   badge: K        → green circle badge on the node
+#   Letters A-J are "Data Structures" (left column, orange)
+#   Letters K-N are "Outputs" (right column, green)
+#
+# ── Annotations ──
+#   Placed above a node. Keep short (one line) to avoid overlaps.
+#
+# ══════════════════════════════════════════════════════════════════════
+
+title: "Data Processing Pipeline"
+subtitle: "Freely Walking Optomotor — Reiser Lab, HHMI Janelia"
+
+# ──────────────────────────────────────────────────────────────────────
+# NODES
+# ──────────────────────────────────────────────────────────────────────
+# Each node has:
+#   id:         unique identifier (used in connections)
+#   label:      display text (can be multiline with \n)
+#   type:       script | data | major | output
+#   side:       left | right | center | full
+#              (position within center column — left=scripts, right=data)
+#   row:        vertical position (0 = top, increments of 1)
+#   badge:      optional letter for side-column image link
+#   annotation: optional short text displayed above the node
+# ──────────────────────────────────────────────────────────────────────
+
+nodes:
+
+  # ── Section 1: Acquisition ──
+  - id: run_exp
+    label: "Run Experiment (protocol_XX.m)"
+    type: major
+    side: left
+    row: 0
+    badge: A
+
+  - id: ufmf
+    label: "UFMF Video (.ufmf)"
+    type: data
+    side: right
+    row: 1
+    badge: B
+
+  - id: log_mat
+    label: "LOG.mat"
+    type: data
+    side: right
+    row: 2
+    badge: C,D
+
+  # ── Section 2: Tracking ──
+  - id: flytracker
+    label: "FlyTracker (offline tracking)"
+    type: script
+    side: left
+    row: 3
+    badge: E
+
+  - id: feat
+    label: "feat.mat"
+    type: data
+    side: right
+    row: 4
+    badge: F
+
+  - id: trx
+    label: "trx.mat"
+    type: data
+    side: right
+    row: 5
+    badge: G
+
+  # ── Section 3: Combining ──
+  - id: combine
+    label: "combine_data_one_cohort(feat, trx)"
+    type: script
+    side: left
+    row: 6
+    annotation: "Remove bad tracking | Interpolate gaps | Compute metrics"
+
+  - id: comb_data
+    label: "comb_data struct"
+    type: data
+    side: right
+    row: 7
+    badge: H
+
+  # ── Section 4: Save ──
+  - id: save_mat
+    label: "Save *.mat results files\n(LOG + comb_data + n_fly_data)"
+    type: major
+    side: center
+    row: 8
+    badge: I,J
+
+  # ── Section 5: Branch — per-cohort (left) ──
+  - id: one_cohort_cond
+    label: "comb_data_one_cohort_cond(LOG, comb_data)"
+    type: script
+    side: left
+    row: 10
+    annotation: "Parse data by condition using LOG frame indices (+300 frame (10s) pre buffer)"
+
+  - id: data_single
+    label: "DATA struct (single cohort)"
+    type: data
+    side: left
+    row: 12
+    annotation: "Used only for quick per-cohort review plots"
+
+  # ── Section 5: Branch — hierarchical (right) ──
+  - id: across_cohorts
+    label: "comb_data_across_cohorts_cond(protocol_dir)"
+    type: major
+    side: right
+    row: 14
+    annotation: "Parse data by condition as before and merge all experiments for one protocol"
+
+  - id: data_hier
+    label: "DATA.(strain).(sex)(cohort_idx)\n.(condition).(metric)"
+    type: data
+    side: right
+    row: 16
+    badge: K,L,M,N
+    annotation: "Main data structure used for downstream analysis"
+
+  # ── Section 6: Downstream outputs ──
+  - id: analysis
+    label: "Analysis scripts (MATLAB)"
+    type: output
+    side: left
+    row: 18
+    annotation: "This is where the analysis of different protocols diverges"
+
+  - id: preprocess
+    label: "preprocess.py (Python)"
+    type: output
+    side: center
+    row: 18
+
+  - id: export_traj
+    label: "export_trajectory_data.m (MATLAB)"
+    type: output
+    side: right
+    row: 18
+
+  - id: pub_figs
+    label: "Publication figures"
+    type: data
+    side: left
+    row: 19
+
+  - id: parquet
+    label: "Dash dashboard\nParquet files"
+    type: data
+    side: center
+    row: 19
+    badge: O
+    annotation: "Open terminal and type 'dash-freely' "
+
+  - id: json_gz
+    label: "Trajectory viewer\n.json.gz"
+    type: data
+    side: right
+    row: 19
+    badge: P
+    annotation: "HTML and compressed JSON data files"
+
+
+# ──────────────────────────────────────────────────────────────────────
+# CONNECTIONS
+# ──────────────────────────────────────────────────────────────────────
+# Format: "from_id -> to_id"
+# Add "dashed" after to make the line dashed.
+# All lines are drawn as orthogonal (right-angle) paths.
+# ──────────────────────────────────────────────────────────────────────
+
+connections:
+  - "run_exp -> ufmf"
+  - "run_exp -> log_mat"
+  - "ufmf -> flytracker"
+  - "log_mat -> save_mat  dashed"
+  - "flytracker -> feat"
+  - "flytracker -> trx"
+  - "feat -> combine"
+  - "trx -> combine"
+  - "combine -> comb_data"
+  - "comb_data -> save_mat"
+  - "save_mat -> one_cohort_cond"
+  - "save_mat -> across_cohorts"
+  - "one_cohort_cond -> data_single"
+  - "across_cohorts -> data_hier"
+  - "data_hier -> analysis"
+  - "data_hier -> preprocess"
+  - "data_hier -> export_traj"
+  - "analysis -> pub_figs"
+  - "preprocess -> parquet"
+  - "export_traj -> json_gz"
+
+
+# ──────────────────────────────────────────────────────────────────────
+# SIDE COLUMN IMAGES
+# ──────────────────────────────────────────────────────────────────────
+# badge:    letter matching a node badge above
+# caption:  text shown below the image
+# src:      path to the image file (absolute or relative)
+#           Leave blank or "placeholder" for an empty slot.
+# column:   left | right
+# ──────────────────────────────────────────────────────────────────────
+
+images:
+
+  - badge: A
+    column: left
+    caption: "Experiment Data Folder"
+    src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/1b_raw_data_exp_folder.png"
+
+  - badge: B
+    column: right
+    caption: "UFMF — raw behavioural frame from overhead camera"
+    src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/1_raw_behavioural_frame.png"
+
+  - badge: C
+    column: left
+    caption: "LOG structure — stimulus timing, metadata, 28 fields"
+    src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/2_LOG_data.png"
+
+  - badge: D
+    column: left
+    caption: "LOG structure — within a condition"
+    src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/3_LOG_level2.png"
+
+  - badge: E
+    column: right
+    caption: "Tracked UFMF frame — FlyTracker output"
+    src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/4_tracked_behavioural_frame.png"
+
+  - badge: F
+    column: left
+    caption: "feat structure — FlyTracker feature output"
+    src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/5_feat_data.png"
+
+  - badge: G
+    column: left
+    caption: "trx data — FlyTracker trajectory output"
+    src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/6_trx_data.png"
+
+  - badge: H
+    column: left
+    caption: "comb_data structure — combined behavioural metrics"
+    src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/7_comb_data.png"
+
+  - badge: I
+    column: left
+    caption: "Folder structure - results files per cohort"
+    src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/8_processed_data_results_folder.png"
+
+  - badge: J
+    column: left
+    caption: "Contents of a single results file - 1 per cohort"
+    src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/8b_contents_of_results_mat.png"
+
+  - badge: K
+    column: left
+    caption: "Hierarchical DATA — 19 strain fields"
+    src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/9_DATA_level1.png"
+
+  - badge: L
+    column: left
+    caption: "Strain level — cohorts x conditions"
+    src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/10_DATA_strain_level.png"
+
+  - badge: M
+    column: left
+    caption: "Cohort level — metadata"
+    src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/11_DATA_metadata.png"
+
+  - badge: N
+    column: left
+    caption: "Condition level — behavioural metric arrays"
+    src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/12_DATA_condition_level.png"
+
+  - badge: O
+    column: right
+    caption: "Interactive Dash dashboard (localhost:8050)"
+    src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/13_dashboard_image.png"
+
+  - badge: P
+    column: right
+    caption: "HTML trajectory viewer with drag-and-drop .json.gz"
+    src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/14_trajectory_viewer.png"
+
+
+# ──────────────────────────────────────────────────────────────────────
+# DIVIDERS
+# ──────────────────────────────────────────────────────────────────────
+# Horizontal lines spanning the center column with optional text.
+#   row:      fractional row position (e.g. 11.5 = between rows 11 and 12)
+#   text:     label text (displayed above the line)
+# ──────────────────────────────────────────────────────────────────────
+
+dividers:
+  - row: 13
+    text: "Included in the automatic processing pipeline"
+

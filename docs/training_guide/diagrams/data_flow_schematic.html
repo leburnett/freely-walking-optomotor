@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Processing Pipeline</title>
+<style>
+  *,*::before,*::after { box-sizing:border-box;margin:0;padding:0 }
+  html { font-size:14px }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#fff;color:#333;line-height:1.4 }
+  .page-header { text-align:center;padding:20px 16px 10px;border-bottom:2px solid #3B6FA0;margin-bottom:6px }
+  .page-header h1 { font-size:1.5rem;color:#222;font-weight:700 }
+  .page-header .subtitle { font-size:.82rem;color:#777;margin-top:3px }
+  .grid { display:grid;grid-template-columns:1fr 2fr 1fr;gap:10px;padding:6px 10px 20px;max-width:1500px;margin:0 auto;align-items:start }
+  .side-col { display:flex;flex-direction:column;gap:8px }
+  .side-col h2 { font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;padding-bottom:5px;margin-bottom:2px;text-align:center }
+  .left-col h2 { color:#c56c00;border-bottom:2px solid #e8983e }
+  .right-col h2 { color:#2e7d32;border-bottom:2px solid #66bb6a }
+  .img-card { border:1px solid #ddd;border-radius:6px;overflow:hidden;background:#fafafa }
+  .img-card .card-header { display:flex;align-items:center;gap:6px;padding:4px 8px;font-size:.75rem;font-weight:600;color:#444 }
+  .img-card img { width:100%;display:block;border-top:1px solid #eee;background:#f5f5f5;min-height:50px;object-fit:contain }
+  .img-card .caption { padding:3px 8px;font-size:.7rem;color:#888;border-top:1px solid #eee }
+  .badge { display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:.7rem;font-weight:700;color:#fff;flex-shrink:0 }
+  .badge-orange { background:#e8983e }
+  .badge-green { background:#4caf50 }
+  .center-col { display:flex;flex-direction:column;align-items:center }
+  .center-col h2 { font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;color:#3B6FA0;border-bottom:2px solid #3B6FA0;padding-bottom:5px;margin-bottom:6px;text-align:center;width:100% }
+  .note-box { border:1px dashed #bbb;border-radius:4px;padding:4px 6px;font-size:.68rem;color:#888;min-height:24px;line-height:1.3;background:#fefefe;width:100% }
+  .note-box:focus { outline:2px solid #5A8EBE;border-color:#5A8EBE;color:#333 }
+  .note-box:empty::before { content:attr(data-placeholder);color:#ccc }
+  .flowchart-wrap { width:100%;overflow:visible }
+  .flowchart-wrap svg { width:100%;height:auto;display:block }
+  @media print {
+    @page { size:A3 landscape;margin:10mm }
+    body { -webkit-print-color-adjust:exact;print-color-adjust:exact }
+    .note-box { border-color:#ccc }
+    .note-box:empty::before { content:'' }
+  }
+</style>
+</head>
+<body>
+<div class="page-header">
+  <h1>Data Processing Pipeline</h1>
+  <div class="subtitle">Freely Walking Optomotor — Reiser Lab, HHMI Janelia</div>
+</div>
+<div class="grid">
+  <div class="side-col left-col">
+    <h2>Data Structures</h2>
+    <div class="img-card">
+      <div class="card-header"><span class="badge badge-orange">A</span> Experiment Data Folder</div>
+      <img src="/Users/burnettl/Documents/Projects/oaky_cokey/assets/1b_raw_data_exp_folder.png" alt="">
+      <div class="caption">Experiment Data Folder</div>
+    </div>
+    <div class="img-card">
+      <div class="card-header"><span class="badge badge-orange">C</span> LOG structure — stimulus timing, metadat</div>
+      <img src="/Users/burnettl/Documents/Projects/oaky_cokey/assets/2_LOG_data.png" alt="">
+      <div class="caption">LOG structure — stimulus timing, metadata, 28 fields</div>
+    </div>
+    <div class="img-card">
+      <div class="card-header"><span class="badge badge-orange">D</span> LOG structure — within a condition</div>
+      <img src="/Users/burnettl/Documents/Projects/oaky_cokey/assets/3_LOG_level2.png" alt="">
+      <div class="caption">LOG structure — within a condition</div>
+    </div>
+    <div class="img-card">
+      <div class="card-header"><span class="badge badge-orange">F</span> feat structure — FlyTracker feature outp</div>
+      <img src="/Users/burnettl/Documents/Projects/oaky_cokey/assets/5_feat_data.png" alt="">
+      <div class="caption">feat structure — FlyTracker feature output</div>
+    </div>
+    <div class="img-card">
+      <div class="card-header"><span class="badge badge-orange">G</span> trx data — FlyTracker trajectory output</div>
+      <img src="/Users/burnettl/Documents/Projects/oaky_cokey/assets/6_trx_data.png" alt="">
+      <div class="caption">trx data — FlyTracker trajectory output</div>
+    </div>
+    <div class="img-card">
+      <div class="card-header"><span class="badge badge-orange">H</span> comb_data structure — combined behaviour</div>
+      <img src="/Users/burnettl/Documents/Projects/oaky_cokey/assets/7_comb_data.png" alt="">
+      <div class="caption">comb_data structure — combined behavioural metrics</div>
+    </div>
+    <div class="img-card">
+      <div class="card-header"><span class="badge badge-orange">I</span> Folder structure - results files per coh</div>
+      <img src="/Users/burnettl/Documents/Projects/oaky_cokey/assets/8_processed_data_results_folder.png" alt="">
+      <div class="caption">Folder structure - results files per cohort</div>
+    </div>
+    <div class="img-card">
+      <div class="card-header"><span class="badge badge-orange">J</span> Contents of a single results file - 1 pe</div>
+      <img src="/Users/burnettl/Documents/Projects/oaky_cokey/assets/8b_contents_of_results_mat.png" alt="">
+      <div class="caption">Contents of a single results file - 1 per cohort</div>
+    </div>
+    <div class="img-card">
+      <div class="card-header"><span class="badge badge-orange">K</span> Hierarchical DATA — 19 strain fields</div>
+      <img src="/Users/burnettl/Documents/Projects/oaky_cokey/assets/9_DATA_level1.png" alt="">
+      <div class="caption">Hierarchical DATA — 19 strain fields</div>
+    </div>
+    <div class="img-card">
+      <div class="card-header"><span class="badge badge-orange">L</span> Strain level — cohorts x conditions</div>
+      <img src="/Users/burnettl/Documents/Projects/oaky_cokey/assets/10_DATA_strain_level.png" alt="">
+      <div class="caption">Strain level — cohorts x conditions</div>
+    </div>
+    <div class="img-card">
+      <div class="card-header"><span class="badge badge-orange">M</span> Cohort level — metadata</div>
+      <img src="/Users/burnettl/Documents/Projects/oaky_cokey/assets/11_DATA_metadata.png" alt="">
+      <div class="caption">Cohort level — metadata</div>
+    </div>
+    <div class="img-card">
+      <div class="card-header"><span class="badge badge-orange">N</span> Condition level — behavioural metric arr</div>
+      <img src="/Users/burnettl/Documents/Projects/oaky_cokey/assets/12_DATA_condition_level.png" alt="">
+      <div class="caption">Condition level — behavioural metric arrays</div>
+    </div>
+    <div class="note-box" contenteditable="true" data-placeholder="Notes on data structures..."></div>
+  </div>
+  <div class="center-col">
+    <h2>Processing Pipeline</h2>
+    <div class="flowchart-wrap">
+      <svg viewBox="0 0 580 1210" xmlns="http://www.w3.org/2000/svg"
+           font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+    <path d="M235,46.0 L272.5,46.0 L272.5,102.0 L310,102.0" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M235,46.0 L272.5,46.0 L272.5,158.0 L310,158.0" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M310,102.0 L272.5,102.0 L272.5,214.0 L235,214.0" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M520,158.0 L565,158.0 L565,470 L361.0,470 L361.0,478" fill="none" stroke="#3B6FA0" stroke-width="1.2" stroke-dasharray="5,4"/>
+    <path d="M235,214.0 L272.5,214.0 L272.5,270.0 L310,270.0" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M235,214.0 L272.5,214.0 L272.5,326.0 L310,326.0" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M310,270.0 L272.5,270.0 L272.5,382.0 L235,382.0" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M310,326.0 L272.5,326.0 L272.5,382.0 L235,382.0" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M235,382.0 L272.5,382.0 L272.5,438.0 L310,438.0" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M415.0,454 L415.0,466.0 L322.0,466.0 L322.0,478" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M218.0,510 L218.0,550.0 L130.0,550.0 L130.0,590" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M322.0,510 L322.0,662.0 L415.0,662.0 L415.0,814" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M130.0,622 L130.0,702" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M415.0,846 L415.0,926" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M310,942.0 L110.0,942.0 L110.0,1038" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M310,942.0 L290.0,942.0 L290.0,1038" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M415.0,958 L415.0,998.0 L470.0,998.0 L470.0,1038" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M110.0,1070 L110.0,1094" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M290.0,1070 L290.0,1094" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <path d="M470.0,1070 L470.0,1094" fill="none" stroke="#3B6FA0" stroke-width="1.2"/>
+    <line x1="10" y1="774.0" x2="570" y2="774.0" stroke="#ccc" stroke-width="1" stroke-dasharray="6,4"/>
+    <text x="290.0" y="768.0" text-anchor="middle" fill="#aaa" font-size="8" font-style="italic">Included in the automatic processing pipeline</text>
+    <rect x="25" y="30" width="210" height="32" rx="7" fill="#3B6FA0"/>
+    <text x="130.0" y="50.0" text-anchor="middle" fill="#fff" font-size="7.0" font-weight="bold">Run Experiment (protocol_XX.m)</text>
+    <circle cx="241" cy="39" r="8" fill="#e8983e"/>
+    <text x="241" y="43" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="bold">A</text>
+    <rect x="310" y="86" width="210" height="32" rx="7" fill="#f0f0f0" stroke="#ccc" stroke-width="1"/>
+    <text x="415.0" y="106.0" text-anchor="middle" fill="#555" font-size="9.5" font-weight="bold">UFMF Video (.ufmf)</text>
+    <circle cx="526" cy="95" r="8" fill="#e8983e"/>
+    <text x="526" y="99" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="bold">B</text>
+    <rect x="310" y="142" width="210" height="32" rx="7" fill="#f0f0f0" stroke="#ccc" stroke-width="1"/>
+    <text x="415.0" y="162.0" text-anchor="middle" fill="#555" font-size="9.5" font-weight="bold">LOG.mat</text>
+    <circle cx="526" cy="151" r="8" fill="#e8983e"/>
+    <text x="526" y="155" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="bold">C</text>
+    <circle cx="526" cy="167" r="8" fill="#e8983e"/>
+    <text x="526" y="171" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="bold">D</text>
+    <rect x="25" y="198" width="210" height="32" rx="7" fill="#5A8EBE"/>
+    <text x="130.0" y="218.0" text-anchor="middle" fill="#fff" font-size="7.0" font-weight="bold">FlyTracker (offline tracking)</text>
+    <circle cx="241" cy="207" r="8" fill="#e8983e"/>
+    <text x="241" y="211" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="bold">E</text>
+    <rect x="310" y="254" width="210" height="32" rx="7" fill="#f0f0f0" stroke="#ccc" stroke-width="1"/>
+    <text x="415.0" y="274.0" text-anchor="middle" fill="#555" font-size="9.5" font-weight="bold">feat.mat</text>
+    <circle cx="526" cy="263" r="8" fill="#e8983e"/>
+    <text x="526" y="267" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="bold">F</text>
+    <rect x="310" y="310" width="210" height="32" rx="7" fill="#f0f0f0" stroke="#ccc" stroke-width="1"/>
+    <text x="415.0" y="330.0" text-anchor="middle" fill="#555" font-size="9.5" font-weight="bold">trx.mat</text>
+    <circle cx="526" cy="319" r="8" fill="#e8983e"/>
+    <text x="526" y="323" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="bold">G</text>
+    <rect x="25" y="366" width="210" height="32" rx="7" fill="#5A8EBE"/>
+    <text x="130.0" y="386.0" text-anchor="middle" fill="#fff" font-size="7.0" font-weight="bold">combine_data_one_cohort(feat, trx)</text>
+    <text x="25" y="408" fill="#aaa" font-size="7.0" font-style="italic">Remove bad tracking | Interpolate gaps | Compute</text>
+    <text x="25" y="418" fill="#aaa" font-size="7.0" font-style="italic">metrics</text>
+    <rect x="310" y="422" width="210" height="32" rx="7" fill="#f0f0f0" stroke="#ccc" stroke-width="1"/>
+    <text x="415.0" y="442.0" text-anchor="middle" fill="#555" font-size="9.5" font-weight="bold">comb_data struct</text>
+    <circle cx="526" cy="431" r="8" fill="#e8983e"/>
+    <text x="526" y="435" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="bold">H</text>
+    <rect x="140" y="478" width="260" height="32" rx="7" fill="#3B6FA0"/>
+    <text x="270.0" y="493.0" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="bold">Save *.mat results files</text>
+    <text x="270.0" y="505.0" text-anchor="middle" fill="#dde8f3" font-size="7.0">(LOG + comb_data + n_fly_data)</text>
+    <circle cx="406" cy="487" r="8" fill="#e8983e"/>
+    <text x="406" y="491" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="bold">I</text>
+    <circle cx="406" cy="503" r="8" fill="#e8983e"/>
+    <text x="406" y="507" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="bold">J</text>
+    <rect x="25" y="590" width="210" height="32" rx="7" fill="#5A8EBE"/>
+    <text x="130.0" y="610.0" text-anchor="middle" fill="#fff" font-size="7.0" font-weight="bold">comb_data_one_cohort_cond(LOG, comb_data)</text>
+    <text x="25" y="632" fill="#aaa" font-size="7.0" font-style="italic">Parse data by condition using LOG frame indices</text>
+    <text x="25" y="642" fill="#aaa" font-size="7.0" font-style="italic">(+300 frame (10s) pre buffer)</text>
+    <rect x="25" y="702" width="210" height="32" rx="7" fill="#f0f0f0" stroke="#ccc" stroke-width="1"/>
+    <text x="130.0" y="722.0" text-anchor="middle" fill="#555" font-size="7.4" font-weight="bold">DATA struct (single cohort)</text>
+    <text x="25" y="744" fill="#aaa" font-size="7.0" font-style="italic">Used only for quick per-cohort review plots</text>
+    <rect x="310" y="814" width="210" height="32" rx="7" fill="#3B6FA0"/>
+    <text x="415.0" y="834.0" text-anchor="middle" fill="#fff" font-size="7.0" font-weight="bold">comb_data_across_cohorts_cond(protocol_dir)</text>
+    <text x="310" y="856" fill="#aaa" font-size="7.0" font-style="italic">Parse data by condition as before and merge all</text>
+    <text x="310" y="866" fill="#aaa" font-size="7.0" font-style="italic">experiments for one protocol</text>
+    <rect x="310" y="926" width="210" height="32" rx="7" fill="#f0f0f0" stroke="#ccc" stroke-width="1"/>
+    <text x="415.0" y="941.0" text-anchor="middle" fill="#555" font-size="7.0" font-weight="bold">DATA.(strain).(sex)(cohort_idx)</text>
+    <text x="415.0" y="953.0" text-anchor="middle" fill="#888" font-size="6.5">.(condition).(metric)</text>
+    <circle cx="526" cy="935" r="8" fill="#4caf50"/>
+    <text x="526" y="939" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="bold">K</text>
+    <circle cx="526" cy="951" r="8" fill="#4caf50"/>
+    <text x="526" y="955" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="bold">L</text>
+    <circle cx="526" cy="967" r="8" fill="#4caf50"/>
+    <text x="526" y="971" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="bold">M</text>
+    <circle cx="526" cy="983" r="8" fill="#4caf50"/>
+    <text x="526" y="987" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="bold">N</text>
+    <text x="310" y="968" fill="#aaa" font-size="7.0" font-style="italic">Main data structure used for downstream analysis</text>
+    <rect x="40.0" y="1038" width="140" height="32" rx="7" fill="#7BADD4"/>
+    <text x="110.0" y="1058.0" text-anchor="middle" fill="#fff" font-size="8.0" font-weight="bold">Analysis scripts (MATLAB)</text>
+    <text x="40.0" y="1080" fill="#aaa" font-size="7.0" font-style="italic">This is where the analysis of</text>
+    <text x="40.0" y="1090" fill="#aaa" font-size="7.0" font-style="italic">different protocols diverges</text>
+    <rect x="220.0" y="1038" width="140" height="32" rx="7" fill="#7BADD4"/>
+    <text x="290.0" y="1058.0" text-anchor="middle" fill="#fff" font-size="9.1" font-weight="bold">preprocess.py (Python)</text>
+    <rect x="400.0" y="1038" width="140" height="32" rx="7" fill="#7BADD4"/>
+    <text x="470.0" y="1058.0" text-anchor="middle" fill="#fff" font-size="7.0" font-weight="bold">export_trajectory_data.m (MATLAB)</text>
+    <rect x="40.0" y="1094" width="140" height="32" rx="7" fill="#f0f0f0" stroke="#ccc" stroke-width="1"/>
+    <text x="110.0" y="1114.0" text-anchor="middle" fill="#555" font-size="9.5" font-weight="bold">Publication figures</text>
+    <rect x="220.0" y="1094" width="140" height="32" rx="7" fill="#f0f0f0" stroke="#ccc" stroke-width="1"/>
+    <text x="290.0" y="1109.0" text-anchor="middle" fill="#555" font-size="8.5" font-weight="bold">Dash dashboard</text>
+    <text x="290.0" y="1121.0" text-anchor="middle" fill="#888" font-size="8.0">Parquet files</text>
+    <circle cx="366.0" cy="1103" r="8" fill="#4caf50"/>
+    <text x="366.0" y="1107" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="bold">O</text>
+    <text x="220.0" y="1136" fill="#aaa" font-size="7.0" font-style="italic">Open terminal and type</text>
+    <text x="220.0" y="1146" fill="#aaa" font-size="7.0" font-style="italic">'dash-freely'</text>
+    <rect x="400.0" y="1094" width="140" height="32" rx="7" fill="#f0f0f0" stroke="#ccc" stroke-width="1"/>
+    <text x="470.0" y="1109.0" text-anchor="middle" fill="#555" font-size="8.5" font-weight="bold">Trajectory viewer</text>
+    <text x="470.0" y="1121.0" text-anchor="middle" fill="#888" font-size="8.0">.json.gz</text>
+    <circle cx="546.0" cy="1103" r="8" fill="#4caf50"/>
+    <text x="546.0" y="1107" text-anchor="middle" fill="#fff" font-size="7.5" font-weight="bold">P</text>
+    <text x="400.0" y="1136" fill="#aaa" font-size="7.0" font-style="italic">HTML and compressed JSON data</text>
+    <text x="400.0" y="1146" fill="#aaa" font-size="7.0" font-style="italic">files</text>
+    <rect x="10" y="1170" width="560" height="30" rx="4" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+    <text x="22" y="1188" fill="#666" font-size="7.5" font-weight="bold">Legend:</text>
+    <rect x="70" y="1178" width="28" height="14" rx="4" fill="#3B6FA0"/>
+    <text x="105" y="1189" fill="#666" font-size="7">Major step</text>
+    <rect x="155" y="1178" width="28" height="14" rx="4" fill="#5A8EBE"/>
+    <text x="190" y="1189" fill="#666" font-size="7">Processing fn</text>
+    <rect x="245" y="1178" width="28" height="14" rx="4" fill="#7BADD4"/>
+    <text x="280" y="1189" fill="#666" font-size="7">Output script</text>
+    <rect x="335" y="1178" width="28" height="14" rx="6" fill="#f0f0f0" stroke="#ccc" stroke-width="1"/>
+    <text x="370" y="1189" fill="#666" font-size="7">Data / file</text>
+    <circle cx="415" cy="1185" r="7" fill="#e8983e"/>
+    <text x="425" y="1189" fill="#666" font-size="7">Data ref</text>
+    <circle cx="470" cy="1185" r="7" fill="#4caf50"/>
+    <text x="480" y="1189" fill="#666" font-size="7">Output ref</text>
+      </svg>
+    </div>
+    <div class="note-box" contenteditable="true" data-placeholder="General notes..." style="margin-top:6px"></div>
+  </div>
+  <div class="side-col right-col">
+    <h2>Outputs</h2>
+    <div class="img-card">
+      <div class="card-header"><span class="badge badge-green">B</span> UFMF — raw behavioural frame from overhe</div>
+      <img src="/Users/burnettl/Documents/Projects/oaky_cokey/assets/1_raw_behavioural_frame.png" alt="">
+      <div class="caption">UFMF — raw behavioural frame from overhead camera</div>
+    </div>
+    <div class="img-card">
+      <div class="card-header"><span class="badge badge-green">E</span> Tracked UFMF frame — FlyTracker output</div>
+      <img src="/Users/burnettl/Documents/Projects/oaky_cokey/assets/4_tracked_behavioural_frame.png" alt="">
+      <div class="caption">Tracked UFMF frame — FlyTracker output</div>
+    </div>
+    <div class="img-card">
+      <div class="card-header"><span class="badge badge-green">O</span> Interactive Dash dashboard (localhost:80</div>
+      <img src="/Users/burnettl/Documents/Projects/oaky_cokey/assets/13_dashboard_image.png" alt="">
+      <div class="caption">Interactive Dash dashboard (localhost:8050)</div>
+    </div>
+    <div class="img-card">
+      <div class="card-header"><span class="badge badge-green">P</span> HTML trajectory viewer with drag-and-dro</div>
+      <img src="/Users/burnettl/Documents/Projects/oaky_cokey/assets/14_trajectory_viewer.png" alt="">
+      <div class="caption">HTML trajectory viewer with drag-and-drop .json.gz</div>
+    </div>
+    <div class="note-box" contenteditable="true" data-placeholder="Notes on outputs..."></div>
+  </div>
+</div>
+</body>
+</html>
