@@ -232,83 +232,102 @@ images:
 
   - badge: A
     column: left
-    caption: "Experiment Data Folder"
+    title: "Experiment Data Folder"
+    caption: "Showing the contents of a single experiment folder after tracking."
     src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/1b_raw_data_exp_folder.png"
 
   - badge: B
     column: right
-    caption: "UFMF — raw behavioural frame from overhead camera"
+    title: "UFMF frame"
+    caption: " Raw behavioural frame from overhead camera"
     src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/1_raw_behavioural_frame.png"
 
   - badge: C
     column: left
+    title: "LOG struct"
     caption: "LOG structure — stimulus timing, metadata, 28 fields"
     src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/2_LOG_data.png"
 
   - badge: D
     column: left
+    title: "LOG struct"
     caption: "LOG structure — within a condition"
     src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/3_LOG_level2.png"
 
   - badge: E
     column: right
-    caption: "Tracked UFMF frame — FlyTracker output"
+    title: "Tracked UFMF frame"
+    caption: "FlyTracker output"
     src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/4_tracked_behavioural_frame.png"
 
   - badge: F
     column: left
-    caption: "feat structure — FlyTracker feature output"
+    title: "feat structure"
+    caption: "FlyTracker feature output"
     src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/5_feat_data.png"
 
   - badge: G
     column: left
-    caption: "trx data — FlyTracker trajectory output"
+    title: "trx data"
+    caption: "FlyTracker trajectory output"
     src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/6_trx_data.png"
+    wide: true
 
   - badge: H
     column: left
-    caption: "comb_data structure — combined behavioural metrics"
+    title: "comb_data structure"
+    caption: "Showing the combined behavioural metrics timeseries. Each row is a fly and each array contains data points across the entire experiment unparsed."
     src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/7_comb_data.png"
 
   - badge: I
     column: left
+    title: "Results folder"
     caption: "Folder structure - results files per cohort"
     src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/8_processed_data_results_folder.png"
 
   - badge: J
     column: left
-    caption: "Contents of a single results file - 1 per cohort"
+    title: "Results file contents"
+    caption: "Variables saved within a single results file - 1 per cohort"
     src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/8b_contents_of_results_mat.png"
 
   - badge: K
     column: left
-    caption: "Hierarchical DATA — 19 strain fields"
+    title: "Hierarchical DATA struct"
+    caption: "The core data structure used for most downstream analysis files. 19 strain fields. Data from all protocols (from p19 onwards) should be able to be processed into this struct format."
     src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/9_DATA_level1.png"
 
   - badge: L
     column: left
-    caption: "Strain level — cohorts x conditions"
+    title: "Strain level"
+    caption: "cohorts x conditions"
     src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/10_DATA_strain_level.png"
 
   - badge: M
     column: left
-    caption: "Cohort level — metadata"
+    title: "Cohort level"
+    caption: "metadata"
     src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/11_DATA_metadata.png"
 
   - badge: N
     column: left
-    caption: "Condition level — behavioural metric arrays"
+    title: "Condition level"
+    caption: "Behavioural metric arrays"
     src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/12_DATA_condition_level.png"
 
   - badge: O
     column: right
-    caption: "Interactive Dash dashboard (localhost:8050)"
+    title: "Interactive dashboard"
+    caption: "Comprehensive dashboard for viewing the behavioural data across strains. Made using Dash (localhost:8050). "
     src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/13_dashboard_image.png"
+    wide: true
 
   - badge: P
     column: right
-    caption: "HTML trajectory viewer with drag-and-drop .json.gz"
+    title: "HTML trajectory viewer"
+    caption: "Includes drag-and-drop feature and accepts both compressed (.json.gz) and uncompressed (.json) data files. These data files and the html page are created with the function export_trajectory_data.m"
     src: "/Users/burnettl/Documents/Projects/oaky_cokey/assets/14_trajectory_viewer.png"
+    wide: true
 
 
 # ──────────────────────────────────────────────────────────────────────

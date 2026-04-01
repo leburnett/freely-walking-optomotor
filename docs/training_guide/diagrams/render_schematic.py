@@ -272,7 +272,7 @@ def render_node_svg(node):
                      f'fill="{sub_col}" font-size="{fs2:.1f}">'
                      f'{_esc(lines[1])}</text>')
 
-    # Badges
+    # Badges — white circle with black text and thin border
     badges = node.get("badge", "")
     if badges:
         badge_list = [b.strip() for b in str(badges).split(",")]
@@ -280,10 +280,10 @@ def render_node_svg(node):
         by_start = y + 2
         for i, b in enumerate(badge_list):
             by = by_start + i * 16
-            col = BADGE_COLORS["right"] if b >= "K" else BADGE_COLORS["left"]
-            parts.append(f'<circle cx="{bx}" cy="{by + 7}" r="8" fill="{col}"/>')
+            parts.append(f'<circle cx="{bx}" cy="{by + 7}" r="8" fill="#fff" '
+                         f'stroke="#999" stroke-width="1"/>')
             parts.append(f'<text x="{bx}" y="{by + 11}" text-anchor="middle" '
-                         f'fill="#fff" font-size="7.5" font-weight="bold">{b}</text>')
+                         f'fill="#333" font-size="7.5" font-weight="bold">{b}</text>')
 
     # Annotation — placed below the node, wrapped to node width
     ann = node.get("annotation", "")
@@ -399,15 +399,19 @@ def _wrap_text(text, max_chars):
 
 def render_image_card(img):
     badge = img.get("badge", "?")
-    caption = img.get("caption", "")
+    title = img.get("title", "")      # short header text
+    caption = img.get("caption", "")   # longer description below image
+    # Fall back: if no title, use caption truncated; if no caption, use title
+    header_text = title or caption[:50]
+    caption_text = caption or title
     src = img.get("src", "")
-    col = img.get("column", "left")
-    badge_cls = "badge-orange" if col == "left" else "badge-green"
+    wide = img.get("wide", False)
+    wide_style = ' style="grid-column:1/-1"' if wide else ""
     img_tag = f'<img src="{src}" alt="">' if src else '<div style="min-height:50px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:11px;border-top:1px solid #eee">No image</div>'
-    return f"""    <div class="img-card">
-      <div class="card-header"><span class="badge {badge_cls}">{badge}</span> {caption[:40]}</div>
+    return f"""    <div class="img-card"{wide_style}>
+      <div class="card-header"><span class="badge">{badge}</span> {_esc(header_text)}</div>
       {img_tag}
-      <div class="caption">{caption}</div>
+      <div class="caption">{_esc(caption_text)}</div>
     </div>"""
 
 
@@ -415,11 +419,10 @@ def build_html(cfg, svg_body, svg_height):
     title = cfg.get("title", "Pipeline")
     subtitle = cfg.get("subtitle", "")
     images = cfg.get("images", [])
-    left_imgs = [i for i in images if i.get("column") == "left"]
-    right_imgs = [i for i in images if i.get("column") == "right"]
 
-    left_cards = "\n".join(render_image_card(i) for i in left_imgs)
-    right_cards = "\n".join(render_image_card(i) for i in right_imgs)
+    # Sort all images alphabetically by badge letter
+    all_imgs = sorted(images, key=lambda i: i.get("badge", "Z"))
+    all_cards = "\n".join(render_image_card(i) for i in all_imgs)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -434,20 +437,18 @@ def build_html(cfg, svg_body, svg_height):
   .page-header {{ text-align:center;padding:20px 16px 10px;border-bottom:2px solid #3B6FA0;margin-bottom:6px }}
   .page-header h1 {{ font-size:1.5rem;color:#222;font-weight:700 }}
   .page-header .subtitle {{ font-size:.82rem;color:#777;margin-top:3px }}
-  .grid {{ display:grid;grid-template-columns:1fr 2fr 1fr;gap:10px;padding:6px 10px 20px;max-width:1500px;margin:0 auto;align-items:start }}
-  .side-col {{ display:flex;flex-direction:column;gap:8px }}
-  .side-col h2 {{ font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;padding-bottom:5px;margin-bottom:2px;text-align:center }}
-  .left-col h2 {{ color:#c56c00;border-bottom:2px solid #e8983e }}
-  .right-col h2 {{ color:#2e7d32;border-bottom:2px solid #66bb6a }}
+  /* 4-column grid: flowchart takes left 2 cols, images take right 2 cols */
+  .grid {{ display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;padding:6px 10px 20px;max-width:1600px;margin:0 auto;align-items:start }}
+  .flowchart-col {{ grid-column:1/3;display:flex;flex-direction:column;align-items:center }}
+  .flowchart-col h2 {{ font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;color:#3B6FA0;border-bottom:2px solid #3B6FA0;padding-bottom:5px;margin-bottom:6px;text-align:center;width:100% }}
+  .images-col {{ grid-column:3/5 }}
+  .images-col h2 {{ font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;color:#555;border-bottom:2px solid #999;padding-bottom:5px;margin-bottom:6px;text-align:center }}
+  .images-grid {{ display:grid;grid-template-columns:1fr 1fr;gap:8px }}
   .img-card {{ border:1px solid #ddd;border-radius:6px;overflow:hidden;background:#fafafa }}
   .img-card .card-header {{ display:flex;align-items:center;gap:6px;padding:4px 8px;font-size:.75rem;font-weight:600;color:#444 }}
   .img-card img {{ width:100%;display:block;border-top:1px solid #eee;background:#f5f5f5;min-height:50px;object-fit:contain }}
   .img-card .caption {{ padding:3px 8px;font-size:.7rem;color:#888;border-top:1px solid #eee }}
-  .badge {{ display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:.7rem;font-weight:700;color:#fff;flex-shrink:0 }}
-  .badge-orange {{ background:#e8983e }}
-  .badge-green {{ background:#4caf50 }}
-  .center-col {{ display:flex;flex-direction:column;align-items:center }}
-  .center-col h2 {{ font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;color:#3B6FA0;border-bottom:2px solid #3B6FA0;padding-bottom:5px;margin-bottom:6px;text-align:center;width:100% }}
+  .badge {{ display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:.7rem;font-weight:700;color:#333;flex-shrink:0;background:#fff;border:1px solid #999 }}
   .note-box {{ border:1px dashed #bbb;border-radius:4px;padding:4px 6px;font-size:.68rem;color:#888;min-height:24px;line-height:1.3;background:#fefefe;width:100% }}
   .note-box:focus {{ outline:2px solid #5A8EBE;border-color:#5A8EBE;color:#333 }}
   .note-box:empty::before {{ content:attr(data-placeholder);color:#ccc }}
@@ -467,12 +468,7 @@ def build_html(cfg, svg_body, svg_height):
   <div class="subtitle">{_esc(subtitle)}</div>
 </div>
 <div class="grid">
-  <div class="side-col left-col">
-    <h2>Data Structures</h2>
-{left_cards}
-    <div class="note-box" contenteditable="true" data-placeholder="Notes on data structures..."></div>
-  </div>
-  <div class="center-col">
+  <div class="flowchart-col">
     <h2>Processing Pipeline</h2>
     <div class="flowchart-wrap">
       <svg viewBox="0 0 {SVG_WIDTH} {svg_height}" xmlns="http://www.w3.org/2000/svg"
@@ -482,10 +478,12 @@ def build_html(cfg, svg_body, svg_height):
     </div>
     <div class="note-box" contenteditable="true" data-placeholder="General notes..." style="margin-top:6px"></div>
   </div>
-  <div class="side-col right-col">
-    <h2>Outputs</h2>
-{right_cards}
-    <div class="note-box" contenteditable="true" data-placeholder="Notes on outputs..."></div>
+  <div class="images-col">
+    <h2>Reference Images</h2>
+    <div class="images-grid">
+{all_cards}
+    </div>
+    <div class="note-box" contenteditable="true" data-placeholder="Notes..." style="margin-top:8px"></div>
   </div>
 </div>
 </body>
