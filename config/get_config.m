@@ -89,6 +89,15 @@ function cfg = get_config()
     cfg.results          = fullfile(cfg.project_root, 'results');
     cfg.figures          = fullfile(cfg.project_root, 'figures');
 
+    % --- Create local directories if they do not exist ---
+    dirs = {cfg.data_unprocessed, cfg.data_tracked, cfg.data_processed, ...
+            cfg.results, cfg.figures};
+    for i = 1:numel(dirs)
+        if ~isfolder(dirs{i})
+            mkdir(dirs{i});
+        end
+    end
+
     % --- Repo asset paths (derived from repo_root) ---
     cfg.patterns = fullfile(cfg.repo_root, 'src', 'patterns', 'Patterns_optomotor');
     cfg.calibration_file = fullfile(cfg.repo_root, 'src', 'tracking', 'calibration.mat');

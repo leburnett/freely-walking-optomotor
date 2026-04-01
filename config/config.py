@@ -88,6 +88,11 @@ FIGURES_PATH     = PROJECT_ROOT / "figures"
 # Centralized log directory
 LOG_DIR = PROJECT_ROOT / "logs"
 
+# --- Create local directories if they do not exist ---
+for _d in (DATA_UNPROCESSED, DATA_TRACKED, DATA_PROCESSED, DATA_FAILED,
+           RESULTS_PATH, FIGURES_PATH, LOG_DIR):
+    _d.mkdir(parents=True, exist_ok=True)
+
 # --- Repo asset paths ---
 PATTERNS_DIR  = REPO_ROOT / "src" / "patterns" / "Patterns_optomotor"
 PROTOCOLS_DIR = REPO_ROOT / "src" / "protocols"
