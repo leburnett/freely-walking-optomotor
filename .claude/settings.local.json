@@ -140,7 +140,17 @@
       "Bash(grep -rn src/analysis /Users/burnettl/Documents/GitHub/reiser-documentation/ --include=*.qmd --include=*.md)",
       "Bash(for f:*)",
       "Bash(find . -name \"$f\")",
-      "Bash(find /Users/burnettl/Documents/GitHub/freely-walking-optomotor -name \"$f\")"
+      "Bash(find /Users/burnettl/Documents/GitHub/freely-walking-optomotor -name \"$f\")",
+      "Read(//private/tmp/**)",
+      "Bash(gzip -k test_traj.json)",
+      "Bash(sed \"s/^''''//;s/'''' newline \\\\.\\\\.\\\\.$//;s/'''''''' newline \\\\.\\\\.\\\\.$//\")",
+      "Read(//tmp/**)",
+      "Bash(xargs kill:*)",
+      "Bash(python generate_pipeline_diagram.py)",
+      "Bash(open /Users/burnettl/Documents/GitHub/freely-walking-optomotor/docs/training_guide/diagrams/data_flow_schematic.html)",
+      "Bash(open /Users/burnettl/Documents/GitHub/freely-walking-optomotor/docs/training_guide/diagrams/pipeline-layout-builder.html)",
+      "Bash(python render_schematic.py pipeline_layout.yaml --open)",
+      "Bash(pip install:*)"
     ]
   }
 }

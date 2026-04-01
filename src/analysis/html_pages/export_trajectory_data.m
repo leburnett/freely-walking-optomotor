@@ -337,16 +337,21 @@ for s_idx = 1:numel(all_strains)
     json_str = strrep(json_str, 'NaN', 'null');
     json_str = regexprep(json_str, '\.0([,\]\}])', '$1');
 
-    % Write JSON file
+    % Write JSON file, then gzip compress it
     safe_name = regexprep(strain, '[^a-zA-Z0-9_]', '_');
     json_file = fullfile(data_dir, [safe_name '.json']);
     fid = fopen(json_file, 'w', 'n', 'UTF-8');
     fwrite(fid, json_str, 'char');
     fclose(fid);
 
-    file_info = dir(json_file);
-    fprintf('  %s: %d flies, %d conditions (%.1f MB)\n', ...
-        strain, strain_fly_count, numel(strain_conditions), file_info.bytes/1e6);
+    json_info = dir(json_file);
+    gzip(json_file, data_dir);
+    delete(json_file);
+    gz_file = fullfile(data_dir, [safe_name '.json.gz']);
+    gz_info = dir(gz_file);
+    fprintf('  %s: %d flies, %d conditions (%.1f MB → %.1f MB compressed)\n', ...
+        strain, strain_fly_count, numel(strain_conditions), ...
+        json_info.bytes/1e6, gz_info.bytes/1e6);
 
     total_flies = total_flies + strain_fly_count;
     file_count = file_count + 1;
@@ -362,7 +367,7 @@ fclose(fid);
 fprintf('\n=== Export complete ===\n');
 fprintf('  Viewer:  %s\n', viewer_file);
 fprintf('  Data:    %s/ (%d files, %d total flies)\n', data_dir, file_count, total_flies);
-fprintf('\nOpen the viewer in a browser and drag-and-drop JSON files to load data.\n');
+fprintf('\nOpen the viewer in a browser and drag-and-drop .json.gz files to load data.\n');
 
 end
 
