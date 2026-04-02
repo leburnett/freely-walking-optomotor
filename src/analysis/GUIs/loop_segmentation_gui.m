@@ -37,7 +37,7 @@ stim_range = STIM_ON:STIM_OFF;
 %% Loop detection options
 
 loop_opts.lookahead_frames = 75;
-loop_opts.min_loop_frames  = 10;
+loop_opts.min_loop_frames  = 5;
 loop_opts.fps              = FPS;
 loop_opts.arena_center     = ARENA_CENTER;
 loop_opts.arena_radius     = ARENA_R;

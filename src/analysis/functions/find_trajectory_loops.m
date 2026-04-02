@@ -59,12 +59,12 @@ function loops = find_trajectory_loops(x, y, heading, opts)
 %% Parse options
 if nargin < 4, opts = struct(); end
 lookahead_frames = get_opt(opts, 'lookahead_frames', 90);
-min_loop_fr      = get_opt(opts, 'min_loop_frames', 10);
+min_loop_fr      = get_opt(opts, 'min_loop_frames', 5);
 fps              = get_opt(opts, 'fps', 30);
 arena_center     = get_opt(opts, 'arena_center', [528, 520] / 4.1691);
 arena_radius     = get_opt(opts, 'arena_radius', 120);
 max_dist_center  = get_opt(opts, 'max_dist_center', 110);  % exclude loops with centre > this from arena centre
-min_bbox_area    = get_opt(opts, 'min_bbox_area', 1);       % exclude loops with area < this (mm²)
+min_bbox_area    = get_opt(opts, 'min_bbox_area', 0.2);       % exclude loops with area < this (mm²)
 vel              = get_opt(opts, 'vel', []);                 % [1 x N] speed (mm/s); needed for angular_diff
 speed_threshold  = get_opt(opts, 'speed_threshold', 0.5);   % mm/s; frames below this excluded from angular_diff
 has_vel          = ~isempty(vel);

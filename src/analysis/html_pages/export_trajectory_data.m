@@ -276,6 +276,19 @@ for s_idx = 1:numel(all_strains)
                     % Tortuosity
                     tort = compute_tortuosity(x, y, tort_window, FPS);
 
+                    % Loop segmentation
+                    loop_opts = struct('lookahead_frames', 75, ...
+                        'min_loop_frames', 5, ...
+                        'max_dist_center', 110, ...
+                        'min_bbox_area', 0.2);
+                    loops_result = find_trajectory_loops(x, y, hw, loop_opts);
+                    loop_ids = zeros(1, min_frames);
+                    for lk = 1:loops_result.n_loops
+                        sf = loops_result.start_frame(lk);
+                        ef = loops_result.end_frame(lk);
+                        loop_ids(sf:ef) = lk;
+                    end
+
                     % Subsample & round for compactness
                     x   = round(x(frame_idx), 1);
                     y   = round(y(frame_idx), 1);
@@ -286,6 +299,7 @@ for s_idx = 1:numel(all_strains)
                     vd  = round(vd(frame_idx), 1);
                     ang_diff = round(ang_diff(frame_idx));
                     tort = round(tort(frame_idx), 1);
+                    loop_ids = loop_ids(frame_idx);
 
                     fly_entry = struct();
                     fly_entry.strain    = strain;
@@ -305,6 +319,7 @@ for s_idx = 1:numel(all_strains)
                     fly_entry.vd   = vd;
                     fly_entry.ad   = ang_diff;
                     fly_entry.tort = tort;
+                    fly_entry.loops = loop_ids;
 
                     strain_fly_count = strain_fly_count + 1;
                     cond_fly_count = cond_fly_count + 1;
