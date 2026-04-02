@@ -150,7 +150,18 @@
       "Bash(open /Users/burnettl/Documents/GitHub/freely-walking-optomotor/docs/training_guide/diagrams/data_flow_schematic.html)",
       "Bash(open /Users/burnettl/Documents/GitHub/freely-walking-optomotor/docs/training_guide/diagrams/pipeline-layout-builder.html)",
       "Bash(python render_schematic.py pipeline_layout.yaml --open)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(mkdir -p /Users/burnettl/Documents/GitHub/reiser-documentation/assets/imgs/freely/pipeline)",
+      "Read(//Users/burnettl/Documents/Projects/oaky_cokey/assets/**)",
+      "Bash(python render_schematic.py pipeline_layout.yaml --png)",
+      "Bash(brew list:*)",
+      "Bash(brew install:*)",
+      "Bash(qlmanage -t -s 2000 -o /tmp/svgpng 03_data_flow_pipeline.svg)",
+      "Bash(ls -la /tmp/svgpng/*.png)",
+      "Bash(mkdir -p /tmp/svgpng)",
+      "Bash(qlmanage -t -s 2000 -o /tmp/svgpng/ /Users/burnettl/Documents/GitHub/freely-walking-optomotor/docs/training_guide/diagrams/03_data_flow_pipeline.svg)",
+      "Bash(python -c \"from config.config import *; print\\(''OK''\\)\")",
+      "Bash(python -c \"from config.config import *; print\\(''OK — idempotent run''\\)\")"
     ]
   }
 }

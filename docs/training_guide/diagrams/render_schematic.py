@@ -34,12 +34,12 @@ TEXT_COLORS = {
 BADGE_COLORS = {"left": "#e8983e", "right": "#4caf50"}
 
 # Layout grid
-ROW_HEIGHT   = 56          # vertical spacing per row unit
+ROW_HEIGHT   = 40          # vertical spacing per row unit
 COL_LEFT_X   = 25          # x origin for "left" nodes
 COL_RIGHT_X  = 310         # x origin for "right" nodes
 COL_CENTER_X = 140         # x origin for "center" / "full" nodes
 NODE_W       = 210          # default node width
-NODE_H       = 32           # default node height
+NODE_H       = 28           # default node height
 NODE_W_WIDE  = 260          # wider for center/full nodes
 NODE_W_NARROW = 140         # narrow width for downstream 3-across rows
 PADDING_TOP  = 30           # top padding before row 0
@@ -406,9 +406,9 @@ def render_image_card(img):
     caption_text = caption or title
     src = img.get("src", "")
     wide = img.get("wide", False)
-    wide_style = ' style="grid-column:1/-1"' if wide else ""
+    wide_cls = " wide" if wide else ""
     img_tag = f'<img src="{src}" alt="">' if src else '<div style="min-height:50px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:11px;border-top:1px solid #eee">No image</div>'
-    return f"""    <div class="img-card"{wide_style}>
+    return f"""    <div class="img-card{wide_cls}">
       <div class="card-header"><span class="badge">{badge}</span> {_esc(header_text)}</div>
       {img_tag}
       <div class="caption">{_esc(caption_text)}</div>
@@ -434,17 +434,21 @@ def build_html(cfg, svg_body, svg_height):
   *,*::before,*::after {{ box-sizing:border-box;margin:0;padding:0 }}
   html {{ font-size:14px }}
   body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#fff;color:#333;line-height:1.4 }}
-  .page-header {{ text-align:center;padding:20px 16px 10px;border-bottom:2px solid #3B6FA0;margin-bottom:6px }}
-  .page-header h1 {{ font-size:1.5rem;color:#222;font-weight:700 }}
-  .page-header .subtitle {{ font-size:.82rem;color:#777;margin-top:3px }}
-  /* 4-column grid: flowchart takes left 2 cols, images take right 2 cols */
-  .grid {{ display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;padding:6px 10px 20px;max-width:1600px;margin:0 auto;align-items:start }}
-  .flowchart-col {{ grid-column:1/3;display:flex;flex-direction:column;align-items:center }}
-  .flowchart-col h2 {{ font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;color:#3B6FA0;border-bottom:2px solid #3B6FA0;padding-bottom:5px;margin-bottom:6px;text-align:center;width:100% }}
-  .images-col {{ grid-column:3/5 }}
-  .images-col h2 {{ font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;color:#555;border-bottom:2px solid #999;padding-bottom:5px;margin-bottom:6px;text-align:center }}
+  .page-header {{ text-align:center;padding:10px 16px 6px;border-bottom:2px solid #3B6FA0;margin-bottom:4px }}
+  .page-header h1 {{ font-size:1.3rem;color:#222;font-weight:700;margin:0 }}
+  .page-header .subtitle {{ font-size:.78rem;color:#777;margin-top:2px }}
+  .container {{ max-width:900px;margin:0 auto;padding:4px 12px 16px }}
+  /* Flowchart section */
+  .flowchart-section {{ margin-bottom:12px }}
+  .flowchart-section h2 {{ font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;color:#3B6FA0;border-bottom:2px solid #3B6FA0;padding-bottom:4px;margin-bottom:6px;text-align:center }}
+  .flowchart-wrap {{ width:100%;max-width:700px;margin:0 auto;overflow:visible }}
+  .flowchart-wrap svg {{ width:100%;height:auto;display:block }}
+  /* Images section */
+  .images-section {{ margin-top:16px }}
+  .images-section h2 {{ font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;color:#555;border-bottom:2px solid #999;padding-bottom:5px;margin-bottom:8px;text-align:center }}
   .images-grid {{ display:grid;grid-template-columns:1fr 1fr;gap:8px }}
-  .img-card {{ border:1px solid #ddd;border-radius:6px;overflow:hidden;background:#fafafa }}
+  .img-card {{ border:1px solid #ddd;border-radius:6px;overflow:hidden;background:#fafafa;break-inside:avoid }}
+  .img-card.wide {{ grid-column:1/-1 }}
   .img-card .card-header {{ display:flex;align-items:center;gap:6px;padding:4px 8px;font-size:.75rem;font-weight:600;color:#444 }}
   .img-card img {{ width:100%;display:block;border-top:1px solid #eee;background:#f5f5f5;min-height:50px;object-fit:contain }}
   .img-card .caption {{ padding:3px 8px;font-size:.7rem;color:#888;border-top:1px solid #eee }}
@@ -452,13 +456,16 @@ def build_html(cfg, svg_body, svg_height):
   .note-box {{ border:1px dashed #bbb;border-radius:4px;padding:4px 6px;font-size:.68rem;color:#888;min-height:24px;line-height:1.3;background:#fefefe;width:100% }}
   .note-box:focus {{ outline:2px solid #5A8EBE;border-color:#5A8EBE;color:#333 }}
   .note-box:empty::before {{ content:attr(data-placeholder);color:#ccc }}
-  .flowchart-wrap {{ width:100%;overflow:visible }}
-  .flowchart-wrap svg {{ width:100%;height:auto;display:block }}
   @media print {{
-    @page {{ size:A3 landscape;margin:10mm }}
+    @page {{ margin:8mm }}
     body {{ -webkit-print-color-adjust:exact;print-color-adjust:exact }}
-    .note-box {{ border-color:#ccc }}
-    .note-box:empty::before {{ content:'' }}
+    .page-header {{ padding:6px 8px 4px;margin-bottom:2px }}
+    .container {{ padding:2px 6px 8px;max-width:100% }}
+    .flowchart-section {{ break-inside:avoid;margin-bottom:8px }}
+    .flowchart-wrap {{ max-width:100% }}
+    .img-card {{ break-inside:avoid }}
+    .images-section h2 {{ break-after:avoid }}
+    .note-box {{ display:none }}
   }}
 </style>
 </head>
@@ -467,8 +474,8 @@ def build_html(cfg, svg_body, svg_height):
   <h1>{_esc(title)}</h1>
   <div class="subtitle">{_esc(subtitle)}</div>
 </div>
-<div class="grid">
-  <div class="flowchart-col">
+<div class="container">
+  <div class="flowchart-section">
     <h2>Processing Pipeline</h2>
     <div class="flowchart-wrap">
       <svg viewBox="0 0 {SVG_WIDTH} {svg_height}" xmlns="http://www.w3.org/2000/svg"
@@ -478,7 +485,7 @@ def build_html(cfg, svg_body, svg_height):
     </div>
     <div class="note-box" contenteditable="true" data-placeholder="General notes..." style="margin-top:6px"></div>
   </div>
-  <div class="images-col">
+  <div class="images-section">
     <h2>Reference Images</h2>
     <div class="images-grid">
 {all_cards}
@@ -574,6 +581,31 @@ def main():
     out_path = yaml_path.parent / "data_flow_schematic.html"
     out_path.write_text(html)
     print(f"Written: {out_path}")
+
+    # ── PNG export: flowchart only ──
+    if "--png" in sys.argv:
+        svg_str = (f'<?xml version="1.0" encoding="UTF-8"?>\n'
+                   f'<svg viewBox="0 0 {SVG_WIDTH} {svg_height}" '
+                   f'width="{SVG_WIDTH}" height="{svg_height}" '
+                   f'xmlns="http://www.w3.org/2000/svg" '
+                   f'font-family="-apple-system,BlinkMacSystemFont,\'Segoe UI\','
+                   f'Roboto,sans-serif" '
+                   f'style="background:#fff">\n'
+                   f'{svg_body}\n</svg>')
+        svg_path = yaml_path.parent / "03_data_flow_pipeline.svg"
+        svg_path.write_text(svg_str)
+        print(f"Written: {svg_path}")
+
+        png_path = yaml_path.parent / "03_data_flow_pipeline.png"
+        import subprocess
+        try:
+            subprocess.run(["rsvg-convert", "-o", str(png_path), "-w", "1450",
+                           str(svg_path)], check=True, capture_output=True)
+            print(f"Written: {png_path}")
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            print(f"SVG written at {svg_path}")
+            print(f"To convert to PNG, install librsvg: brew install librsvg")
+            print(f"Then run: rsvg-convert -o {png_path} -w 1450 {svg_path}")
 
     if do_open:
         import subprocess
