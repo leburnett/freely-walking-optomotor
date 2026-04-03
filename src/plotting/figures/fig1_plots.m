@@ -1,13 +1,20 @@
 
 %% Make plots for MIC paper - time series
 
-%% 1 - make DATA
+%% ================================================================
+%  SECTION 1: Setup
+%  ================================================================
 
 cfg = get_config();
 ROOT_DIR = cfg.project_root;
-% Move to the directory to where the results per experiment are saved:
-protocol_dir = fullfile(ROOT_DIR, 'results', 'protocol_27');
-cd(protocol_dir);
+
+if ~exist('DATA', 'var')
+    protocol_dir = fullfile(cfg.results, 'protocol_27');
+    DATA = comb_data_across_cohorts_cond(protocol_dir);
+end
+
+
+%% Strain names: 
 
 % Get all of the strain folders that are inside the protocol folder.
 strain_folders = dir;
@@ -31,9 +38,7 @@ if folderMatch
     strain_folders(index).name = strrep(strain_folders(index).name, "ss1209_DCH-VCH_shibire_kir", "ss1209_DCH_VCH_shibire_kir");
 end 
 
-% Generate the struct 'DATA' that combines data across experiments and
-% separates data into conditions.
-DATA = comb_data_across_cohorts_cond(protocol_dir);
+%% Experiment data metrics: 
 
 % Save a text file with the number of flies and vials for each strain
 % that has been run so far: 
@@ -68,19 +73,19 @@ cond_titles = {"60deg-gratings-4Hz"...
             };
 
 % Blues
-% col_12 = [31 120 180; ... %50 50 50; ...% 166 206 227; 106 61 154; ...
-%     31 120 180; ...
-%     178 223 138; ...
-%     47 141 41; ...
-%     251 154 153; ...
-%     227 26 28; ...
-%     253 191 111; ...
-%     255 127 0; ...
-%     166 206 227; ...%202 178 214; ...
-%     200 200 200; ... % 106 61 154; ...166 206 227;
-%     255 224 41; ...
-%     187 75 12; ...
-%     ]./255;
+col_12 = [106 61 154; ... %50 50 50; ...% 166 206 227; 106 61 154; ...
+    31 120 180; ...
+    178 223 138; ...
+    47 141 41; ...
+    251 154 153; ...
+    227 26 28; ...
+    253 191 111; ...
+    255 127 0; ...
+    166 206 227; ...%202 178 214; ...
+    200 200 200; ... % 106 61 154; ...166 206 227;
+    255 224 41; ...
+    187 75 12; ...
+    ]./255;
 
 % Blue colours used: 
 % 4 Hz  -  31 120 180;
@@ -111,9 +116,9 @@ end
 
 % PLOT 
 strain_names = strain;
-% cond_ids = [10, 1];
+cond_ids = [10, 1];
 % cond_ids = [3, 4, 1];
-cond_ids = [1,7];
+% cond_ids = [1,7]; % 60 deg versus Reverse Phi
 % data_type = "dist_data_delta";
 data_type = "av_data";
 protocol = "protocol_27";
