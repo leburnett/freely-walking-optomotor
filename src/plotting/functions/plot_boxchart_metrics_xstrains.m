@@ -6,6 +6,7 @@ function plot_boxchart_metrics_xstrains(DATA, strain_ids, cond_idx, data_type, r
 [data_type, resolved_delta] = resolve_delta_data_type(data_type);
 if resolved_delta > 0, delta = resolved_delta; end
     
+% fixed 'strain_colours' colormap for the box plots
 strain_colours = [[220,  40,  30]; ...  % muted red
 [220,  85,  30];...
 [220, 130,  35];...
@@ -58,11 +59,11 @@ for strain_id = 1:ns
     cond_data = combine_timeseries_across_exp_check(data, condition_n, data_type);
 
     if delta == 1
-        cond_data = cond_data - cond_data(:, 300); % relative            
+        cond_data = (cond_data - cond_data(:, 300))*-1; % relative            
     end
 
     if delta == 2
-        cond_data = cond_data - cond_data(:, 1200); % relative            
+        cond_data = (cond_data - cond_data(:, 1200))*-1; % relative            
     end
 
     if data_type == "av_data" ||  data_type == "curv_data" 
@@ -123,9 +124,9 @@ if data_type == "fv_data"
     if delta, yrng = [-15 15]; else, yrng = [0 27]; end
 elseif data_type == "dist_data"
     if delta == 1
-        yrng = [-110 100];
+        yrng = [-10 120];
     elseif delta == 2
-        yrng = [-110 120];
+        yrng = [-100 120];
     else
         yrng = [0 125];
     end
