@@ -11,8 +11,8 @@ end
     hold on;
     if show_phases
         p1= plot(x(1:300), y(1:300), '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1.5, 'DisplayName', 'OFF');
-        p2 = plot(x(300:750), y(300:750), '-', 'Color', [0.231 0.510 0.965], 'LineWidth', 1.5, 'DisplayName', 'CW'); % line for trajectory
-        p3 = plot(x(750:1200), y(750:1200), '-', 'Color', [0.925 0.282 0.600], 'LineWidth', 1.5, 'DisplayName', 'CCW'); % line for trajectory
+        p2 = plot(x(300:750), y(300:750), '-', 'Color', [0.231 0.510 0.965], 'LineWidth', 1.5, 'DisplayName', 'CCW'); % line for trajectory
+        p3 = plot(x(750:1200), y(750:1200), '-', 'Color', [0.925 0.282 0.600], 'LineWidth', 1.5, 'DisplayName', 'CW'); % line for trajectory
         plot(x(1200:1500), y(1200:1500), '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1.5);
     else
         plot(x, y, '-', 'Color', line_colour, 'LineWidth', 1.5, 'DisplayName', cond_name); % line for trajectory
