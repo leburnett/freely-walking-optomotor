@@ -4,11 +4,13 @@
 %  (LMMs) for 4 loop metrics as a function of distance from the arena centre.
 %  Control strain only (jfrc100_es_shibire_kir), frames 750-850 excluded.
 %
-%  Figures (13):
-%    Fig 1-6:  Per-fly OLS fit lines overlaid
-%              (area, duration, |heading|, aspect, ang_diff, dist_from_prev)
-%    Fig 7:    Per-fly slope distributions with Wilcoxon signed-rank test
-%    Fig 8-13: LMM per-fly predicted lines with population line and 95% CI
+%  Figures (17):
+%    Fig 1-6:   Per-fly OLS fit lines overlaid
+%               (area, duration, |heading|, aspect, ang_diff, dist_from_prev)
+%    Fig 7:     Per-fly slope distributions with Wilcoxon signed-rank test
+%    Fig 8-13:  LMM per-fly predicted lines with population line and 95% CI
+%    Fig 14-15: Loop cos/sin(rel_angle) vs distance — radial/tangential bias
+%    Fig 16-17: Inter-loop segment cos/sin(rel_angle) vs distance
 %
 %  Requires DATA in workspace (from comb_data_across_cohorts_cond, protocol 27).
 %  Requires Statistics and Machine Learning Toolbox (fitlme, signrank, corr).
@@ -395,11 +397,210 @@ for mi = 1:N_METRICS
     fprintf('    (p>0.05 means time does not improve the model)\n');
 end
 
+%% ================================================================
+%  SECTION 7: Loop orientation cos/sin and inter-loop segment direction
+%  ================================================================
+%
+%  Computes:
+%    - cos(rel_angle) and sin(rel_angle) for each loop (PCA long axis)
+%    - cos(rel_angle) and sin(rel_angle) for each inter-loop segment
+%      (start→end displacement direction)
+%
+%  Then generates per-fly OLS fit line plots (thin per-fly lines + bold
+%  mean trend) for all four: loop cos, loop sin, segment cos, segment sin.
+
+fprintf('\n=== Computing loop orientations and inter-loop segments ===\n');
+
+ASPECT_THRESHOLD = 1.1;
+MIN_SEG_FRAMES = 5;
+
+% --- Compute loop orientation cos/sin ---
+flat_loop_cos = NaN(size(flat_dist));
+flat_loop_sin = NaN(size(flat_dist));
+
+% We need to re-run loop detection per fly to access frame indices for
+% both orientation and segment extraction. Store loops per fly.
+fly_loops_cell = cell(n_flies, 1);
+for f = 1:n_flies
+    loop_opts.vel = vel_stim(f,:);
+    fly_loops_cell{f} = find_trajectory_loops( ...
+        x_stim(f,:), y_stim(f,:), heading_stim(f,:), loop_opts);
+end
+
+% Compute orientation for each loop in the flat table
+row = 0;
+for f = 1:n_flies
+    loops = fly_loops_cell{f};
+    for k = 1:loops.n_loops
+        row = row + 1;
+        if loops.bbox_aspect(k) < ASPECT_THRESHOLD, continue; end
+        sf = loops.start_frame(k);
+        ef = loops.end_frame(k);
+        [~, ra, ~, ~] = compute_loop_orientation( ...
+            x_stim(f, sf:ef), y_stim(f, sf:ef), ARENA_CENTER);
+        if ~isnan(ra)
+            flat_loop_cos(row) = cosd(ra);
+            flat_loop_sin(row) = sind(ra);
+        end
+    end
+end
+
+fprintf('  Loops with orientation: %d / %d\n', sum(~isnan(flat_loop_cos)), n_total_loops);
+
+% --- Extract inter-loop segments ---
+seg_fly_id  = [];
+seg_cos     = [];
+seg_sin     = [];
+seg_dist    = [];   % distance from centre (midpoint of segment)
+
+for f = 1:n_flies
+    loops = fly_loops_cell{f};
+    if loops.n_loops < 2, continue; end
+
+    x_fly = x_stim(f,:);
+    y_fly = y_stim(f,:);
+
+    for k = 1:(loops.n_loops - 1)
+        s_start = loops.end_frame(k) + 1;
+        s_end   = loops.start_frame(k+1) - 1;
+        if s_end - s_start + 1 < MIN_SEG_FRAMES, continue; end
+
+        x_s = x_fly(s_start:s_end);
+        y_s = y_fly(s_start:s_end);
+        valid = ~isnan(x_s) & ~isnan(y_s);
+        x_v = x_s(valid);  y_v = y_s(valid);
+        if numel(x_v) < MIN_SEG_FRAMES, continue; end
+
+        dx = x_v(end) - x_v(1);
+        dy = y_v(end) - y_v(1);
+        seg_len = sqrt(dx^2 + dy^2);
+        if seg_len < 0.5, continue; end
+
+        dir_ang = atan2d(dy, dx);
+        mx = (x_v(1) + x_v(end)) / 2;
+        my = (y_v(1) + y_v(end)) / 2;
+        d_center = sqrt((mx - ARENA_CENTER(1))^2 + (my - ARENA_CENTER(2))^2);
+        radial_ang = atan2d(my - ARENA_CENTER(2), mx - ARENA_CENTER(1));
+        rel = mod(dir_ang - radial_ang + 180, 360) - 180;
+
+        seg_fly_id = [seg_fly_id; f];
+        seg_cos    = [seg_cos; cosd(rel)];
+        seg_sin    = [seg_sin; sind(rel)];
+        seg_dist   = [seg_dist; d_center];
+    end
+end
+
+fprintf('  Inter-loop segments: %d\n', numel(seg_cos));
+
+%% ================================================================
+%  SECTION 8: Per-fly OLS fit lines for cos/sin (Figures 14-17)
+%  ================================================================
+%
+%  Four figures:
+%    Fig 14: Loop cos(rel_angle) vs distance    — radial bias of loops
+%    Fig 15: Loop sin(rel_angle) vs distance    — tangential bias of loops
+%    Fig 16: Segment cos(rel_angle) vs distance — radial bias of segments
+%    Fig 17: Segment sin(rel_angle) vs distance — tangential bias of segments
+%
+%  Each shows thin per-fly OLS lines with a bold mean trend line and
+%  SEM shading. Loop plots in blue, segment plots in forest green.
+
+col_loop = [0.216 0.494 0.722];     % blue for loops
+col_seg  = [0.133 0.545 0.133];     % forest green for segments
+
+orient_data   = {flat_loop_cos, flat_loop_sin, seg_cos, seg_sin};
+orient_dist   = {flat_dist,     flat_dist,     seg_dist, seg_dist};
+orient_flyid  = {flat_fly_id,   flat_fly_id,   seg_fly_id, seg_fly_id};
+orient_labels = {'Loop cos(rel angle) — radial bias', ...
+                 'Loop sin(rel angle) — tangential bias', ...
+                 'Segment cos(rel angle) — radial bias', ...
+                 'Segment sin(rel angle) — tangential bias'};
+orient_short  = {'loop_cos', 'loop_sin', 'seg_cos', 'seg_sin'};
+orient_cols   = {col_loop, col_loop, col_seg, col_seg};
+orient_dark   = {[0.10 0.25 0.54], [0.10 0.25 0.54], [0.05 0.35 0.05], [0.05 0.35 0.05]};
+
+fig_base = 13;  % continue numbering after existing figures
+
+for oi = 1:4
+    m_vals = orient_data{oi};
+    d_vals = orient_dist{oi};
+    f_ids  = orient_flyid{oi};
+    col_light = orient_cols{oi};
+    col_trend = orient_dark{oi};
+
+    % Compute per-fly OLS fits
+    unique_flies = unique(f_ids(~isnan(m_vals)));
+    fly_slopes_oi = [];
+    fly_ints_oi   = [];
+    fly_ids_oi    = [];
+
+    for fi = 1:numel(unique_flies)
+        fid = unique_flies(fi);
+        idx = f_ids == fid;
+        d_f = d_vals(idx);
+        m_f = m_vals(idx);
+        v = ~isnan(d_f) & ~isnan(m_f);
+        if sum(v) >= MIN_LOOPS_FOR_FIT
+            p_f = polyfit(d_f(v), m_f(v), 1);
+            fly_slopes_oi = [fly_slopes_oi; p_f(1)];
+            fly_ints_oi   = [fly_ints_oi; p_f(2)];
+            fly_ids_oi    = [fly_ids_oi; fid];
+        end
+    end
+
+    n_with_fit = numel(fly_slopes_oi);
+
+    % Plot
+    figure('Position', [30+(oi+6)*20, 30+(oi+6)*20, 750, 550], ...
+        'Name', sprintf('Fig %d: OLS %s vs distance', fig_base+oi, orient_short{oi}));
+    hold on;
+
+    % Per-fly lines (thin, semi-transparent)
+    for fi = 1:n_with_fit
+        y_f = fly_ints_oi(fi) + fly_slopes_oi(fi) * x_fit;
+        plot(x_fit, y_f, '-', 'Color', [col_light 0.2], 'LineWidth', 1);
+    end
+
+    % Mean trend line
+    if n_with_fit >= 3
+        mean_slp = mean(fly_slopes_oi);
+        mean_int = mean(fly_ints_oi);
+        y_avg = mean_int + mean_slp * x_fit;
+        plot(x_fit, y_avg, '-', 'Color', col_trend, 'LineWidth', 3);
+
+        % SEM envelope
+        all_y = fly_ints_oi + fly_slopes_oi * x_fit;
+        y_sem = std(all_y, 0, 1) / sqrt(n_with_fit);
+        fill([x_fit, fliplr(x_fit)], [y_avg+y_sem, fliplr(y_avg-y_sem)], ...
+            col_light, 'FaceAlpha', 0.15, 'EdgeColor', 'none');
+
+        % Wilcoxon test on slopes
+        [p_wil, ~] = signrank(fly_slopes_oi);
+        se_slp = std(fly_slopes_oi) / sqrt(n_with_fit);
+
+        text(5, max(ylim)*0.92, ...
+            sprintf('mean slope = %.4f [%.4f, %.4f]\nWilcoxon p = %.2e\nn = %d flies', ...
+            mean_slp, mean_slp-1.96*se_slp, mean_slp+1.96*se_slp, p_wil, n_with_fit), ...
+            'FontSize', 11, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
+    end
+
+    yline(0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1);
+    xlim([0 ARENA_R+5]);
+    xlabel('Distance from centre (mm)', 'FontSize', 14);
+    ylabel(orient_labels{oi}, 'FontSize', 14);
+    title(sprintf('Per-fly OLS: %s (n=%d flies)', orient_labels{oi}, n_with_fit), 'FontSize', 14);
+    set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+
+    fprintf('%s: mean slope=%.4f, Wilcoxon p=%.3e (n=%d)\n', ...
+        orient_short{oi}, mean(fly_slopes_oi), signrank(fly_slopes_oi), n_with_fit);
+end
+
 %% Summary
 
 fprintf('\n=============================================\n');
 fprintf('  ANALYSIS COMPLETE\n');
 fprintf('  %d loops from %d flies (control strain)\n', n_total_loops, n_flies);
+fprintf('  %d inter-loop segments\n', numel(seg_cos));
 fprintf('  Frames 750-850 excluded (stimulus reversal)\n');
-fprintf('  13 figures generated (6 OLS + 1 slopes + 6 LMM)\n');
+fprintf('  17 figures generated (6 OLS + 1 slopes + 6 LMM + 4 cos/sin OLS)\n');
 fprintf('=============================================\n');
