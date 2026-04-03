@@ -1,14 +1,17 @@
 function fig = plot_metric_vs_wall_distance(bin_centres, bin_means, bin_sems, opts)
-% PLOT_METRIC_VS_WALL_DISTANCE  Line + SEM shading of metric vs wall distance.
+% PLOT_METRIC_VS_WALL_DISTANCE  Line + SEM shading of metric vs distance from centre.
 %
 %   fig = PLOT_METRIC_VS_WALL_DISTANCE(bin_centres, bin_means, bin_sems, opts)
 %
 %   Plots one or more groups as mean lines with SEM shading, binned by
-%   distance from the arena wall. Optionally overlays a linear fit with
+%   distance from the arena centre. Optionally overlays a linear fit with
 %   slope annotation.
 %
+%   NOTE: Despite the legacy function name, bin_centres should now represent
+%   distance from arena centre (mm), not distance from wall.
+%
 %   INPUTS:
-%     bin_centres - [1 x n_bins] wall distance bin centres (mm)
+%     bin_centres - [1 x n_bins] distance-from-centre bin centres (mm)
 %     bin_means   - [1 x n_bins] or [n_groups x n_bins] mean metric values
 %     bin_sems    - [1 x n_bins] or [n_groups x n_bins] SEM values
 %     opts        - struct with optional fields:
@@ -25,7 +28,7 @@ function fig = plot_metric_vs_wall_distance(bin_centres, bin_means, bin_sems, op
 %
 %   EXAMPLE:
 %     opts.ylabel_str = '|AV| (deg/s)';
-%     opts.title_str = 'Angular Velocity vs Wall Distance';
+%     opts.title_str = 'Angular Velocity vs Distance from Centre';
 %     opts.show_fit = true;
 %     plot_metric_vs_wall_distance(bin_centres, means, sems, opts);
 %
@@ -104,14 +107,14 @@ for g = 1:n_groups
 end
 
 %% Formatting
-xlabel(ax_handle, 'Distance from wall (mm)', 'FontSize', 14);
+xlabel(ax_handle, 'Distance from arena centre (mm)', 'FontSize', 14);
 ylabel(ax_handle, ylabel_str, 'FontSize', 14);
 if ~isempty(title_str)
     title(ax_handle, title_str, 'FontSize', 16);
 end
-if ~isempty(labels) && n_groups > 1
-    legend(ax_handle, 'Location', 'best');
-end
+% if ~isempty(labels) && n_groups > 1
+%     legend(ax_handle, 'Location', 'best');
+% end
 set(ax_handle, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
 
 end

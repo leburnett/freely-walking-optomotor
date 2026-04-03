@@ -5,7 +5,7 @@ function geom = compute_turning_event_geometry(events, x_data, y_data, arena_rad
 %
 %   For each detected 360-degree turning event, computes the bounding box
 %   of the trajectory segment, its area, aspect ratio, centre of mass, and
-%   the distance of that centre from the arena wall.
+%   the distance of that centre from the arena centre.
 %
 %   INPUTS:
 %     events       - struct from detect_360_turning_events for ONE fly,
@@ -23,7 +23,7 @@ function geom = compute_turning_event_geometry(events, x_data, y_data, arena_rad
 %       .bbox_aspect      - aspect ratio (max_side / min_side), >= 1
 %       .bbox_center_x    - x coordinate of bounding box centre (mm)
 %       .bbox_center_y    - y coordinate of bounding box centre (mm)
-%       .wall_dist_center - distance from bbox centre to wall (mm)
+%       .centre_dist      - distance from bbox centre to arena centre (mm)
 %       .path_length      - total path length during the turn (mm)
 %       .mean_x           - mean x position (trajectory centroid, mm)
 %       .mean_y           - mean y position (trajectory centroid, mm)
@@ -42,7 +42,7 @@ n_events = events.n_events;
 
 % Pre-allocate
 field_names = {'bbox_width', 'bbox_height', 'bbox_area', 'bbox_aspect', ...
-    'bbox_center_x', 'bbox_center_y', 'wall_dist_center', 'path_length', ...
+    'bbox_center_x', 'bbox_center_y', 'centre_dist', 'path_length', ...
     'mean_x', 'mean_y', 'compactness'};
 for fn = 1:numel(field_names)
     geom.(field_names{fn}) = NaN(1, n_events);
@@ -99,9 +99,8 @@ for e = 1:n_events
     geom.mean_x(e) = mean(x_seg);
     geom.mean_y(e) = mean(y_seg);
 
-    % Distance from bbox centre to wall
-    dist_from_center = sqrt((cx - arena_center(1))^2 + (cy - arena_center(2))^2);
-    geom.wall_dist_center(e) = arena_radius - dist_from_center;
+    % Distance from bbox centre to arena centre
+    geom.centre_dist(e) = sqrt((cx - arena_center(1))^2 + (cy - arena_center(2))^2);
 
     % Path length
     dx = diff(x_seg);

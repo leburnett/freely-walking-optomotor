@@ -7,9 +7,9 @@ function results = sensitivity_analysis_windows(av_data, curv_data, fv_data, ...
 %       bin_edges, window_range)
 %
 %   Sweeps through a range of window widths. For each width, computes
-%   sliding-window metrics and bins them by wall distance. Produces
-%   heatmap matrices showing how the metric-vs-wall-distance relationship
-%   changes with window width.
+%   sliding-window metrics and bins them by distance from arena centre.
+%   Produces heatmap matrices showing how the metric-vs-centre-distance
+%   relationship changes with window width.
 %
 %   INPUTS:
 %     av_data, curv_data, fv_data, dist_data, x_data, y_data
@@ -17,14 +17,14 @@ function results = sensitivity_analysis_windows(av_data, curv_data, fv_data, ...
 %     arena_radius  - scalar, arena radius in mm
 %     fps           - scalar, frames per second
 %     frame_range   - vector of frame indices (e.g. 300:1200)
-%     bin_edges     - vector of wall distance bin edges (mm)
+%     bin_edges     - vector of centre distance bin edges (mm)
 %     window_range  - vector of window widths to test (seconds),
 %                     e.g. 0.1:0.1:3.0
 %
 %   OUTPUT:
 %     results - struct with fields:
 %       .window_range  - tested window values (seconds)
-%       .bin_centres   - wall distance bin centres (mm)
+%       .bin_centres   - centre distance bin centres (mm)
 %       .av_heatmap    - [n_windows x n_bins] mean |AV| per bin per window
 %       .curv_heatmap  - [n_windows x n_bins] mean |curv| per bin per window
 %       .fv_heatmap    - [n_windows x n_bins] mean FV per bin per window
@@ -46,8 +46,8 @@ curv_heatmap = NaN(n_windows, n_bins);
 fv_heatmap   = NaN(n_windows, n_bins);
 tort_heatmap = NaN(n_windows, n_bins);
 
-% Pre-compute wall distance (same for all windows)
-wall_dist = arena_radius - dist_data;
+% Distance from arena centre (same for all windows) — dist_data is already centre distance
+centre_dist = dist_data;
 
 fprintf('Sensitivity analysis: %d windows from %.1fs to %.1fs\n', ...
     n_windows, window_range(1), window_range(end));
@@ -63,10 +63,10 @@ for w = 1:n_windows
         dist_data, x_data, y_data, arena_radius, fps, opts);
 
     % Bin each metric
-    av_heatmap(w, :)   = bin_metric_by_wall_distance(metrics.abs_av,    wall_dist, frame_range, bin_edges);
-    curv_heatmap(w, :) = bin_metric_by_wall_distance(metrics.abs_curv,  wall_dist, frame_range, bin_edges);
-    fv_heatmap(w, :)   = bin_metric_by_wall_distance(metrics.fwd_vel,   wall_dist, frame_range, bin_edges);
-    tort_heatmap(w, :) = bin_metric_by_wall_distance(metrics.tortuosity, wall_dist, frame_range, bin_edges);
+    av_heatmap(w, :)   = bin_metric_by_wall_distance(metrics.abs_av,    centre_dist, frame_range, bin_edges);
+    curv_heatmap(w, :) = bin_metric_by_wall_distance(metrics.abs_curv,  centre_dist, frame_range, bin_edges);
+    fv_heatmap(w, :)   = bin_metric_by_wall_distance(metrics.fwd_vel,   centre_dist, frame_range, bin_edges);
+    tort_heatmap(w, :) = bin_metric_by_wall_distance(metrics.tortuosity, centre_dist, frame_range, bin_edges);
 
     if mod(w, 10) == 0
         fprintf('  Window %d/%d (%.1fs) done\n', w, n_windows, win_s);

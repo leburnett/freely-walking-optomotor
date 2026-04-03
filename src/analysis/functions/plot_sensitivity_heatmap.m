@@ -3,8 +3,8 @@ function fig = plot_sensitivity_heatmap(results, metric_name, opts)
 %
 %   fig = PLOT_SENSITIVITY_HEATMAP(results, metric_name, opts)
 %
-%   Displays a heatmap showing how a metric's relationship with wall
-%   distance changes across different sliding window widths.
+%   Displays a heatmap showing how a metric's relationship with distance
+%   from arena centre changes across different sliding window widths.
 %
 %   INPUTS:
 %     results     - struct from sensitivity_analysis_windows, with fields:
@@ -68,7 +68,7 @@ cb.Label.String = cbar_label;
 cb.Label.FontSize = 12;
 
 %% Formatting
-xlabel(ax_handle, 'Distance from wall (mm)', 'FontSize', 14);
+xlabel(ax_handle, 'Distance from arena centre (mm)', 'FontSize', 14);
 ylabel(ax_handle, 'Window width (s)', 'FontSize', 14);
 title(ax_handle, title_str, 'FontSize', 16);
 set(ax_handle, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);

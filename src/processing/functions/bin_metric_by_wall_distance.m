@@ -1,19 +1,22 @@
 function [bin_means, bin_sems, bin_n, per_fly_means] = ...
     bin_metric_by_wall_distance(metric_data, wall_dist, frame_range, bin_edges)
-% BIN_METRIC_BY_WALL_DISTANCE  Bin any metric by distance from wall.
+% BIN_METRIC_BY_WALL_DISTANCE  Bin any metric by a spatial distance array.
 %
 %   [bin_means, bin_sems, bin_n, per_fly_means] = ...
 %       BIN_METRIC_BY_WALL_DISTANCE(metric_data, wall_dist, frame_range, bin_edges)
 %
-%   For each fly, computes the mean metric value within each wall-distance
+%   For each fly, computes the mean metric value within each distance
 %   bin (across frames in frame_range). Then computes the across-fly mean
 %   and SEM for each bin.
 %
+%   NOTE: Despite the legacy function name, the second argument is now
+%   typically distance from arena centre (dist_data), not wall distance.
+%
 %   INPUTS:
 %     metric_data - [n_flies x n_frames] metric values
-%     wall_dist   - [n_flies x n_frames] distance from wall (mm)
+%     wall_dist   - [n_flies x n_frames] distance array (mm), e.g. dist from centre
 %     frame_range - vector of frame indices to include (e.g. 300:1200)
-%     bin_edges   - vector of bin edges for wall distance (mm), e.g. 0:10:119
+%     bin_edges   - vector of bin edges (mm), e.g. 0:10:120
 %
 %   OUTPUTS:
 %     bin_means     - [1 x n_bins] mean across flies of per-fly bin means

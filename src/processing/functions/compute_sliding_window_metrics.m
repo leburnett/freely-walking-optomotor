@@ -9,7 +9,7 @@ function metrics = compute_sliding_window_metrics(av_data, curv_data, fv_data, .
 %     - |angular velocity| and |curvature| (short window)
 %     - forward velocity (short window)
 %     - path tortuosity (long window)
-%   Also computes wall distance from dist_data.
+%   Also passes through distance from arena centre (dist_data).
 %
 %   INPUTS:
 %     av_data      - [n_flies x n_frames] angular velocity (deg/s)
@@ -30,7 +30,7 @@ function metrics = compute_sliding_window_metrics(av_data, curv_data, fv_data, .
 %       .abs_curv    - sliding mean of |curvature| (deg/mm)
 %       .fwd_vel     - sliding mean of forward velocity (mm/s)
 %       .tortuosity  - path tortuosity index (>=1, 1=straight)
-%       .wall_dist   - distance from wall (mm): arena_radius - dist_data
+%       .centre_dist - distance from arena centre (mm), same as dist_data
 %
 %   EXAMPLE:
 %     opts.short_window = 0.5;
@@ -62,7 +62,7 @@ metrics.fwd_vel  = movmean(fv_data,        short_win_frames, 2, 'omitnan');
 %% Compute tortuosity (separate function, longer window)
 metrics.tortuosity = compute_tortuosity(x_data, y_data, long_win_frames, fps);
 
-%% Wall distance
-metrics.wall_dist = arena_radius - dist_data;
+%% Distance from arena centre (pass through dist_data)
+metrics.centre_dist = dist_data;
 
 end

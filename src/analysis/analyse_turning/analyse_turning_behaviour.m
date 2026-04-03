@@ -1,7 +1,7 @@
 %% ANALYSE_TURNING_BEHAVIOUR - Turning analysis for freely-walking flies
 %
 % Analyses turning behaviour during visual stimulus conditions using
-% sliding-window metrics binned by wall distance and discrete 360-degree
+% sliding-window metrics binned by distance from arena centre and discrete 360-degree
 % turning event detection.
 %
 % Currently configured for jfrc100_es_shibire_kir (control) flies during
@@ -9,13 +9,13 @@
 %
 % SECTIONS:
 %   1. Configuration and data loading
-%   2. Sliding-window metrics vs wall distance (|AV|, |curv|, FV, tortuosity)
+%   2. Sliding-window metrics vs distance from centre (|AV|, |curv|, FV, tortuosity)
 %   3. Sensitivity analysis (window width heatmaps)
 %   4. Metric correlation matrix
 %   5. 360-degree turning event detection (per-rep, split by stimulus half)
 %
 % FIGURES:
-%   Fig 1: 2x2 metric vs wall distance (stimulus vs baseline)
+%   Fig 1: 2x2 metric vs distance from centre (stimulus vs baseline)
 %   Fig 2: 2x2 window width sensitivity heatmaps
 %   Fig 3: Metric correlation matrix (stimulus period)
 %   Fig 4: 360-degree turning events summary (duration, direction, geometry)
@@ -25,7 +25,7 @@
 %   - Processing functions: compute_sliding_window_metrics,
 %     sensitivity_analysis_windows, detect_360_turning_events,
 %     compute_turning_event_geometry, load_per_rep_data,
-%     bin_metric_by_wall_distance
+%     bin_metric_by_wall_distance (bins by distance from centre)
 %   - Plotting functions: plot_metric_vs_wall_distance,
 %     plot_sensitivity_heatmap, plot_turning_events_summary,
 %     plot_metric_correlations
@@ -63,12 +63,13 @@ STIM_ON  = 300;   % frame 300 = stimulus onset
 STIM_MID = 750;   % frame 750 = direction change (CW -> CCW)
 STIM_OFF = 1200;  % frame 1200 = stimulus offset
 
-% Pre-stimulus baseline
-PRE_START = 1;
-PRE_END   = 300;
+% Pre-stimulus baseline - - Use 15s within interval instead - match the
+% duration of the stimulus.Start 50 frames after stimulus stops.
+PRE_START = 1250;
+PRE_END   = 1700;
 
-% Distance-to-wall bins (mm from wall)
-bin_edges = 0:10:ARENA_R;  % 0 = at wall, 120 = at centre
+% Distance-from-centre bins (mm from arena centre)
+bin_edges = 0:10:ARENA_R;  % 0 = at centre, 120 = at wall
 bin_centres = bin_edges(1:end-1) + diff(bin_edges) / 2;
 
 % Colors
@@ -107,26 +108,26 @@ fprintf('  Control: %d flies, %d frames\n', n_ctrl, n_frames);
 fprintf('\n=== Approach A: Sliding-window metrics ===\n');
 
 opts_sw.short_window = 0.5;  % seconds
-opts_sw.long_window  = 2.0;  % seconds
+opts_sw.long_window  = 1.6; %2.0;  % seconds
 metrics_ctrl = compute_sliding_window_metrics(av_ctrl, curv_ctrl, fv_ctrl, ...
     dist_ctrl, x_ctrl, y_ctrl, ARENA_R, FPS, opts_sw);
 
-% Bin each metric by wall distance — stimulus period
+% Bin each metric by distance from centre — stimulus period
 stim_range = STIM_ON:STIM_OFF;
 pre_range  = PRE_START:PRE_END;
 
-[av_means_stim,   av_sems_stim]   = bin_metric_by_wall_distance(metrics_ctrl.abs_av,    metrics_ctrl.wall_dist, stim_range, bin_edges);
-[curv_means_stim, curv_sems_stim] = bin_metric_by_wall_distance(metrics_ctrl.abs_curv,  metrics_ctrl.wall_dist, stim_range, bin_edges);
-[fv_means_stim,   fv_sems_stim]   = bin_metric_by_wall_distance(metrics_ctrl.fwd_vel,   metrics_ctrl.wall_dist, stim_range, bin_edges);
-[tort_means_stim, tort_sems_stim] = bin_metric_by_wall_distance(metrics_ctrl.tortuosity, metrics_ctrl.wall_dist, stim_range, bin_edges);
+[av_means_stim,   av_sems_stim]   = bin_metric_by_wall_distance(metrics_ctrl.abs_av,    metrics_ctrl.centre_dist, stim_range, bin_edges);
+[curv_means_stim, curv_sems_stim] = bin_metric_by_wall_distance(metrics_ctrl.abs_curv,  metrics_ctrl.centre_dist, stim_range, bin_edges);
+[fv_means_stim,   fv_sems_stim]   = bin_metric_by_wall_distance(metrics_ctrl.fwd_vel,   metrics_ctrl.centre_dist, stim_range, bin_edges);
+[tort_means_stim, tort_sems_stim] = bin_metric_by_wall_distance(metrics_ctrl.tortuosity, metrics_ctrl.centre_dist, stim_range, bin_edges);
 
-% Bin — baseline period
-[av_means_pre,   av_sems_pre]   = bin_metric_by_wall_distance(metrics_ctrl.abs_av,    metrics_ctrl.wall_dist, pre_range, bin_edges);
-[curv_means_pre, curv_sems_pre] = bin_metric_by_wall_distance(metrics_ctrl.abs_curv,  metrics_ctrl.wall_dist, pre_range, bin_edges);
-[fv_means_pre,   fv_sems_pre]   = bin_metric_by_wall_distance(metrics_ctrl.fwd_vel,   metrics_ctrl.wall_dist, pre_range, bin_edges);
-[tort_means_pre, tort_sems_pre] = bin_metric_by_wall_distance(metrics_ctrl.tortuosity, metrics_ctrl.wall_dist, pre_range, bin_edges);
+% Bin — baseline period (by distance from centre)
+[av_means_pre,   av_sems_pre]   = bin_metric_by_wall_distance(metrics_ctrl.abs_av,    metrics_ctrl.centre_dist, pre_range, bin_edges);
+[curv_means_pre, curv_sems_pre] = bin_metric_by_wall_distance(metrics_ctrl.abs_curv,  metrics_ctrl.centre_dist, pre_range, bin_edges);
+[fv_means_pre,   fv_sems_pre]   = bin_metric_by_wall_distance(metrics_ctrl.fwd_vel,   metrics_ctrl.centre_dist, pre_range, bin_edges);
+[tort_means_pre, tort_sems_pre] = bin_metric_by_wall_distance(metrics_ctrl.tortuosity, metrics_ctrl.centre_dist, pre_range, bin_edges);
 
-% Figure: 2x2 metric vs wall distance (stimulus vs baseline)
+% Figure: 2x2 metric vs distance from centre (stimulus vs baseline)
 fig_metrics = figure('Position', [50 50 1200 900]);
 tl = tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
 sgtitle(tl, sprintf('Control — Condition %d (60° Gratings 4Hz)', key_condition), 'FontSize', 18);
@@ -146,7 +147,7 @@ for p = 1:4
     popts.labels = {'Baseline', 'Stimulus'};
     popts.ylabel_str = metric_names{p};
     popts.title_str = metric_names{p};
-    popts.show_fit = true;
+    popts.show_fit = false;
     popts.ax = ax;
     plot_metric_vs_wall_distance(bin_centres, combined_means, combined_sems, popts);
 end

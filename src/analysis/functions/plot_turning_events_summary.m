@@ -23,7 +23,7 @@ function fig = plot_turning_events_summary(events_h1, geom_h1, events_h2, geom_h
 %   PANELS:
 %     A: Histogram of turns per fly (half 1 vs half 2)
 %     B: Histogram of turn duration (s)
-%     C: Scatter of bbox area vs wall distance (colored by half)
+%     C: Scatter of bbox area vs distance from centre (colored by half)
 %     D: Histogram of bbox aspect ratio
 %
 % See also: detect_360_turning_events, compute_turning_event_geometry
@@ -59,8 +59,8 @@ for f = 1:n_flies
     area_h2   = [area_h2, geom_h2(f).bbox_area]; %#ok<AGROW>
     aspect_h1 = [aspect_h1, geom_h1(f).bbox_aspect]; %#ok<AGROW>
     aspect_h2 = [aspect_h2, geom_h2(f).bbox_aspect]; %#ok<AGROW>
-    wd_h1     = [wd_h1, geom_h1(f).wall_dist_center]; %#ok<AGROW>
-    wd_h2     = [wd_h2, geom_h2(f).wall_dist_center]; %#ok<AGROW>
+    wd_h1     = [wd_h1, geom_h1(f).centre_dist]; %#ok<AGROW>
+    wd_h2     = [wd_h2, geom_h2(f).centre_dist]; %#ok<AGROW>
 end
 
 %% Figure
@@ -95,16 +95,16 @@ ylabel(ax2, 'Count (events)', 'FontSize', 14);
 title(ax2, 'B — Turn duration', 'FontSize', 16);
 set(ax2, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
 
-% Panel C: Bbox area vs wall distance
+% Panel C: Bbox area vs distance from centre
 ax3 = nexttile(tl);
 hold(ax3, 'on');
 valid_h1 = ~isnan(area_h1) & ~isnan(wd_h1);
 valid_h2 = ~isnan(area_h2) & ~isnan(wd_h2);
 scatter(ax3, wd_h1(valid_h1), area_h1(valid_h1), 30, cols(1,:), 'filled', 'MarkerFaceAlpha', 0.5);
 scatter(ax3, wd_h2(valid_h2), area_h2(valid_h2), 30, cols(2,:), 'filled', 'MarkerFaceAlpha', 0.5);
-xlabel(ax3, 'Wall distance of turn centre (mm)', 'FontSize', 14);
+xlabel(ax3, 'Distance from arena centre (mm)', 'FontSize', 14);
 ylabel(ax3, 'Bounding box area (mm²)', 'FontSize', 14);
-title(ax3, 'C — Turn area vs wall distance', 'FontSize', 16);
+title(ax3, 'C — Turn area vs distance from centre', 'FontSize', 16);
 set(ax3, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
 
 % Panel D: Bbox aspect ratio

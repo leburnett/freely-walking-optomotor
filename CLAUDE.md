@@ -480,6 +480,9 @@ All MATLAB figures should follow these aesthetic defaults unless explicitly told
   ```
   Full list (19 colours) is in `python/freely-walking-python/dashboard/constants.py` → `STRAIN_COLORS`.
 
+### Axis label conventions
+- **Distance from centre, not wall:** Always label spatial axes as **"Distance from arena centre (mm)"**, never "Distance from wall (mm)", unless explicitly told otherwise. The underlying data (`dist_data`) already represents distance from the arena centre (0 = centre, 120 = wall).
+
 ### Standard boilerplate for new figures
 After creating axes or subplots, apply:
 ```matlab
