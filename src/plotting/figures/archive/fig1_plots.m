@@ -271,12 +271,18 @@ hFig.Position = [27  622  1774  425];
 %% Trajectories. 
 
 cond_ids = [10, 9, 1];
+show_phases = 1;
 
 % [807, 802, 791, 314, 24, 776, 786, 804, 746, 215, 743, 701, 705, 727, 239]
 % [24, 692, 646, 639, 631, 245, 637, 625, 581, 583, 87, 547]
 for f = [543, 557, 544, 523, 370, 312, 396, 212, 816, 818, 166]
-    plot_traj_xcond(DATA, strain, cond_ids, f)
+    plot_traj_xcond(DATA, strain, cond_ids, f, show_phases)
 end 
+
+for f = [807, 802, 791, 314, 24, 776, 786, 804, 746, 215, 743, 701, 705, 727, 239]
+    plot_traj_xcond(DATA, strain, cond_ids, f, show_phases)
+end 
+
 
 cond_idx = 7; %10 
 % fly_ids = [557, 543, 637]; %557

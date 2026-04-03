@@ -1,4 +1,4 @@
-function plot_traj_xcond(DATA, strain, cond_ids, fly_idx)
+function plot_traj_xcond(DATA, strain, cond_ids, fly_idx, show_phases)
 
 figure;
 
@@ -35,7 +35,14 @@ cond_titles = {'4Hz',...
 % Define the center of the arena
 cx = 122.8079; %calib.centroids(1)/calib.PPM; 
 cy = 124.7267; %calib.centroids(2)/calib.PPM;
-frame_rng_stim = 300:1200;
+if show_phases
+    frame_rng_stim = 1:1500;
+else
+    frame_rng_stim = 300:1200;
+end 
+
+% By default show both start and end markers
+start_stop = 3;
 
 for c = 1:n_conditions
 
@@ -64,7 +71,7 @@ for c = 1:n_conditions
     x = x_data(frame_rng_stim); % x position over time (1 x n)
     y = y_data(frame_rng_stim); % y position over time (1 x n)
     
-    plot_trajectory_condition(x, y, cx, cy, line_colour, cond_name, traj_only)
+    plot_trajectory_condition(x, y, cx, cy, line_colour, cond_name, traj_only, start_stop, show_phases)
     axis off
     hold on 
 end 
