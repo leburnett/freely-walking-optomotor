@@ -47,8 +47,27 @@ function plot_pval_heatmap(pvals_all, target_mean_all, control_mean_all, strain_
     image(heatmap_rgb);
     
     n_strains = height(strain_names);
+
+    % Build cell-type display labels (matching scatter plot in fig4)
+    display_labels = cell(n_strains, 1);
+    for si = 1:n_strains
+        sn = strain_names{si};
+        if strcmp(sn, 'jfrc100_es_shibire_kir')
+            display_labels{si} = 'ES';
+        elseif startsWith(sn, 'l1l4_')
+            display_labels{si} = 'L1-L4';
+        else
+            lbl = regexprep(sn, '^ss\d+_', '');
+            lbl = strrep(lbl, '_shibire_kir', '');
+            lbl = strrep(lbl, 't4t5', 'T4-T5');
+            lbl = strrep(lbl, 'DCH_VCH', 'DCH-VCH');
+            lbl = strrep(lbl, 'Pm2ab', 'Pm2a-b');
+            display_labels{si} = lbl;
+        end
+    end
+
     yticks(1:n_strains)
-    yticklabels(strrep(strain_names, '_', '-'))
+    yticklabels(display_labels)
 
     % Boundaries between metric categories.
     hold on; 
