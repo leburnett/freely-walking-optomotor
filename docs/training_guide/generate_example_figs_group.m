@@ -44,7 +44,7 @@ end
 
 % Shared parameters
 ES_STRAIN     = 'jfrc100_es_shibire_kir';
-TARGET_STRAIN = 'ss2344_T4_shibire_kir';
+TARGET_STRAIN = 'l1l4_jfrc100_shibire_kir';
 SEX           = 'F';
 
 COND_TITLES_27 = {"60deg-gratings-4Hz", "60deg-gratings-8Hz", ...
