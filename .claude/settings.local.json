@@ -161,7 +161,8 @@
       "Bash(mkdir -p /tmp/svgpng)",
       "Bash(qlmanage -t -s 2000 -o /tmp/svgpng/ /Users/burnettl/Documents/GitHub/freely-walking-optomotor/docs/training_guide/diagrams/03_data_flow_pipeline.svg)",
       "Bash(python -c \"from config.config import *; print\\(''OK''\\)\")",
-      "Bash(python -c \"from config.config import *; print\\(''OK — idempotent run''\\)\")"
+      "Bash(python -c \"from config.config import *; print\\(''OK — idempotent run''\\)\")",
+      "Bash(find /Users/burnettl/Documents/GitHub/freely-walking-optomotor/results -name *strain* -type f)"
     ]
   }
 }
