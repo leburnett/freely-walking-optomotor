@@ -288,12 +288,9 @@ cond_titles = {'60deg 4Hz', '60deg 8Hz', 'ON bars', 'OFF bars', ...
     'ON curt.', 'OFF curt.', 'RevPhi 2Hz', 'RevPhi 4Hz', ...
     'Flicker', 'Static', 'Offset CoR', 'Bar fix.'};
 
-% White-to-dark-red sequential colormap
+% White-to-black sequential greyscale colormap
 n_colors = 256;
-red_cmap = zeros(n_colors, 3);
-red_cmap(:, 1) = linspace(1, 0.6, n_colors);       % R: 1 → 0.6
-red_cmap(:, 2) = linspace(1, 0.05, n_colors);       % G: 1 → 0.05
-red_cmap(:, 3) = linspace(1, 0.05, n_colors);       % B: 1 → 0.05
+grey_cmap = repmat(linspace(1, 0, n_colors)', 1, 3);
 
 % Flip rows so strain_order{1} is at the bottom
 reject_matrix_f = reject_matrix(flip_idx, :);
@@ -301,7 +298,7 @@ display_labels_f_heat = display_labels(flip_idx);
 
 fig3 = figure('Position', [50 50 1000 600]);
 imagesc(reject_matrix_f);
-colormap(gca, red_cmap);
+colormap(gca, grey_cmap);
 cb = colorbar;
 cb.Label.String = '% reps rejected';
 cb.Label.FontSize = 12;
