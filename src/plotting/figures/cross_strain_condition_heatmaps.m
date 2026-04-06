@@ -66,7 +66,21 @@ for c = 1:n_conds
     ctrl_turning(:, c)    = cm(:, TURNING_COL);
 end
 
-%% 3 — FDR correction
+%% 3 — Reorder columns: move "Offset CoR" (cond 11) to position 3
+
+% Original order: 1..12 where 11 = Offset CoR
+% New order: 1, 2, 11, 3, 4, 5, 6, 7, 8, 9, 10, 12
+col_order = [1, 2, 11, 3, 4, 5, 6, 7, 8, 9, 10, 12];
+
+pvals_centring  = pvals_centring(:, col_order);
+target_centring = target_centring(:, col_order);
+ctrl_centring   = ctrl_centring(:, col_order);
+pvals_turning   = pvals_turning(:, col_order);
+target_turning  = target_turning(:, col_order);
+ctrl_turning    = ctrl_turning(:, col_order);
+cond_titles     = cond_titles(col_order);
+
+%% 4 — FDR correction
 
 % Joint FDR correction across ALL comparisons in both heatmaps
 all_pvals = [pvals_centring(:); pvals_turning(:)];
@@ -75,7 +89,7 @@ n_total = n_strains * n_conds;
 adj_centring = reshape(adj_all(1:n_total), n_strains, n_conds);
 adj_turning  = reshape(adj_all(n_total+1:end), n_strains, n_conds);
 
-%% 4 — Plot heatmaps
+%% 5 — Plot heatmaps
 
 % Clean strain labels for display
 strain_labels = strrep(strain_names_heat, '_', '-');
@@ -88,6 +102,8 @@ fig = figure('Position', [50 50 1400 600]);
 subplot(1, 2, 1);
 rgb_centring = build_heatmap_rgb(adj_centring, ctrl_centring, target_centring);
 image(rgb_centring);
+hold on;
+draw_grid_lines(n_strains, n_conds);
 yticks(1:n_strains);
 yticklabels(strain_labels);
 xticks(1:n_conds);
@@ -95,11 +111,14 @@ xticklabels(cond_titles);
 xtickangle(45);
 title('A — Centring (relative distance at end of stim)', 'FontSize', 14);
 set(gca, 'FontSize', 9, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+hold off;
 
 % Panel B: Turning
 subplot(1, 2, 2);
 rgb_turning = build_heatmap_rgb(adj_turning, target_turning, ctrl_turning);
 image(rgb_turning);
+hold on;
+draw_grid_lines(n_strains, n_conds);
 yticks(1:n_strains);
 yticklabels(strain_labels);
 xticks(1:n_conds);
@@ -107,6 +126,7 @@ xticklabels(cond_titles);
 xtickangle(45);
 title('B — Turning (mean turning rate during stim)', 'FontSize', 14);
 set(gca, 'FontSize', 9, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+hold off;
 
 sgtitle('Cross-strain comparison vs ES control — P27 all conditions', 'FontSize', 16);
 
@@ -116,7 +136,7 @@ if save_figs
     close(fig);
 end
 
-%% 5 — Print summary
+%% 6 — Print summary
 
 fprintf('\n--- Heatmap summary ---\n');
 fprintf('Centring: %d/%d cells significant (FDR q<0.05)\n', ...
@@ -220,9 +240,25 @@ for s = 1:n_strains
     fprintf('\n');
 end
 
+f = gcf;
+f.Position= [188   649   610   300];
+
 fprintf('\n=== Done ===\n');
 
-%% Helper function
+%% Helper functions
+
+function draw_grid_lines(n_rows, n_cols)
+%DRAW_GRID_LINES  Light grey grid lines between heatmap cells.
+    grid_color = [0.75 0.75 0.75];
+    % Horizontal lines
+    for r = 0.5:(n_rows + 0.5)
+        plot([0.5, n_cols + 0.5], [r, r], '-', 'Color', grid_color, 'LineWidth', 0.5);
+    end
+    % Vertical lines
+    for c = 0.5:(n_cols + 0.5)
+        plot([c, c], [0.5, n_rows + 0.5], '-', 'Color', grid_color, 'LineWidth', 0.5);
+    end
+end
 
 function rgb = build_heatmap_rgb(adj_p, target_mean, ctrl_mean)
 % BUILD_HEATMAP_RGB  Red/blue RGB heatmap from p-values and direction.
