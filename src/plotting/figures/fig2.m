@@ -85,7 +85,7 @@ for mi = 1:n_metrics
     figure('Name', sprintf('TS 60deg: %s', m_title));
     plot_xcond_per_strain_p31('protocol_31', dt_str, cond_60, ...
         {control_strain}, ts_params, DATA_31);
-    title(sprintf('60deg gratings — %s', m_title), 'FontSize', 14);
+    % title(sprintf('60deg gratings — %s', m_title), 'FontSize', 14);
 end
 
 %% 4 — Time series: 15deg gratings (5 metrics)
@@ -104,7 +104,7 @@ for mi = 1:n_metrics
     figure('Name', sprintf('TS 15deg: %s', m_title));
     plot_xcond_per_strain_p31('protocol_31', dt_str, cond_15, ...
         {control_strain}, ts_params, DATA_31);
-    title(sprintf('15deg gratings — %s', m_title), 'FontSize', 14);
+    % title(sprintf('15deg gratings — %s', m_title), 'FontSize', 14);
 end
 
 %% 5 — Violin plots: 60deg gratings (5 metrics, 4 speeds each)
