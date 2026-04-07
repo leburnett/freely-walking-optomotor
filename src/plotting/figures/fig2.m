@@ -141,12 +141,12 @@ for mi = 1:n_metrics
 
     % figure('Name', sprintf('Violin 60deg: %s', m_title));
     plot_violin(group_data, labels_60, opts);
-    title(sprintf('60deg gratings — %s', m_title), 'FontSize', 14);
+    % title(sprintf('60deg gratings — %s', m_title), 'FontSize', 14);
     yl = ylim; ylim([yl(1), yl(2) + diff(yl) * 0.15]);
+    f = gcf; f.Position = [1260   84  255  456];
+    ax = gca; ax.FontSize = 14;
+    hold on; yline(0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5); hold off;
 
-    if dt == "fv_data" || dt == "av_data" || dt == "curv_data"
-        hold on; yline(0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5); hold off;
-    end
 end
 
 %% 6 — Violin plots: 15deg gratings (5 metrics, 4 speeds each)
@@ -181,10 +181,10 @@ for mi = 1:n_metrics
 
     % figure('Name', sprintf('Violin 15deg: %s', m_title));
     plot_violin(group_data, labels_15, opts);
-    title(sprintf('15deg gratings — %s', m_title), 'FontSize', 14);
+    % title(sprintf('15deg gratings — %s', m_title), 'FontSize', 14);
     yl = ylim; ylim([yl(1), yl(2) + diff(yl) * 0.15]);
+    f = gcf; f.Position = [1260   84  255  456];
+    ax = gca; ax.FontSize = 14;
+    hold on; yline(0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5); hold off;
 
-    if dt == "fv_data" || dt == "av_data" || dt == "curv_data"
-        hold on; yline(0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5); hold off;
-    end
 end

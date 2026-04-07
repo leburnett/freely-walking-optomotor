@@ -157,7 +157,7 @@ if show_median && exist('medians', 'var')
         if ~isnan(medians(g))
             text(ax, g, yl(2), sprintf('%.1f', medians(g)), ...
                 'HorizontalAlignment', 'center', 'VerticalAlignment', 'top', ...
-                'FontSize', 9, 'FontWeight', 'bold', 'Color', [0.3 0.3 0.3]);
+                'FontSize', 10, 'FontWeight', 'bold', 'Color', [0.3 0.3 0.3]);
         end
     end
 end
