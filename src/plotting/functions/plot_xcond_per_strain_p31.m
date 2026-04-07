@@ -48,34 +48,38 @@ function plot_xcond_per_strain_p31(protocol, data_type, cond_ids, strain_names, 
               187  75  12; ...  % spare
               ] ./ 255;
 
-    % Y-axis limits
-    if params.plot_sd == 1
-        if data_type == "fv_data"
-            if delta, rng = [-15 15]; else, rng = [0 22]; end
-        elseif data_type == "dist_data"
-            if delta, rng = [-5 40]; else, rng = [0 120]; end
-        elseif data_type == "av_data" || data_type == "curv_data"
-            rng = [-350 350];
-        else
-            rng = [];
-        end
-    else
-        if data_type == "fv_data"
-            if delta, rng = [-8 8]; else, rng = [0 15]; end
-        elseif data_type == "dist_data"
-            if delta, rng = [-5 40]; else, rng = [30 90]; end
-        elseif data_type == "av_data"
-            rng = [-245 245];
-        elseif data_type == "curv_data"
-            rng = [-200 200];
-        else
-            rng = [];
+    % Compute data-driven y-limits from all conditions being plotted
+    y_global_min =  Inf;
+    y_global_max = -Inf;
+
+    for strain_id = 1:numel(strain_names)
+        strain = strain_names{strain_id};
+        for c = 1:numel(cond_ids)
+            condition_n = cond_ids(c);
+            data_s = DATA.(strain).(sex);
+            cd_tmp = combine_timeseries_across_exp(data_s, condition_n, data_type);
+            if delta
+                cd_tmp = (cd_tmp - cd_tmp(:, 300)) * -1;
+            end
+            md_tmp = squeeze(nanmean(reshape(cd_tmp, 2, [], size(cd_tmp, 2)), 1)); %#ok<NANMEAN>
+            mean_tmp = nanmean(md_tmp); %#ok<NANMEAN>
+
+            if params.plot_sem == 1
+                spread = nanstd(md_tmp) / sqrt(size(md_tmp, 1)); %#ok<NANSTD>
+            elseif params.plot_sd == 1
+                spread = nanstd(md_tmp); %#ok<NANSTD>
+            else
+                spread = zeros(size(mean_tmp));
+            end
+
+            y_global_min = min(y_global_min, min(mean_tmp - spread, [], 'omitnan'));
+            y_global_max = max(y_global_max, max(mean_tmp + spread, [], 'omitnan'));
         end
     end
 
-    if isempty(rng)
-        rng = [-inf inf];
-    end
+    % Add 10% padding
+    y_pad = (y_global_max - y_global_min) * 0.10;
+    rng = [y_global_min - y_pad, y_global_max + y_pad];
 
     %% PLOT
 
