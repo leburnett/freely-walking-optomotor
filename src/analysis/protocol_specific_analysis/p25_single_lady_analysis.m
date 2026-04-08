@@ -175,7 +175,7 @@ end
 
 
 
-%% Method 2 - use grouped flies for p25. 
+%% Method 2 - use grouped flies for p25. Bootstrap method. 
 
 load(fullfile(cfg.results, "protocol_25", "DATA_single_ladies_es_shibire_kir_p25.mat"), 'DATA');
 
