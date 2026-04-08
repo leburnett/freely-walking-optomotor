@@ -188,3 +188,64 @@ for mi = 1:n_metrics
     hold on; yline(0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5); hold off;
 
 end
+
+%% 7 — Errorbar tuning curves: metric vs stimulus speed (ES control)
+%
+% For each metric, 60deg (blue) and 15deg (pink) on the same axes.
+
+speeds = [60, 120, 240, 480];
+
+for mi = 1:n_metrics
+    dt       = metrics{mi, 1};
+    delta    = metrics{mi, 2};
+    frm_rng  = metrics{mi, 3};
+    m_title  = metrics{mi, 4};
+
+    figure('Position', [560 603 400 420], 'Name', sprintf('Tuning: %s', m_title));
+    hold on;
+
+    for sf = 1:2
+        if sf == 1
+            conds = cond_60;  sf_label = '60deg';
+            eb_colors = col_12(cond_60, :);
+        else
+            conds = cond_15;  sf_label = '15deg';
+            eb_colors = col_12(cond_15, :);
+        end
+
+        vals = NaN(1, numel(conds));
+        sems_v = NaN(1, numel(conds));
+
+        for ci = 1:numel(conds)
+            cond_data = combine_timeseries_across_exp_check(data_ctrl, conds(ci), dt);
+            if delta == 1
+                cond_data = (cond_data - cond_data(:, 300)) * -1;
+            end
+            if dt == "av_data" || dt == "curv_data"
+                cond_data(:, 750:1200) = cond_data(:, 750:1200) * -1;
+            end
+            per_fly = nanmean(cond_data(:, frm_rng), 2); %#ok<NANMEAN>
+            vals(ci)   = nanmean(per_fly); %#ok<NANMEAN>
+            sems_v(ci) = nanstd(per_fly) / sqrt(numel(per_fly)); %#ok<NANSTD>
+        end
+
+        % Coloured markers with errorbars
+        for ci = 1:numel(conds)
+            errorbar(speeds(ci), vals(ci), sems_v(ci), 'o', 'Color', eb_colors(ci, :), ...
+                'LineWidth', 2, 'MarkerFaceColor', 'w', 'MarkerEdgeColor', eb_colors(ci, :), ...
+                'MarkerSize', 7, 'CapSize', 5);
+        end
+
+        % Connecting line in darkest colour
+        plot(speeds, vals, '-', 'Color', eb_colors(end, :), 'LineWidth', 1.5);
+    end
+
+    yline(0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5);
+    xlabel('Stimulus speed (deg/s)', 'FontSize', 14);
+    ylabel(m_title, 'FontSize', 14);
+    legend({'', '', '', '', '60deg', '', '', '', '', '15deg'}, ...
+        'Location', 'best', 'FontSize', 11);
+    xticks(speeds);
+    xticklabels({'60', '120', '240', '480'});
+    set(gca, 'FontSize', 14, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+end
