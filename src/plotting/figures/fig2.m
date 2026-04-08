@@ -249,3 +249,86 @@ for mi = 1:n_metrics
     xticklabels({'60', '120', '240', '480'});
     set(gca, 'FontSize', 14, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
 end
+
+%% 8 — Scatter plot: ES control, centring vs turning, all 8 speed conditions
+%
+% Each marker = one condition (4 x 60deg in blue, 4 x 15deg in pink).
+
+all_conds   = [cond_60, cond_15];
+all_labels  = [labels_60, labels_15];
+all_colors  = [col_12(cond_60, :); col_12(cond_15, :)];
+sf_prefix   = [repmat({'60deg'}, 1, 4), repmat({'15deg'}, 1, 4)];
+n_scatter   = numel(all_conds);
+
+turning_sc  = NaN(n_scatter, 1);
+centring_sc = NaN(n_scatter, 1);
+
+for ci = 1:n_scatter
+    cond_data_av = combine_timeseries_across_exp_check(data_ctrl, all_conds(ci), "av_data");
+    cond_data_av(:, 750:1200) = cond_data_av(:, 750:1200) * -1;
+    turning_sc(ci) = nanmean(nanmean(cond_data_av(:, 300:1200), 2)); %#ok<NANMEAN>
+
+    cond_data_dist = combine_timeseries_across_exp_check(data_ctrl, all_conds(ci), "dist_data");
+    dist_delta = (cond_data_dist - cond_data_dist(:, 300)) * -1;
+    centring_sc(ci) = nanmean(nanmean(dist_delta(:, 1170:1200), 2)); %#ok<NANMEAN>
+end
+
+figure('Position', [50 50 500 450], 'Name', 'Scatter ES: speed conditions');
+hold on;
+
+xline(0, ':', 'Color', [0 0 0], 'LineWidth', 0.5);
+yline(0, ':', 'Color', [0 0 0], 'LineWidth', 0.5);
+
+% Plot markers
+for ci = 1:n_scatter
+    scatter(turning_sc(ci), centring_sc(ci), 100, all_colors(ci, :), 'filled', ...
+        'MarkerEdgeColor', [0.3 0.3 0.3], 'LineWidth', 0.5);
+end
+
+% Connect 60deg and 15deg points separately with lines
+% plot(turning_sc(1:4), centring_sc(1:4), '-', 'Color', col_12(4, :), 'LineWidth', 1);
+% plot(turning_sc(5:8), centring_sc(5:8), '-', 'Color', col_12(9, :), 'LineWidth', 1);
+
+% Labels with anti-overlap
+scatter_labels = cell(n_scatter, 1);
+for ci = 1:n_scatter
+    scatter_labels{ci} = sprintf('%s %s', sf_prefix{ci}, all_labels{ci});
+end
+
+x_range_sc = max(turning_sc) - min(turning_sc);
+y_range_sc = max(centring_sc) - min(centring_sc);
+if x_range_sc == 0; x_range_sc = 1; end
+if y_range_sc == 0; y_range_sc = 1; end
+x_off_sc = x_range_sc * 0.05;
+y_off_sc = y_range_sc * 0.05;
+
+txt_x_sc = turning_sc + x_off_sc;
+txt_y_sc = centring_sc + y_off_sc;
+
+min_dy_sc = y_range_sc * 0.055;
+min_dx_sc = x_range_sc * 0.10;
+for pass = 1:10
+    [~, sort_idx] = sort(txt_y_sc);
+    for i = 2:n_scatter
+        a = sort_idx(i-1);
+        b = sort_idx(i);
+        if abs(txt_x_sc(a) - txt_x_sc(b)) < min_dx_sc && ...
+                abs(txt_y_sc(a) - txt_y_sc(b)) < min_dy_sc
+            mid = (txt_y_sc(a) + txt_y_sc(b)) / 2;
+            txt_y_sc(a) = mid - min_dy_sc / 2;
+            txt_y_sc(b) = mid + min_dy_sc / 2;
+        end
+    end
+end
+
+for ci = 1:n_scatter
+    plot([turning_sc(ci), txt_x_sc(ci)], [centring_sc(ci), txt_y_sc(ci)], ...
+        '-', 'Color', [0.6 0.6 0.6], 'LineWidth', 0.5);
+    text(txt_x_sc(ci), txt_y_sc(ci), scatter_labels{ci}, 'FontSize', 8, ...
+        'VerticalAlignment', 'middle');
+end
+
+xlabel('Mean angular velocity during stimulus (deg/s)', 'FontSize', 14);
+ylabel('Centring (relative distance at end)', 'FontSize', 14);
+set(gca, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+f = gcf; f.Position = [50    50   314   259];
