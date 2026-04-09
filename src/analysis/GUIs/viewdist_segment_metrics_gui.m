@@ -280,7 +280,3 @@ fig.UserData = state;
 
 % Initial draw
 redraw(fig);
-
-fprintf('\nGUI ready.\n');
-fprintf('  Control strain always shown in black\n');
-fprintf('  Tick checkboxes to overlay other strains\n');
