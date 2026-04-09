@@ -39,15 +39,13 @@ sex = 'F';
 
 STIM_ON  = 300;
 STIM_OFF = 1200;
-MASK_START = 750;
-MASK_END   = 850;
 
 MIN_SEG_FRAMES = 5;  % minimum frames for an inter-loop segment
 
 %% Loop detection + orientation + inter-loop segments (all strains)
 
 loop_opts.lookahead_frames = 75;
-loop_opts.min_loop_frames  = 10;
+loop_opts.min_loop_frames  = 5;
 loop_opts.fps              = FPS;
 loop_opts.arena_center     = ARENA_CENTER;
 loop_opts.arena_radius     = ARENA_R;
@@ -102,19 +100,10 @@ for si = 1:numel(all_strain_names)
                 y_fly = rep_data.y_data(f, sr);
                 h_fly = rep_data.heading_data(f, sr);
 
-                % Masked copies for detection
-                x_det = x_fly;  y_det = y_fly;  h_det = h_fly;
-                mask_s = max(MASK_START - STIM_ON + 1, 1);
-                mask_e = min(MASK_END - STIM_ON + 1, numel(x_fly));
-                x_det(mask_s:mask_e) = NaN;
-                y_det(mask_s:mask_e) = NaN;
-                h_det(mask_s:mask_e) = NaN;
-
                 v_fly = vel_rep(f, sr);
-                v_fly(mask_s:mask_e) = NaN;
                 loop_opts.vel = v_fly;
 
-                loops = find_trajectory_loops(x_det, y_det, h_det, loop_opts);
+                loops = find_trajectory_loops(x_fly, y_fly, h_fly, loop_opts);
 
                 % --- Compute loop orientations ---
                 orient = struct();
@@ -374,10 +363,10 @@ fig.UserData = state;
                         'Color', arrow_col, 'LineWidth', 2.5, 'MaxHeadSize', 1.5);
                     n_loop_arrows = n_loop_arrows + 1;
 
-                    mid_frame = round((sf + ef) / 2);
-                    text(ax_h, x(mid_frame) + 1, y(mid_frame) + 1, ...
-                        sprintf('L%d %.0f°', k, orient.rel_angle(k)), ...
-                        'FontSize', 7, 'Color', col, 'FontWeight', 'bold');
+                    % mid_frame = round((sf + ef) / 2);
+                    % text(ax_h, x(mid_frame) + 1, y(mid_frame) + 1, ...
+                    %     sprintf('L%d %.0f°', k, orient.rel_angle(k)), ...
+                    %     'FontSize', 7, 'Color', col, 'FontWeight', 'bold');
                 end
             end
         end
@@ -395,10 +384,10 @@ fig.UserData = state;
                     'Color', [0.3 0.75 0.3], 'LineWidth', 2);
 
                 % Start/end markers for segment
-                plot(ax_h, x(ss), y(ss), '^', 'MarkerSize', 6, ...
-                    'MarkerFaceColor', [0.3 0.75 0.3], 'MarkerEdgeColor', 'k', 'LineWidth', 0.5);
-                plot(ax_h, x(se), y(se), 'v', 'MarkerSize', 6, ...
-                    'MarkerFaceColor', [0.3 0.75 0.3], 'MarkerEdgeColor', 'k', 'LineWidth', 0.5);
+                % plot(ax_h, x(ss), y(ss), '^', 'MarkerSize', 6, ...
+                %     'MarkerFaceColor', [0.3 0.75 0.3], 'MarkerEdgeColor', 'k', 'LineWidth', 0.5);
+                % plot(ax_h, x(se), y(se), 'v', 'MarkerSize', 6, ...
+                %     'MarkerFaceColor', [0.3 0.75 0.3], 'MarkerEdgeColor', 'k', 'LineWidth', 0.5);
 
                 % Direction arrow at midpoint
                 if ~isnan(segs.rel_angle(k))
@@ -409,9 +398,9 @@ fig.UserData = state;
                         'Color', arrow_col, 'LineWidth', 2, 'MaxHeadSize', 1.5);
                     n_seg_arrows = n_seg_arrows + 1;
 
-                    text(ax_h, segs.mid_x(k) + 1, segs.mid_y(k) - 1, ...
-                        sprintf('S%d %.0f°', k, segs.rel_angle(k)), ...
-                        'FontSize', 7, 'Color', [0.2 0.5 0.2], 'FontWeight', 'bold');
+                    % text(ax_h, segs.mid_x(k) + 1, segs.mid_y(k) - 1, ...
+                    %     sprintf('S%d %.0f°', k, segs.rel_angle(k)), ...
+                    %     'FontSize', 7, 'Color', [0.2 0.5 0.2], 'FontWeight', 'bold');
                 end
             end
         end
