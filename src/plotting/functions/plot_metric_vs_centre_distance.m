@@ -44,7 +44,7 @@ draw_line(gca, bin_centres, stim_means, stim_sems, stim_col, alpha_val, 'Stimulu
 
 xlabel('Distance from arena centre (mm)', 'FontSize', 14);
 ylabel(metric_name, 'FontSize', 14);
-title(metric_name, 'FontSize', 16);
+% title(metric_name, 'FontSize', 16);
 
 if show_leg
     legend('Location', 'best');
