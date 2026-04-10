@@ -62,13 +62,13 @@ function [pvals, target_mean, control_mean] = curv_metric_tests(cond_data, cond_
 
 %% 2 - Average turning rate during the first 5s of the CW stimulus.
 
-    rng_stim_start = 315:450;
-
-    % RUN TEST
-    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_stim_start, pre_averaged);
-
-    % ADD VALUES
-    [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
+    % rng_stim_start = 315:450;
+    % 
+    % % RUN TEST
+    % [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(cond_data2, cond_data_control2, rng_stim_start, pre_averaged);
+    % 
+    % % ADD VALUES
+    % [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
 
 
 %% 3 - Average turning rate during the first 5s of the CCW stimulus.

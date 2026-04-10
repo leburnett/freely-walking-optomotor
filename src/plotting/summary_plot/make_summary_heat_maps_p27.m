@@ -80,10 +80,11 @@ function DATA = make_summary_heat_maps_p27(DATA)
     ax.YAxis.TickLength = [0 0]; 
     ax.FontSize = 12;
 
-    title(strrep(cond_titles{condition_n}, '_', '-'))
+    % title(strrep(cond_titles{condition_n}, '_', '-'))
+    title('')
 
     f = gcf;
-    f.Position = [118   469   363   466]; %[118   469   467   466]; % [2612  -522  373  1588]; %[564    73   362   974];
+    f.Position = [118   469   156   466]; %[118   469   363   466]; %[118   469   467   466]; % [2612  -522  373  1588]; %[564    73   362   974];
 
  
     

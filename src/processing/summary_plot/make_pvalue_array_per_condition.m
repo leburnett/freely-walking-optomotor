@@ -58,14 +58,14 @@ for typ_id = 1:n_data_types
     elseif data_type == "curv_data"
         [pvals_cv, target_mean_cv, control_mean_cv] = curv_metric_tests(cond_data, cond_data_control, true);
 
-    elseif data_type == "dist_data"
-        [pvals_dist, target_mean_dist, control_mean_dist] = dist_metric_tests(cond_data, cond_data_control, 1, true);
+    % elseif data_type == "dist_data"
+    %     [pvals_dist, target_mean_dist, control_mean_dist] = dist_metric_tests(cond_data, cond_data_control, 1, true);
 
     elseif data_type == "dist_data_delta"
         [pvals_delta, target_mean_delta, control_mean_delta] = dist_metric_tests(cond_data, cond_data_control, 2, true);
 
-    elseif data_type == "dist_data_delta_end"
-        [pvals_dist_dt, target_mean_dist_dt, control_mean_dist_dt] = dist_metric_tests(cond_data, cond_data_control, 3, true);
+    % elseif data_type == "dist_data_delta_end"
+    %     [pvals_dist_dt, target_mean_dist_dt, control_mean_dist_dt] = dist_metric_tests(cond_data, cond_data_control, 3, true);
     end
 
 end

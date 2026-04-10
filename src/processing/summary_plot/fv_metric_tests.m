@@ -61,14 +61,14 @@ function [pvals, target_mean, control_mean] = fv_metric_tests(cond_data, cond_da
 
 %% 5 - Change in average forward velocity (+/- 3s) from when the stimulus starts
 
-    rng_b4_3 = 210:300;
-    rng_stim_3 = 300:390;
-
-    % RUN TEST
-    [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(cond_data, cond_data_control, rng_b4_3, rng_stim_3, "norm", pre_averaged);
-
-    % ADD VALUES
-    [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
+    % rng_b4_3 = 210:300;
+    % rng_stim_3 = 300:390;
+    % 
+    % % RUN TEST
+    % [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_change(cond_data, cond_data_control, rng_b4_3, rng_stim_3, "norm", pre_averaged);
+    % 
+    % % ADD VALUES
+    % [pvals, target_mean, control_mean] = add_pvalues(pvals, target_mean, control_mean, p, mean_per_strain, mean_per_strain_control);
 
 %% 6 - Change in average forward velocity (+/- 3s) from when the stimulus changes direction.
 

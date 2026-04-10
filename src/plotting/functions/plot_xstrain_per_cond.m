@@ -46,24 +46,9 @@ function plot_xstrain_per_cond(protocol, data_type, cond_ids, strain_ids, params
     %     187 75 12; ...
     %     ]./255;
 
-strain_colours = [[220,  40,  30]; ...  % muted red
-[220,  85,  30];...
-  [220, 130,  35];...
-  [220, 175,  40];...
-  [220, 210,  50];...  % soft yellow
- [190, 170, 60];...  % yellow-green
- [164, 182, 120];...  % light green
- [134, 187, 139];...  % green-cyan
- [104, 185, 158];...  % cyan
- [ 82, 176, 176];...  % teal
- [ 72, 160, 192];...  % blue-cyan
- [ 74, 138, 202];...  % blue
- [ 86, 114, 204];...  % blue-indigo
- [108,  92, 198];...  % indigo
- [132,  74, 186];...  % violet
- [154,  60, 168]; ...   % deep violet
- [40 40 40]; ...
- [180 180 180]]./255;
+% Strain colours (from cmap_config)
+cmaps_fn = cmap_config();
+strain_colours = cmaps_fn.strains.colors;
       
 if params.plot_sd == 1
     if data_type == "fv_data"
@@ -81,7 +66,7 @@ else
     if data_type == "fv_data"
         if delta, rng = [-8 8]; else, rng = [0 20]; end
     elseif data_type == "dist_data"
-        if delta, rng = [-55 10]; else, rng = [20 90]; end
+        if delta, rng = [-40 10]; else, rng = [20 90]; end
     elseif data_type == "view_dist"
         rng = [60 140];
     elseif data_type == "dist_dt"
@@ -116,8 +101,8 @@ if params.shaded_areas == 1
         if delta == 1
 
             % within 10s
-            rectangle('Position', [570, rng(1), 30, diff(rng)], ...
-                  'FaceColor', [0.7 0.7 0.7], 'EdgeColor', 'none', 'FaceAlpha', 0.3);
+            % rectangle('Position', [570, rng(1), 30, diff(rng)], ...
+            %       'FaceColor', [0.7 0.7 0.7], 'EdgeColor', 'none', 'FaceAlpha', 0.3);
 
             % end of stim
             rectangle('Position', [1170, rng(1), 30, diff(rng)], ...
@@ -142,12 +127,12 @@ if params.shaded_areas == 1
     elseif data_type == "av_data" || data_type == "curv_data" 
 
         % Full stim
-        % rectangle('Position', [300, rng(1), 900, diff(rng)], ...
-        %       'FaceColor', [0.7 0.7 0.7], 'EdgeColor', 'none', 'FaceAlpha', 0.3);
+        rectangle('Position', [300, rng(1), 900, diff(rng)], ...
+              'FaceColor', [0.7 0.7 0.7], 'EdgeColor', 'none', 'FaceAlpha', 0.3);
 
         % % First 5s - slight delay
-        rectangle('Position', [315, rng(1), 150, diff(rng)], ...
-              'FaceColor', [0.7 0.7 0.7], 'EdgeColor', 'none', 'FaceAlpha', 0.3);
+        % rectangle('Position', [315, rng(1), 150, diff(rng)], ...
+        %       'FaceColor', [0.7 0.7 0.7], 'EdgeColor', 'none', 'FaceAlpha', 0.3);
     end 
 end 
    
@@ -209,8 +194,8 @@ for strain_id = strain_ids
     box off
     ax = gca;
     ax.TickDir = 'out';
-    ax.LineWidth = 1.2;
-    ax.FontSize = 14;
+    ax.LineWidth = 1.75;
+    ax.FontSize = 18;
     
     f = gcf;
     % f.Position = [233   581   603   390]; % p27

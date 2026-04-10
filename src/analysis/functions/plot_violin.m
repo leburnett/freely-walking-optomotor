@@ -45,7 +45,7 @@ n_kde         = get_opt(opts, 'n_kde_points', 100);
 
 % Strain palette
 default_colors = [
-    0.7   0.7   0.7;     % grey (control)
+    0.8   0.8   0.8;     % grey (control)
     0.216 0.494 0.722;   % blue
     0.894 0.102 0.110;   % red
     0.302 0.686 0.290;   % green
@@ -148,7 +148,7 @@ set(ax, 'XTick', 1:n_groups, 'XTickLabel', group_labels, ...
 xlim(ax, [0.3, n_groups + 0.7]);
 ylabel(ax, ylabel_str, 'FontSize', 18);
 % title(ax, title_str, 'FontSize', 16);
-set(ax, 'FontSize', 18, 'TickDir', 'out', 'TickLength', [0.02 0.02], 'Box', 'off', 'LineWidth', 1.5);
+set(ax, 'FontSize', 18, 'TickDir', 'out', 'TickLength', [0.017 0.017], 'Box', 'off', 'LineWidth', 1.75);
 
 % Add median value text above each violin at the y-axis upper limit
 if show_median && exist('medians', 'var')
