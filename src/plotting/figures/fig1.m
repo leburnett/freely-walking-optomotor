@@ -30,23 +30,8 @@ end
 
 %% Colour map options
 
-% Rainbow
-% cmap = [31 120 180; ...
-%         166 206 227; ...
-%         178 223 138; ...
-%         47 141 41; ...
-%         251 154 153; ...
-%         227 26 28; ...
-%         253 191 111; ...
-%         255 127 0; ...
-%         202 178 214; ...
-%         106 61 154; ...
-%         255 224 41; ...
-%         187 75 12; ...
-%         ]./255;
-
 % Blues
-cmap = [31 120 180; ... %50 50 50; ...% 166 206 227; 106 61 154; ...
+cmap = [30 30 30; ... %50 50 50; ...% 166 206 227; 106 61 154; ...
     31 120 180; ...
     178 223 138; ...
     47 141 41; ...
@@ -60,23 +45,10 @@ cmap = [31 120 180; ... %50 50 50; ...% 166 206 227; 106 61 154; ...
     187 75 12; ...
     ]./255;
 
-% Different speed colours     
- % cmap = [173 216 230; ... % 1Hz %50 50 50; ...% 166 206 227; 106 61 154; ...
- %    82 173 227; ... % 2Hz
- %    31 120 180; ... % 4 HZ
- %    61 82 159; ... % 8 Hz
- %    231 158 190; ... % Flicker
- %    243 207 226; ...
- %    231 158 190; ...
- %    223 113 167; ...
- %    215 48 139; ...%202 178 214; ...
- %    200 200 200; ... % 106 61 154; ...166 206 227;
- %    255 224 41; ...
- %    187 75 12; ...
- %    ]./255;
 
-%% Fixed parameters. 
+%% Fixed parameters.
 strain = "jfrc100_es_shibire_kir";
+strain_names = {"jfrc100_es_shibire_kir"};
 protocol = "protocol_27";
 data_types =  {'fv_data', 'av_data', 'curv_data', 'dist_data', 'dist_data_delta'};
 
@@ -99,17 +71,25 @@ for i = 1:numel(data_types)
     data_type = data_types{i};
 
     figure;
-    plot_xcond_per_strain2(protocol, data_type, cond_ids, strain_names, params, DATA)
+    plot_xcond_per_strain2(protocol, data_type, cond_ids, strain_names, params, DATA, cmap)
     f = gcf;
-    f.Position = [181   611   641   340];
+    f.Position = [181   549   796   402];
 
-end 
+    % Condition labels in top-right corner
+    text(0.98, 0.93, 'Static', 'Units', 'normalized', ...
+        'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', ...
+        'FontSize', 22, 'Color', [0.7 0.7 0.7]);
+    text(0.98, 0.85, '4Hz', 'Units', 'normalized', ...
+        'HorizontalAlignment', 'right', 'VerticalAlignment', 'top', ...
+        'FontSize', 22, 'Color', [0.3 0.3 0.3]);
+
+end
 
 %% ================================================================
 %  SECTION 3: Box and whisker chart for metrics
 %  ================================================================
 
-cond_ids = [1, 10];
+cond_ids = [10, 1];
 n_cond = numel(cond_ids);
 
 panels = struct( ...
@@ -120,20 +100,18 @@ panels = struct( ...
     'xl',        {[0.5 n_cond+0.5],  [0.5 n_cond+0.5],  [0.5 n_cond+0.5],  [0.5 n_cond+0.5], [0.5 n_cond+0.5]} ...
 );
 
-for i = 1:numel(panels)
-    p = panels(i);
-    if i > 1
-        figure;
-    end
-    if ~isempty(p.ref_line)
-        plot(p.ref_line, [0 0], 'k');
-        hold on;
-    end
-    plot_boxchart_metrics_xcond(DATA, cond_ids, strain_names, p.data_type, p.rng, p.delta, cmap);
-    if ~isempty(p.xl)
-        xlim(p.xl);
-    end
-end
+% for i = 1:numel(panels)
+%     p = panels(i);
+%     figure;
+%     if ~isempty(p.ref_line)
+%         plot(p.ref_line, [0 0], 'k');
+%         hold on;
+%     end
+%     plot_boxchart_metrics_xcond(DATA, cond_ids, strain_names, p.data_type, p.rng, p.delta, cmap);
+%     if ~isempty(p.xl)
+%         xlim(p.xl);
+%     end
+% end
 
 
 %% ================================================================
@@ -142,17 +120,29 @@ end
 
 % Make the corresponding histogram plots. 
 
-for i = 1:numel(panels)
-    p = panels(i);
-    if i > 1
-        figure;
-    end
-    plot_histogram_metrics_xcond(DATA, cond_ids, strain_names, p.data_type, p.rng, p.delta, cmap)
-end
+% for i = 1:numel(panels)
+%     p = panels(i);
+%     figure;
+%     plot_histogram_metrics_xcond(DATA, cond_ids, strain_names, p.data_type, p.rng, p.delta, cmap)
+% end
 
 
 %% ================================================================
-%  SECTION 5: Trajectory examples
+%  SECTION 5: Violin plots for metrics
+%  ================================================================
+
+for i = 1:numel(panels)
+    p = panels(i);
+    plot_violin_metrics_xcond(DATA, cond_ids, strain_names, p.data_type, p.rng, p.delta, cmap);
+
+    % Add zero reference line for delta plots
+    if p.delta > 0 || p.data_type =="av_data"
+        yline(0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1, 'HandleVisibility', 'off');
+    end
+end
+
+%% ================================================================
+%  SECTION 6: Trajectory examples
 %  ================================================================
 
 show_phases = 1; % plots 5s pre and post stimulus and CW in blue and CCW in pink.
