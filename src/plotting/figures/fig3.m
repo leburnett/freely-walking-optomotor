@@ -14,6 +14,7 @@
 %   11. Polar histogram: loop vs inter-loop segment orientation
 %   12. Radial bias (cos) vs distance: loops and segments (shaded SEM)
 %   13. Number of self-intersection loops vs distance (stim vs acclim)
+%   14. Self-intersection loop bbox area vs distance (stim, control)
 %
 % Requires DATA in workspace (from comb_data_across_cohorts_cond, protocol 27).
 
@@ -200,6 +201,7 @@ seg_rel  = [];  seg_dist  = [];
 % Also count loops per distance bin for Figure 11
 loop_count_per_fly_stim = {};  % cell array, one vector per fly
 loop_dist_per_fly_stim  = {};
+loop_area_per_fly_stim  = {};
 
 for exp_idx = 1:length(data_ctrl)
     for rep_idx = 1:2
@@ -234,9 +236,10 @@ for exp_idx = 1:length(data_ctrl)
 
             loops = find_trajectory_loops(x_det, y_det, h_det, loop_opts_fig3);
 
-            % Store per-fly loop distances for Figure 11
+            % Store per-fly loop distances and areas
             if loops.n_loops > 0
                 loop_dist_per_fly_stim{end+1} = loops.bbox_dist_center(:);
+                loop_area_per_fly_stim{end+1} = loops.bbox_area(:);
             end
 
             % Loop orientations
@@ -339,6 +342,7 @@ sem_count_stim  = std(count_bins_stim, 0, 1) / sqrt(n_flies_stim_loops);
 
 % --- Acclimation: detect loops in acclim_off1 ---
 loop_dist_per_fly_acc = {};
+loop_area_per_fly_acc = {};
 loop_opts_acc = loop_opts_fig3;
 
 for exp_idx = 1:length(data_ctrl)
@@ -365,6 +369,7 @@ for exp_idx = 1:length(data_ctrl)
         loops_a = find_trajectory_loops(x_a, y_a, h_a, loop_opts_acc);
         if loops_a.n_loops > 0
             loop_dist_per_fly_acc{end+1} = loops_a.bbox_dist_center(:);
+            loop_area_per_fly_acc{end+1} = loops_a.bbox_area(:);
         end
     end
 end
@@ -415,7 +420,49 @@ ylabel('Loops per fly (mean)', 'FontSize', 14);
 legend('Location', 'best', 'FontSize', 11);
 set(gca, 'FontSize', 15, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
 
-fprintf('\n=== fig3.m complete: 13 figures generated ===\n');
+%% ================================================================
+%  FIGURE 14: Bbox area of self-intersection loops vs distance
+%  ================================================================
+%
+%  For each loop detected via self-intersection, bin the bbox area by
+%  the loop's distance from the arena centre. Plot mean + SEM shading.
+
+% --- Stimulus ---
+all_loop_areas_stim = vertcat(loop_area_per_fly_stim{:});
+all_loop_dists_stim = vertcat(loop_dist_per_fly_stim{:});
+
+area_bin_mean_stim = NaN(1, n_db);
+area_bin_sem_stim  = NaN(1, n_db);
+for bi = 1:n_db
+    in_b = all_loop_dists_stim >= be_d(bi) & all_loop_dists_stim < be_d(bi+1) & ~isnan(all_loop_areas_stim);
+    if sum(in_b) >= 5
+        area_bin_mean_stim(bi) = mean(all_loop_areas_stim(in_b));
+        area_bin_sem_stim(bi)  = std(all_loop_areas_stim(in_b)) / sqrt(sum(in_b));
+    end
+end
+
+% --- Acclimation ---
+all_loop_areas_acc = vertcat(loop_area_per_fly_acc{:});
+all_loop_dists_acc = vertcat(loop_dist_per_fly_acc{:});
+
+area_bin_mean_acc = NaN(1, n_db);
+area_bin_sem_acc  = NaN(1, n_db);
+for bi = 1:n_db
+    in_b = all_loop_dists_acc >= be_d(bi) & all_loop_dists_acc < be_d(bi+1) & ~isnan(all_loop_areas_acc);
+    if sum(in_b) >= 5
+        area_bin_mean_acc(bi) = mean(all_loop_areas_acc(in_b));
+        area_bin_sem_acc(bi)  = std(all_loop_areas_acc(in_b)) / sqrt(sum(in_b));
+    end
+end
+
+% --- Plot ---
+fig14 = plot_metric_vs_centre_distance(bc_d, ...
+    area_bin_mean_stim, area_bin_sem_stim, ...
+    area_bin_mean_acc, area_bin_sem_acc, ...
+    'Bbox area (mm^2)');
+fig14.Position = FIG_POS;
+
+fprintf('\n=== fig3.m complete: 14 figures generated ===\n');
 
 %% ================================================================
 %  LOCAL FUNCTIONS
