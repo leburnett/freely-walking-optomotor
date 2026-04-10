@@ -77,8 +77,9 @@ for c = 1:n_conditions
 end 
 
 title(string(fly_idx))  
-lgd = legend;
-lgd.Position = [0.8178    0.6857    0.1554    0.2821];
+% lgd = legend;
+% lgd.Position = [0.8178    0.6857    0.1554    0.2821];
+legend off
 
 % Save the figure:
 % f_name = fullfile(save_folder, strcat("Traj_fig", string(p),"_", strain, "_Condition", string(condition_n), ".pdf"));

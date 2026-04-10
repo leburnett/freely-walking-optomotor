@@ -40,7 +40,7 @@ ylabel_str    = get_opt(opts, 'ylabel_str', '');
 title_str     = get_opt(opts, 'title_str', '');
 show_median   = get_opt(opts, 'show_median', true);
 show_mean     = get_opt(opts, 'show_mean', false);
-violin_width  = get_opt(opts, 'violin_width', 0.35);
+violin_width  = get_opt(opts, 'violin_width', 0.3);
 n_kde         = get_opt(opts, 'n_kde_points', 100);
 
 % Strain palette
@@ -135,20 +135,20 @@ for g = 1:n_groups
     end
 
     % Mean diamond
-    if show_mean
-        mean_val = mean(vals);
-        plot(ax, x_center, mean_val, 'd', 'MarkerSize', 8, ...
-            'MarkerFaceColor', 'w', 'MarkerEdgeColor', col * 0.6, 'LineWidth', 1.5);
-    end
+    % if show_mean
+    %     mean_val = mean(vals);
+    %     plot(ax, x_center, mean_val, 'd', 'MarkerSize', 8, ...
+    %         'MarkerFaceColor', 'w', 'MarkerEdgeColor', col * 0.6, 'LineWidth', 1.5);
+    % end
 end
 
 % Formatting
 set(ax, 'XTick', 1:n_groups, 'XTickLabel', group_labels, ...
     'XTickLabelRotation', 45);
 xlim(ax, [0.3, n_groups + 0.7]);
-ylabel(ax, ylabel_str, 'FontSize', 14);
-title(ax, title_str, 'FontSize', 16);
-set(ax, 'FontSize', 12, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2);
+ylabel(ax, ylabel_str, 'FontSize', 18);
+% title(ax, title_str, 'FontSize', 16);
+set(ax, 'FontSize', 18, 'TickDir', 'out', 'TickLength', [0.02 0.02], 'Box', 'off', 'LineWidth', 1.5);
 
 % Add median value text above each violin at the y-axis upper limit
 if show_median && exist('medians', 'var')
@@ -157,7 +157,7 @@ if show_median && exist('medians', 'var')
         if ~isnan(medians(g))
             text(ax, g, yl(2), sprintf('%.1f', medians(g)), ...
                 'HorizontalAlignment', 'center', 'VerticalAlignment', 'top', ...
-                'FontSize', 10, 'FontWeight', 'bold', 'Color', [0.3 0.3 0.3]);
+                'FontSize', 18, 'FontWeight', 'bold', 'Color', [0.3 0.3 0.3]);
         end
     end
 end

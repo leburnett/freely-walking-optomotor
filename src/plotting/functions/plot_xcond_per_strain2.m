@@ -195,7 +195,8 @@ for strain_id = 1:numel(strain_names)
     box off
     ax = gca;
     ax.TickDir = 'out';
-    ax.LineWidth = 1.2;
+    ax.LineWidth = 1.75;
+    ax.TickLength = [0.017 0.017];
     ax.FontSize = 20;
     
     f = gcf;

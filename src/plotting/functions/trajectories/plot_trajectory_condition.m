@@ -20,19 +20,19 @@ end
     
     if start_stop == 1
         % Mark the start
-        p5 = plot(x(1), y(1), 'o', 'MarkerFaceColor', 'w', 'MarkerEdgeColor', 'k', 'DisplayName', 'Start'); % white start
+        p5 = plot(x(1), y(1), 'o', 'MarkerSize', 13, 'MarkerFaceColor', [0.3 0.6 0.6], 'MarkerEdgeColor', 'k', 'DisplayName', 'Start'); % white start
     elseif start_stop == 2
         % Mark the end
-        p6 = plot(x(end), y(end), 'o', 'MarkerFaceColor', [0 0 0], 'MarkerEdgeColor', 'k', 'DisplayName', 'End'); % dark grey end
+        p6 = plot(x(end), y(end), 'o', 'MarkerSize', 13, 'MarkerFaceColor', [0.9 0 0], 'MarkerEdgeColor', 'k', 'DisplayName', 'End'); % dark grey end
     elseif start_stop == 3
         % Mark the start and end points
-        p5 = plot(x(1), y(1), 'o', 'MarkerFaceColor', 'w', 'MarkerEdgeColor', 'k', 'DisplayName', 'Start'); % white start
-        p6 = plot(x(end), y(end), 'o', 'MarkerFaceColor', [0 0 0], 'MarkerEdgeColor', 'k', 'DisplayName', 'End'); % dary grey end
+        p5 = plot(x(1), y(1), 'o', 'MarkerSize', 13, 'MarkerFaceColor', [0.3 0.6 0.6], 'MarkerEdgeColor', 'k', 'DisplayName', 'Start'); % white start
+        p6 = plot(x(end), y(end), 'o', 'MarkerSize', 13, 'MarkerFaceColor', [0.9 0 0], 'MarkerEdgeColor', 'k', 'DisplayName', 'End'); % dary grey end
     end 
     
   if ~traj_only  
     % Mark the center of the arena
-    p7 = plot(cx, cy, 'r+', 'MarkerSize', 18, 'LineWidth', 1.5, 'DisplayName', 'Centre');
+    p7 = plot(cx, cy, 'k+', 'MarkerSize', 18, 'LineWidth', 1.5, 'DisplayName', 'Centre');
   end 
 
     % Label the plot
@@ -42,11 +42,27 @@ end
     xlim([-2 247])
     ylim([0 248])
 
-    if ~traj_only 
-        legend([p1, p2, p3, p5, p6, p7], {'OFF', 'CW', 'CCW', 'Start', 'End', 'Centre'});
-    end 
+    % Text labels for phases and start/end markers
+    if show_phases
+        % Legend-style labels in bottom-left corner
+        text(0.01, 0.05, 'No stimulus', 'Units', 'normalized', ...
+            'FontSize', 16, 'FontWeight', 'bold', 'Color', [0.5 0.5 0.5]);
+        text(0.01, 0.1, 'CCW', 'Units', 'normalized', ...
+            'FontSize', 16, 'FontWeight', 'bold', 'Color', [0.231 0.510 0.965]);
+        text(0.01, 0.15, 'CW', 'Units', 'normalized', ...
+            'FontSize', 16, 'FontWeight', 'bold', 'Color', [0.925 0.282 0.600]);
 
-    % f = gcf;
-    % f.Position = [4017 -504  576 1570]; %[ 223    64   571   961];
+        % Start label above and to the right of start point
+        x_start = x(find(~isnan(x), 1, 'first'));
+        y_start = y(find(~isnan(y), 1, 'first'));
+        text(x_start + 8, y_start, 'Start', ...
+            'FontSize', 16, 'Color', [0.3 0.6 0.6]);
 
-end 
+        % End label to the right of end point
+        x_end = x(find(~isnan(x), 1, 'last'));
+        y_end = y(find(~isnan(y), 1, 'last'));
+        text(x_end + 8, y_end, 'End', ...
+            'FontSize', 16, 'Color', [0.9 0 0]);
+    end
+
+end

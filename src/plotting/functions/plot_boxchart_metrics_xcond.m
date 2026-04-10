@@ -119,10 +119,9 @@ for k = 1:numel(cond_ids)
         'BoxFaceAlpha', 0.5);
 end
 
-% Set x ticks
+% Set x ticks — label with condition numbers
 xticks(1:numel(cond_ids))
-% xticklabels({'1','2','3'})
-xticklabels({})
+xticklabels(arrayfun(@(c) sprintf('Cond %d', c), cond_ids, 'UniformOutput', false))
 xlim([0.5 numel(cond_ids)+0.5])
 
 % Set y label.
