@@ -39,19 +39,9 @@ labels_60 = {'1 Hz', '2 Hz', '4 Hz', '8 Hz'};
 cond_15 = [6, 7, 8, 9];
 labels_15 = {'4 Hz', '8 Hz', '16 Hz', '32 Hz'};
 
-% Speed colourmap (same as plot_xcond_per_strain_p31)
-col_12 = [173 216 230; ...  % Cond 1: light blue
-           82 173 227; ...  % Cond 2
-           31 120 180; ...  % Cond 3: medium blue
-           61  82 159; ...  % Cond 4: dark blue
-          231 158 190; ...  % Cond 5: light pink
-          243 207 226; ...  % Cond 6: pale pink
-          231 158 190; ...  % Cond 7
-          223 113 167; ...  % Cond 8
-          215  48 139; ...  % Cond 9: dark magenta
-          200 200 200; ...  % Cond 10: grey
-          255 224  41; ...
-          187  75  12] ./ 255;
+% Speed colourmap (from cmap_config)
+cmaps = cmap_config();
+col_12 = cmaps.conditions_p31.colors;
 
 % 5 metrics to plot
 metrics = { ...

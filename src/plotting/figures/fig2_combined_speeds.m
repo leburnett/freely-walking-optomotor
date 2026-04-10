@@ -40,17 +40,20 @@ end
 control_strain = 'jfrc100_es_shibire_kir';
 sex = 'F';
 
-%% 2 — Condition mapping and colours
+%% 2 — Condition mapping and colours (from cmap_config)
+
+cmaps = cmap_config();
+cs_cols = cmaps.combined_speeds.colors;
 
 % 6 conditions in display order: Static, Flicker, 1Hz, 2Hz, 4Hz, 8Hz
 % Each entry: {DATA source, condition number, label, colour, edge colour}
 cond_spec = { ...
-    DATA_27,  10,  'Static',   [0.88 0.88 0.88],  [0.6 0.6 0.6];  ...  % light grey fill, grey edge
-    DATA_31,   5,  'Flicker',  [0.55 0.55 0.55],  [0.3 0.3 0.3];  ...  % darker grey fill, dark edge
-    DATA_31,   1,  '1 Hz',     [173 216 230]./255, 'none';  ...       % light blue
-    DATA_31,   2,  '2 Hz',     [ 82 173 227]./255, 'none';  ...
-    DATA_31,   3,  '4 Hz',     [ 31 120 180]./255, 'none';  ...       % medium blue
-    DATA_31,   4,  '8 Hz',     [ 61  82 159]./255, 'none';  ...       % dark blue
+    DATA_27,  10,  'Static',   cs_cols(1,:),  [0.6 0.6 0.6];  ...
+    DATA_31,   5,  'Flicker',  cs_cols(2,:),  [0.3 0.3 0.3];  ...
+    DATA_31,   1,  '1 Hz',     cs_cols(3,:),  'none';  ...
+    DATA_31,   2,  '2 Hz',     cs_cols(4,:),  'none';  ...
+    DATA_31,   3,  '4 Hz',     cs_cols(5,:),  'none';  ...
+    DATA_31,   4,  '8 Hz',     cs_cols(6,:),  'none';  ...
 };
 
 n_conds = size(cond_spec, 1);

@@ -49,9 +49,10 @@ pre_frames  = 150:STIM_ON;
 stim_frames = (STIM_ON+1):STIM_OFF;
 post_frames = (STIM_OFF+1):1350;
 
-% Colors
-col_stim = [0.216 0.494 0.722];   % blue
-col_grey = [0.7 0.7 0.7];         % pre/post & reference lines
+% Colors (from cmap_config)
+cmaps = cmap_config();
+col_stim = cmaps.centring.colors(1,:);   % blue
+col_grey = cmaps.centring.colors(2,:);   % pre/post & reference lines
 
 % Control data
 data = DATA.(strain).F;

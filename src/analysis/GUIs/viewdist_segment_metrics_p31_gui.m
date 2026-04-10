@@ -52,33 +52,11 @@ cond_labels = { ...
     '15° 4Hz', '15° 8Hz', '15° 16Hz', '15° 32Hz', '15° flicker'};
 n_conditions = 10;
 
-% Colours: strain 1 = blue/pink (control), strain 2 = green/orange (T4/T5)
-% Each is [n_conditions x 3]
-colors_ctrl = [ ...
-    173, 216, 230;   % cond 1 — light blue
-     82, 173, 227;   % cond 2
-     31, 120, 180;   % cond 3
-     61,  82, 159;   % cond 4 — dark blue
-    231, 158, 190;   % cond 5 — 60° flicker
-    243, 207, 226;   % cond 6 — pale pink
-    231, 158, 190;   % cond 7
-    223, 113, 167;   % cond 8
-    215,  48, 139;   % cond 9 — dark magenta
-    200, 200, 200]./ 255;   % cond 10 — grey
-
-colors_t4t5 = [ ...
-    190, 230, 170;   % cond 1 — light green
-    130, 200, 100;   % cond 2
-     60, 160,  60;   % cond 3
-     30, 110,  30;   % cond 4 — dark green
-    180, 210, 140;   % cond 5 — 60° flicker (muted green)
-    255, 225, 150;   % cond 6 — pale yellow
-    255, 195, 100;   % cond 7 — light orange
-    240, 150,  50;   % cond 8 — orange
-    220, 100,  20;   % cond 9 — dark orange
-    180, 180, 180]./ 255;   % cond 10 — grey
-
-all_colors = cat(3, colors_ctrl, colors_t4t5);  % [10 x 3 x 2]
+% Colours from cmap_config
+cmaps_gui = cmap_config();
+colors_ctrl = cmaps_gui.conditions_p31.colors;
+colors_t4t5 = cmaps_gui.conditions_p31_t4t5.colors;
+all_colors  = cat(3, colors_ctrl, colors_t4t5);  % [10 x 3 x 2]
 
 %% Pre-compute segment metrics for both strains, all conditions
 

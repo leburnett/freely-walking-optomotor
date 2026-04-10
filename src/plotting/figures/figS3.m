@@ -34,9 +34,10 @@ cond_idx = 1;  % condition 1: 60deg gratings 4Hz
 strain_grp  = 'jfrc100_es_shibire_kir';
 strain_solo = 'jfrc100_es_shibire_kir_solo';
 
-% Colours
-col_grp  = [0.4 0.4 0.4];     % dark grey for grouped
-col_solo = [0.46 0.15 0.30];  % burgundy for solo
+% Colours (from cmap_config)
+cmaps = cmap_config();
+col_grp  = cmaps.group_solo.colors(1,:);  % dark grey
+col_solo = cmaps.group_solo.colors(2,:);  % burgundy
 
 % Bootstrap parameters
 N_BOOT = 1000;

@@ -139,10 +139,11 @@ metric_data_a = {flat_acc.area,  flat_acc.aspect,  flat_acc.tort,  flat_acc.dur}
 metric_labels = {'Bbox area (mm^2)', 'Aspect ratio', ...
                  'Tortuosity (path/displacement)', 'Duration (s)'};
 
-col_stim = [0.1 0.1 0.1];
-col_acc  = [0.75 0.75 0.75];
-col_stim_fill = [0.2 0.2 0.2];
-col_acc_fill  = [0.8 0.8 0.8];
+cmaps = cmap_config();
+col_stim      = cmaps.stim_baseline.colors(1,:);
+col_stim_fill = cmaps.stim_baseline.colors(2,:);
+col_acc       = cmaps.stim_baseline.colors(3,:);
+col_acc_fill  = cmaps.stim_baseline.colors(4,:);
 
 for mi = 1:4
     figure('Position', FIG_POS);
@@ -279,8 +280,8 @@ end
 fprintf('Orientations: %d loops, %d segments\n', numel(loop_rel), numel(seg_rel));
 
 % --- Polar histogram ---
-col_loop = [0.6 0.6 0.6];
-col_seg  = [0.133 0.545 0.133];
+col_loop = cmaps.loop_segment.colors(1,:);
+col_seg  = cmaps.loop_segment.colors(2,:);
 
 figure('Position', FIG_POS);
 h1 = polarhistogram(deg2rad(loop_rel), 36, 'FaceColor', col_loop, 'EdgeColor', 'w', 'FaceAlpha', 0.5);

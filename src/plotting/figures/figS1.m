@@ -52,27 +52,9 @@ strain_order = { ...
 control_strain = 'jfrc100_es_shibire_kir';
 n_strains = numel(strain_order);
 
-% Strain colours (matches plot_boxchart_metrics_xstrains)
-% Rows 1-16 = experimental strains in heatmap order, 17 = control (dark grey),
-% 18 = spare (light grey)
-strain_colours = [[220,  40,  30]; ...  % muted red
-    [220,  85,  30]; ...
-    [220, 130,  35]; ...
-    [220, 175,  40]; ...
-    [220, 210,  50]; ...  % soft yellow
-    [190, 170,  60]; ...  % yellow-green
-    [164, 182, 120]; ...  % light green
-    [134, 187, 139]; ...  % green-cyan
-    [104, 185, 158]; ...  % cyan
-    [ 82, 176, 176]; ...  % teal
-    [ 72, 160, 192]; ...  % blue-cyan
-    [ 74, 138, 202]; ...  % blue
-    [ 86, 114, 204]; ...  % blue-indigo
-    [108,  92, 198]; ...  % indigo
-    [132,  74, 186]; ...  % violet
-    [154,  60, 168]; ...  % deep violet
-    [ 40,  40,  40]; ...
-    [180, 180, 180]] ./ 255;
+% Strain colours (from cmap_config)
+cmaps = cmap_config();
+strain_colours = cmaps.strains.colors;
 
 % Assign colors: reverse mapping so l1l4=red(1), LPC1=purple(16), control=light grey
 bar_colors = zeros(n_strains, 3);

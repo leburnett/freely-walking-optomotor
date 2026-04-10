@@ -70,20 +70,9 @@ end
 n_strains = numel(strain_order_valid);
 fprintf('Plotting %d strains.\n', n_strains);
 
-% Custom colourmap (one colour per strain in strain_order_norp)
-violin_colors = [ ...
-    0.75  0.75  0.75;    % jfrc100_es — light grey
-    0.894 0.102 0.110;   % l1l4 — red
-    1.000 0.498 0.000;   % t4t5 — orange
-    0.133 0.545 0.133;   % NorpA +/+ — dark green
-    0.565 0.933 0.565;   % NorpA UAS-Norp/+ — light green
-    0.10  0.25  0.54;    % NorpA Rh1 — dark blue
-    0.55  0.70  0.90;    % NorpAw Rh1 — light blue
-    0.40  0.15  0.53;    % NorpA Rh2 — dark purple
-    0.75  0.55  0.85;    % NorpAw Rh2 — light purple
-    0.72  0.53  0.04;    % NorpA Rh5/Rh6 — gold
-    0.95  0.85  0.10;    % NorpAw Rh5/Rh6 — yellow
-];
+% Custom colourmap (from cmap_config)
+cmaps = cmap_config();
+violin_colors = cmaps.norpa_rescue.colors;
 
 % Display labels
 display_labels = strrep(strain_order_valid, '_', '-');

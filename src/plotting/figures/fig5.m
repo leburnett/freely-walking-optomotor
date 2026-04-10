@@ -31,11 +31,12 @@ sex = 'F';
 strain_es   = 'jfrc100_es_shibire_kir';
 strain_t4t5 = 'ss324_t4t5_shibire_kir';
 
-% Colours per spatial frequency
-col_es_60   = [0.4 0.4 0.4];     % dark grey
-col_t4t5_60 = [1.0 0.5 0.0];     % orange
-col_es_15   = [0.75 0.75 0.75];  % light grey
-col_t4t5_15 = [1.0 0.85 0.10];  % yellow
+% Colours per spatial frequency (from cmap_config)
+cmaps = cmap_config();
+col_es_60   = cmaps.es_vs_t4t5.colors(1,:);  % dark grey
+col_t4t5_60 = cmaps.es_vs_t4t5.colors(2,:);  % orange
+col_es_15   = cmaps.es_vs_t4t5.colors(3,:);  % light grey
+col_t4t5_15 = cmaps.es_vs_t4t5.colors(4,:);  % yellow
 
 %% 2 — Condition setup
 
@@ -49,19 +50,8 @@ cond_15 = [6, 7, 8, 9];
 labels_15 = {'4 Hz', '8 Hz', '16 Hz', '32 Hz'};
 speeds_15 = [60, 120, 240, 480];  % deg/s (matched angular speed)
 
-% Speed colourmap (from plot_xcond_per_strain_p31)
-col_12 = [173 216 230; ...
-           82 173 227; ...
-           31 120 180; ...
-           61  82 159; ...
-          231 158 190; ...
-          243 207 226; ...
-          231 158 190; ...
-          223 113 167; ...
-          215  48 139; ...
-          200 200 200; ...
-          255 224  41; ...
-          187  75  12] ./ 255;
+% Speed colourmap (from cmap_config)
+col_12 = cmaps.conditions_p31.colors;
 
 % Metrics
 metrics = { ...
