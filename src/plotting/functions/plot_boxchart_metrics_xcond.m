@@ -23,7 +23,7 @@ if resolved_delta > 0, delta = resolved_delta; end
 %   - Rainbow colormap for up to 12 conditions
 %
 % PREPROCESSING:
-%   - Uses combine_timeseries_across_exp_check (filters non-walking flies)
+%   - Uses combine_timeseries_across_exp (filters non-walking flies)
 %   - For av_data/curv_data: flips second half of stimulus (frames 750:1200)
 %   - Conditions 7,8 (reverse phi): multiplies by -1 for sign convention
 %
@@ -33,7 +33,7 @@ if resolved_delta > 0, delta = resolved_delta; end
 %   - av_data: [-20, 225]
 %   - curv_data: [-40, 210]
 %
-% See also: boxchart, scatter, combine_timeseries_across_exp_check, get_ylb_from_data_type
+% See also: boxchart, scatter, combine_timeseries_across_exp, get_ylb_from_data_type
    
 box_colours = cmap(cond_ids, :);
 
@@ -59,7 +59,7 @@ for strain_id = 1:numel(strain_names)
         % Now removes flies that don't move on average > 2mm s-1 over the
         % stimlus or are too close to the edge of the arena for the entire
         % stimulus.
-        cond_data = combine_timeseries_across_exp_check(data, condition_n, data_type);
+        cond_data = combine_timeseries_across_exp(data, condition_n, data_type);
 
         if delta == 1
             cond_data = (cond_data - cond_data(:, 300))*-1; % relative            
@@ -77,7 +77,7 @@ for strain_id = 1:numel(strain_names)
         cond_data = cond_data(:, rng);
 
         % Mean within this range per rep per fly - one data point per rep.
-        % After "combine_timeseries_across_exp_check" this is now per FLY
+        % After "combine_timeseries_across_exp" this is now per FLY
         mean_data = nanmean(cond_data, 2);
 
         if condition_n == 7 || condition_n == 8

@@ -4,13 +4,13 @@ function [rep_data, n_flies_total, provenance] = load_per_rep_data(DATA, strain,
 %   [rep_data, n_flies_total] = LOAD_PER_REP_DATA(DATA, strain, sex, condition_n, data_types)
 %   [rep_data, n_flies_total, provenance] = LOAD_PER_REP_DATA(...)
 %
-%   Unlike combine_timeseries_across_exp_check (which averages R1 and R2),
+%   Unlike combine_timeseries_across_exp (which averages R1 and R2),
 %   this function returns each rep as a separate fly observation. This is
 %   essential for analyses that depend on trajectory structure (e.g.,
 %   turning event detection), where averaging heading across reps would
 %   destroy the data.
 %
-%   Applies the same quiescence-based QC as combine_timeseries_across_exp_check:
+%   Applies the same quiescence-based QC as combine_timeseries_across_exp:
 %     - Reject a fly-rep if vel_data < 0.5 mm/s for >75% of frames
 %     - Reject a fly-rep if min(dist_data) > 110 mm (stuck at edge)
 %
@@ -40,9 +40,9 @@ function [rep_data, n_flies_total, provenance] = load_per_rep_data(DATA, strain,
 %     [rd, n, prov] = load_per_rep_data(DATA, "jfrc100_es_shibire_kir", "F", 1, ...
 %         {'heading_data', 'x_data', 'y_data', 'dist_data'});
 %
-% See also: combine_timeseries_across_exp_check, detect_360_turning_events
+% See also: combine_timeseries_across_exp, detect_360_turning_events
 
-%% QC thresholds (match combine_timeseries_across_exp_check defaults)
+%% QC thresholds (match combine_timeseries_across_exp defaults)
 VEL_THRESHOLD   = 0.5;   % mm/s
 QUIESCENCE_FRAC = 0.75;  % fraction of stationary frames
 DIST_THRESHOLD  = 110;   % mm from center

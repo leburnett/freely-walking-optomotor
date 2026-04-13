@@ -22,7 +22,7 @@
 %
 % REQUIREMENTS:
 %   - DATA struct from comb_data_across_cohorts_cond (Protocol 27)
-%   - Functions: combine_timeseries_across_exp_check
+%   - Functions: combine_timeseries_across_exp
 %
 % See also: simulate_walking_viewdist_gain, radial_tangential_analysis,
 %           compute_radial_tangential
@@ -62,11 +62,11 @@ sex = 'F';
 
 data_ctrl = DATA.(control_strain).(sex);
 
-x_all    = combine_timeseries_across_exp_check(data_ctrl, condition_n, "x_data");
-y_all    = combine_timeseries_across_exp_check(data_ctrl, condition_n, "y_data");
-hw_all   = combine_timeseries_across_exp_check(data_ctrl, condition_n, "heading_wrap");
-vel_all  = combine_timeseries_across_exp_check(data_ctrl, condition_n, "vel_data");
-dist_all = combine_timeseries_across_exp_check(data_ctrl, condition_n, "dist_data");
+x_all    = combine_timeseries_across_exp(data_ctrl, condition_n, "x_data");
+y_all    = combine_timeseries_across_exp(data_ctrl, condition_n, "y_data");
+hw_all   = combine_timeseries_across_exp(data_ctrl, condition_n, "heading_wrap");
+vel_all  = combine_timeseries_across_exp(data_ctrl, condition_n, "vel_data");
+dist_all = combine_timeseries_across_exp(data_ctrl, condition_n, "dist_data");
 
 n_flies = size(x_all, 1);
 n_frames = size(x_all, 2);

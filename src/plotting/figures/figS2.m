@@ -7,7 +7,7 @@
 %
 % REQUIREMENTS:
 %   - Protocol 27 Norp results in oaky_cokey project folder
-%   - Functions: comb_data_across_cohorts_cond, combine_timeseries_across_exp_check,
+%   - Functions: comb_data_across_cohorts_cond, combine_timeseries_across_exp,
 %     plot_violin, get_ylb_from_data_type
 %
 % See also: figS1, fig4
@@ -114,7 +114,7 @@ for mi = 1:n_metrics
         if ~isfield(DATA_NORP.(strain), sex); continue; end
         data_s = DATA_NORP.(strain).(sex);
 
-        cond_data = combine_timeseries_across_exp_check(data_s, cond_idx, dt);
+        cond_data = combine_timeseries_across_exp(data_s, cond_idx, dt);
 
         if delta == 1
             cond_data = (cond_data - cond_data(:, 300)) * -1;
@@ -229,7 +229,7 @@ for mi = 1:n_metrics
                 cond_data = (cond_data - cond_data(:, 300)) * -1;
             end
 
-            mean_data = squeeze(nanmean(reshape(cond_data, 2, [], size(cond_data, 2)), 1)); %#ok<NANMEAN>
+            mean_data = cond_data;
             mean_all  = nanmean(mean_data); %#ok<NANMEAN>
             sem_all   = nanstd(mean_data) / sqrt(size(mean_data, 1)); %#ok<NANSTD>
 

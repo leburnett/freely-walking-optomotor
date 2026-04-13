@@ -24,12 +24,12 @@ function [base_type, delta, d_fv] = resolve_delta_data_type(data_type)
 % EXAMPLE:
 %   [base, delta, d_fv] = resolve_delta_data_type("fv_data_delta");
 %   % base = "fv_data", delta = 1, d_fv = 0
-%   cond_data = combine_timeseries_across_exp_check(data, cond_n, base);
+%   cond_data = combine_timeseries_across_exp(data, cond_n, base);
 %   if delta == 1
 %       cond_data = cond_data - cond_data(:, 300);
 %   end
 %
-% See also: combine_timeseries_across_exp_check, get_ylb_from_data_type
+% See also: combine_timeseries_across_exp, get_ylb_from_data_type
 
     d_fv = 0;
 

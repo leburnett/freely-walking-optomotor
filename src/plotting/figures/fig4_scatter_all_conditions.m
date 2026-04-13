@@ -7,7 +7,7 @@
 % REQUIREMENTS:
 %   - Protocol 27 data via comb_data_across_cohorts_cond
 %   - strain_names2.mat in results folder
-%   - Functions: combine_timeseries_across_exp_check, get_config
+%   - Functions: combine_timeseries_across_exp, get_config
 %
 % See also: fig4, cross_strain_condition_heatmaps
 
@@ -113,12 +113,12 @@ for cond_idx = 1:N_CONDITIONS
         strain = strain_names_list{strain_ids(k)};
         data = DATA.(strain).(sex);
 
-        curv = combine_timeseries_across_exp_check(data, cond_idx, "av_data");
+        curv = combine_timeseries_across_exp(data, cond_idx, "av_data");
         curv(:, 750:1200) = curv(:, 750:1200) * -1;
      
         turning_means(k) = nanmean(nanmean(curv(:, 300:1200), 2)); %#ok<NANMEAN>
 
-        dist = combine_timeseries_across_exp_check(data, cond_idx, "dist_data");
+        dist = combine_timeseries_across_exp(data, cond_idx, "dist_data");
         dist_delta = (dist - dist(:, 300)) * -1;
         centring_means(k) = nanmean(nanmean(dist_delta(:, 1170:1200), 2)); %#ok<NANMEAN>
     end
@@ -211,11 +211,11 @@ centring_es = NaN(N_CONDITIONS, 1);
 data_es = DATA.(control_strain).(sex);
 
 for c = 1:N_CONDITIONS
-    curv = combine_timeseries_across_exp_check(data_es, c, "av_data");
+    curv = combine_timeseries_across_exp(data_es, c, "av_data");
     curv(:, 750:1200) = curv(:, 750:1200) * -1;
     turning_es(c) = nanmean(nanmean(curv(:, 300:1200), 2)); %#ok<NANMEAN>
 
-    dist = combine_timeseries_across_exp_check(data_es, c, "dist_data");
+    dist = combine_timeseries_across_exp(data_es, c, "dist_data");
     dist_delta = (dist - dist(:, 300)) * -1;
     centring_es(c) = nanmean(nanmean(dist_delta(:, 1170:1200), 2)); %#ok<NANMEAN>
 end
@@ -287,11 +287,11 @@ centring_test = NaN(N_CONDITIONS, 1);
 data_es = DATA.(test_strain).(sex);
 
 for c = 1:N_CONDITIONS
-    curv = combine_timeseries_across_exp_check(data_es, c, "av_data");
+    curv = combine_timeseries_across_exp(data_es, c, "av_data");
     curv(:, 750:1200) = curv(:, 750:1200) * -1;
     turning_test(c) = nanmean(nanmean(curv(:, 300:1200), 2)); %#ok<NANMEAN>
 
-    dist = combine_timeseries_across_exp_check(data_es, c, "dist_data");
+    dist = combine_timeseries_across_exp(data_es, c, "dist_data");
     dist_delta = (dist - dist(:, 300)) * -1;
     centring_test(c) = nanmean(nanmean(dist_delta(:, 1170:1200), 2)); %#ok<NANMEAN>
 end

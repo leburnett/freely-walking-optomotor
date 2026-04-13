@@ -5,7 +5,7 @@ function [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng(con
 %   averages paired rep rows (2 rows per fly) before computing per-fly means.
 %
 %   [p, m, mc] = welch_ttest_for_rng(..., true) skips rep averaging — use
-%   when data already has 1 row per fly (e.g., from combine_timeseries_across_exp_check).
+%   when data already has 1 row per fly (e.g., from combine_timeseries_across_exp).
 %
 % See also: mean_every_two_rows, ttest2
 

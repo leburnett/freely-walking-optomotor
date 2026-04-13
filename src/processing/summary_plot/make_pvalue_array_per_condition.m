@@ -5,14 +5,14 @@ function [pvals, target_mean, control_mean] = make_pvalue_array_per_condition(DA
 % a particular protocol. This is made using:
 %   DATA = comb_data_across_cohorts_cond(protocol_dir);
 %
-% Uses combine_timeseries_across_exp_check to apply quiescence-based QC
+% Uses combine_timeseries_across_exp to apply quiescence-based QC
 % before computing metrics. Data has 1 row per fly (reps averaged after QC).
 %
 % Returned arrays are of the size [1 x n_metrics]. Since this is run for
 % each condition. These arrays are then concatenated vertically in the
 % function that calls this function: 'make_pvalue_heatmap_across_strains'.
 %
-% See also: combine_timeseries_across_exp_check, fv_metric_tests,
+% See also: combine_timeseries_across_exp, fv_metric_tests,
 %           curv_metric_tests, dist_metric_tests
 
 % Extract 'data' from the relevant strain / condition.
@@ -34,8 +34,8 @@ for typ_id = 1:n_data_types
 
     % Combine timeseries data across all experiments for one strain/condition.
     % Uses quiescence-based QC: each row = 1 fly (reps averaged after filtering).
-    cond_data_control = combine_timeseries_across_exp_check(data_control, condition_n, base_type);
-    cond_data = combine_timeseries_across_exp_check(data, condition_n, base_type);
+    cond_data_control = combine_timeseries_across_exp(data_control, condition_n, base_type);
+    cond_data = combine_timeseries_across_exp(data, condition_n, base_type);
 
     % Apply within-fly baseline subtraction if delta
     if delta_flag == 1

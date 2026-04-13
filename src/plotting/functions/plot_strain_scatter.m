@@ -43,7 +43,7 @@ function fig = plot_strain_scatter(DATA, strain_ids, cond_idx, x_metric, y_metri
 %
 %     fig = plot_strain_scatter(DATA, 1:17, 1, x_met, y_met);
 %
-%   See also: combine_timeseries_across_exp_check, cmap_config
+%   See also: combine_timeseries_across_exp, cmap_config
 
 if nargin < 6, opts = struct(); end
 show_labels = get_opt(opts, 'show_labels', true);
@@ -299,7 +299,7 @@ end
 
 function per_fly = extract_metric(data, cond_idx, metric)
 % Extract per-fly mean values for one metric specification.
-    ts = combine_timeseries_across_exp_check(data, cond_idx, metric.data_type);
+    ts = combine_timeseries_across_exp(data, cond_idx, metric.data_type);
 
     if metric.delta == 1
         ts = (ts - ts(:, 300)) * -1;

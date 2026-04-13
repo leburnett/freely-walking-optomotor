@@ -34,7 +34,7 @@ for strain_id = 1:numel(strain_names)
         condition_n = cond_ids(c);
         data = DATA.(strain).(sex);
 
-        cond_data = combine_timeseries_across_exp_check(data, condition_n, data_type);
+        cond_data = combine_timeseries_across_exp(data, condition_n, data_type);
 
         if delta == 1
             cond_data = (cond_data - cond_data(:, 300)) * -1;
@@ -72,6 +72,7 @@ vopts.show_mean    = true;
 vopts.marker_size  = 10;
 vopts.marker_alpha = 0.3;
 vopts.violin_alpha = 0.4;
+vopts.med_text_sz = 14;
 
 [fig_v, ~] = plot_violin(group_data, group_labels, vopts);
 fig_v.Position = [138 432 230 413];

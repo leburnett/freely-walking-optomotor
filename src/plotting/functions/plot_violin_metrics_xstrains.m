@@ -13,7 +13,7 @@ function plot_violin_metrics_xstrains(DATA, strain_ids, cond_idx, data_type, rng
 %   delta      - 0 = absolute, 1 = relative to frame 300, 2 = relative to frame 1200
 %
 % See also: plot_boxchart_metrics_xstrains, plot_violin,
-%           combine_timeseries_across_exp_check
+%           combine_timeseries_across_exp
 
 % Resolve delta data types (e.g., 'fv_data_delta' -> 'fv_data' + delta=1)
 [data_type, resolved_delta] = resolve_delta_data_type(data_type);
@@ -63,7 +63,7 @@ for strain_id = 1:ns
     data = DATA.(strain).(sex);
 
     % Matrix of timeseries data (quiescence QC applied, averaged across reps)
-    cond_data = combine_timeseries_across_exp_check(data, condition_n, data_type);
+    cond_data = combine_timeseries_across_exp(data, condition_n, data_type);
 
     if delta == 1
         cond_data = (cond_data - cond_data(:, 300)) * -1;  % relative to frame 300

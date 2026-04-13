@@ -119,7 +119,7 @@ function plot_xcond_per_strain_p31(protocol, data_type, cond_ids, strain_names, 
                 cond_data = (cond_data - cond_data(:, 300)) * -1;
             end
 
-            mean_data = squeeze(nanmean(reshape(cond_data, 2, [], size(cond_data, 2)), 1)); %#ok<NANMEAN>
+            mean_data = cond_data;
             mean_data_all = nanmean(mean_data); %#ok<NANMEAN>
 
             if params.plot_sem == 1

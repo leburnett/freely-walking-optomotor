@@ -91,13 +91,13 @@ end
 fprintf('\n=== Loading control data (condition %d) ===\n', key_condition);
 data_ctrl = DATA.(control_strain).(sex);
 
-av_ctrl   = combine_timeseries_across_exp_check(data_ctrl, key_condition, "av_data");
-curv_ctrl = combine_timeseries_across_exp_check(data_ctrl, key_condition, "curv_data");
-fv_ctrl   = combine_timeseries_across_exp_check(data_ctrl, key_condition, "fv_data");
-dist_ctrl = combine_timeseries_across_exp_check(data_ctrl, key_condition, "dist_data");
-x_ctrl    = combine_timeseries_across_exp_check(data_ctrl, key_condition, "x_data");
-y_ctrl    = combine_timeseries_across_exp_check(data_ctrl, key_condition, "y_data");
-head_ctrl = combine_timeseries_across_exp_check(data_ctrl, key_condition, "heading_data");
+av_ctrl   = combine_timeseries_across_exp(data_ctrl, key_condition, "av_data");
+curv_ctrl = combine_timeseries_across_exp(data_ctrl, key_condition, "curv_data");
+fv_ctrl   = combine_timeseries_across_exp(data_ctrl, key_condition, "fv_data");
+dist_ctrl = combine_timeseries_across_exp(data_ctrl, key_condition, "dist_data");
+x_ctrl    = combine_timeseries_across_exp(data_ctrl, key_condition, "x_data");
+y_ctrl    = combine_timeseries_across_exp(data_ctrl, key_condition, "y_data");
+head_ctrl = combine_timeseries_across_exp(data_ctrl, key_condition, "heading_data");
 
 n_ctrl = size(av_ctrl, 1);
 n_frames = size(av_ctrl, 2);

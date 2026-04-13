@@ -5,7 +5,7 @@ function [p, mean_per_strain, mean_per_strain_control] = welch_ttest_for_rng_min
 %   finds the min per rep, then averages paired rep rows (2 rows per fly).
 %
 %   [p, m, mc] = welch_ttest_for_rng_min(..., true) skips rep averaging — use
-%   when data already has 1 row per fly (e.g., from combine_timeseries_across_exp_check).
+%   when data already has 1 row per fly (e.g., from combine_timeseries_across_exp).
 %
 %   NaN handling: uses 'omitnan' for min and nanmean for averages so that
 %   flies with NaN-padded frames (from cohorts with different frame counts)

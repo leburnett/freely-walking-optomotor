@@ -56,7 +56,7 @@ for strain_id = 1:ns
     % Now removes flies that don't move on average > 2mm s-1 over the
     % stimlus or are too close to the edge of the arena for the entire
     % stimulus.
-    cond_data = combine_timeseries_across_exp_check(data, condition_n, data_type);
+    cond_data = combine_timeseries_across_exp(data, condition_n, data_type);
 
     if delta == 1
         cond_data = (cond_data - cond_data(:, 300))*-1; % relative            
@@ -74,7 +74,7 @@ for strain_id = 1:ns
     cond_data = cond_data(:, rng);
 
     % Mean within this range per rep per fly - one data point per rep.
-    % After "combine_timeseries_across_exp_check" this is now per FLY
+    % After "combine_timeseries_across_exp" this is now per FLY
     mean_data = nanmean(cond_data, 2);
     
     % Then average per fly - one data point per fly. 

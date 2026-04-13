@@ -244,14 +244,17 @@ if ~isfile(fullfile(SAVE_DIR, 'ex_trajectory_xcond.png'))
         cond_ids = [10, 9, 1];  % static, flicker, 4Hz
 
         % Clamp fly index to available data
-        n_flies = size(combine_timeseries_across_exp(traj_data, cond_ids(1), "x_data"), 1);
+        n_flies = size(combine_timeseries_across_exp(traj_data, cond_ids(1), "x_data", ...
+            'qc', 'none', 'average_reps', false), 1);
         fly_idx = min(fly_idx_show, n_flies);
 
         figure('Visible', 'off');
         for ci = 1:numel(cond_ids)
             cn = cond_ids(ci);
-            x = combine_timeseries_across_exp(traj_data, cn, "x_data");
-            y = combine_timeseries_across_exp(traj_data, cn, "y_data");
+            x = combine_timeseries_across_exp(traj_data, cn, "x_data", ...
+                'qc', 'none', 'average_reps', false);
+            y = combine_timeseries_across_exp(traj_data, cn, "y_data", ...
+                'qc', 'none', 'average_reps', false);
             plot_trajectory_condition(x(fly_idx, frame_rng), y(fly_idx, frame_rng), ...
                 ARENA_CX, ARENA_CY, COL_12(cn,:), COND_LABELS{cn}, ci > 1, 0)
             hold on
@@ -274,8 +277,10 @@ if ~isfile(fullfile(SAVE_DIR, 'ex_trajectory_xflies.png'))
     disp('Generating multi-fly trajectory...')
     try
         cn = 1;  % 4Hz gratings
-        x_all = combine_timeseries_across_exp(traj_data, cn, "x_data");
-        y_all = combine_timeseries_across_exp(traj_data, cn, "y_data");
+        x_all = combine_timeseries_across_exp(traj_data, cn, "x_data", ...
+            'qc', 'none', 'average_reps', false);
+        y_all = combine_timeseries_across_exp(traj_data, cn, "y_data", ...
+            'qc', 'none', 'average_reps', false);
         fly_ids = 1:min(3, size(x_all, 1));
 
         figure('Visible', 'off');
@@ -300,7 +305,8 @@ end
 if ~isfile(fullfile(SAVE_DIR, 'ex_trajectory_prepost.png'))
     disp('Generating pre/post stimulus trajectory...')
     try
-        n_flies = size(combine_timeseries_across_exp(traj_data, 1, "x_data"), 1);
+        n_flies = size(combine_timeseries_across_exp(traj_data, 1, "x_data", ...
+            'qc', 'none', 'average_reps', false), 1);
         fly_idx = min(fly_idx_show, n_flies);
         plot_traj_pre_post(DATA_27, ES_STRAIN, 1, fly_idx)
         legend off

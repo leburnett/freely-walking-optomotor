@@ -4,10 +4,10 @@ function plot_traj_subplot(DATA, strain, condition_n, save_folder)
     data = DATA.(strain).F;
     
     data_type = "x_data"; 
-    cond_data_x = combine_timeseries_across_exp(data, condition_n, data_type);
+    cond_data_x = combine_timeseries_across_exp(data, condition_n, data_type, 'qc', 'none', 'average_reps', false);
     
     data_type = "y_data"; 
-    cond_data_y = combine_timeseries_across_exp(data, condition_n, data_type);
+    cond_data_y = combine_timeseries_across_exp(data, condition_n, data_type, 'qc', 'none', 'average_reps', false);
     
     % Define the center of the arena
     cx = 122.8079; %calib.centroids(1)/calib.PPM; 

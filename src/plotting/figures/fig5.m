@@ -11,7 +11,7 @@
 % REQUIREMENTS:
 %   - Protocol 31 data via comb_data_across_cohorts_cond
 %   - Functions: plot_xcond_per_strain_p31, plot_violin,
-%     combine_timeseries_across_exp_check, combine_timeseries_across_exp,
+%     combine_timeseries_across_exp, combine_timeseries_across_exp,
 %     check_and_average_across_reps, get_ylb_from_data_type
 %
 % See also: fig2, ANALYSE_P31_DIFF_SPEEDS, p31_speed_tuning_centring
@@ -130,7 +130,7 @@ for mi = 1:n_metrics
     for ci = 1:numel(cond_60)
         % ES
         vi_es = (ci - 1) * 2 + 1;
-        cond_data = combine_timeseries_across_exp_check(data_es, cond_60(ci), dt);
+        cond_data = combine_timeseries_across_exp(data_es, cond_60(ci), dt);
         if delta == 1; cond_data = (cond_data - cond_data(:, 300)) * -1; end
         if dt == "av_data" || dt == "curv_data"
             cond_data(:, 750:1200) = cond_data(:, 750:1200) * -1;
@@ -141,7 +141,7 @@ for mi = 1:n_metrics
 
         % T4T5
         vi_t4 = vi_es + 1;
-        cond_data = combine_timeseries_across_exp_check(data_t4t5, cond_60(ci), dt);
+        cond_data = combine_timeseries_across_exp(data_t4t5, cond_60(ci), dt);
         if delta == 1; cond_data = (cond_data - cond_data(:, 300)) * -1; end
         if dt == "av_data" || dt == "curv_data"
             cond_data(:, 750:1200) = cond_data(:, 750:1200) * -1;
@@ -183,7 +183,7 @@ for mi = 1:n_metrics
 
     for ci = 1:numel(cond_15)
         vi_es = (ci - 1) * 2 + 1;
-        cond_data = combine_timeseries_across_exp_check(data_es, cond_15(ci), dt);
+        cond_data = combine_timeseries_across_exp(data_es, cond_15(ci), dt);
         if delta == 1; cond_data = (cond_data - cond_data(:, 300)) * -1; end
         if dt == "av_data" || dt == "curv_data"
             cond_data(:, 750:1200) = cond_data(:, 750:1200) * -1;
@@ -193,7 +193,7 @@ for mi = 1:n_metrics
         group_colors(vi_es, :) = col_es_15;
 
         vi_t4 = vi_es + 1;
-        cond_data = combine_timeseries_across_exp_check(data_t4t5, cond_15(ci), dt);
+        cond_data = combine_timeseries_across_exp(data_t4t5, cond_15(ci), dt);
         if delta == 1; cond_data = (cond_data - cond_data(:, 300)) * -1; end
         if dt == "av_data" || dt == "curv_data"
             cond_data(:, 750:1200) = cond_data(:, 750:1200) * -1;
@@ -271,7 +271,7 @@ for eb_mi = 1:n_eb_metrics
             sems_v = NaN(1, numel(conds));
 
             for ci = 1:numel(conds)
-                cond_data = combine_timeseries_across_exp_check(data_s, conds(ci), dt);
+                cond_data = combine_timeseries_across_exp(data_s, conds(ci), dt);
                 if delta == 1
                     cond_data = (cond_data - cond_data(:, 300)) * -1;
                 end
@@ -315,7 +315,7 @@ function plot_strain_ts(DATA, strain_list, col_list, sex, cond_n, data_type, del
         if delta
             cond_data = (cond_data - cond_data(:, 300)) * -1;
         end
-        mean_data = squeeze(nanmean(reshape(cond_data, 2, [], size(cond_data, 2)), 1)); %#ok<NANMEAN>
+        mean_data = cond_data;
         mean_all  = nanmean(mean_data); %#ok<NANMEAN>
         sem_all   = nanstd(mean_data) / sqrt(size(mean_data, 1)); %#ok<NANSTD>
         all_means{si} = mean_all;

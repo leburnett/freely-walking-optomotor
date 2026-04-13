@@ -151,8 +151,8 @@ for strain_id = strain_ids
             cond_data = (cond_data - cond_data(:, 300))*-1; % relative
         end 
     
-        % Average per fly. 
-        mean_data = squeeze(nanmean(reshape(cond_data, 2, [], size(cond_data,2)), 1));
+        % cond_data is already 1 row per fly (reps averaged in combine_timeseries_across_exp)
+        mean_data = cond_data;
 
         % Mean across all flies
         mean_data_all = nanmean(mean_data);

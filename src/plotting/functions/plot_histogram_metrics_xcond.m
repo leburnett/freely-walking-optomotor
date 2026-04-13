@@ -15,7 +15,7 @@ function plot_histogram_metrics_xcond(DATA, cond_ids, strain_names, data_type, r
 %   delta        - 0=raw values, 1=relative to frame 300, 2=relative to frame 1200
 %   cmap         - Colormap array (colours indexed by condition_id)
 %
-% See also: plot_boxchart_metrics_xcond, combine_timeseries_across_exp_check
+% See also: plot_boxchart_metrics_xcond, combine_timeseries_across_exp
 
 % Resolve delta data types (e.g., 'fv_data_delta' -> 'fv_data' + delta=1)
 [data_type, resolved_delta] = resolve_delta_data_type(data_type);
@@ -36,7 +36,7 @@ for c = 1:numel(cond_ids)
         strain = strain_names{strain_id};
         data = DATA.(strain).(sex);
 
-        cond_data = combine_timeseries_across_exp_check(data, condition_n, data_type);
+        cond_data = combine_timeseries_across_exp(data, condition_n, data_type);
 
         if delta == 1
             cond_data = (cond_data - cond_data(:, 300)) * -1;

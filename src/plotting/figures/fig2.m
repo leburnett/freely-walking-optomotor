@@ -12,7 +12,7 @@
 % REQUIREMENTS:
 %   - Protocol 31 data via comb_data_across_cohorts_cond
 %   - Functions: plot_xcond_per_strain_p31, plot_violin,
-%     combine_timeseries_across_exp_check, get_ylb_from_data_type
+%     combine_timeseries_across_exp, get_ylb_from_data_type
 %
 % See also: fig_different_speeds, p31_speed_tuning_centring
 
@@ -109,7 +109,7 @@ for mi = 1:n_metrics
 
     group_data   = cell(numel(cond_60), 1);
     for ci = 1:numel(cond_60)
-        cond_data = combine_timeseries_across_exp_check(data_ctrl, cond_60(ci), dt);
+        cond_data = combine_timeseries_across_exp(data_ctrl, cond_60(ci), dt);
         if delta == 1
             cond_data = (cond_data - cond_data(:, 300)) * -1;
         end
@@ -149,7 +149,7 @@ for mi = 1:n_metrics
 
     group_data   = cell(numel(cond_15), 1);
     for ci = 1:numel(cond_15)
-        cond_data = combine_timeseries_across_exp_check(data_ctrl, cond_15(ci), dt);
+        cond_data = combine_timeseries_across_exp(data_ctrl, cond_15(ci), dt);
         if delta == 1
             cond_data = (cond_data - cond_data(:, 300)) * -1;
         end
@@ -207,7 +207,7 @@ for mi = 1:n_metrics
         sems_v = NaN(1, numel(conds));
 
         for ci = 1:numel(conds)
-            cond_data = combine_timeseries_across_exp_check(data_ctrl, conds(ci), dt);
+            cond_data = combine_timeseries_across_exp(data_ctrl, conds(ci), dt);
             if delta == 1
                 cond_data = (cond_data - cond_data(:, 300)) * -1;
             end
@@ -254,11 +254,11 @@ turning_sc  = NaN(n_scatter, 1);
 centring_sc = NaN(n_scatter, 1);
 
 for ci = 1:n_scatter
-    cond_data_av = combine_timeseries_across_exp_check(data_ctrl, all_conds(ci), "av_data");
+    cond_data_av = combine_timeseries_across_exp(data_ctrl, all_conds(ci), "av_data");
     cond_data_av(:, 750:1200) = cond_data_av(:, 750:1200) * -1;
     turning_sc(ci) = nanmean(nanmean(cond_data_av(:, 300:1200), 2)); %#ok<NANMEAN>
 
-    cond_data_dist = combine_timeseries_across_exp_check(data_ctrl, all_conds(ci), "dist_data");
+    cond_data_dist = combine_timeseries_across_exp(data_ctrl, all_conds(ci), "dist_data");
     dist_delta = (cond_data_dist - cond_data_dist(:, 300)) * -1;
     centring_sc(ci) = nanmean(nanmean(dist_delta(:, 1170:1200), 2)); %#ok<NANMEAN>
 end

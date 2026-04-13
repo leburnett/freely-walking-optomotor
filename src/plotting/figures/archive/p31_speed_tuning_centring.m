@@ -18,7 +18,7 @@
 %
 % REQUIREMENTS:
 %   - Results folder: results/protocol_31/
-%   - Functions: comb_data_across_cohorts_cond, combine_timeseries_across_exp_check,
+%   - Functions: comb_data_across_cohorts_cond, combine_timeseries_across_exp,
 %     check_and_average_across_reps
 %
 % See also: analyse_p31_diff_speeds, plot_errorbar_tuning_diff_speeds,
@@ -348,7 +348,7 @@ function [vals60, sem60, vals15, sem15, n_flies, perfly60, perfly15] = ...
 %   Returns [1×6] arrays: [baseline, cond1-4, flicker] for 60deg and 15deg.
 %   Also returns per-fly summary values for statistics (cell arrays).
 %
-%   Uses combine_timeseries_across_exp_check for quiescence-based QC.
+%   Uses combine_timeseries_across_exp for quiescence-based QC.
 %   Handles delta transformation for dist_data_delta.
 
     % Resolve delta data type
@@ -410,7 +410,7 @@ function [vals60, sem60, vals15, sem15, n_flies, perfly60, perfly15] = ...
     for ci = 1:5  % 5 conditions per spatial frequency
         % 60deg
         cond_n = conds_60(ci);
-        cond_data = combine_timeseries_across_exp_check(data, cond_n, base_type);
+        cond_data = combine_timeseries_across_exp(data, cond_n, base_type);
 
         if ~isempty(cond_data) && size(cond_data, 2) >= 1200
             if ci == 1
@@ -455,7 +455,7 @@ function [vals60, sem60, vals15, sem15, n_flies, perfly60, perfly15] = ...
 
         % 15deg
         cond_n = conds_15(ci);
-        cond_data = combine_timeseries_across_exp_check(data, cond_n, base_type);
+        cond_data = combine_timeseries_across_exp(data, cond_n, base_type);
 
         if ~isempty(cond_data) && size(cond_data, 2) >= 1200
             mean_ts = nanmean(cond_data);

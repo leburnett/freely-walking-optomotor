@@ -73,7 +73,7 @@ function [rep_data] = check_and_average_across_reps(rep1_data, rep2_data, rep1_d
 %       'rep1_vel', r1_vel, 'rep2_vel', r2_vel, ...
 %       'vel_threshold', 1.0, 'quiescence_frac', 0.85);
 %
-% See also: comb_data_across_cohorts_cond, combine_timeseries_across_exp_check, nanmean
+% See also: comb_data_across_cohorts_cond, combine_timeseries_across_exp, nanmean
 
     %% Parse optional arguments
     p = inputParser;

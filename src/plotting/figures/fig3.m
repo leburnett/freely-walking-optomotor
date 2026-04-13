@@ -55,12 +55,12 @@ FIG_POS = [76    56   355   285];
 %  ================================================================
 
 data_ctrl = DATA.(control_strain).(sex);
-av_ctrl   = combine_timeseries_across_exp_check(data_ctrl, 1, "av_data");
-fv_ctrl   = combine_timeseries_across_exp_check(data_ctrl, 1, "fv_data");
-dist_ctrl = combine_timeseries_across_exp_check(data_ctrl, 1, "dist_data");
-x_ctrl    = combine_timeseries_across_exp_check(data_ctrl, 1, "x_data");
-y_ctrl    = combine_timeseries_across_exp_check(data_ctrl, 1, "y_data");
-curv_ctrl = combine_timeseries_across_exp_check(data_ctrl, 1, "curv_data");
+av_ctrl   = combine_timeseries_across_exp(data_ctrl, 1, "av_data");
+fv_ctrl   = combine_timeseries_across_exp(data_ctrl, 1, "fv_data");
+dist_ctrl = combine_timeseries_across_exp(data_ctrl, 1, "dist_data");
+x_ctrl    = combine_timeseries_across_exp(data_ctrl, 1, "x_data");
+y_ctrl    = combine_timeseries_across_exp(data_ctrl, 1, "y_data");
+curv_ctrl = combine_timeseries_across_exp(data_ctrl, 1, "curv_data");
 
 opts_sw.short_window = 0.5;
 opts_sw.long_window  = 1.6;

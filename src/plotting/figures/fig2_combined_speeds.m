@@ -15,7 +15,7 @@
 % REQUIREMENTS:
 %   - Protocol 27 and 31 data via comb_data_across_cohorts_cond
 %   - Functions: plot_violin, combine_timeseries_across_exp,
-%     combine_timeseries_across_exp_check, get_ylb_from_data_type
+%     combine_timeseries_across_exp, get_ylb_from_data_type
 %
 % See also: fig2, fig_different_speeds
 
@@ -101,7 +101,7 @@ for mi = 1:n_metrics
             cond_data = (cond_data - cond_data(:, 300)) * -1;
         end
 
-        mean_data = squeeze(nanmean(reshape(cond_data, 2, [], size(cond_data, 2)), 1)); %#ok<NANMEAN>
+        mean_data = cond_data;
         mean_all  = nanmean(mean_data); %#ok<NANMEAN>
         sem_all   = nanstd(mean_data) / sqrt(size(mean_data, 1)); %#ok<NANSTD>
 
@@ -182,7 +182,7 @@ for mi = 1:n_metrics
         cond_n   = cond_spec{ci, 2};
 
         data_ctrl = DATA_src.(control_strain).(sex);
-        cond_data = combine_timeseries_across_exp_check(data_ctrl, cond_n, dt);
+        cond_data = combine_timeseries_across_exp(data_ctrl, cond_n, dt);
         if delta == 1
             cond_data = (cond_data - cond_data(:, 300)) * -1;
         end
@@ -274,7 +274,7 @@ for mi = 1:n_metrics
             cond_data = (cond_data - cond_data(:, 300)) * -1;
         end
 
-        mean_data = squeeze(nanmean(reshape(cond_data, 2, [], size(cond_data, 2)), 1)); %#ok<NANMEAN>
+        mean_data = cond_data;
         mean_all  = nanmean(mean_data); %#ok<NANMEAN>
         sem_all   = nanstd(mean_data) / sqrt(size(mean_data, 1)); %#ok<NANSTD>
 
@@ -353,7 +353,7 @@ for mi = 1:n_metrics
         cond_n   = sf_spec{ci, 2};
 
         data_ctrl = DATA_src.(control_strain).(sex);
-        cond_data = combine_timeseries_across_exp_check(data_ctrl, cond_n, dt);
+        cond_data = combine_timeseries_across_exp(data_ctrl, cond_n, dt);
         if delta == 1
             cond_data = (cond_data - cond_data(:, 300)) * -1;
         end

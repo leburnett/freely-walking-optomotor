@@ -60,10 +60,10 @@ for c = 1:n_conditions
     data = DATA.(strain).F;
     
     data_type = "x_data"; 
-    cond_data_x = combine_timeseries_across_exp(data, condition_n, data_type);
+    cond_data_x = combine_timeseries_across_exp(data, condition_n, data_type, 'qc', 'none', 'average_reps', false);
     
     data_type = "y_data"; 
-    cond_data_y = combine_timeseries_across_exp(data, condition_n, data_type);
+    cond_data_y = combine_timeseries_across_exp(data, condition_n, data_type, 'qc', 'none', 'average_reps', false);
     
     x_data = cond_data_x(fly_idx, :);
     y_data = cond_data_y(fly_idx, :);    

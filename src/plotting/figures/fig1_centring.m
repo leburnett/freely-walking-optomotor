@@ -15,7 +15,7 @@
 % REQUIREMENTS:
 %   - Results folder: results/protocol_27/
 %   - Functions: comb_data_across_cohorts_cond, combine_timeseries_across_exp,
-%     combine_timeseries_across_exp_check
+%     combine_timeseries_across_exp
 %
 % See also: fig1_plots, plot_traj_pre_post, plot_fly_occupancy_heatmaps_all
 
@@ -59,12 +59,12 @@ data = DATA.(strain).F;
 
 %% 2 — Extract data
 
-% Trajectories (x, y) — no QC needed
-cond_x = combine_timeseries_across_exp(data, cond_n, 'x_data');
-cond_y = combine_timeseries_across_exp(data, cond_n, 'y_data');
+% Trajectories (x, y) — no QC, keep individual reps for trajectory plotting
+cond_x = combine_timeseries_across_exp(data, cond_n, 'x_data', 'qc', 'none', 'average_reps', false);
+cond_y = combine_timeseries_across_exp(data, cond_n, 'y_data', 'qc', 'none', 'average_reps', false);
 
-% Distance from centre — with quiescence QC
-cond_dist = combine_timeseries_across_exp_check(data, cond_n, 'dist_data');
+% Distance from centre — distance QC (default), averaged across reps
+cond_dist = combine_timeseries_across_exp(data, cond_n, 'dist_data');
 
 % Baseline-subtracted distance
 cond_dist_delta = cond_dist - cond_dist(:, STIM_ON);

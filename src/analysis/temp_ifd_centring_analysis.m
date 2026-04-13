@@ -40,9 +40,9 @@ fprintf('Extracting data for %s, condition %d...\n', control_strain, cond_idx);
 
 data_ctrl = DATA.(control_strain).(sex);
 
-ifd_all  = combine_timeseries_across_exp_check(data_ctrl, cond_idx, 'IFD_data');
-dist_all = combine_timeseries_across_exp_check(data_ctrl, cond_idx, 'dist_data');
-vel_all  = combine_timeseries_across_exp_check(data_ctrl, cond_idx, 'vel_data');
+ifd_all  = combine_timeseries_across_exp(data_ctrl, cond_idx, 'IFD_data');
+dist_all = combine_timeseries_across_exp(data_ctrl, cond_idx, 'dist_data');
+vel_all  = combine_timeseries_across_exp(data_ctrl, cond_idx, 'vel_data');
 
 [n_flies, n_frames] = size(dist_all);
 fprintf('  %d flies, %d frames\n', n_flies, n_frames);

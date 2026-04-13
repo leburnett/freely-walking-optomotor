@@ -11,7 +11,7 @@
 %   - strain_names2.mat in results folder
 %   - Functions: make_summary_heat_maps_p27, plot_colour_bar_for_summary_plot,
 %     plot_violin_metrics_xstrains, plot_violin, plot_xcond_per_strain2,
-%     combine_timeseries_across_exp_check, combine_timeseries_across_exp
+%     combine_timeseries_across_exp, combine_timeseries_across_exp
 %
 % See also: cross_strain_condition_heatmaps, figS1
 

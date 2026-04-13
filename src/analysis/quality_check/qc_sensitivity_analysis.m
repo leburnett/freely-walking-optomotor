@@ -24,7 +24,7 @@
 %   - Console summary of conclusion robustness
 %   - CSV with full sweep results
 %
-% See also: combine_timeseries_across_exp_check, check_and_average_across_reps
+% See also: combine_timeseries_across_exp, check_and_average_across_reps
 
 %% 1 - Configuration
 
@@ -95,10 +95,10 @@ for qi = 1:n_qf
         cond = key_conditions(ci);
 
         % --- Control data ---
-        ctrl_dist = combine_timeseries_across_exp_check(DATA.(control_strain).(sex), cond, 'dist_data', ...
-            'vel_threshold', VEL_THRESHOLD_FIXED, 'quiescence_frac', qf);
-        ctrl_curv = combine_timeseries_across_exp_check(DATA.(control_strain).(sex), cond, 'curv_data', ...
-            'vel_threshold', VEL_THRESHOLD_FIXED, 'quiescence_frac', qf);
+        ctrl_dist = combine_timeseries_across_exp(DATA.(control_strain).(sex), cond, 'dist_data', ...
+            'qc', 'quiescence', 'vel_threshold', VEL_THRESHOLD_FIXED, 'quiescence_frac', qf);
+        ctrl_curv = combine_timeseries_across_exp(DATA.(control_strain).(sex), cond, 'curv_data', ...
+            'qc', 'quiescence', 'vel_threshold', VEL_THRESHOLD_FIXED, 'quiescence_frac', qf);
 
         % Baseline distance
         ctrl_dist_delta = ctrl_dist - ctrl_dist(:, FRAME_BASELINE);
@@ -113,10 +113,10 @@ for qi = 1:n_qf
             strain = key_strains{si};
 
             % --- Strain data ---
-            strain_dist = combine_timeseries_across_exp_check(DATA.(strain).(sex), cond, 'dist_data', ...
-                'vel_threshold', VEL_THRESHOLD_FIXED, 'quiescence_frac', qf);
-            strain_curv = combine_timeseries_across_exp_check(DATA.(strain).(sex), cond, 'curv_data', ...
-                'vel_threshold', VEL_THRESHOLD_FIXED, 'quiescence_frac', qf);
+            strain_dist = combine_timeseries_across_exp(DATA.(strain).(sex), cond, 'dist_data', ...
+                'qc', 'quiescence', 'vel_threshold', VEL_THRESHOLD_FIXED, 'quiescence_frac', qf);
+            strain_curv = combine_timeseries_across_exp(DATA.(strain).(sex), cond, 'curv_data', ...
+                'qc', 'quiescence', 'vel_threshold', VEL_THRESHOLD_FIXED, 'quiescence_frac', qf);
 
             % Baseline distance
             strain_dist_delta = strain_dist - strain_dist(:, FRAME_BASELINE);
@@ -334,8 +334,8 @@ for vi = 1:n_vt
     vt = vt_values(vi);
 
     % Control
-    ctrl_dist = combine_timeseries_across_exp_check(DATA.(control_strain).(sex), cond_for_vt, 'dist_data', ...
-        'vel_threshold', vt, 'quiescence_frac', QF_FIXED);
+    ctrl_dist = combine_timeseries_across_exp(DATA.(control_strain).(sex), cond_for_vt, 'dist_data', ...
+        'qc', 'quiescence', 'vel_threshold', vt, 'quiescence_frac', QF_FIXED);
     ctrl_dist_delta = ctrl_dist - ctrl_dist(:, FRAME_BASELINE);
     ctrl_vals = nanmean(ctrl_dist_delta(:, RNG_STIM_END), 2);
     ctrl_vals_clean = ctrl_vals(~isnan(ctrl_vals));
@@ -344,8 +344,8 @@ for vi = 1:n_vt
 
     for si = 1:n_strains
         strain = key_strains{si};
-        strain_dist = combine_timeseries_across_exp_check(DATA.(strain).(sex), cond_for_vt, 'dist_data', ...
-            'vel_threshold', vt, 'quiescence_frac', QF_FIXED);
+        strain_dist = combine_timeseries_across_exp(DATA.(strain).(sex), cond_for_vt, 'dist_data', ...
+            'qc', 'quiescence', 'vel_threshold', vt, 'quiescence_frac', QF_FIXED);
         strain_dist_delta = strain_dist - strain_dist(:, FRAME_BASELINE);
         s_vals = nanmean(strain_dist_delta(:, RNG_STIM_END), 2);
         s_vals_clean = s_vals(~isnan(s_vals));

@@ -166,7 +166,9 @@
       "Bash(find /Users/burnettl/Documents/GitHub/freely-walking-optomotor -name *DATA_ES_Shibire* -o -name *single_ladies*)",
       "Bash(find /Users/burnettl/Documents/GitHub/freely-walking-optomotor -name \"*.m\" -type f -exec grep -l \"function.*combine_timeseries\" {} \\\\;)",
       "Bash(find /Users/burnettl/Documents/GitHub/freely-walking-optomotor -name \"*.m\" -type f -exec grep -l \"function.*load_per_rep_data\" {} \\\\;)",
-      "Bash(find /Users/burnettl/Documents/GitHub/freely-walking-optomotor -name \"*.m\" -type f -exec grep -l \"resolve_delta_data_type\\\\|get_ylb_from_data_type\" {} \\\\;)"
+      "Bash(find /Users/burnettl/Documents/GitHub/freely-walking-optomotor -name \"*.m\" -type f -exec grep -l \"resolve_delta_data_type\\\\|get_ylb_from_data_type\" {} \\\\;)",
+      "Bash(ls -la /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/processing/functions/combine_timeseries_across_exp*.m)",
+      "Bash(ls -la /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/processing/summary_plot/combine_timeseries_across_exp*.m)"
     ]
   }
 }
