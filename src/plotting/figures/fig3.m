@@ -83,6 +83,26 @@ fig2 = plot_metric_vs_centre_distance(bin_centres, fv_m_s, fv_s_s, fv_m_p, fv_s_
 fig2.Position = FIG_POS;
 
 %% ================================================================
+%  FIGURE: Distance from centre PDF — stimulus vs baseline
+%  ================================================================
+
+dist_stim_vals = dist_ctrl(:, stim_range);
+dist_pre_vals  = dist_ctrl(:, pre_range);
+
+pdf_edges = linspace(0, ARENA_R, 25);
+
+fig_pdf = figure('Position', FIG_POS);
+histogram(dist_stim_vals(:), pdf_edges, 'Normalization', 'pdf', 'Orientation', 'vertical', ...
+    'FaceColor', [0.3 0.3 0.3], 'EdgeColor', 'k', 'LineWidth', 0.6, 'FaceAlpha', 0.7, 'DisplayName', 'Stimulus');
+hold on;
+histogram(dist_pre_vals(:), pdf_edges, 'Normalization', 'pdf', 'Orientation', 'vertical', ...
+    'FaceColor', [0.85 0.85 0.85], 'EdgeColor', 'k', 'LineWidth', 0.6, 'FaceAlpha', 0.5, 'DisplayName', 'Baseline');
+xlabel('Distance from arena centre (mm)', 'FontSize', 15);
+ylabel('Probability density', 'FontSize', 15)
+legend('Location', 'best');
+set(gca, 'FontSize', 15, 'TickDir', 'out', 'Box', 'off', 'LineWidth', 1.2, 'TickLength', [0.017 0.017]);
+
+%% ================================================================
 %  FIGURES 3-6: View-dist segment metrics vs distance (stim vs acclim)
 %  ================================================================
 
@@ -90,6 +110,7 @@ SMOOTH_WIN     = 10;
 MIN_PROMINENCE = 5;
 MIN_SEG_FRAMES = 5;
 MAX_DIST_CENTER = 110;
+MIN_RSQ        = 0.1;   % minimum R² for sum-of-sines fit (rejects non-periodic flies)
 
 % --- Stimulus segments ---
 data_types_vd = {'heading_data', 'x_data', 'y_data', 'dist_data', 'vel_data', 'view_dist'};
@@ -99,9 +120,9 @@ x_stim_vd  = rep_data_vd.x_data(:, stim_range);
 y_stim_vd  = rep_data_vd.y_data(:, stim_range);
 vd_stim_vd = rep_data_vd.view_dist(:, stim_range);
 
-[flat_stim, n_stim, ~] = segment_viewdist_peaks( ...
+[flat_stim, n_stim, ~, ~] = segment_viewdist_peaks( ...
     x_stim_vd, y_stim_vd, vd_stim_vd, ARENA_CENTER, FPS, ...
-    SMOOTH_WIN, MIN_PROMINENCE, MIN_SEG_FRAMES, MAX_DIST_CENTER);
+    SMOOTH_WIN, MIN_PROMINENCE, MIN_SEG_FRAMES, MAX_DIST_CENTER, MIN_RSQ);
 
 % --- Acclimation segments ---
 x_acc = [];  y_acc = [];  vd_acc = [];
@@ -124,9 +145,9 @@ for exp_idx = 1:length(data_ctrl)
     end
 end
 
-[flat_acc, n_acc, ~] = segment_viewdist_peaks( ...
+[flat_acc, n_acc, ~, ~] = segment_viewdist_peaks( ...
     x_acc, y_acc, vd_acc, ARENA_CENTER, FPS, ...
-    SMOOTH_WIN, MIN_PROMINENCE, MIN_SEG_FRAMES, MAX_DIST_CENTER);
+    SMOOTH_WIN, MIN_PROMINENCE, MIN_SEG_FRAMES, MAX_DIST_CENTER, MIN_RSQ);
 
 fprintf('View-dist segments: %d stim, %d acclim\n', n_stim, n_acc);
 
@@ -492,47 +513,3 @@ function plot_shaded_line(ax, bin_centres, m_vals, d_vals, bin_edges, col_line, 
         'DisplayName', label);
 end
 
-function [flat, n_segs, n_excluded] = segment_viewdist_peaks( ...
-        x_all, y_all, vd_all, arena_center, fps, ...
-        smooth_win, min_prom, min_seg_frames, max_dist)
-% Extract peak-to-peak segments from view_dist signal.
-    flat.fly_id = [];  flat.area = [];  flat.aspect = [];
-    flat.tort = [];    flat.dist = [];  flat.dur = [];
-    n_segs = 0;  n_excluded = 0;
-
-    for f = 1:size(x_all, 1)
-        vd = vd_all(f,:);  xf = x_all(f,:);  yf = y_all(f,:);
-        vdc = vd; vdc(isnan(vdc)) = 0;
-        vds = movmean(vdc, smooth_win, 'omitnan');
-        vds(isnan(vd)) = NaN;
-        [~, pl] = findpeaks(vds, 'MinPeakProminence', min_prom, 'MinPeakDistance', 5);
-        if numel(pl) < 2, continue; end
-
-        for k = 1:(numel(pl)-1)
-            sf = pl(k); ef = pl(k+1);
-            if ef-sf+1 < min_seg_frames, continue; end
-            xs = xf(sf:ef); ys = yf(sf:ef);
-            v = ~isnan(xs) & ~isnan(ys);
-            xv = xs(v); yv = ys(v);
-            if numel(xv) < min_seg_frames, continue; end
-
-            w = max(xv)-min(xv); h = max(yv)-min(yv);
-            mx = (min(xv)+max(xv))/2; my = (min(yv)+max(yv))/2;
-            dc = sqrt((mx-arena_center(1))^2 + (my-arena_center(2))^2);
-            if dc > max_dist, n_excluded = n_excluded+1; continue; end
-
-            dxs = diff(xv); dys = diff(yv);
-            pl_len = sum(sqrt(dxs.^2+dys.^2));
-            disp_len = sqrt((xv(end)-xv(1))^2+(yv(end)-yv(1))^2);
-            if disp_len > 0.5, tort = pl_len/disp_len; else, tort = NaN; end
-
-            flat.fly_id = [flat.fly_id; f];
-            flat.area   = [flat.area; w*h];
-            flat.aspect = [flat.aspect; max(w,h)/max(min(w,h),0.01)];
-            flat.tort   = [flat.tort; tort];
-            flat.dist   = [flat.dist; dc];
-            flat.dur    = [flat.dur; (ef-sf)/fps];
-            n_segs = n_segs+1;
-        end
-    end
-end
