@@ -11,7 +11,7 @@ function plot_pval_heatmap(pvals_all, target_mean_all, control_mean_all, strain_
     diff_array2(diff_array2<=0) = -1;
 
     % Flip for distance to centre.
-    diff_array2(:,3) = diff_array2(:, 3)*-1; 
+    diff_array2(:,4) = diff_array2(:, 4)*-1; 
 
     % Initialize RGB image
     [m, n] = size(pvals_all);
@@ -78,7 +78,7 @@ function plot_pval_heatmap(pvals_all, target_mean_all, control_mean_all, strain_
 
     % if condition_n == 12
         % Xlabels for metric names
-        xticks(1:3)
+        % xticks(1:4)
         % xticklabels({...
         %     'fv-stim', ...
         %     'fv-change-3s-start', ...
@@ -87,7 +87,7 @@ function plot_pval_heatmap(pvals_all, target_mean_all, control_mean_all, strain_
         %     'dist-rel-10'...
         %     'dist-rel-end', ...
         %     })
-        xticklabels({})
+        xticklabels({''})
     % else
     %     xticks(1:38)
     %     xticklabels({''})
@@ -95,7 +95,7 @@ function plot_pval_heatmap(pvals_all, target_mean_all, control_mean_all, strain_
 
     ax = gca;
     ax.FontSize = 5;
-    ax.LineWidth = 0.5;
+    ax.LineWidth = 1;
 
     %  % Add colour bar
     % subplot(1, 40, 40)

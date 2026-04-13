@@ -54,7 +54,7 @@ if params.plot_sd == 1
     if data_type == "fv_data"
         if delta, rng = [-15 15]; else, rng = [0 22]; end
     elseif data_type == "dist_data"
-        if delta, rng = [-70 30]; else, rng = [0 120]; end
+        if delta, rng = [-5 35]; else, rng = [0 120]; end
     elseif data_type == "view_dist"
         rng = [60 140];
     elseif data_type == "dist_dt"
@@ -66,7 +66,7 @@ else
     if data_type == "fv_data"
         if delta, rng = [-8 8]; else, rng = [0 20]; end
     elseif data_type == "dist_data"
-        if delta, rng = [-40 10]; else, rng = [20 90]; end
+        if delta, rng = [-5 35]; else, rng = [20 90]; end
     elseif data_type == "view_dist"
         rng = [60 140];
     elseif data_type == "dist_dt"
@@ -148,7 +148,7 @@ for strain_id = strain_ids
         data = DATA.(strain).(sex);
         cond_data = combine_timeseries_across_exp(data, condition_n, data_type); % absolute
         if delta
-            cond_data = cond_data - cond_data(:, 300); % relative
+            cond_data = (cond_data - cond_data(:, 300))*-1; % relative
         end 
     
         % Average per fly. 
@@ -156,6 +156,10 @@ for strain_id = strain_ids
 
         % Mean across all flies
         mean_data_all = nanmean(mean_data);
+
+        if data_type == "curv_data"
+            mean_data_all = movmean(mean_data_all, 6);
+        end 
 
         % mean_data = nanmean(cond_data);
 

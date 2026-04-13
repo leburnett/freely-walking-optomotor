@@ -60,31 +60,40 @@ f = gcf; f.Position = [118   901   749    34];
 % Edit these values to ensure median text labels are visible.
 % Format: [ymin, ymax] or [] to use auto-limits.
 violin_ylims = { ...
-    [-10 38];      % Metric 1: Avg FV during stimulus
+    [-10 35];      % Metric 1: Avg FV during stimulus
     [-35 35];    % Metric 2: FV change at onset
-    [-75 310];   % Metric 3: Avg turning during stimulus
-    [-300 750];   % Metric 4: Early turning (first 5s CW)
-    [-150 160];   % Metric 5: Centring at end of stimulus
-    [-110 170];   % Metric 6: Centring after 10s
+    [-150 510];   % Metric 3: Avg ang vel 
+    [-100 510];   % Metric 4: Avg turning during stimulus
+    [-130 160];   % Metric 5: Centring at end of stimulus
 };
 
 % Metric 1: Avg FV during stimulus (frames 300:1200)
 plot_violin_metrics_xstrains(DATA, strain_ids, cond_idx, "fv_data", 300:1200, 0);
 % title('Metric 1: Avg FV during stimulus', 'FontSize', 14);
-hold on; yline(0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5); hold off;
+hold on; yline(0, ':', 'Color', [0.7 0.7 0.7], 'LineWidth', 1.5); hold off;
 if ~isempty(violin_ylims{1}); ylim(violin_ylims{1}); end
 f = gcf; f.Position = [376   335   937   410];
+xticks([])
+
+% Metric 2: Avg angular velocity during stimulus (frames 300:1200)
+plot_violin_metrics_xstrains(DATA, strain_ids, cond_idx, "av_data", 300:1200, 0);
+% title('Metric 3: Avg turning during stimulus', 'FontSize', 14);
+hold on; yline(0, ':', 'Color', [0.7 0.7 0.7], 'LineWidth', 1.5); hold off;
+if ~isempty(violin_ylims{3}); ylim(violin_ylims{3}); end
+f = gcf; f.Position = [376   335   937   410];
+xticks([])
 
 % Metric 3: Avg turning rate during stimulus (frames 300:1200)
 plot_violin_metrics_xstrains(DATA, strain_ids, cond_idx, "curv_data", 300:1200, 0);
 % title('Metric 3: Avg turning during stimulus', 'FontSize', 14);
-hold on; yline(0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5); hold off;
-if ~isempty(violin_ylims{3}); ylim(violin_ylims{3}); end
+hold on; yline(0, ':', 'Color', [0.7 0.7 0.7], 'LineWidth', 1.5); hold off;
+if ~isempty(violin_ylims{4}); ylim(violin_ylims{4}); end
 f = gcf; f.Position = [376   335   937   410];
+xticks([])
 
 % Metric 5: Relative distance at end of stimulus (frames 1170:1200, delta=1)
 plot_violin_metrics_xstrains(DATA, strain_ids, cond_idx, "dist_data", 1170:1200, 1);
-hold on; yline(0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5); hold off;
+hold on; yline(0, ':', 'Color', [0.7 0.7 0.7], 'LineWidth', 1.5); hold off;
 % title('Metric 5: Centring at end of stimulus', 'FontSize', 14);
 if ~isempty(violin_ylims{5}); ylim(violin_ylims{5}); end
 f = gcf; f.Position = [376   335   937   410];
@@ -106,12 +115,13 @@ ts_params.plot_individ = 0;
 ts_params.shaded_areas = 1;
 
 metric_ts = { ...
-    "fv_data",          'FV: full stimulus', [1,7, 17]; ...
-    "curv_data",        'Turning: full stimulus', [1, 12, 17]; ...
+    "fv_data",          'FV: full stimulus', [1, 12, 7, 17]; ...
+    "av_data",        'AV: full stimulus', [1, 12, 7, 17]; ...
+    "curv_data",        'Turning: full stimulus', [1, 12, 7, 17]; ...
     "dist_data_delta",  'Centring: end of stim', [1, 12, 7, 17]; ...
 };
 
-for sp = 1:size(metric_ts, 1)
+for sp = size(metric_ts, 1)
     figure;
     plot_xstrain_per_cond('protocol_27', metric_ts{sp, 1}, 1, metric_ts{sp, 3}, ts_params, DATA);
     % title(metric_ts{sp, 2}, 'FontSize', 14);
@@ -135,7 +145,7 @@ y_met.delta     = 1;
 y_met.flip_ccw  = false;
 y_met.label     = 'Centring at end of stimulus (mm)';
 
-scatter_opts.title_str = sprintf('Centring vs Turning — Condition %d', cond_idx);
+scatter_opts.title_str = 'Centring vs Turning';
 fig_scatter = plot_strain_scatter(DATA, strain_ids, cond_idx, x_met, y_met, scatter_opts);
 fig_scatter.Position = [50 50 305 269];
 
@@ -146,7 +156,22 @@ if save_figs
 end
 
 
-cond_idx = 2;
-scatter_opts.title_str = sprintf('Centring vs Turning — Condition %d', cond_idx);
+
+
+% Define x-axis metric: turning rate during stimulus
+x_met.data_type = "fv_data";
+x_met.frames    = 300:1200;
+x_met.delta     = 0;
+x_met.flip_ccw  = false;
+x_met.label     = 'Mean forward velocity during stimulus (mm/s)';
+
+% Define y-axis metric: centring at end of stimulus
+y_met.data_type = "dist_data";
+y_met.frames    = 1170:1200;
+y_met.delta     = 1;
+y_met.flip_ccw  = false;
+y_met.label     = 'Centring at end of stimulus (mm)';
+
+scatter_opts.title_str = sprintf('Centring vs Walking');
 fig_scatter = plot_strain_scatter(DATA, strain_ids, cond_idx, x_met, y_met, scatter_opts);
 fig_scatter.Position = [50 50 305 269];

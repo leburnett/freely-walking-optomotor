@@ -16,18 +16,18 @@ c_array(1, : , :) = [...
 ];
 
 imagesc(flip(c_array)); % Flip to go from blue to red
-hold on
-text(1,1,'<= 0.00001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-text(2,1,'< 0.0001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-text(3,1,'< 0.001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-text(4,1,'< 0.01', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-text(5,1,'< 0.05', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-text(6,1,'NS', 'HorizontalAlignment', 'center', 'Color', 'k', 'FontWeight','bold')
-text(7,1,'< 0.05', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-text(8,1,'< 0.01', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-text(9,1,'< 0.001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-text(10,1,'< 0.0001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
-text(11,1,'<= 0.00001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
+% hold on
+% text(1,1,'<= 0.00001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
+% text(2,1,'< 0.0001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
+% text(3,1,'< 0.001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
+% text(4,1,'< 0.01', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
+% text(5,1,'< 0.05', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
+% text(6,1,'NS', 'HorizontalAlignment', 'center', 'Color', 'k', 'FontWeight','bold')
+% text(7,1,'< 0.05', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
+% text(8,1,'< 0.01', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
+% text(9,1,'< 0.001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
+% text(10,1,'< 0.0001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
+% text(11,1,'<= 0.00001', 'HorizontalAlignment', 'center', 'Color', 'w', 'FontWeight','bold')
 
 ax = gca; ax.LineWidth = 1.4;
 xticks([])

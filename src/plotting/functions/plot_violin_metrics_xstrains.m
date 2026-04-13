@@ -46,7 +46,7 @@ strain_names = load(fullfile(cfg.results, 'strain_names2.mat'));
 strain_names = strain_names.strain_names;
 n_strains = height(strain_names);
 strain_names{n_strains+1} = 'jfrc100_es_shibire_kir';
-strain_names{n_strains+2} = 'csw1118';
+% strain_names{n_strains+2} = 'csw1118';
 
 sex = 'F';
 ns = numel(strain_ids);
@@ -87,29 +87,6 @@ for strain_id = 1:ns
     group_labels{strain_id} = strrep(strain, '_', '-');
 end
 
-% Set y-limits (same as boxchart version)
-if data_type == "fv_data"
-    if delta, yrng = [-15 15]; else, yrng = [0 27]; end
-elseif data_type == "dist_data"
-    if delta == 1
-        yrng = [-10 120];
-    elseif delta == 2
-        yrng = [-100 120];
-    else
-        yrng = [0 125];
-    end
-elseif data_type == "view_dist"
-    yrng = [60 140];
-elseif data_type == "dist_dt"
-    yrng = [-7 5];
-elseif data_type == "av_data"
-    if delta, yrng = [-200 200]; else, yrng = [-40 225]; end
-elseif data_type == "curv_data"
-    if delta, yrng = [-200 200]; else, yrng = [-40 210]; end
-else
-    yrng = [];
-end
-
 % Plot violins
 ylb = get_ylb_from_data_type(data_type, delta);
 
@@ -123,11 +100,13 @@ opts.show_median  = true;
 opts.show_mean    = false;
 opts.violin_width = 0.35;
 
-[~, ax] = plot_violin(group_data, group_labels, opts);
-
-if ~isempty(yrng)
-    ylim(ax, yrng);
+if data_type == "av_data" || data_type == "curv_data"
+    opts.med_text_sz = 14;
+else
+    opts.med_text_sz = 14;
 end
+
+[~, ax] = plot_violin(group_data, group_labels, opts);
 
 % Remove x-tick labels (matches boxchart version)
 set(ax, 'XTickLabel', {});

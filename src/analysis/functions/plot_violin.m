@@ -81,6 +81,13 @@ else
 end
 hold(ax, 'on');
 
+% Plot the median of the control flies first
+vals_control = group_data{n_groups};
+vals_control = vals_control(~isnan(vals_control));
+med_val_control = median(vals_control);
+yline(med_val_control, '-', 'Color', [0 0 0], 'LineWidth', 0.5);
+
+% Plot the violins.
 medians = NaN(1, n_groups);  % for annotation after ylim is set
 
 for g = 1:n_groups
@@ -153,11 +160,14 @@ set(ax, 'FontSize', 18, 'TickDir', 'out', 'TickLength', [0.017 0.017], 'Box', 'o
 % Add median value text above each violin at the y-axis upper limit
 if show_median && exist('medians', 'var')
     yl = ylim(ax);
+    if yl(2) < 35
+        yl(2) = 34;
+    end 
     for g = 1:n_groups
         if ~isnan(medians(g))
             text(ax, g, yl(2), sprintf('%.1f', medians(g)), ...
                 'HorizontalAlignment', 'center', 'VerticalAlignment', 'top', ...
-                'FontSize', 18, 'FontWeight', 'bold', 'Color', [0.3 0.3 0.3]);
+                'FontSize', opts.med_text_sz, 'FontWeight', 'bold', 'Color', [0.3 0.3 0.3]);
         end
     end
 end
