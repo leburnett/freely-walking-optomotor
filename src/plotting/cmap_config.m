@@ -190,7 +190,6 @@ cmaps.trajectory_phases.usage = 'Trajectory phase colouring: stimulus halves + s
 cmaps.norpa_rescue.colors = [ ...
      0.75, 0.75, 0.75;    % ES control
      0.894, 0.102, 0.110; % L1L4
-     1.0,   0.498, 0.0;   % T4T5
      0.133, 0.545, 0.133; % NorpA +/+
      0.565, 0.933, 0.565; % NorpA UAS-Norp/+
      0.10,  0.25,  0.54;  % NorpA Rh1

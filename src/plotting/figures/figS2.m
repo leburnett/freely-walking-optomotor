@@ -30,7 +30,6 @@ cond_idx = 1;
 strain_order_norp = { ...
     'jfrc100_es_shibire_kir', ...
     'l1l4_jfrc100_shibire_kir', ...
-    'ss324_t4t5_shibire_kir', ...
     'NorpA_plus_plus', ...
     'NorpA_UAS_Norp_plus', ...
     'NorpA_UAS_Norp_Rh1_Gal4', ...
@@ -146,6 +145,8 @@ for mi = 1:n_metrics
     opts.violin_alpha = 0.35;
     opts.show_median  = true;
     opts.violin_width = 0.35;
+    opts.plot_ES_median = false;
+    opts.med_text_sz = 14;
 
     plot_violin(group_data, display_labels, opts);
     title(m_title, 'FontSize', 14);
@@ -175,13 +176,13 @@ end
 
 % Define the 4 strain groups (each includes ES as first entry)
 ts_groups = { ...
-    {'jfrc100_es_shibire_kir', 'NorpA_plus_plus', 'NorpA_UAS_Norp_plus'}, ...
+    {'NorpA_plus_plus', 'NorpA_UAS_Norp_plus'}, ...
         'NorpA controls'; ...
-    {'jfrc100_es_shibire_kir', 'NorpA_UAS_Norp_Rh1_Gal4', 'NorpAw_UAS_Norp_Rh1_Gal4'}, ...
+    {'NorpA_UAS_Norp_Rh1_Gal4', 'NorpAw_UAS_Norp_Rh1_Gal4'}, ...
         'Rh1 rescue'; ...
-    {'jfrc100_es_shibire_kir', 'NorpA_UAS_Norp_Rh2_Gal4', 'NorpAw_UAS_Norp_Rh2_Gal4'}, ...
+    {'NorpA_UAS_Norp_Rh2_Gal4', 'NorpAw_UAS_Norp_Rh2_Gal4'}, ...
         'Rh2 rescue'; ...
-    {'jfrc100_es_shibire_kir', 'NorpA_UAS_Norp_Rh5_Rh6_Gal4', 'NorpAw_UAS_Norp_Rh5_Rh6_Gal4'}, ...
+    {'NorpA_UAS_Norp_Rh5_Rh6_Gal4', 'NorpAw_UAS_Norp_Rh5_Rh6_Gal4'}, ...
         'Rh5/Rh6 rescue'; ...
 };
 n_groups = size(ts_groups, 1);
@@ -231,6 +232,7 @@ for mi = 1:n_metrics
 
             mean_data = cond_data;
             mean_all  = nanmean(mean_data); %#ok<NANMEAN>
+            mean_all = movmean(mean_all, 6);
             sem_all   = nanstd(mean_data) / sqrt(size(mean_data, 1)); %#ok<NANSTD>
 
             grp_means{si} = mean_all;
@@ -241,7 +243,16 @@ for mi = 1:n_metrics
         end
 
         y_pad = (y_max - y_min) * 0.10;
-        rng_yl = [y_min - y_pad, y_max + y_pad];
+        % rng_yl = [y_min - y_pad, y_max + y_pad];
+        if dt == "dist_data" 
+            rng_yl = [-15 27];
+        elseif dt == "av_data" 
+            rng_yl = [-170 170];
+        elseif dt == "curv_data" 
+            rng_yl = [-170 170];
+        elseif dt == "fv_data" 
+            rng_yl = [0 20];
+        end 
 
         figure('Name', sprintf('TS %s: %s', grp_title, m_title), ...
             'Position', [233 511 641 460]);
@@ -298,6 +309,136 @@ for mi = 1:n_metrics
             'FaceColor', [0.4 0.4 0.4], 'EdgeColor', 'k');
 
         box off;
-        set(gca, 'TickDir', 'out', 'LineWidth', 1.2, 'FontSize', 14);
+        set(gca, 'TickDir', 'out', 'LineWidth', 1.2, 'FontSize', 16);
+        f = gcf;
+        f.Position = [181   549   796   402];
     end
 end
+
+
+%% Movement towards the edge during phototaxis condition
+
+photo_idx = 12;
+mi = 4; 
+
+xmax = 1800;
+
+dt      = metric_spec{mi, 1};
+delta   = metric_spec{mi, 2};
+m_title = metric_spec{mi, 4};
+
+[dt_resolved, delta_resolved] = resolve_delta_data_type(dt);
+if delta_resolved > 0, delta = delta_resolved; end
+
+for gi = 1:n_groups
+    grp_strains = ts_groups{gi, 1};
+    grp_title   = ts_groups{gi, 2};
+    n_s = numel(grp_strains);
+
+    % First pass: compute data-driven y-limits across all strains in group
+    y_min =  Inf;
+    y_max = -Inf;
+    grp_means = cell(n_s, 1);
+    grp_sems  = cell(n_s, 1);
+
+    for si = 1:n_s
+        strain = grp_strains{si};
+        % Resolve strain name to actual field name in DATA_NORP
+        if isfield(DATA_NORP, strain)
+            sn = strain;
+        else
+            sn = '';
+            for j = 1:numel(available_strains)
+                if strcmp(strrep(available_strains{j}, '-', '_'), strain)
+                    sn = available_strains{j};
+                    break;
+                end
+            end
+        end
+        if isempty(sn) || ~isfield(DATA_NORP.(sn), sex); continue; end
+
+        data_s = DATA_NORP.(sn).(sex);
+        cond_data = combine_timeseries_across_exp(data_s, photo_idx, dt_resolved);
+        if delta
+            cond_data = (cond_data - cond_data(:, 300)) * -1;
+        end
+
+        mean_data = cond_data;
+        mean_all  = nanmean(mean_data); %#ok<NANMEAN>
+        mean_all = movmean(mean_all, 6);
+        sem_all   = nanstd(mean_data) / sqrt(size(mean_data, 1)); %#ok<NANSTD>
+
+        grp_means{si} = mean_all;
+        grp_sems{si}  = sem_all;
+
+        y_min = min(y_min, min(mean_all - sem_all, [], 'omitnan'));
+        y_max = max(y_max, max(mean_all + sem_all, [], 'omitnan'));
+    end
+
+    y_pad = (y_max - y_min) * 0.10;
+    % rng_yl = [y_min - y_pad, y_max + y_pad];
+    if dt == "dist_data" 
+        rng_yl = [-15 27];
+    elseif dt == "av_data" 
+        rng_yl = [-170 170];
+    elseif dt == "curv_data" 
+        rng_yl = [-170 170];
+    elseif dt == "fv_data" 
+        rng_yl = [0 20];
+    end 
+
+    figure('Name', sprintf('TS %s: %s', grp_title, m_title), ...
+        'Position', [233 511 641 460]);
+    hold on;
+
+    % Plot each strain
+    for si = 1:n_s
+        if isempty(grp_means{si}); continue; end
+        strain = grp_strains{si};
+        col = strain_color_map(strain);
+        mean_all = grp_means{si};
+        sem_all  = grp_sems{si};
+        nf = numel(mean_all);
+        x = 1:nf;
+
+        plot(x, mean_all + sem_all, 'w', 'LineWidth', 1);
+        plot(x, mean_all - sem_all, 'w', 'LineWidth', 1);
+        patch([x fliplr(x)], [mean_all + sem_all, fliplr(mean_all - sem_all)], ...
+            col, 'FaceAlpha', 0.25, 'EdgeColor', 'none');
+        plot(mean_all, 'Color', col, 'LineWidth', 2.5);
+    end
+
+    % Reference lines
+    plot([300 300], rng_yl, 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5);
+    plot([750 750], rng_yl, 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5);
+    plot([1200 1200], rng_yl, 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5);
+    plot([0 xmax], [0 0], 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5);
+
+    ylb = get_ylb_from_data_type(dt_resolved, delta);
+    ylabel(ylb);
+    xlabel('Time (s)');
+    xticks([0, 300, 600, 900, 1200, 1500, 1800]);
+    xticklabels({'-10', '0', '10', '20', '30', '40', '50'});
+    ylim(rng_yl);
+    xlim([0 xmax]);
+
+    % Stimulus annotation rectangles at top
+    yl = ylim;
+    yrange = yl(2) - yl(1);
+    rect_h = yrange / 20;
+    ylim([yl(1) yl(2) + rect_h]);
+    rect_y = yl(2);
+
+    rectangle('Position', [0, rect_y, 300, rect_h], ...
+        'FaceColor', [0.4 0.4 0.4], 'EdgeColor', 'k');
+    rectangle('Position', [300, rect_y, 900, rect_h], ...
+        'FaceColor', [1 1 1], 'EdgeColor', 'k');
+    rectangle('Position', [1200, rect_y, xmax - 1200, rect_h], ...
+        'FaceColor', [0.4 0.4 0.4], 'EdgeColor', 'k');
+
+    box off;
+    set(gca, 'TickDir', 'out', 'LineWidth', 1.2, 'FontSize', 16);
+    f = gcf;
+    f.Position = [181   549   796   402];
+end
+
