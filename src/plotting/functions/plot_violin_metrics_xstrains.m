@@ -99,6 +99,7 @@ opts.violin_alpha = 0.35;
 opts.show_median  = true;
 opts.show_mean    = false;
 opts.violin_width = 0.35;
+opts.plot_ES_median = true;
 
 if data_type == "av_data" || data_type == "curv_data"
     opts.med_text_sz = 14;

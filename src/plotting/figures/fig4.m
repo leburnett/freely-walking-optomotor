@@ -130,48 +130,48 @@ for sp = size(metric_ts, 1)
 end
 
 %% 6 — Centring vs turning scatter (one marker per strain)
-
-% Define x-axis metric: turning rate during stimulus
-x_met.data_type = "av_data";
-x_met.frames    = 300:1200;
-x_met.delta     = 0;
-x_met.flip_ccw  = true;
-x_met.label     = 'Mean angular velocity during stimulus (deg/s)';
-
-% Define y-axis metric: centring at end of stimulus
-y_met.data_type = "dist_data";
-y_met.frames    = 1170:1200;
-y_met.delta     = 1;
-y_met.flip_ccw  = false;
-y_met.label     = 'Centring at end of stimulus (mm)';
-
-scatter_opts.title_str = 'Centring vs Turning';
-fig_scatter = plot_strain_scatter(DATA, strain_ids, cond_idx, x_met, y_met, scatter_opts);
-fig_scatter.Position = [50 50 305 269];
-
-if save_figs
-    if ~isfolder(save_folder); mkdir(save_folder); end
-    exportgraphics(fig_scatter, fullfile(save_folder, 'fig4_centring_vs_turning.pdf'), ...
-        'ContentType', 'vector');
-end
-
-
-
-
-% Define x-axis metric: turning rate during stimulus
-x_met.data_type = "fv_data";
-x_met.frames    = 300:1200;
-x_met.delta     = 0;
-x_met.flip_ccw  = false;
-x_met.label     = 'Mean forward velocity during stimulus (mm/s)';
-
-% Define y-axis metric: centring at end of stimulus
-y_met.data_type = "dist_data";
-y_met.frames    = 1170:1200;
-y_met.delta     = 1;
-y_met.flip_ccw  = false;
-y_met.label     = 'Centring at end of stimulus (mm)';
-
-scatter_opts.title_str = sprintf('Centring vs Walking');
-fig_scatter = plot_strain_scatter(DATA, strain_ids, cond_idx, x_met, y_met, scatter_opts);
-fig_scatter.Position = [50 50 305 269];
+% 
+% % Define x-axis metric: turning rate during stimulus
+% x_met.data_type = "av_data";
+% x_met.frames    = 300:1200;
+% x_met.delta     = 0;
+% x_met.flip_ccw  = true;
+% x_met.label     = 'Mean angular velocity during stimulus (deg/s)';
+% 
+% % Define y-axis metric: centring at end of stimulus
+% y_met.data_type = "dist_data";
+% y_met.frames    = 1170:1200;
+% y_met.delta     = 1;
+% y_met.flip_ccw  = false;
+% y_met.label     = 'Centring at end of stimulus (mm)';
+% 
+% scatter_opts.title_str = 'Centring vs Turning';
+% fig_scatter = plot_strain_scatter(DATA, strain_ids, cond_idx, x_met, y_met, scatter_opts);
+% fig_scatter.Position = [50 50 305 269];
+% 
+% if save_figs
+%     if ~isfolder(save_folder); mkdir(save_folder); end
+%     exportgraphics(fig_scatter, fullfile(save_folder, 'fig4_centring_vs_turning.pdf'), ...
+%         'ContentType', 'vector');
+% end
+% 
+% 
+% 
+% 
+% % Define x-axis metric: turning rate during stimulus
+% x_met.data_type = "fv_data";
+% x_met.frames    = 300:1200;
+% x_met.delta     = 0;
+% x_met.flip_ccw  = false;
+% x_met.label     = 'Mean forward velocity during stimulus (mm/s)';
+% 
+% % Define y-axis metric: centring at end of stimulus
+% y_met.data_type = "dist_data";
+% y_met.frames    = 1170:1200;
+% y_met.delta     = 1;
+% y_met.flip_ccw  = false;
+% y_met.label     = 'Centring at end of stimulus (mm)';
+% 
+% scatter_opts.title_str = sprintf('Centring vs Walking');
+% fig_scatter = plot_strain_scatter(DATA, strain_ids, cond_idx, x_met, y_met, scatter_opts);
+% fig_scatter.Position = [50 50 305 269];

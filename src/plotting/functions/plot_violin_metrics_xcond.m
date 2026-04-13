@@ -73,6 +73,7 @@ vopts.marker_size  = 10;
 vopts.marker_alpha = 0.3;
 vopts.violin_alpha = 0.4;
 vopts.med_text_sz = 14;
+vopts.plot_ES_median = false;
 
 [fig_v, ~] = plot_violin(group_data, group_labels, vopts);
 fig_v.Position = [138 432 230 413];

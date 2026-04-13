@@ -81,11 +81,13 @@ else
 end
 hold(ax, 'on');
 
-% Plot the median of the control flies first
-vals_control = group_data{n_groups};
-vals_control = vals_control(~isnan(vals_control));
-med_val_control = median(vals_control);
-yline(med_val_control, '-', 'Color', [0 0 0], 'LineWidth', 0.5);
+if opts.plot_ES_median == true
+    % Plot the median of the control flies first
+    vals_control = group_data{n_groups};
+    vals_control = vals_control(~isnan(vals_control));
+    med_val_control = median(vals_control);
+    yline(med_val_control, '-', 'Color', [0 0 0], 'LineWidth', 0.5);
+end 
 
 % Plot the violins.
 medians = NaN(1, n_groups);  % for annotation after ylim is set
