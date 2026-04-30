@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two-Eye Optomotor Model — Centring via Bilateral Optic Flow</title>
+    <style>
+        :root {
+            --primary-color: #000000;
+            --secondary-color: #555555;
+            --background-color: #f0f0f0;
+            --panel-bg: #ffffff;
+            --text-color: #1a1a1a;
+            --border-color: #cccccc;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            text-align: center;
+        }
+        header h1 { font-size: 1.5rem; font-weight: 600; }
+        header p { opacity: 0.9; margin-top: 0.3rem; font-size: 0.9rem; }
+
+        main { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+
+        .simulation-layout {
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+        }
+        @media (max-width: 900px) { .simulation-layout { flex-direction: column; } }
+
+        .controls-panel {
+            background: var(--panel-bg);
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-width: 280px;
+            flex-shrink: 0;
+        }
+        .controls-panel h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+        }
+        .control-group { margin-bottom: 1rem; }
+        .control-group label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.25rem; }
+        .control-group input[type="range"] { width: 100%; margin-top: 0.25rem; }
+        .checkbox-group { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; }
+        .checkbox-group label { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-weight: normal; font-size: 0.85rem; }
+        .radio-group { display: flex; gap: 1rem; align-items: center; margin-top: 0.25rem; }
+        .radio-group label { display: flex; align-items: center; gap: 0.25rem; cursor: pointer; font-weight: normal; }
+        .buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.25rem; }
+        button {
+            padding: 0.6rem 1.2rem; border: none; border-radius: 4px; cursor: pointer;
+            font-size: 0.9rem; transition: background-color 0.2s; flex: 1;
+        }
+        .btn-start { background-color: #2d8a4e; color: white; }
+        .btn-start:hover { background-color: #236b3c; }
+        .btn-stop { background-color: #c0392b; color: white; }
+        .btn-stop:hover { background-color: #962d22; }
+        .btn-reset { background-color: #888888; color: white; }
+        .btn-reset:hover { background-color: #666666; }
+
+        .arena-panel {
+            background: var(--panel-bg);
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            flex: 1 1 auto;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .arena-canvas {
+            border-radius: 4px;
+            background: #fafafa;
+            max-width: 100%;
+            height: auto;
+        }
+        .status-bar {
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            color: #666;
+            text-align: center;
+        }
+
+        /* Collapsible model section */
+        .model-section { background: var(--panel-bg); border-radius: 8px; margin-top: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .collapsible-header {
+            padding: 1rem 1.5rem; cursor: pointer; display: flex;
+            justify-content: space-between; align-items: center;
+            border-radius: 8px; transition: background-color 0.2s;
+        }
+        .collapsible-header:hover { background-color: #f5f5f5; }
+        .collapsible-header h2 { font-size: 1.15rem; color: var(--primary-color); margin: 0; }
+        .collapsible-header::after { content: '\25BC'; font-size: 0.8rem; transition: transform 0.3s; color: var(--secondary-color); }
+        .collapsible-header.collapsed::after { transform: rotate(-90deg); }
+        .collapsible-content { padding: 0 1.5rem 1.5rem; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; }
+        .collapsible-content.collapsed { max-height: 0 !important; padding-top: 0; padding-bottom: 0; }
+
+        .model-content h3 { font-size: 1.05rem; color: var(--primary-color); margin-top: 1.4rem; margin-bottom: 0.6rem; }
+        .model-content h3:first-child { margin-top: 0.5rem; }
+        .model-content h4 { font-size: 0.95rem; color: #2c3e50; margin-top: 1.1rem; margin-bottom: 0.4rem; }
+        .model-content p { font-size: 0.9rem; margin-bottom: 0.7rem; color: #333; }
+        .model-content ul, .model-content ol { margin: 0.4rem 0 0.8rem 1.5rem; font-size: 0.9rem; }
+        .model-content li { margin-bottom: 0.35rem; }
+        .equation {
+            background: #f0f0f0; padding: 0.7rem 1rem; border-radius: 4px;
+            font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto;
+            margin: 0.7rem 0; border-left: 3px solid var(--secondary-color);
+        }
+        .compare-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; margin: 0.9rem 0;
+        }
+        @media (max-width: 700px) { .compare-grid { grid-template-columns: 1fr; } }
+        .compare-card {
+            background: #f5f5f5; padding: 0.9rem; border-radius: 4px; border-left: 4px solid #555;
+        }
+        .compare-card h4 { margin-top: 0; margin-bottom: 0.4rem; color: var(--primary-color); font-size: 0.95rem; }
+        .compare-card p { margin-bottom: 0; font-size: 0.85rem; }
+
+        footer { text-align: center; padding: 1rem; color: #666; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Two-Eye Optomotor Model</h1>
+        <p>Bilateral optic-flow comparison — does centring emerge from independent eye signals?</p>
+    </header>
+
+    <main>
+        <div class="simulation-layout">
+            <!-- Controls -->
+            <div class="controls-panel">
+                <h2>Parameters</h2>
+
+                <div class="control-group">
+                    <label>k_turn (turning gain): <span id="kTurn_val">2.0</span></label>
+                    <input type="range" id="kTurn" min="0" max="10" step="0.1" value="2.0" oninput="updateParam('kTurn')">
+                </div>
+
+                <div class="control-group">
+                    <label>Walking speed (mm/s): <span id="vMax_val">20</span></label>
+                    <input type="range" id="vMax" min="5" max="50" step="1" value="20" oninput="updateParam('vMax')">
+                </div>
+
+                <div class="control-group">
+                    <label>Trail length (s): <span id="trailLength_val">3.0</span></label>
+                    <input type="range" id="trailLength" min="0" max="10" step="0.5" value="3" oninput="updateTrailLength()">
+                </div>
+
+                <div class="control-group">
+                    <label>Grating speed: <span id="gratingSpeed_val">0.1</span></label>
+                    <input type="range" id="gratingSpeed" min="0" max="1" step="0.01" value="0.1" oninput="updateParam('gratingSpeed')">
+                </div>
+
+                <div class="control-group">
+                    <label>&omega;_pref (EMD peak, rad/s): <span id="omegaPref_val">2.0</span></label>
+                    <input type="range" id="omegaPref" min="0.5" max="20" step="0.1" value="2.0" oninput="updateParam('omegaPref')">
+                </div>
+
+                <div class="control-group">
+                    <label>Grating direction:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="grating" value="1" checked> CW</label>
+                        <label><input type="radio" name="grating" value="-1"> CCW</label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Visualisation:</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="showRays"> Show eye rays</label>
+                    </div>
+                </div>
+
+                <div class="buttons">
+                    <button id="startBtn" class="btn-start" onclick="startAnimation()">Start</button>
+                    <button id="stopBtn" class="btn-stop" onclick="stopAnimation()" disabled>Stop</button>
+                </div>
+                <div class="buttons">
+                    <button class="btn-reset" onclick="resetSimulation()">Reset</button>
+                </div>
+            </div>
+
+            <!-- Arena -->
+            <div class="arena-panel">
+                <canvas id="arenaCanvas" class="arena-canvas" width="500" height="500"></canvas>
+                <div class="status-bar"><span id="statusText">Ready — Press Start to begin</span></div>
+            </div>
+        </div>
+
+        <!-- Model description -->
+        <section class="model-section">
+            <div class="collapsible-header" onclick="toggleSection(this)">
+                <h2>The Two-Eye Model: Bilateral Optic-Flow Comparison</h2>
+            </div>
+            <div class="collapsible-content">
+                <div class="model-content">
+                    <h3>Biological Motivation</h3>
+                    <p>In a real fly, each compound eye independently samples the visual world. When the gratings on the arena wall move, the perceived angular velocity on each retina depends on the geometry of viewing — specifically, how far the wall is from each eye. A wall that is close fills more of the visual field and produces faster apparent motion than a wall far away, even if both walls carry identical gratings moving at identical speeds.</p>
+                    <p>This model replaces the original single-viewing-distance gain with two independent eye signals, then drives turning based on a comparison (here: the average) of those two signals.</p>
+
+                    <h3>Eye Geometry</h3>
+                    <p>Each fly carries two eyes at the front of its (oval) body, one on either side. The representative line of sight for each eye points <strong>±45° from the body axis</strong> — forward-and-laterally — approximating where the foveal axis of <em>Drosophila</em> compound eyes is directed. For each eye, the model casts a ray from the body centre in the eye's viewing direction and computes the distance to the arena wall (<code>d_left</code>, <code>d_right</code>).</p>
+
+                    <h3>Per-Eye Angular Velocity (Raw)</h3>
+                    <p>The wall surface moves at linear speed <code>v_wall = grating_speed × R_arena</code> (tangentially, since the gratings rotate around the arena). When viewed from distance <code>d</code>, this produces an apparent retinal angular velocity inversely proportional to distance:</p>
+                    <div class="equation">
+                        &omega;_raw = grating_speed &times; R_arena / d_eye
+                    </div>
+
+                    <h3>Reichardt-Like EMD Saturation</h3>
+                    <p>Real elementary motion detectors (EMDs) in the fly visual system have a non-monotonic velocity tuning: response grows with stimulus speed up to a preferred velocity <code>&omega;_pref</code>, then <em>decreases</em> at higher velocities (an aliasing-driven dropoff). We approximate this with a saturating function:</p>
+                    <div class="equation">
+                        &omega;_eye = &omega;_raw / (1 + (&omega;_raw / &omega;_pref)<sup>2</sup>)
+                    </div>
+                    <p>This response is approximately linear at low velocities, peaks at <code>&omega;_raw = &omega;_pref</code> with a value of <code>&omega;_pref / 2</code>, then decreases. Typical <em>Drosophila</em> EMD preferred velocities are in the range 1&ndash;5 rad/s. Both eyes apply this nonlinearity independently.</p>
+
+                    <h3>Turning Rule: Baseline + Bilateral Excess</h3>
+                    <p>The turning command splits into two parts: a uniform optomotor baseline that is always present whenever the gratings move, plus a bilateral wall-proximity amplification scaled by <code>k_turn</code>:</p>
+                    <div class="equation">
+                        &omega;_avg       = (&omega;_left + &omega;_right) / 2
+                        <br>&omega;_baseline  = Reichardt(grating_speed, &omega;_pref)   <span style="color:#777">// what each eye sees at the centre</span>
+                        <br>&omega;_excess    = &omega;_avg &minus; &omega;_baseline
+                        <br>d&theta;/dt        = grating_dir &times; (&omega;_baseline + k_turn &times; &omega;_excess) &nbsp;+&nbsp; brownian
+                    </div>
+                    <p>With <code>k_turn = 0</code>, every fly turns at the baseline rate regardless of position (uniform optomotor response). With <code>k_turn &gt; 0</code>, the wall-proximity excess on top of that baseline increases turning whenever a fly's eyes see close walls. Always has the sign of the grating motion, as you specified. Speed-turning coupling is preserved: <code>speed = v_max / (1 + 7 &times; |d&theta;|)</code>.</p>
+
+                    <h3>Comparison With the Original Single-View Model</h3>
+                    <div class="compare-grid">
+                        <div class="compare-card">
+                            <h4>Original (single forward view)</h4>
+                            <p>Turning gain depends on <em>where the fly is heading</em>. Heading toward a wall → short forward viewing distance → high gain → tight turning. Heading toward the centre → long view → low gain → straight path. Centripetal drift emerges directly from this heading-dependent asymmetry.</p>
+                        </div>
+                        <div class="compare-card">
+                            <h4>Two-eye (this model)</h4>
+                            <p>Turning gain depends on <em>where the fly is</em>, integrated over two lateral views. Near the wall, at least one eye almost always sees a short distance, so turning is faster. The forward viewing distance no longer enters explicitly. Centring (if it emerges) comes from <em>position-dependent</em> turning rate rather than heading-dependent gain.</p>
+                        </div>
+                    </div>
+
+                    <h3>Will Centring Emerge?</h3>
+                    <p>The mechanism is more indirect than in the single-view model. Tighter turning near the wall means smaller turn radii there — a fly near the wall traces small circles, while a fly near the centre traces large ones. Combined with Brownian noise, this should produce a statistical bias toward the centre, but it depends on the geometry of the eye signals. The centring may be weaker, may emerge only at certain k_turn values, or may show qualitatively different distributions (e.g., a ring rather than a single peak). Watch for it!</p>
+
+                    <h3>Tips</h3>
+                    <ul>
+                        <li>Toggle <strong>Show eye rays</strong> to see each fly's two viewing rays in real time. Orange = left eye, blue = right eye. Their lengths reflect the viewing distance.</li>
+                        <li>Try <code>k_turn = 0</code> to see pure Brownian motion as a control.</li>
+                        <li>Compare with the original single-view model in <code>freely_walking_animation.html</code> using the same grating speed.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Two-Eye Optomotor Model — Bilateral Optic-Flow Comparison</p>
+    </footer>
+
+    <script>
+    // ── Constants ─────────────────────────────────────────────────────────────
+    const ARENA_RADIUS = 120.5;       // mm
+    const CANVAS_PADDING = 20;
+    const FPS = 30;
+    const NUM_FLIES = 15;
+    const NUM_STRIPES = 12;
+    const EYE_ANGLE = 45 * Math.PI / 180;   // ±45° from heading
+    const MIN_VIEW_DIST = 5;          // mm — clamp to avoid divide-by-zero singularity
+
+    const FLY_COLOURS = [
+        '#e6194b','#3cb44b','#ffe119','#4363d8','#f58231',
+        '#911eb4','#46f0f0','#f032e6','#bcf60c','#fabebe',
+        '#008080','#e6beff','#9a6324','#800000','#aaffc3'
+    ];
+
+    // ── State ─────────────────────────────────────────────────────────────────
+    let trailLength = 90;
+    let gratingPhase = 0;
+    let animationId = null;
+    let isRunning = false;
+    let elapsedTime = 0;
+    let flies = [];
+
+    // ── Parameters ────────────────────────────────────────────────────────────
+    function getParams() {
+        return {
+            fps:           FPS,
+            arena_radius:  ARENA_RADIUS,
+            k_turn:        parseFloat(document.getElementById('kTurn').value),
+            grating_speed: parseFloat(document.getElementById('gratingSpeed').value),
+            omega_pref:    parseFloat(document.getElementById('omegaPref').value),
+            grating_dir:   parseInt(document.querySelector('input[name="grating"]:checked').value),
+            v_max:         parseFloat(document.getElementById('vMax').value),
+            alpha:         7,
+            brownian_amp:  1.2,
+            min_dist:      MIN_VIEW_DIST
+        };
+    }
+
+    // Reichardt-like saturating response: peaks at omega_pref
+    function reichardt(omega_raw, omega_pref) {
+        const r = omega_raw / omega_pref;
+        return omega_raw / (1 + r * r);
+    }
+
+    function updateParam(id) {
+        document.getElementById(id + '_val').textContent = document.getElementById(id).value;
+    }
+
+    function updateTrailLength() {
+        const v = parseFloat(document.getElementById('trailLength').value);
+        document.getElementById('trailLength_val').textContent = v.toFixed(1);
+        trailLength = Math.round(v * FPS);
+    }
+
+    // ── RNG ───────────────────────────────────────────────────────────────────
+    function createRNG(seed) {
+        let s = seed;
+        return () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+    }
+    function gaussianRandom(rand) {
+        const u1 = Math.max(rand(), 1e-10);
+        return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * rand());
+    }
+
+    // ── Ray-circle intersection (positive forward distance) ───────────────────
+    function viewDistCircle(x, y, theta, R) {
+        const dx = Math.cos(theta), dy = Math.sin(theta);
+        const B = 2*(x*dx + y*dy);
+        const C = x*x + y*y - R*R;
+        const disc = B*B - 4*C;
+        if (disc < 0) return 0;
+        const sq = Math.sqrt(disc);
+        const t1 = (-B + sq)/2, t2 = (-B - sq)/2;
+        const cands = [t1, t2].filter(t => t > 1e-6);
+        return cands.length ? Math.min(...cands) : 0;
+    }
+
+    // ── Fly initialisation ────────────────────────────────────────────────────
+    function initFly(index) {
+        const seed = Date.now() + index * 1000 + Math.floor(Math.random() * 10000);
+        const rand = createRNG(seed);
+        const r = Math.sqrt(rand()) * ARENA_RADIUS * 0.85;
+        const a = rand() * 2 * Math.PI;
+        return {
+            x: r * Math.cos(a),
+            y: r * Math.sin(a),
+            theta: rand() * 2 * Math.PI,
+            trail: [],
+            colour: FLY_COLOURS[index],
+            rand: createRNG(seed + 777),
+            // Cached eye distances (updated every frame, used for drawing)
+            dLeft: 0, dRight: 0
+        };
+    }
+
+    function initializeFlies() {
+        flies = [];
+        for (let i = 0; i < NUM_FLIES; i++) flies.push(initFly(i));
+        elapsedTime = 0;
+    }
+
+    // ── Fly update with two-eye model ─────────────────────────────────────────
+    function updateFly(fly, params) {
+        const dt = 1 / params.fps;
+
+        // Trail
+        fly.trail.push({ x: fly.x, y: fly.y });
+        while (fly.trail.length > trailLength) fly.trail.shift();
+
+        // Two-eye viewing distances
+        const dLeft  = viewDistCircle(fly.x, fly.y, fly.theta + EYE_ANGLE, params.arena_radius);
+        const dRight = viewDistCircle(fly.x, fly.y, fly.theta - EYE_ANGLE, params.arena_radius);
+        fly.dLeft = dLeft;
+        fly.dRight = dRight;
+
+        // Per-eye raw retinal angular velocity (rad/s): ω = v_wall / d
+        const v_wall = params.grating_speed * params.arena_radius;
+        const omegaLeftRaw  = v_wall / Math.max(dLeft, params.min_dist);
+        const omegaRightRaw = v_wall / Math.max(dRight, params.min_dist);
+
+        // Reichardt-like saturating EMD response
+        const omegaLeft  = reichardt(omegaLeftRaw,  params.omega_pref);
+        const omegaRight = reichardt(omegaRightRaw, params.omega_pref);
+
+        // Bilateral comparison: average eye signal
+        const omegaAvg = (omegaLeft + omegaRight) / 2;
+
+        // Baseline = what each eye sees at the arena centre, after Reichardt
+        const omegaBaseline = reichardt(params.grating_speed, params.omega_pref);
+
+        // Excess: bilateral signal beyond baseline (drives wall-proximity amplification)
+        const omegaExcess = omegaAvg - omegaBaseline;
+
+        // Turning command: baseline (always present) + k_turn × excess
+        const turn_cmd = params.grating_dir * (omegaBaseline + params.k_turn * omegaExcess);
+
+        // Brownian noise
+        const brownian = gaussianRandom(fly.rand) / params.brownian_amp * Math.sqrt(dt);
+
+        const dtheta = turn_cmd * dt + brownian;
+        fly.theta += dtheta;
+
+        // Speed-turning coupling
+        const speed = params.v_max / (1 + params.alpha * Math.abs(dtheta));
+        let xn = fly.x + speed * dt * Math.cos(fly.theta);
+        let yn = fly.y + speed * dt * Math.sin(fly.theta);
+
+        // Boundary: 180° flip on hitting wall
+        if (xn*xn + yn*yn >= params.arena_radius * params.arena_radius) {
+            fly.theta += Math.PI;
+            xn = fly.x; yn = fly.y;
+        }
+
+        fly.x = xn; fly.y = yn;
+    }
+
+    // ── Drawing ───────────────────────────────────────────────────────────────
+    function drawArena() {
+        const canvas = document.getElementById('arenaCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width, H = canvas.height;
+        const totalRadius = ARENA_RADIUS * 1.35;
+        const scale = (W - 2 * CANVAS_PADDING) / (2 * totalRadius);
+        const cx = W / 2, cy = H / 2;
+
+        ctx.fillStyle = '#fafafa';
+        ctx.fillRect(0, 0, W, H);
+
+        const arenaR = ARENA_RADIUS * scale;
+        const gratingW = ARENA_RADIUS * 0.30 * scale;
+        const outerR = arenaR + gratingW;
+
+        // Grating annulus
+        const stripeAngle = Math.PI / NUM_STRIPES;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, outerR, 0, 2 * Math.PI);
+        ctx.arc(cx, cy, arenaR, 0, 2 * Math.PI, true);
+        ctx.clip();
+        for (let i = 0; i < NUM_STRIPES * 2; i++) {
+            const sa = i * stripeAngle + gratingPhase;
+            ctx.fillStyle = (i % 2 === 0) ? '#1a1a1a' : '#22aa22';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, outerR + 5, sa, sa + stripeAngle);
+            ctx.closePath();
+            ctx.fill();
+        }
+        ctx.restore();
+
+        // Arena boundary
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, arenaR, 0, 2 * Math.PI);
+        ctx.stroke();
+
+        // Centre cross
+        ctx.strokeStyle = '#ccc';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx - 10, cy); ctx.lineTo(cx + 10, cy);
+        ctx.moveTo(cx, cy - 10); ctx.lineTo(cx, cy + 10);
+        ctx.stroke();
+
+        // Eye rays first (under flies)
+        const showRays = document.getElementById('showRays').checked;
+        if (showRays) drawAllEyeRays(ctx, scale, cx, cy);
+
+        // Flies
+        for (const fly of flies) drawFly(ctx, fly, scale, cx, cy);
+    }
+
+    function drawAllEyeRays(ctx, scale, cx, cy) {
+        for (const fly of flies) {
+            const fxPx = cx + fly.x * scale;
+            const fyPx = cy - fly.y * scale;
+
+            const lAng = fly.theta + EYE_ANGLE;
+            const rAng = fly.theta - EYE_ANGLE;
+
+            // Left eye ray (orange, semi-transparent)
+            ctx.strokeStyle = 'rgba(255, 140, 0, 0.45)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(fxPx, fyPx);
+            ctx.lineTo(
+                fxPx + fly.dLeft * scale * Math.cos(lAng),
+                fyPx - fly.dLeft * scale * Math.sin(lAng)
+            );
+            ctx.stroke();
+
+            // Right eye ray (blue, semi-transparent)
+            ctx.strokeStyle = 'rgba(0, 120, 255, 0.45)';
+            ctx.beginPath();
+            ctx.moveTo(fxPx, fyPx);
+            ctx.lineTo(
+                fxPx + fly.dRight * scale * Math.cos(rAng),
+                fyPx - fly.dRight * scale * Math.sin(rAng)
+            );
+            ctx.stroke();
+        }
+    }
+
+    function drawFly(ctx, fly, scale, cx, cy) {
+        const x = cx + fly.x * scale;
+        const y = cy - fly.y * scale;
+
+        // Trail
+        if (fly.trail.length > 1) {
+            for (let i = 1; i < fly.trail.length; i++) {
+                const op = Math.floor((i / fly.trail.length) * 0.4 * 255).toString(16).padStart(2, '0');
+                ctx.strokeStyle = fly.colour + op;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(cx + fly.trail[i-1].x * scale, cy - fly.trail[i-1].y * scale);
+                ctx.lineTo(cx + fly.trail[i].x * scale,   cy - fly.trail[i].y * scale);
+                ctx.stroke();
+            }
+            const last = fly.trail[fly.trail.length - 1];
+            ctx.strokeStyle = fly.colour + '66';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(cx + last.x * scale, cy - last.y * scale);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        }
+
+        // Body: oval, oriented along heading
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(-fly.theta);   // canvas y-axis is inverted, so negate
+
+        const bodyL = 7;
+        const bodyW = 3;
+        ctx.fillStyle = fly.colour;
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, bodyL, bodyW, 0, 0, 2*Math.PI);
+        ctx.fill();
+        ctx.stroke();
+
+        // Two eyes at the front of the body
+        ctx.fillStyle = '#1a1a1a';
+        ctx.beginPath();
+        ctx.arc(bodyL * 0.6, -bodyW * 0.55, 1.1, 0, 2*Math.PI);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(bodyL * 0.6,  bodyW * 0.55, 1.1, 0, 2*Math.PI);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    // ── Animation loop ────────────────────────────────────────────────────────
+    function animate() {
+        if (!isRunning) return;
+        const params = getParams();
+        const dt = 1 / params.fps;
+
+        gratingPhase += params.grating_dir * params.grating_speed * 3 * dt;
+
+        for (const fly of flies) updateFly(fly, params);
+
+        elapsedTime += dt;
+        drawArena();
+
+        document.getElementById('statusText').textContent =
+            `Running — Time: ${elapsedTime.toFixed(1)}s`;
+
+        animationId = requestAnimationFrame(animate);
+    }
+
+    // ── Controls ──────────────────────────────────────────────────────────────
+    function startAnimation() {
+        if (isRunning) return;
+        isRunning = true;
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('stopBtn').disabled = false;
+        animate();
+    }
+
+    function stopAnimation() {
+        isRunning = false;
+        if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+        document.getElementById('statusText').textContent =
+            `Paused at ${elapsedTime.toFixed(1)}s — Press Start to resume`;
+    }
+
+    function resetSimulation() {
+        stopAnimation();
+        initializeFlies();
+        gratingPhase = 0;
+        // Pre-compute eye distances for drawing before any update
+        const params = getParams();
+        for (const fly of flies) {
+            fly.dLeft  = viewDistCircle(fly.x, fly.y, fly.theta + EYE_ANGLE, params.arena_radius);
+            fly.dRight = viewDistCircle(fly.x, fly.y, fly.theta - EYE_ANGLE, params.arena_radius);
+        }
+        drawArena();
+        document.getElementById('statusText').textContent = 'Ready — Press Start to begin';
+    }
+
+    function toggleSection(header) {
+        header.classList.toggle('collapsed');
+        const content = header.nextElementSibling;
+        if (content.classList.contains('collapsed')) {
+            content.classList.remove('collapsed');
+            content.style.maxHeight = content.scrollHeight + 'px';
+        } else {
+            content.style.maxHeight = '0';
+            content.classList.add('collapsed');
+        }
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        ['kTurn', 'gratingSpeed', 'vMax', 'omegaPref'].forEach(id => {
+            document.getElementById(id + '_val').textContent = document.getElementById(id).value;
+        });
+        updateTrailLength();
+        initializeFlies();
+        // Pre-compute eye distances for first draw
+        const params = getParams();
+        for (const fly of flies) {
+            fly.dLeft  = viewDistCircle(fly.x, fly.y, fly.theta + EYE_ANGLE, params.arena_radius);
+            fly.dRight = viewDistCircle(fly.x, fly.y, fly.theta - EYE_ANGLE, params.arena_radius);
+        }
+        drawArena();
+    });
+    </script>
+</body>
+</html>
