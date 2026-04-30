@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arena Geometry Comparison - Optomotor Model</title>
+    <style>
+        :root {
+            --primary-color: #000000;
+            --secondary-color: #555555;
+            --background-color: #f0f0f0;
+            --panel-bg: #ffffff;
+            --text-color: #1a1a1a;
+            --border-color: #cccccc;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            text-align: center;
+        }
+        header h1 { font-size: 1.5rem; font-weight: 600; }
+        header p { opacity: 0.9; margin-top: 0.3rem; font-size: 0.9rem; }
+
+        main { max-width: 1600px; margin: 0 auto; padding: 1.5rem; }
+
+        .simulation-layout {
+            display: flex;
+            gap: 1.25rem;
+            align-items: flex-start;
+        }
+        @media (max-width: 1200px) { .simulation-layout { flex-direction: column; } }
+
+        /* Controls */
+        .controls-panel {
+            background: var(--panel-bg);
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-width: 240px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 1rem;
+        }
+        .controls-panel h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+        }
+        .control-group { margin-bottom: 1rem; }
+        .control-group label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.25rem; }
+        .control-group input[type="range"] { width: 100%; margin-top: 0.25rem; }
+        .radio-group { display: flex; gap: 1rem; align-items: center; margin-top: 0.25rem; }
+        .radio-group label { display: flex; align-items: center; gap: 0.25rem; cursor: pointer; font-weight: normal; }
+        .buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.25rem; }
+        button {
+            padding: 0.6rem 1.2rem; border: none; border-radius: 4px; cursor: pointer;
+            font-size: 0.9rem; transition: background-color 0.2s; flex: 1;
+        }
+        .btn-start { background-color: #2d8a4e; color: white; }
+        .btn-start:hover { background-color: #236b3c; }
+        .btn-stop { background-color: #c0392b; color: white; }
+        .btn-stop:hover { background-color: #962d22; }
+        .btn-reset { background-color: #888888; color: white; }
+        .btn-reset:hover { background-color: #666666; }
+
+        /* arena grid */
+        .arenas-wrapper { flex: 1 1 auto; min-width: 0; }
+        .arenas-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        @media (max-width: 800px) { .arenas-grid { grid-template-columns: 1fr; } }
+
+        .arena-panel {
+            background: var(--panel-bg);
+            border-radius: 8px;
+            padding: 0.9rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .arena-panel h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--primary-color); }
+        .arena-canvas { border-radius: 4px; background: #fafafa; max-width: 100%; height: auto; }
+        .status-bar { margin-top: 0.4rem; font-size: 0.78rem; color: #666; text-align: center; min-height: 1.2em; }
+
+        /* collapsible */
+        .collapsible-section { background: var(--panel-bg); border-radius: 8px; margin-top: 1.25rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .collapsible-header {
+            padding: 1rem 1.5rem; cursor: pointer; display: flex; justify-content: space-between;
+            align-items: center; border-radius: 8px; transition: background-color 0.2s;
+        }
+        .collapsible-header:hover { background-color: #f5f5f5; }
+        .collapsible-header h2 { font-size: 1.1rem; color: var(--primary-color); margin: 0; }
+        .collapsible-header::after { content: '\25BC'; font-size: 0.8rem; transition: transform 0.3s; color: var(--secondary-color); }
+        .collapsible-header.collapsed::after { transform: rotate(-90deg); }
+        .collapsible-content { padding: 0 1.5rem 1.5rem; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; }
+        .collapsible-content.collapsed { max-height: 0 !important; padding-top: 0; padding-bottom: 0; }
+
+        .model-content h3 { font-size: 1rem; color: var(--primary-color); margin-top: 1.25rem; margin-bottom: 0.6rem; }
+        .model-content h3:first-child { margin-top: 0.5rem; }
+        .model-content p { font-size: 0.88rem; margin-bottom: 0.6rem; color: #333; }
+        .model-content ul { margin: 0.4rem 0 0.8rem 1.4rem; font-size: 0.88rem; }
+        .model-content li { margin-bottom: 0.3rem; }
+        .equation {
+            background: #f0f0f0; padding: 0.6rem 1rem; border-radius: 4px;
+            font-family: 'Courier New', monospace; font-size: 0.88rem; overflow-x: auto;
+            margin: 0.6rem 0; border-left: 3px solid var(--secondary-color);
+        }
+        .arena-grid-desc {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin: 0.75rem 0;
+        }
+        @media (max-width: 700px) { .arena-grid-desc { grid-template-columns: 1fr; } }
+        .desc-card {
+            background: #f5f5f5; padding: 0.8rem; border-radius: 4px; border-left: 4px solid #555;
+        }
+        .desc-card h4 { margin-top: 0; margin-bottom: 0.4rem; font-size: 0.9rem; color: var(--primary-color); }
+        .desc-card p { margin-bottom: 0; font-size: 0.82rem; }
+
+        footer { text-align: center; padding: 1rem; color: #666; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Arena Geometry Comparison — Optomotor Model</h1>
+        <p>Same model, six arena shapes — 15 independent flies each. Where do they accumulate?</p>
+    </header>
+
+    <main>
+        <div class="simulation-layout">
+            <!-- Controls -->
+            <div class="controls-panel">
+                <h2>Parameters</h2>
+                <div class="control-group">
+                    <label>k_dist (distance gain): <span id="kDist_val">2.0</span></label>
+                    <input type="range" id="kDist" min="0" max="10" step="0.1" value="2.0" oninput="updateParam('kDist')">
+                </div>
+                <div class="control-group">
+                    <label>Walking speed (mm/s): <span id="vMax_val">20</span></label>
+                    <input type="range" id="vMax" min="5" max="50" step="1" value="20" oninput="updateParam('vMax')">
+                </div>
+                <div class="control-group">
+                    <label>Trail length (s): <span id="trailLength_val">3.0</span></label>
+                    <input type="range" id="trailLength" min="0" max="10" step="0.5" value="3" oninput="updateTrailLength()">
+                </div>
+                <div class="control-group">
+                    <label>Grating speed: <span id="gratingSpeed_val">0.1</span></label>
+                    <input type="range" id="gratingSpeed" min="0" max="1" step="0.01" value="0.1" oninput="updateParam('gratingSpeed')">
+                </div>
+                <div class="control-group">
+                    <label>Grating direction:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="grating" value="1" checked> CW</label>
+                        <label><input type="radio" name="grating" value="-1"> CCW</label>
+                    </div>
+                </div>
+                <div class="buttons">
+                    <button id="startBtn" class="btn-start" onclick="startAnimation()">Start</button>
+                    <button id="stopBtn" class="btn-stop" onclick="stopAnimation()" disabled>Stop</button>
+                </div>
+                <div class="buttons">
+                    <button class="btn-reset" onclick="resetSimulation()">Reset</button>
+                </div>
+            </div>
+
+            <!-- Arena Grid: 3 rows × 2 cols -->
+            <div class="arenas-wrapper">
+                <div class="arenas-grid">
+                    <div class="arena-panel">
+                        <h3>Circular Arena</h3>
+                        <canvas id="circleCanvas" class="arena-canvas" width="380" height="380"></canvas>
+                        <div class="status-bar" id="statusCircle">Ready</div>
+                    </div>
+                    <div class="arena-panel">
+                        <h3>Square Arena</h3>
+                        <canvas id="squareCanvas" class="arena-canvas" width="380" height="380"></canvas>
+                        <div class="status-bar" id="statusSquare">&nbsp;</div>
+                    </div>
+                    <div class="arena-panel">
+                        <h3>Oval Arena</h3>
+                        <canvas id="ellipseCanvas" class="arena-canvas" width="380" height="380"></canvas>
+                        <div class="status-bar" id="statusEllipse">&nbsp;</div>
+                    </div>
+                    <div class="arena-panel">
+                        <h3>Curved Cross Arena</h3>
+                        <canvas id="crossCanvas" class="arena-canvas" width="380" height="380"></canvas>
+                        <div class="status-bar" id="statusCross">&nbsp;</div>
+                    </div>
+                    <div class="arena-panel">
+                        <h3>Donut Arena (central obstacle)</h3>
+                        <canvas id="donutCanvas" class="arena-canvas" width="380" height="380"></canvas>
+                        <div class="status-bar" id="statusDonut">&nbsp;</div>
+                    </div>
+                    <div class="arena-panel">
+                        <h3>Crescent Arena (concave)</h3>
+                        <canvas id="crescentCanvas" class="arena-canvas" width="380" height="380"></canvas>
+                        <div class="status-bar" id="statusCrescent">&nbsp;</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Geometry notes -->
+        <section class="collapsible-section">
+            <div class="collapsible-header collapsed" onclick="toggleSection(this)">
+                <h2>Arena Geometries &amp; When Centripetal Drift Can Fail</h2>
+            </div>
+            <div class="collapsible-content collapsed" style="max-height:0;">
+                <div class="model-content">
+                    <h3>How These Six Arenas Differ</h3>
+                    <div class="arena-grid-desc">
+                        <div class="desc-card">
+                            <h4>Circular (&empty; 241 mm)</h4>
+                            <p>Smooth, isotropic boundary. Strong centripetal drift expected — the canonical case.</p>
+                        </div>
+                        <div class="desc-card">
+                            <h4>Square (241 mm side)</h4>
+                            <p>Flat walls, right-angle corners. Diagonal viewing distances are &radic;2 longer than axial, so the drift is slightly weaker along the diagonals. Net result: a mildly diamond-shaped distribution.</p>
+                        </div>
+                        <div class="desc-card">
+                            <h4>Oval (420 mm &times; 120 mm, 3.5:1)</h4>
+                            <p>Strongly asymmetric viewing distances: ~210 mm along the major axis (very low gain) vs ~60 mm along the minor (high gain). The minor-axis walls drive strong lateral centring, but the gain along the long axis is so weak that flies become quasi-1D random walkers and accumulate near the tips of the oval rather than at the centre.</p>
+                        </div>
+                        <div class="desc-card">
+                            <h4>Curved Cross (arm: 280 mm &times; 110 mm)</h4>
+                            <p>Two oval arms unioned. Each arm has long axial viewing distance (low gain → drift toward tip) and short lateral distance (high gain → centring within the arm). With high k_dist, flies cluster at the four arm tips, <em>not</em> the geometric centre.</p>
+                        </div>
+                        <div class="desc-card">
+                            <h4>Donut (R_out 120 mm, R_in 45 mm)</h4>
+                            <p>Annular ring with a central obstacle. <em>Both</em> walls (inner and outer) generate the same wall-repulsion mechanism. The two repulsions balance at the midpoint of the annulus, so flies should cluster in a <strong>ring</strong> at radius ~83 mm — the new "centre". The geometric centre is unreachable.</p>
+                        </div>
+                        <div class="desc-card">
+                            <h4>Crescent (concave cutout)</h4>
+                            <p>Outer circle (R 120 mm) minus an offset cutout (R 65 mm at +80 mm x). The cutout boundary is <em>concave</em> from inside. A fly in the concave pocket sees the cutout wall close on one side and the outer wall close on the other — it gets squeezed between two walls. Watch whether flies cluster on the convex (left) side, away from the pocket.</p>
+                        </div>
+                    </div>
+
+                    <h3>Geometries Where Centripetal Drift Can Break Down</h3>
+                    <p>The drift mechanism relies on a consistent asymmetry: <em>facing the wall → short viewing distance → high gain → strong turning; facing the interior → long viewing distance → low gain → straighter path.</em> This asymmetry is broken when:</p>
+                    <ul>
+                        <li><strong>The "centre" is geometrically inaccessible (donut):</strong> Flies cannot drift to a point; they drift to whatever locus minimises the average wall-proximity gain. For the annulus this is the midpoint ring.</li>
+                        <li><strong>The arena has multiple competing attractor regions (cross, star):</strong> Each arm tip becomes a local attractor because the gain landscape favours moving outward along the arm. The geometric centre becomes a saddle rather than an attractor.</li>
+                        <li><strong>The boundary is concave (crescent, hourglass, horseshoe):</strong> In the concave region, the wall-normal points <em>away</em> from where you'd want flies to drift. The pocket can trap flies or push them in unexpected directions, depending on whether the convex outer wall or concave inner wall dominates locally.</li>
+                        <li><strong>The arena is highly elongated (oval &gt; 3:1):</strong> The major-axis viewing distance gets so long that the gain is effectively zero there. Flies become quasi-1D random walkers along the major axis with reflective endpoints, accumulating at the tips. The 3.5:1 oval in this page is in this regime — at moderate-to-high k_dist, the tip clustering should be clearly visible.</li>
+                    </ul>
+
+                    <h3>Model Equations (identical in all arenas)</h3>
+                    <div class="equation">
+                        &Delta;&theta; = grating_dir &times; grating_speed &times; dt
+                            &nbsp;+&nbsp; randn()/1.2 &times; &radic;dt
+                            &nbsp;+&nbsp; grating_dir &times; k_dist &times; sigmoid(viewing_dist) &times; dt
+                    </div>
+                    <div class="equation">
+                        sigmoid(d) = 1 / (1 + exp(0.02 &times; (d &minus; 90)))
+                        &nbsp;&nbsp;&nbsp;&nbsp;
+                        speed = v_max / (1 + 7 &times; |&Delta;&theta;|)
+                    </div>
+                    <p>The only geometry-dependent quantity is <code>viewing_dist</code> — the distance from the fly's current position to the nearest wall along its heading. Each arena uses a different ray-intersection formula. Boundary reflections use the wall's outward normal (angle-of-incidence = angle-of-reflection), except the simple circular arena which uses a 180° flip.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Optomotor Response Model — Arena Geometry Comparison</p>
+    </footer>
+
+    <script>
+    // ── Arena configurations ──────────────────────────────────────────────────
+    const ARENAS = {
+        circle:   { type: 'circle',   R: 120.5 },
+        square:   { type: 'square',   H: 120.5 },
+        ellipse:  { type: 'ellipse',  a: 210, b: 60 },
+        cross:    { type: 'cross',    Ra: 140, Rb: 55 },
+        donut:    { type: 'donut',    R_out: 120.5, R_in: 45 },
+        crescent: { type: 'crescent', R_out: 120.5, R_cut: 65, cx_cut: 80 }
+    };
+
+    // ── Constants ─────────────────────────────────────────────────────────────
+    const FPS          = 30;
+    const NUM_FLIES    = 15;
+    const NUM_STRIPES  = 12;
+    const GRATING_FRAC = 0.30;
+    const PAD          = 18;
+
+    const FLY_COLOURS = [
+        '#e6194b','#3cb44b','#ffe119','#4363d8','#f58231',
+        '#911eb4','#46f0f0','#f032e6','#bcf60c','#fabebe',
+        '#008080','#e6beff','#9a6324','#800000','#aaffc3'
+    ];
+
+    // ── State ─────────────────────────────────────────────────────────────────
+    let trailLength  = 90;
+    let gratingPhase = 0;
+    let animationId  = null;
+    let isRunning    = false;
+    let elapsedTime  = 0;
+
+    const flyPools = { circle: [], square: [], ellipse: [], cross: [], donut: [], crescent: [] };
+
+    // ── Parameter helpers ─────────────────────────────────────────────────────
+    function getParams() {
+        return {
+            fps:           FPS,
+            k_dist:        parseFloat(document.getElementById('kDist').value),
+            d0:            90,
+            b:             0.02,
+            grating_speed: parseFloat(document.getElementById('gratingSpeed').value),
+            grating_dir:   parseInt(document.querySelector('input[name="grating"]:checked').value),
+            v_max:         parseFloat(document.getElementById('vMax').value),
+            alpha:         7,
+            brownian_amp:  1.2,
+            min_dist:      20
+        };
+    }
+    function updateParam(id) {
+        if (id !== 'grating')
+            document.getElementById(id + '_val').textContent = document.getElementById(id).value;
+    }
+    function updateTrailLength() {
+        const v = parseFloat(document.getElementById('trailLength').value);
+        document.getElementById('trailLength_val').textContent = v.toFixed(1);
+        trailLength = Math.round(v * FPS);
+    }
+
+    // ── RNG ───────────────────────────────────────────────────────────────────
+    function createRNG(seed) {
+        let s = seed;
+        return () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+    }
+    function gaussianRandom(rand) {
+        const u1 = Math.max(rand(), 1e-10);
+        return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * rand());
+    }
+
+    // ── Viewing-distance functions ────────────────────────────────────────────
+
+    function viewDistCircle(x, y, theta, R) {
+        const dx = Math.cos(theta), dy = Math.sin(theta);
+        const B = 2*(x*dx + y*dy);
+        const C = x*x + y*y - R*R;
+        const disc = B*B - 4*C;
+        if (disc < 0) return 0;
+        const sq = Math.sqrt(disc);
+        return Math.max((-B + sq)/2, (-B - sq)/2, 0);
+    }
+
+    function viewDistSquare(x, y, theta, H) {
+        const dx = Math.cos(theta), dy = Math.sin(theta);
+        const tx = dx !== 0 ? (dx > 0 ? (H - x)/dx : (-H - x)/dx) : Infinity;
+        const ty = dy !== 0 ? (dy > 0 ? (H - y)/dy : (-H - y)/dy) : Infinity;
+        const t = Math.min(tx, ty);
+        return t > 0 ? t : 0;
+    }
+
+    function viewDistEllipse(x, y, theta, a, b) {
+        const dx = Math.cos(theta), dy = Math.sin(theta);
+        const A = dx*dx/(a*a) + dy*dy/(b*b);
+        const B = 2*(x*dx/(a*a) + y*dy/(b*b));
+        const C = x*x/(a*a) + y*y/(b*b) - 1;
+        const disc = B*B - 4*A*C;
+        if (disc < 0) return 0;
+        const sq = Math.sqrt(disc);
+        const cands = [(-B + sq)/(2*A), (-B - sq)/(2*A)].filter(t => t > 1e-6);
+        return cands.length ? Math.min(...cands) : 0;
+    }
+
+    function viewDistCross(x, y, theta, Ra, Rb) {
+        const dx = Math.cos(theta), dy = Math.sin(theta);
+        function ellHits(a, b) {
+            const A = dx*dx/(a*a) + dy*dy/(b*b);
+            const B = 2*(x*dx/(a*a) + y*dy/(b*b));
+            const C = x*x/(a*a) + y*y/(b*b) - 1;
+            const disc = B*B - 4*A*C;
+            if (disc < 0) return [];
+            const sq = Math.sqrt(disc);
+            return [(-B+sq)/(2*A), (-B-sq)/(2*A)].filter(t => t > 1e-6);
+        }
+        function inEll(px, py, a, b) { return px*px/(a*a) + py*py/(b*b) <= 1; }
+        const hits = [];
+        for (const t of ellHits(Ra, Rb)) {
+            const px = x+t*dx, py = y+t*dy;
+            if (!inEll(px, py, Rb, Ra)) hits.push(t);
+        }
+        for (const t of ellHits(Rb, Ra)) {
+            const px = x+t*dx, py = y+t*dy;
+            if (!inEll(px, py, Ra, Rb)) hits.push(t);
+        }
+        return hits.length ? Math.min(...hits) : 0;
+    }
+
+    // Donut: ray exits through outer wall (going outward) OR enters inner forbidden disk
+    function viewDistDonut(x, y, theta, R_out, R_in) {
+        const dx = Math.cos(theta), dy = Math.sin(theta);
+        const cands = [];
+        // outer circle around origin
+        {
+            const B = 2*(x*dx + y*dy);
+            const C = x*x + y*y - R_out*R_out;
+            const disc = B*B - 4*C;
+            if (disc >= 0) {
+                const sq = Math.sqrt(disc);
+                for (const t of [(-B+sq)/2, (-B-sq)/2]) if (t > 1e-6) cands.push(t);
+            }
+        }
+        // inner obstacle around origin
+        {
+            const B = 2*(x*dx + y*dy);
+            const C = x*x + y*y - R_in*R_in;
+            const disc = B*B - 4*C;
+            if (disc >= 0) {
+                const sq = Math.sqrt(disc);
+                for (const t of [(-B+sq)/2, (-B-sq)/2]) if (t > 1e-6) cands.push(t);
+            }
+        }
+        return cands.length ? Math.min(...cands) : 0;
+    }
+
+    // Crescent: outer disk minus offset cutout disk
+    function viewDistCrescent(x, y, theta, R_out, R_cut, cx_cut) {
+        const dx = Math.cos(theta), dy = Math.sin(theta);
+        const cands = [];
+        // outer circle around origin: hit valid only if outside the cutout
+        {
+            const B = 2*(x*dx + y*dy);
+            const C = x*x + y*y - R_out*R_out;
+            const disc = B*B - 4*C;
+            if (disc >= 0) {
+                const sq = Math.sqrt(disc);
+                for (const t of [(-B+sq)/2, (-B-sq)/2]) {
+                    if (t > 1e-6) {
+                        const px = x+t*dx, py = y+t*dy;
+                        const dxc = px - cx_cut;
+                        if (dxc*dxc + py*py >= R_cut*R_cut) cands.push(t);
+                    }
+                }
+            }
+        }
+        // cutout circle around (cx_cut, 0): hit valid only if inside the outer
+        {
+            const xs = x - cx_cut;
+            const B = 2*(xs*dx + y*dy);
+            const C = xs*xs + y*y - R_cut*R_cut;
+            const disc = B*B - 4*C;
+            if (disc >= 0) {
+                const sq = Math.sqrt(disc);
+                for (const t of [(-B+sq)/2, (-B-sq)/2]) {
+                    if (t > 1e-6) {
+                        const px = x+t*dx, py = y+t*dy;
+                        if (px*px + py*py <= R_out*R_out) cands.push(t);
+                    }
+                }
+            }
+        }
+        return cands.length ? Math.min(...cands) : 0;
+    }
+
+    // ── Arena membership tests ────────────────────────────────────────────────
+    function inCross(x, y, Ra, Rb) {
+        return x*x/(Ra*Ra)+y*y/(Rb*Rb) <= 1 || x*x/(Rb*Rb)+y*y/(Ra*Ra) <= 1;
+    }
+    function inDonut(x, y, R_out, R_in) {
+        const r2 = x*x + y*y;
+        return r2 <= R_out*R_out && r2 >= R_in*R_in;
+    }
+    function inCrescent(x, y, R_out, R_cut, cx_cut) {
+        const dxc = x - cx_cut;
+        return x*x + y*y <= R_out*R_out && dxc*dxc + y*y >= R_cut*R_cut;
+    }
+
+    // ── Fly initialisation ────────────────────────────────────────────────────
+    function makeFly(x, y, seed, index) {
+        const r = createRNG(seed);
+        return { x, y, theta: r() * 2 * Math.PI, trail: [], colour: FLY_COLOURS[index], rand: createRNG(seed + 777) };
+    }
+
+    function initFly(index, arenaKey) {
+        const base = Date.now() + index * 1000;
+        const offsets = { circle: 0, square: 50000, ellipse: 100000, cross: 150000, donut: 200000, crescent: 250000 };
+        const seed = base + offsets[arenaKey] + Math.floor(Math.random() * 9999);
+        const rand = createRNG(seed);
+        const arena = ARENAS[arenaKey];
+        let x, y;
+
+        if (arenaKey === 'circle') {
+            const r = Math.sqrt(rand()) * arena.R * 0.85;
+            const a = rand() * 2 * Math.PI;
+            x = r * Math.cos(a); y = r * Math.sin(a);
+        } else if (arenaKey === 'square') {
+            x = (rand()*2-1) * arena.H * 0.85;
+            y = (rand()*2-1) * arena.H * 0.85;
+        } else if (arenaKey === 'ellipse') {
+            const r = Math.sqrt(rand());
+            const a = rand() * 2 * Math.PI;
+            x = r * arena.a * 0.85 * Math.cos(a);
+            y = r * arena.b * 0.85 * Math.sin(a);
+        } else if (arenaKey === 'cross') {
+            let tries = 0;
+            do {
+                x = (rand()*2-1) * arena.Ra * 0.85;
+                y = (rand()*2-1) * arena.Ra * 0.85;
+                tries++;
+            } while (!inCross(x, y, arena.Ra * 0.85, arena.Rb * 0.85) && tries < 200);
+            if (!inCross(x, y, arena.Ra, arena.Rb)) { x = 0; y = 0; }
+        } else if (arenaKey === 'donut') {
+            // Uniform in annulus: r² ~ U(R_in², R_out²) (shrunk slightly for safety)
+            const Rmin = arena.R_in * 1.15, Rmax = arena.R_out * 0.85;
+            const r2 = Rmin*Rmin + rand() * (Rmax*Rmax - Rmin*Rmin);
+            const r = Math.sqrt(r2);
+            const a = rand() * 2 * Math.PI;
+            x = r * Math.cos(a); y = r * Math.sin(a);
+        } else { // crescent
+            let tries = 0;
+            do {
+                x = (rand()*2-1) * arena.R_out * 0.85;
+                y = (rand()*2-1) * arena.R_out * 0.85;
+                tries++;
+            } while (!inCrescent(x, y, arena.R_out * 0.85, arena.R_cut * 1.15, arena.cx_cut) && tries < 200);
+            if (!inCrescent(x, y, arena.R_out, arena.R_cut, arena.cx_cut)) { x = -arena.R_out * 0.4; y = 0; }
+        }
+        return makeFly(x, y, seed, index);
+    }
+
+    function initializeFlies() {
+        for (const key of Object.keys(flyPools)) {
+            flyPools[key] = [];
+            for (let i = 0; i < NUM_FLIES; i++) flyPools[key].push(initFly(i, key));
+        }
+        elapsedTime = 0;
+    }
+
+    // ── Helper: reflect heading about an outward unit normal (nx, ny) ─────────
+    function reflectHeading(fly, nx, ny) {
+        const vx = Math.cos(fly.theta), vy = Math.sin(fly.theta);
+        const dot = vx*nx + vy*ny;
+        fly.theta = Math.atan2(vy - 2*dot*ny, vx - 2*dot*nx);
+    }
+
+    // ── Fly update ────────────────────────────────────────────────────────────
+    function updateFly(fly, params, arenaKey) {
+        const dt = 1 / params.fps;
+        const arena = ARENAS[arenaKey];
+
+        fly.trail.push({ x: fly.x, y: fly.y });
+        while (fly.trail.length > trailLength) fly.trail.shift();
+
+        // Viewing distance
+        let vd;
+        if      (arenaKey === 'circle')   vd = viewDistCircle(fly.x, fly.y, fly.theta, arena.R);
+        else if (arenaKey === 'square')   vd = viewDistSquare(fly.x, fly.y, fly.theta, arena.H);
+        else if (arenaKey === 'ellipse')  vd = viewDistEllipse(fly.x, fly.y, fly.theta, arena.a, arena.b);
+        else if (arenaKey === 'cross')    vd = viewDistCross(fly.x, fly.y, fly.theta, arena.Ra, arena.Rb);
+        else if (arenaKey === 'donut')    vd = viewDistDonut(fly.x, fly.y, fly.theta, arena.R_out, arena.R_in);
+        else                              vd = viewDistCrescent(fly.x, fly.y, fly.theta, arena.R_out, arena.R_cut, arena.cx_cut);
+
+        const bias  = vd >= params.min_dist ? params.grating_dir * params.grating_speed * dt : 0;
+        const brown = gaussianRandom(fly.rand) / params.brownian_amp * Math.sqrt(dt);
+        const vf    = 1 / (1 + Math.exp(params.b * (vd - params.d0)));
+        const dtheta = vd < params.min_dist
+            ? brown
+            : bias + brown + params.grating_dir * params.k_dist * vf * dt;
+
+        fly.theta += dtheta;
+        const speed = params.v_max / (1 + params.alpha * Math.abs(dtheta));
+        let xn = fly.x + speed * dt * Math.cos(fly.theta);
+        let yn = fly.y + speed * dt * Math.sin(fly.theta);
+
+        // Boundary handling
+        if (arenaKey === 'circle') {
+            if (xn*xn + yn*yn >= arena.R*arena.R) {
+                fly.theta += Math.PI;
+                xn = fly.x; yn = fly.y;
+            }
+        } else if (arenaKey === 'square') {
+            const H = arena.H;
+            let reflected = false;
+            if (Math.abs(xn) >= H) { fly.theta = Math.PI - fly.theta; xn = Math.sign(xn) * (H - 0.1); reflected = true; }
+            if (Math.abs(yn) >= H) { fly.theta = -fly.theta; yn = Math.sign(yn) * (H - 0.1); reflected = true; }
+            if (reflected) {
+                xn = fly.x + speed * dt * Math.cos(fly.theta) * 0.5;
+                yn = fly.y + speed * dt * Math.sin(fly.theta) * 0.5;
+                xn = Math.max(-H+0.1, Math.min(H-0.1, xn));
+                yn = Math.max(-H+0.1, Math.min(H-0.1, yn));
+            }
+        } else if (arenaKey === 'ellipse') {
+            const { a, b } = arena;
+            if (xn*xn/(a*a) + yn*yn/(b*b) >= 1) {
+                const nxr = fly.x/(a*a), nyr = fly.y/(b*b);
+                const nlen = Math.sqrt(nxr*nxr + nyr*nyr) || 1;
+                reflectHeading(fly, nxr/nlen, nyr/nlen);
+                xn = fly.x; yn = fly.y;
+            }
+        } else if (arenaKey === 'cross') {
+            const { Ra, Rb } = arena;
+            if (!inCross(xn, yn, Ra, Rb)) {
+                const v1 = fly.x*fly.x/(Ra*Ra) + fly.y*fly.y/(Rb*Rb);
+                const v2 = fly.x*fly.x/(Rb*Rb) + fly.y*fly.y/(Ra*Ra);
+                let nxr, nyr;
+                if (v1 >= v2) { nxr = fly.x/(Ra*Ra); nyr = fly.y/(Rb*Rb); }
+                else           { nxr = fly.x/(Rb*Rb); nyr = fly.y/(Ra*Ra); }
+                const nlen = Math.sqrt(nxr*nxr + nyr*nyr) || 1;
+                reflectHeading(fly, nxr/nlen, nyr/nlen);
+                xn = fly.x; yn = fly.y;
+            }
+        } else if (arenaKey === 'donut') {
+            const { R_out, R_in } = arena;
+            const r2 = xn*xn + yn*yn;
+            if (r2 >= R_out*R_out || r2 <= R_in*R_in) {
+                // Reflect about radial direction (works for both inner & outer walls)
+                const r = Math.sqrt(fly.x*fly.x + fly.y*fly.y) || 1;
+                reflectHeading(fly, fly.x/r, fly.y/r);
+                xn = fly.x; yn = fly.y;
+            }
+        } else { // crescent
+            const { R_out, R_cut, cx_cut } = arena;
+            const r2_out = xn*xn + yn*yn;
+            const dxc = xn - cx_cut, dyc = yn;
+            const r2_cut = dxc*dxc + dyc*dyc;
+            if (r2_out >= R_out*R_out) {
+                // Hit outer wall — normal radial from origin
+                const r = Math.sqrt(fly.x*fly.x + fly.y*fly.y) || 1;
+                reflectHeading(fly, fly.x/r, fly.y/r);
+                xn = fly.x; yn = fly.y;
+            } else if (r2_cut <= R_cut*R_cut) {
+                // Hit cutout wall — normal radial from cutout centre
+                const dxC = fly.x - cx_cut, dyC = fly.y;
+                const rc = Math.sqrt(dxC*dxC + dyC*dyC) || 1;
+                reflectHeading(fly, dxC/rc, dyC/rc);
+                xn = fly.x; yn = fly.y;
+            }
+        }
+
+        fly.x = xn; fly.y = yn;
+    }
+
+    // ── Scale/centre per canvas ───────────────────────────────────────────────
+    function arenaScale(canvas, arenaKey) {
+        const W = canvas.width;
+        const arena = ARENAS[arenaKey];
+        let extent;
+        if      (arenaKey === 'circle')   extent = arena.R;
+        else if (arenaKey === 'square')   extent = arena.H;
+        else if (arenaKey === 'ellipse')  extent = arena.a;
+        else if (arenaKey === 'cross')    extent = arena.Ra;
+        else if (arenaKey === 'donut')    extent = arena.R_out;
+        else                              extent = arena.R_out; // crescent
+        const totalExtent = extent * (1 + GRATING_FRAC + 0.08);
+        const scale = (W - 2*PAD) / (2 * totalExtent);
+        return { scale, cx: W/2, cy: W/2 };
+    }
+
+    // ── Grating helpers ───────────────────────────────────────────────────────
+    function fillAngularStripes(ctx, cx, cy, outerR, stripeCount, phaseOffset = 0) {
+        const stripeAngle = Math.PI / stripeCount;
+        for (let i = 0; i < stripeCount * 2; i++) {
+            const sa = i * stripeAngle + gratingPhase + phaseOffset;
+            ctx.fillStyle = (i % 2 === 0) ? '#1a1a1a' : '#22aa22';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, outerR + 5, sa, sa + stripeAngle);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+
+    function addCrossPathPoints(ctx, cx, cy, Ra, Rb, scale, factor, reverse) {
+        const N = 240;
+        const pts = [];
+        for (let i = 0; i <= N; i++) {
+            const theta = (i / N) * 2 * Math.PI;
+            const dx = Math.cos(theta), dy = Math.sin(theta);
+            const r1sq = 1 / (dx*dx/(Ra*Ra) + dy*dy/(Rb*Rb));
+            const r2sq = 1 / (dx*dx/(Rb*Rb) + dy*dy/(Ra*Ra));
+            const r = Math.sqrt(Math.max(r1sq, r2sq)) * factor;
+            pts.push({ px: cx + r*dx*scale, py: cy - r*dy*scale });
+        }
+        if (reverse) pts.reverse();
+        pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.px, p.py) : ctx.lineTo(p.px, p.py));
+        ctx.closePath();
+    }
+
+    // ── Drawing helpers ───────────────────────────────────────────────────────
+    function drawFlies(ctx, flies, scale, cx, cy) {
+        for (const fly of flies) {
+            if (fly.trail.length > 1) {
+                for (let i = 1; i < fly.trail.length; i++) {
+                    const op = Math.floor((i / fly.trail.length) * 0.4 * 255).toString(16).padStart(2, '0');
+                    ctx.strokeStyle = fly.colour + op;
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(cx + fly.trail[i-1].x*scale, cy - fly.trail[i-1].y*scale);
+                    ctx.lineTo(cx + fly.trail[i].x*scale,   cy - fly.trail[i].y*scale);
+                    ctx.stroke();
+                }
+                const last = fly.trail[fly.trail.length - 1];
+                ctx.strokeStyle = fly.colour + '66';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(cx + last.x*scale, cy - last.y*scale);
+                ctx.lineTo(cx + fly.x*scale,  cy - fly.y*scale);
+                ctx.stroke();
+            }
+            ctx.fillStyle = fly.colour;
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(cx + fly.x*scale, cy - fly.y*scale, 4, 0, 2*Math.PI);
+            ctx.fill(); ctx.stroke();
+            ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(cx + fly.x*scale, cy - fly.y*scale);
+            ctx.lineTo(cx + fly.x*scale + 7*Math.cos(fly.theta), cy - fly.y*scale - 7*Math.sin(fly.theta));
+            ctx.stroke();
+        }
+    }
+
+    function drawCentreCross(ctx, cx, cy) {
+        ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx-9,cy); ctx.lineTo(cx+9,cy);
+        ctx.moveTo(cx,cy-9); ctx.lineTo(cx,cy+9);
+        ctx.stroke();
+    }
+
+    // ── Per-arena draw functions ──────────────────────────────────────────────
+
+    function drawCircularArena() {
+        const canvas = document.getElementById('circleCanvas');
+        const ctx = canvas.getContext('2d');
+        const { scale, cx, cy } = arenaScale(canvas, 'circle');
+        const R = ARENAS.circle.R;
+        const Rpx = R * scale;
+        const outerR = Rpx * (1 + GRATING_FRAC);
+
+        ctx.fillStyle = '#fafafa';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, outerR,  0, 2*Math.PI);
+        ctx.arc(cx, cy, Rpx,     0, 2*Math.PI, true);
+        ctx.clip();
+        fillAngularStripes(ctx, cx, cy, outerR, NUM_STRIPES);
+        ctx.restore();
+
+        ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(cx, cy, Rpx, 0, 2*Math.PI); ctx.stroke();
+
+        drawCentreCross(ctx, cx, cy);
+        drawFlies(ctx, flyPools.circle, scale, cx, cy);
+    }
+
+    function drawSquareArena() {
+        const canvas = document.getElementById('squareCanvas');
+        const ctx = canvas.getContext('2d');
+        const { scale, cx, cy } = arenaScale(canvas, 'square');
+        const H = ARENAS.square.H;
+        const Hpx = H * scale;
+        const gratingW = H * GRATING_FRAC * scale;
+        const perimeter = 8 * Hpx;
+
+        ctx.fillStyle = '#fafafa';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const numSegs = NUM_STRIPES * 8;
+        const segLen = perimeter / numSegs;
+        const stripeLen = perimeter / NUM_STRIPES;
+
+        for (let i = 0; i < numSegs; i++) {
+            const d = i * segLen;
+            const stripeIdx = Math.floor(((d + gratingPhase * stripeLen / (Math.PI / NUM_STRIPES)) % perimeter + perimeter) % perimeter / (stripeLen / 2));
+            ctx.fillStyle = (stripeIdx % 2 === 0) ? '#1a1a1a' : '#22aa22';
+            const p0 = squarePerimPt(d,          Hpx, cx, cy);
+            const p1 = squarePerimPt(d + segLen, Hpx, cx, cy);
+            ctx.beginPath();
+            ctx.moveTo(p0.x, p0.y);
+            ctx.lineTo(p1.x, p1.y);
+            ctx.lineTo(p1.x + p1.nx*gratingW, p1.y + p1.ny*gratingW);
+            ctx.lineTo(p0.x + p0.nx*gratingW, p0.y + p0.ny*gratingW);
+            ctx.closePath(); ctx.fill();
+        }
+
+        ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+        ctx.strokeRect(cx - Hpx, cy - Hpx, 2*Hpx, 2*Hpx);
+
+        drawCentreCross(ctx, cx, cy);
+        drawFlies(ctx, flyPools.square, scale, cx, cy);
+    }
+
+    function squarePerimPt(d, Hpx, cx, cy) {
+        const side = 2 * Hpx;
+        d = ((d % (4*side)) + 4*side) % (4*side);
+        if (d < side)         return { x: cx - Hpx + d,    y: cy + Hpx,        nx:  0, ny:  1 };
+        if (d < 2*side) { const t=d-side;   return { x: cx + Hpx,       y: cy + Hpx - t,    nx:  1, ny:  0 }; }
+        if (d < 3*side) { const t=d-2*side; return { x: cx + Hpx - t,   y: cy - Hpx,        nx:  0, ny: -1 }; }
+        const t = d - 3*side;  return { x: cx - Hpx,       y: cy - Hpx + t,    nx: -1, ny:  0 };
+    }
+
+    function drawEllipseArena() {
+        const canvas = document.getElementById('ellipseCanvas');
+        const ctx = canvas.getContext('2d');
+        const { scale, cx, cy } = arenaScale(canvas, 'ellipse');
+        const { a, b } = ARENAS.ellipse;
+        const apx = a * scale, bpx = b * scale;
+        const outerA = apx * (1 + GRATING_FRAC), outerB = bpx * (1 + GRATING_FRAC);
+
+        ctx.fillStyle = '#fafafa';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, outerA, outerB, 0, 0, 2*Math.PI);
+        ctx.ellipse(cx, cy, apx,    bpx,    0, 0, 2*Math.PI);
+        ctx.clip('evenodd');
+        fillAngularStripes(ctx, cx, cy, Math.max(outerA, outerB), NUM_STRIPES);
+        ctx.restore();
+
+        ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(cx, cy, apx, bpx, 0, 0, 2*Math.PI); ctx.stroke();
+
+        drawCentreCross(ctx, cx, cy);
+        drawFlies(ctx, flyPools.ellipse, scale, cx, cy);
+    }
+
+    function drawCrossArena() {
+        const canvas = document.getElementById('crossCanvas');
+        const ctx = canvas.getContext('2d');
+        const { scale, cx, cy } = arenaScale(canvas, 'cross');
+        const { Ra, Rb } = ARENAS.cross;
+
+        ctx.fillStyle = '#fafafa';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const outerFactor = 1 + GRATING_FRAC;
+        ctx.save();
+        ctx.beginPath();
+        addCrossPathPoints(ctx, cx, cy, Ra, Rb, scale, outerFactor, false);
+        addCrossPathPoints(ctx, cx, cy, Ra, Rb, scale, 1.0,         true);
+        ctx.clip('evenodd');
+        const outerExtent = Ra * outerFactor * scale + 10;
+        fillAngularStripes(ctx, cx, cy, outerExtent, NUM_STRIPES);
+        ctx.restore();
+
+        ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+        ctx.beginPath();
+        addCrossPathPoints(ctx, cx, cy, Ra, Rb, scale, 1.0, false);
+        ctx.stroke();
+
+        drawCentreCross(ctx, cx, cy);
+        drawFlies(ctx, flyPools.cross, scale, cx, cy);
+    }
+
+    function drawDonutArena() {
+        const canvas = document.getElementById('donutCanvas');
+        const ctx = canvas.getContext('2d');
+        const { scale, cx, cy } = arenaScale(canvas, 'donut');
+        const { R_out, R_in } = ARENAS.donut;
+        const Rpx_out = R_out * scale;
+        const Rpx_in  = R_in * scale;
+        const outerR  = Rpx_out * (1 + GRATING_FRAC);
+
+        ctx.fillStyle = '#fafafa';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Outer grating annulus
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, outerR,   0, 2*Math.PI);
+        ctx.arc(cx, cy, Rpx_out,  0, 2*Math.PI, true);
+        ctx.clip();
+        fillAngularStripes(ctx, cx, cy, outerR, NUM_STRIPES);
+        ctx.restore();
+
+        // Inner obstacle: filled disk with stripes (counter-rotating offset for visual contrast)
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, Rpx_in, 0, 2*Math.PI);
+        ctx.clip();
+        fillAngularStripes(ctx, cx, cy, Rpx_in, NUM_STRIPES, Math.PI / NUM_STRIPES);
+        ctx.restore();
+
+        // Boundaries
+        ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(cx, cy, Rpx_out, 0, 2*Math.PI); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx, cy, Rpx_in,  0, 2*Math.PI); ctx.stroke();
+
+        drawCentreCross(ctx, cx, cy);
+        drawFlies(ctx, flyPools.donut, scale, cx, cy);
+    }
+
+    function drawCrescentArena() {
+        const canvas = document.getElementById('crescentCanvas');
+        const ctx = canvas.getContext('2d');
+        const { scale, cx, cy } = arenaScale(canvas, 'crescent');
+        const { R_out, R_cut, cx_cut } = ARENAS.crescent;
+        const Rpx_out = R_out * scale;
+        const Rpx_cut = R_cut * scale;
+        const cutCx = cx + cx_cut * scale;
+        const cutCy = cy;
+        const outerR = Rpx_out * (1 + GRATING_FRAC);
+
+        ctx.fillStyle = '#fafafa';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Outer grating annulus around the outer circle
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, outerR,  0, 2*Math.PI);
+        ctx.arc(cx, cy, Rpx_out, 0, 2*Math.PI, true);
+        ctx.clip();
+        fillAngularStripes(ctx, cx, cy, outerR, NUM_STRIPES);
+        ctx.restore();
+
+        // Cutout fill: stripes inside the cutout circle, intersected with outer disk
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cutCx, cutCy, Rpx_cut, 0, 2*Math.PI);
+        ctx.clip();
+        ctx.beginPath();
+        ctx.arc(cx, cy, Rpx_out, 0, 2*Math.PI);
+        ctx.clip();
+        fillAngularStripes(ctx, cutCx, cutCy, Rpx_cut, NUM_STRIPES, Math.PI / NUM_STRIPES);
+        ctx.restore();
+
+        // Boundaries: outer arc (only the part outside the cutout) + cutout arc (only the part inside the outer)
+        ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, Rpx_out, 0, 2*Math.PI);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(cutCx, cutCy, Rpx_cut, 0, 2*Math.PI);
+        ctx.stroke();
+
+        drawCentreCross(ctx, cx, cy);
+        drawFlies(ctx, flyPools.crescent, scale, cx, cy);
+    }
+
+    function drawAll() {
+        drawCircularArena();
+        drawSquareArena();
+        drawEllipseArena();
+        drawCrossArena();
+        drawDonutArena();
+        drawCrescentArena();
+    }
+
+    // ── Animation loop ────────────────────────────────────────────────────────
+    function animate() {
+        if (!isRunning) return;
+        const params = getParams();
+        const dt = 1 / params.fps;
+
+        gratingPhase += params.grating_dir * params.grating_speed * 3 * dt;
+
+        for (const key of Object.keys(flyPools))
+            for (const fly of flyPools[key]) updateFly(fly, params, key);
+
+        elapsedTime += dt;
+        drawAll();
+
+        const txt = `Running — ${elapsedTime.toFixed(1)}s`;
+        ['statusCircle','statusSquare','statusEllipse','statusCross','statusDonut','statusCrescent']
+            .forEach(id => document.getElementById(id).textContent = txt);
+
+        animationId = requestAnimationFrame(animate);
+    }
+
+    // ── Controls ──────────────────────────────────────────────────────────────
+    function startAnimation() {
+        if (isRunning) return;
+        isRunning = true;
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('stopBtn').disabled = false;
+        animate();
+    }
+
+    function stopAnimation() {
+        isRunning = false;
+        if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+        const txt = `Paused at ${elapsedTime.toFixed(1)}s`;
+        ['statusCircle','statusSquare','statusEllipse','statusCross','statusDonut','statusCrescent']
+            .forEach(id => document.getElementById(id).textContent = txt);
+    }
+
+    function resetSimulation() {
+        stopAnimation();
+        initializeFlies();
+        gratingPhase = 0;
+        drawAll();
+        document.getElementById('statusCircle').textContent = 'Ready';
+        ['statusSquare','statusEllipse','statusCross','statusDonut','statusCrescent']
+            .forEach(id => document.getElementById(id).textContent = ' ');
+    }
+
+    function toggleSection(header) {
+        header.classList.toggle('collapsed');
+        const content = header.nextElementSibling;
+        if (content.classList.contains('collapsed')) {
+            content.classList.remove('collapsed');
+            content.style.maxHeight = content.scrollHeight + 'px';
+        } else {
+            content.style.maxHeight = '0';
+            content.classList.add('collapsed');
+        }
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        ['kDist', 'gratingSpeed', 'vMax'].forEach(id => {
+            document.getElementById(id + '_val').textContent = document.getElementById(id).value;
+        });
+        updateTrailLength();
+        initializeFlies();
+        drawAll();
+    });
+    </script>
+</body>
+</html>
