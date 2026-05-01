@@ -375,31 +375,69 @@ for gi = 1:n_groups
         y_max = max(y_max, max(mean_all + sem_all, [], 'omitnan'));
     end
 
-    y_pad = (y_max - y_min) * 0.10;
-    % rng_yl = [y_min - y_pad, y_max + y_pad];
-    if dt == "dist_data" 
-        rng_yl = [-15 27];
-    elseif dt == "av_data" 
-        rng_yl = [-170 170];
-    elseif dt == "curv_data" 
-        rng_yl = [-170 170];
-    elseif dt == "fv_data" 
-        rng_yl = [0 20];
-    end 
+end
 
-    figure('Name', sprintf('TS %s: %s', grp_title, m_title), ...
-        'Position', [233 511 641 460]);
+
+%% 6 — Condition 12 (phototaxis): dist_data_delta per NorpA group + L1L4 control
+%
+% Each figure shows the 2 NorpA strains from a ts_group alongside
+% l1l4_jfrc100_shibire_kir, for condition 12 (32px ON single bar).
+% Sign convention: moving towards centre = positive (delta=1 inversion).
+
+l1l4_strain  = 'l1l4_jfrc100_shibire_kir';
+control_strain = 'jfrc100_es_shibire_kir';
+photo_dt     = "dist_data";
+photo_delta  = 1;
+rng_yl_photo = [-15 27];
+xmax_photo   = 1950;
+
+for gi = 1:n_groups
+    grp_strains = [ts_groups{gi, 1}, {l1l4_strain, control_strain}];
+    grp_title   = ts_groups{gi, 2};
+    n_s = numel(grp_strains);
+
+    grp_means = cell(n_s, 1);
+    grp_sems  = cell(n_s, 1);
+
+    for si = 1:n_s
+        strain = grp_strains{si};
+        if isfield(DATA_NORP, strain)
+            sn = strain;
+        else
+            sn = '';
+            for j = 1:numel(available_strains)
+                if strcmp(strrep(available_strains{j}, '-', '_'), strain)
+                    sn = available_strains{j};
+                    break;
+                end
+            end
+        end
+        if isempty(sn) || ~isfield(DATA_NORP.(sn), sex); continue; end
+
+        data_s    = DATA_NORP.(sn).(sex);
+        cond_data = combine_timeseries_across_exp(data_s, photo_idx, photo_dt);
+        cond_data = (cond_data - cond_data(:, 300)) * -1;
+
+        mean_all = nanmean(cond_data); %#ok<NANMEAN>
+        mean_all = movmean(mean_all, 6);
+        sem_all  = nanstd(cond_data) / sqrt(size(cond_data, 1)); %#ok<NANSTD>
+
+        grp_means{si} = mean_all;
+        grp_sems{si}  = sem_all;
+    end
+
+    figure('Name', sprintf('Photo+L1L4 TS %s: dist_data_delta', grp_title), ...
+        'Position', [181 549 796 402]);
     hold on;
 
-    % Plot each strain
     for si = 1:n_s
         if isempty(grp_means{si}); continue; end
-        strain = grp_strains{si};
-        col = strain_color_map(strain);
+        strain   = grp_strains{si};
+        col      = strain_color_map(strain);
         mean_all = grp_means{si};
         sem_all  = grp_sems{si};
         nf = numel(mean_all);
-        x = 1:nf;
+        x  = 1:nf;
 
         plot(x, mean_all + sem_all, 'w', 'LineWidth', 1);
         plot(x, mean_all - sem_all, 'w', 'LineWidth', 1);
@@ -408,37 +446,74 @@ for gi = 1:n_groups
         plot(mean_all, 'Color', col, 'LineWidth', 2.5);
     end
 
-    % Reference lines
-    plot([300 300], rng_yl, 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5);
-    plot([750 750], rng_yl, 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5);
-    plot([1200 1200], rng_yl, 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5);
-    plot([0 xmax], [0 0], 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5);
+    plot([300 300],   rng_yl_photo, 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5);
+    plot([1650 1650], rng_yl_photo, 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5);
+    plot([0 xmax_photo], [0 0],     'Color', [0.7 0.7 0.7], 'LineWidth', 0.5);
 
-    ylb = get_ylb_from_data_type(dt_resolved, delta);
-    ylabel(ylb);
+    ylabel(get_ylb_from_data_type(photo_dt, photo_delta));
     xlabel('Time (s)');
     xticks([0, 300, 600, 900, 1200, 1500, 1800]);
     xticklabels({'-10', '0', '10', '20', '30', '40', '50'});
-    ylim(rng_yl);
-    xlim([0 xmax]);
+    ylim(rng_yl_photo);
+    xlim([0 xmax_photo]);
 
-    % Stimulus annotation rectangles at top
-    yl = ylim;
+    yl     = ylim;
     yrange = yl(2) - yl(1);
     rect_h = yrange / 20;
     ylim([yl(1) yl(2) + rect_h]);
     rect_y = yl(2);
 
-    rectangle('Position', [0, rect_y, 300, rect_h], ...
+    rectangle('Position', [0,    rect_y, 300,                rect_h], ...
         'FaceColor', [0.4 0.4 0.4], 'EdgeColor', 'k');
-    rectangle('Position', [300, rect_y, 900, rect_h], ...
-        'FaceColor', [1 1 1], 'EdgeColor', 'k');
-    rectangle('Position', [1200, rect_y, xmax - 1200, rect_h], ...
+    rectangle('Position', [300,  rect_y, 1350,                rect_h], ...
+        'FaceColor', [1 1 1],       'EdgeColor', 'k');
+    rectangle('Position', [1650, rect_y, xmax_photo - 1350,  rect_h], ...
         'FaceColor', [0.4 0.4 0.4], 'EdgeColor', 'k');
 
     box off;
     set(gca, 'TickDir', 'out', 'LineWidth', 1.2, 'FontSize', 16);
     f = gcf;
-    f.Position = [181   549   796   402];
+    f.Position = [181 549 796 402];
 end
+
+%% 7 — Violin: distance moved towards centre during condition 12 (phototaxis)
+%
+% Equivalent to the dist_data delta=1 violin in section 4, but for
+% condition 12. Stimulus is 45s (frames 301–1650 at 30fps), so the
+% last-1s window is 1620:1650, matching the 1170:1200 window used for
+% the 30s grating conditions.
+
+photo_frm_rng = 1620:1650;
+group_data_photo = cell(n_strains, 1);
+
+for si = 1:n_strains
+    strain = strain_order_valid{si};
+    if ~isfield(DATA_NORP.(strain), sex); continue; end
+    data_s    = DATA_NORP.(strain).(sex);
+    cond_data = combine_timeseries_across_exp(data_s, photo_idx, "dist_data");
+    cond_data = (cond_data - cond_data(:, 300)) * -1;
+    group_data_photo{si} = nanmean(cond_data(:, photo_frm_rng), 2); %#ok<NANMEAN>
+end
+
+ylb_photo = get_ylb_from_data_type("dist_data", 1);
+
+opts_photo = struct();
+opts_photo.colors       = violin_colors;
+opts_photo.ylabel_str   = ylb_photo;
+opts_photo.marker_size  = 15;
+opts_photo.marker_alpha = 0.4;
+opts_photo.violin_alpha = 0.35;
+opts_photo.show_median  = true;
+opts_photo.violin_width = 0.35;
+opts_photo.plot_ES_median = false;
+opts_photo.med_text_sz  = 14;
+
+plot_violin(group_data_photo, display_labels, opts_photo);
+title('Centring at end of stimulus (condition 12)', 'FontSize', 14);
+
+yl = ylim; ylim([yl(1), yl(2) + diff(yl) * 0.15]);
+hold on; yline(0, '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 0.5); hold off;
+
+ax = gca; ax.FontSize = 14;
+f = gcf; f.Position = [90 101 394 400];
 

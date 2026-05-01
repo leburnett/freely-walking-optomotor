@@ -168,7 +168,24 @@
       "Bash(find /Users/burnettl/Documents/GitHub/freely-walking-optomotor -name \"*.m\" -type f -exec grep -l \"function.*load_per_rep_data\" {} \\\\;)",
       "Bash(find /Users/burnettl/Documents/GitHub/freely-walking-optomotor -name \"*.m\" -type f -exec grep -l \"resolve_delta_data_type\\\\|get_ylb_from_data_type\" {} \\\\;)",
       "Bash(ls -la /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/processing/functions/combine_timeseries_across_exp*.m)",
-      "Bash(ls -la /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/processing/summary_plot/combine_timeseries_across_exp*.m)"
+      "Bash(ls -la /Users/burnettl/Documents/GitHub/freely-walking-optomotor/src/processing/summary_plot/combine_timeseries_across_exp*.m)",
+      "WebSearch",
+      "WebFetch(domain:hal-amu.archives-ouvertes.fr)",
+      "WebFetch(domain:link.springer.com)",
+      "WebFetch(domain:pubmed.ncbi.nlm.nih.gov)",
+      "Bash(pdftoppm -v)",
+      "Bash(mkdir -p /Users/burnettl/.local/bin)",
+      "Bash(ln -sf /opt/homebrew/bin/pdftoppm /Users/burnettl/.local/bin/pdftoppm)",
+      "Read(//Users/burnettl/.local/bin/**)",
+      "Bash(/Users/burnettl/.local/bin/pdftoppm -v)",
+      "Bash(/usr/local/bin/pdftoppm -v)",
+      "Bash(env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin which pdftoppm)",
+      "Bash(env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin which pdftoppm)",
+      "Bash(pdftotext -layout /Users/burnettl/Downloads/Bioinspired_Visuomotor_Convergence.pdf /tmp/bioinspired_visuomotor.txt)",
+      "Bash(pdftotext -layout /Users/burnettl/Downloads/elife-104118-v1.pdf /tmp/elife_104118.txt)",
+      "Bash(pdftotext -layout /Users/burnettl/Downloads/s41598-022-15740-3.pdf /tmp/sr_2022.txt)",
+      "Bash(pdftotext -layout /Users/burnettl/Downloads/s41598-019-44187-2.pdf /tmp/sr_2019.txt)",
+      "Bash(pdftotext -layout /Users/burnettl/Downloads/thesis.pdf /tmp/thesis.txt)"
     ]
   }
 }
