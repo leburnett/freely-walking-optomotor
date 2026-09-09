@@ -104,10 +104,10 @@ The config file (`config/config.py`) reads this variable and sets machine-specif
 MACHINE_ROLE = os.environ.get("MACHINE_ROLE", "").lower()
 
 if MACHINE_ROLE == "acquisition":
-    PROJECT_ROOT = Path(r"C:\Users\labadmin\Documents\freely-walking-optomotor")
+    PROJECT_ROOT = Path(r"<repo path on the rig machine>")
     SOURCE_ROOT = Path(r"C:\MatlabRoot\FreeWalkOptomotor\data")  # Where MATLAB writes raw data
 elif MACHINE_ROLE == "processing":
-    PROJECT_ROOT = Path(r"C:\Users\labadmin\Documents\freely-walking-optomotor")
+    PROJECT_ROOT = Path(r"<repo path on the rig machine>")
     SOURCE_ROOT = None  # Not used on processing machine
 elif MACHINE_ROLE == "analysis":
     PROJECT_ROOT = Path(os.environ.get("PROJECT_ROOT", ""))  # Or auto-detected default

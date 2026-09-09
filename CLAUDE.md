@@ -49,7 +49,7 @@ freely-walking-optomotor/
 ### Related Repository
 
 Documentation is published to a separate Quarto website:
-- **Location:** `/Users/burnettl/Documents/GitHub/reiser-documentation`
+- **Location:** the `reiser-documentation` repo, checked out alongside this one
 - **Hosted at:** GitHub Pages
 - **Structure:** Uses Quarto static site generator with MkDocs Material-like theme
 
@@ -340,7 +340,7 @@ reiser-documentation/
 ### Preview Locally
 
 ```bash
-cd /Users/burnettl/Documents/GitHub/reiser-documentation
+cd ../reiser-documentation
 quarto preview --port 4321
 ```
 

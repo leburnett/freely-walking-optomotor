@@ -2,65 +2,18 @@
 
 Code to run and analyze freely-walking optomotor behavior experiments in the cylindrical G3 LED arena. Developed for the Reiser Lab at HHMI Janelia Research Campus.
 
+**Version** README v1 · **Status** active · **Last verified** not yet verified
+
 First developed for and with Hannah-Marie Santos, summer 2024 and later used for the freely-walking optomotor "oaky-cokey" screen with Aparna Dev, autumn 2024 - summer 2025. Grace Biondi joined the team in summer 2025 and led the eye painting experiments.
 
-## Repository Structure
-
-```
-freely-walking-optomotor/
-│
-├── config/                          # Centralized path configuration
-│   ├── get_config.m                 # MATLAB: cfg = get_config()
-│   └── config.py                    # Python: from config.config import ...
-│
-├── setup_path.m                     # Run once per MATLAB session to add src/ to path
-│
-├── src/                             # MATLAB source code
-│   ├── processing/                  # Data processing pipeline
-│   │   ├── process_freely_walking_data.m   # Main entry point
-│   │   └── functions/               # Processing helper functions
-│   │
-│   ├── plotting/                    # Visualization tools
-│   │   ├── make_overview.m          # Overview/summary plots
-│   │   ├── plot_line_*.m            # Line plots
-│   │   └── functions/               # Plotting helper functions
-│   │
-│   ├── analysis/                    # Ad-hoc analysis scripts
-│   │
-│   ├── tracking/                    # FlyTracker integration
-│   │   ├── batch_track_ufmf.m       # Batch tracking script
-│   │   └── calibration.mat          # Tracking calibration data
-│   │
-│   ├── patterns/
-│   │   ├── Patterns_optomotor/      # LED pattern files (.mat)
-│   │   └── make_patterns/           # Scripts to generate new patterns
-│   │
-│   ├── protocols/                   # Experimental protocol scripts (.m)
-│   │
-│   ├── model/                       # Behavioral model scripts
-│   │
-│   ├── shared/                      # External functions (viridis, fdr_bh, etc.)
-│   │
-│   └── data_review/                 # Data review notebooks
-│
-├── python/
-│   ├── freely-walking-python/       # pixi environment (DO NOT MOVE)
-│   │   ├── pixi.toml               # Dependencies and task definitions
-│   │   ├── dashboard/              # Dash web dashboard
-│   │   └── docs_generator/         # Quarto documentation generator
-│   │
-│   └── automation/                  # Automated processing scripts
-│       ├── daily_processing/        # Automated daily data processing
-│       ├── monitor_and_track/       # FlyTracker monitoring service
-│       └── monitor_and_copy/        # File transfer monitoring service
-│
-├── docs/
-│   └── training_guide/              # Example figure generation scripts
-│
-└── CLAUDE.md                        # Context for Claude Code sessions
-```
-
 ## Setup
+
+| Requirement | Notes |
+|---|---|
+| MATLAB | Statistics and Machine Learning Toolbox; Image Processing Toolbox; Circular Statistics Toolbox for phototaxis analysis |
+| pixi | manages the Python environment in `python/freely-walking-python/` |
+| FlyTracker | tracks the raw video |
+| G3 LED arena | needed to run experiments; not needed for analysis alone |
 
 The system runs across three computers (acquisition rig, processing machine, analysis computer). Both MATLAB and Python use a single editable path that you set once per computer — all other paths are derived automatically. See the [Configuration & Paths](https://leburnett.github.io/reiser-documentation/Freely-walking/freely_walking_configuration.html) documentation page for the full setup guide.
 
@@ -200,6 +153,62 @@ The automation scripts generate a standalone HTML page (`pipeline_status.html`) 
 open /Volumes/reiserlab/oaky-cokey/pipeline_status.html
 ```
 
+## Repository Structure
+
+```
+freely-walking-optomotor/
+│
+├── config/                          # Centralized path configuration
+│   ├── get_config.m                 # MATLAB: cfg = get_config()
+│   └── config.py                    # Python: from config.config import ...
+│
+├── setup_path.m                     # Run once per MATLAB session to add src/ to path
+│
+├── src/                             # MATLAB source code
+│   ├── processing/                  # Data processing pipeline
+│   │   ├── process_freely_walking_data.m   # Main entry point
+│   │   └── functions/               # Processing helper functions
+│   │
+│   ├── plotting/                    # Visualization tools
+│   │   ├── make_overview.m          # Overview/summary plots
+│   │   ├── plot_line_*.m            # Line plots
+│   │   └── functions/               # Plotting helper functions
+│   │
+│   ├── analysis/                    # Ad-hoc analysis scripts
+│   │
+│   ├── tracking/                    # FlyTracker integration
+│   │   ├── batch_track_ufmf.m       # Batch tracking script
+│   │   └── calibration.mat          # Tracking calibration data
+│   │
+│   ├── patterns/
+│   │   ├── Patterns_optomotor/      # LED pattern files (.mat)
+│   │   └── make_patterns/           # Scripts to generate new patterns
+│   │
+│   ├── protocols/                   # Experimental protocol scripts (.m)
+│   │
+│   ├── model/                       # Behavioral model scripts
+│   │
+│   ├── shared/                      # External functions (viridis, fdr_bh, etc.)
+│   │
+│   └── data_review/                 # Data review notebooks
+│
+├── python/
+│   ├── freely-walking-python/       # pixi environment (DO NOT MOVE)
+│   │   ├── pixi.toml               # Dependencies and task definitions
+│   │   ├── dashboard/              # Dash web dashboard
+│   │   └── docs_generator/         # Quarto documentation generator
+│   │
+│   └── automation/                  # Automated processing scripts
+│       ├── daily_processing/        # Automated daily data processing
+│       ├── monitor_and_track/       # FlyTracker monitoring service
+│       └── monitor_and_copy/        # File transfer monitoring service
+│
+├── docs/
+│   └── training_guide/              # Example figure generation scripts
+│
+└── CLAUDE.md                        # Context for Claude Code sessions
+```
+
 ## Key Data Types
 
 | Data Type | Description | Units |
@@ -224,15 +233,12 @@ open /Volumes/reiserlab/oaky-cokey/pipeline_status.html
 
 ## Dependencies
 
-### MATLAB
-- Statistics and Machine Learning Toolbox
-- Image Processing Toolbox
-- Circular Statistics Toolbox (for phototaxis analysis)
-
 ### Python (managed with pixi)
 - numpy, pandas, scipy
 - matplotlib, pillow, imageio
 - jinja2, dash, plotly
+
+MATLAB toolbox requirements are listed under [Setup](#setup).
 
 ## Protocol Naming Convention
 
